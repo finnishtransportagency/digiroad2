@@ -56,6 +56,9 @@ trait ResolvingFrozenRoadLinks {
 
   lazy val username: String = "batch_process_temp_road_address"
 
+  //Timestamp for the instant when Viite road links were frozen
+  lazy val viiteTimestamp: Long = 1667925243000L
+
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def calculateSideCodeUsingEndPointAddrs(addrAtStart: RoadAddress, addrAtEnd: RoadAddress): SideCode = {
@@ -259,11 +262,14 @@ trait ResolvingFrozenRoadLinks {
       roadLinkTempDao.deleteInfoByLinkIds(tempAddressLinkIdsToDelete.toSet)
     }
 
+    // Some state road links are missing road address in Viite
     val allViiteRoadAddresses = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
-    val stateRoadLinksMissingAddress = roadLinksInMunicipality.filterNot(roadLink => {
+    val stateRoadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
       val linkIdsWithTempAddress = existingTempRoadAddress.map(_.linkId)
       val linkIdsWithViiteRoadAddress = allViiteRoadAddresses.map(_.linkId)
-      linkIdsWithViiteRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
+      val hasAddressInfo = linkIdsWithViiteRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
+
+      !hasAddressInfo && roadLink.timeStamp > viiteTimestamp
     })
 
     val groupedRoadLinksMissingAddress = stateRoadLinksMissingAddress.groupBy(_.roadNameIdentifier.getOrElse(""))
@@ -282,7 +288,7 @@ trait ResolvingFrozenRoadLinks {
         }
       }
 
-      val tempAddresses = groupedRoadLinksMissingAddress(key).flatMap { roadLinkMissingAddress =>
+      val tempAddressesToCreate = groupedRoadLinksMissingAddress(key).flatMap { roadLinkMissingAddress =>
         val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
 
         try {
@@ -332,10 +338,10 @@ trait ResolvingFrozenRoadLinks {
         }
       }
 
-      recalculateTrack(viiteAddressesWithPoints, tempAddresses, Seq())
+      recalculateTrack(viiteAddressesWithPoints, tempAddressesToCreate, Seq())
     }.toSeq
 
-    (newAddress, stateRoadLinksMissingAddress.filterNot(frozen => newAddress.map(_.roadAddress.linkId).contains(frozen.linkId)))
+    (newAddress, stateRoadLinksMissingAddress.filterNot(missing => newAddress.map(_.roadAddress.linkId).contains(missing.linkId)))
   }
 
   def recalculateTrack(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint],
@@ -384,7 +390,7 @@ trait ResolvingFrozenRoadLinks {
              |Resolved ${overlappingToCreate.size} addresses on overlapping geometry
              |Resolved ${adjacentsToCreate.size} addreses using adjacent addresses
              |Total: ${(overlappingToCreate ++ adjacentsToCreate).size}
-             |State road links still missing address: ${missing.size - adjacentsToCreate.size}
+             |New state road links without road address info: ${missing.size - adjacentsToCreate.size}
              |Municipality: $municipality
              |""".stripMargin)
         (adjacentsToCreate ++ overlappingToCreate.map(_.roadAddress)).foreach { frozen =>
