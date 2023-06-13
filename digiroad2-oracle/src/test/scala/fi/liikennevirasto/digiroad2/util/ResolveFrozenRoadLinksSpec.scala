@@ -256,7 +256,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     val roadLinkWithPoints = RoadLinkWithPoints(first, last, road3)
     val missingRoadLinks = RoadLinkWithPointsAndAdjacents(roadLinkWithPoints, Seq(road1, road4, road5))
 
-    val result = ResolvingFrozenRoadLinksTest.cleanning(Seq(missingRoadLinks), Seq(), Seq())
+    val result = ResolvingFrozenRoadLinksTest.resolveAddressesRecursively(Seq(missingRoadLinks), Seq(), Seq())
     result.size should be (0)
 
   }
@@ -309,7 +309,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     val roadLinkWithPoints = RoadLinkWithPoints(first, last, road3)
     val missingRoadLinks = RoadLinkWithPointsAndAdjacents(roadLinkWithPoints, Seq(road1, road4, road5))
 
-    val result = ResolvingFrozenRoadLinksTest.cleanning(Seq(missingRoadLinks), mappedAddresses, Seq())
+    val result = ResolvingFrozenRoadLinksTest.resolveAddressesRecursively(Seq(missingRoadLinks), mappedAddresses, Seq())
 
     result.size should be (1)
     result.exists(x => x.track == LeftSide && x.sideCode.contains(SideCode.TowardsDigitizing))

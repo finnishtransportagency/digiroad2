@@ -61,9 +61,9 @@ trait ResolvingFrozenRoadLinks {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def calculateSideCodeUsingEndPointAddrs(addrAtStart: RoadAddress, addrAtEnd: RoadAddress): SideCode = {
-    if(addrAtStart.addrM < addrAtEnd.addrM) SideCode.TowardsDigitizing
-    else if (addrAtStart.addrM > addrAtEnd.addrM) SideCode.AgainstDigitizing
+  def calculateSideCodeUsingEndPointAddrs(addrMAtStart: Int, addrMAtEnd: Int): SideCode = {
+    if(addrMAtStart < addrMAtEnd) SideCode.TowardsDigitizing
+    else if (addrMAtStart > addrMAtEnd) SideCode.AgainstDigitizing
     else SideCode.Unknown
   }
 
@@ -187,59 +187,57 @@ trait ResolvingFrozenRoadLinks {
     * @param mappedAddresses Viite and temp road addresses
     * @return generated temp addresses
     */
-  def cleanner(roadLinksMissingAddress: Seq[RoadLinkWithPointsAndAdjacents], mappedAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+  def resolveUsingAdjacents(roadLinksMissingAddress: Seq[RoadLinkWithPointsAndAdjacents], mappedAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
     logger.info(s"Try to solve ${roadLinksMissingAddress.size}")
 
-    roadLinksMissingAddress.flatMap { adjRoadLink =>
-      val (first, last, missing, roadLinks) = (adjRoadLink.roadLinkWithPoints.firstP, adjRoadLink.roadLinkWithPoints.lastP, adjRoadLink.roadLinkWithPoints.roadLink, adjRoadLink.adjacentLinks)
+    roadLinksMissingAddress.flatMap { roadLink =>
+      val (firstPoint, lastPoint, roadLinkToResolve, adjacentRoadLinks) = (roadLink.roadLinkWithPoints.firstP, roadLink.roadLinkWithPoints.lastP, roadLink.roadLinkWithPoints.roadLink, roadLink.adjacentLinks)
 
       val adjacentFirstLast = mappedAddresses.filter { address =>
-        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
-          Try(missing.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
-          GeometryUtils.areAdjacent(first, address.lastP))
+        Try(roadLinkToResolve.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
+          Try(roadLinkToResolve.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
+          GeometryUtils.areAdjacent(firstPoint, address.lastP))
       }
 
       val adjacentFirstFirst = mappedAddresses.filter { address =>
-        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
-          Try(missing.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
-          GeometryUtils.areAdjacent(first, address.firstP))
+        Try(roadLinkToResolve.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
+          Try(roadLinkToResolve.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
+          GeometryUtils.areAdjacent(firstPoint, address.firstP))
       }
 
       val adjacentLastLast = mappedAddresses.filter { address =>
-        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
-          Try(missing.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
-          GeometryUtils.areAdjacent(last, address.lastP))
+        Try(roadLinkToResolve.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
+          Try(roadLinkToResolve.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
+          GeometryUtils.areAdjacent(lastPoint, address.lastP))
       }
 
       val adjacentLastFirst = mappedAddresses.filter { address =>
-        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
-          Try(missing.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
-          GeometryUtils.areAdjacent(last, address.firstP))
+        Try(roadLinkToResolve.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
+          Try(roadLinkToResolve.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
+          GeometryUtils.areAdjacent(lastPoint, address.firstP))
       }
 
       //TODO Varmaan sideCodePäättely myös tähänd
       // Tapaus "U", jossa digitointisuunta muuttunut viereisellä linkillä ei toimi, kummatkin viereiset tulis firstFirst kohtaan
-      val frozenAddress =
+      val resolvedAddresses =
         if ((adjacentFirstLast ++ adjacentFirstFirst).nonEmpty && (adjacentLastLast ++ adjacentLastFirst).nonEmpty) {
 
-          val startAddressM = (adjacentFirstLast.nonEmpty, adjacentFirstFirst.nonEmpty) match {
-            case (true, false) => adjacentFirstLast.head.roadAddress.endAddressM
-            case _ => adjacentFirstFirst.head.roadAddress.startAddressM
+          val addrMAtFirstPoint = (adjacentFirstLast.nonEmpty, adjacentFirstFirst.nonEmpty) match {
+            case (true, false) => adjacentFirstLast.head.roadAddress.endAddressM.toInt
+            case _ => adjacentFirstFirst.head.roadAddress.startAddressM.toInt
           }
-
-          val endAddressM = (adjacentLastFirst.nonEmpty, adjacentLastLast.nonEmpty) match {
-            case (true, false) => adjacentLastFirst.head.roadAddress.startAddressM
-            case _ => adjacentLastLast.head.roadAddress.endAddressM
+          val addrMAtLastPoint = (adjacentLastFirst.nonEmpty, adjacentLastLast.nonEmpty) match {
+            case (true, false) => adjacentLastFirst.head.roadAddress.startAddressM.toInt
+            case _ => adjacentLastLast.head.roadAddress.endAddressM.toInt
           }
-
+          val sideCode = calculateSideCodeUsingEndPointAddrs(addrMAtFirstPoint, addrMAtLastPoint)
           val address = (adjacentFirstLast ++ adjacentFirstFirst).head.roadAddress
-          Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(missing.linkId, address.road, address.roadPart, Track.Unknown,
-            startAddressM, endAddressM, 0, GeometryUtils.geometryLength(missing.geometry), missing.geometry, None, municipalityCode = address.municipalityCode)))
+          Some(RoadAddressTEMPwithPoint(firstPoint, lastPoint, RoadAddressTEMP(roadLinkToResolve.linkId, address.road, address.roadPart, Track.Unknown,
+            addrMAtFirstPoint, addrMAtLastPoint, 0, GeometryUtils.geometryLength(roadLinkToResolve.geometry), roadLinkToResolve.geometry, Some(sideCode), municipalityCode = address.municipalityCode)))
         } else
           None
 
-      recalculateTrack(mappedAddresses, frozenAddress.toSeq, Seq())
-
+      recalculateTrack(mappedAddresses, resolvedAddresses.toSeq, Seq())
     }
   }
 
@@ -275,7 +273,7 @@ trait ResolvingFrozenRoadLinks {
     val groupedRoadLinksMissingAddress = stateRoadLinksMissingAddress.groupBy(_.roadNameIdentifier.getOrElse(""))
     val groupedRoadLinks = roadLinksInMunicipality.groupBy(_.roadNameIdentifier.getOrElse(""))
 
-    val newAddress = groupedRoadLinksMissingAddress.keys.flatMap { key =>
+    val resolvedAddresses = groupedRoadLinksMissingAddress.keys.flatMap { key =>
       val relevantLinkIds = groupedRoadLinks.getOrElse(key, Seq())
 
       val viiteAddressesWithPoints = allViiteRoadAddresses.flatMap { address =>
@@ -292,6 +290,8 @@ trait ResolvingFrozenRoadLinks {
         val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
 
         try {
+          // KGV road address attributes are not always up-to-date, stop
+          // using them if problems arise, but for now they seem to be OK
           val roadNumber = Try(roadLinkMissingAddress.roadNumber.map(_.toInt).head).toOption
           val roadPartNumber = Try(roadLinkMissingAddress.roadPartNumber.map(_.toInt).head).toOption
 
@@ -325,7 +325,7 @@ trait ResolvingFrozenRoadLinks {
               val orderedAddress = vkmAddresses.sortBy(_.addrM)
               // If start and end point road address Track values are not equal, Track needs to be calculated later
               val track = if (orderedAddress.head.track == orderedAddress.last.track) orderedAddress.head.track else Track.Unknown
-              val tempRoadAddressSideCode = calculateSideCodeUsingEndPointAddrs(vkmAddressAtRoadLinkStart.get, vkmAddressAtRoadLinkEnd.get)
+              val tempRoadAddressSideCode = calculateSideCodeUsingEndPointAddrs(vkmAddressAtRoadLinkStart.get.addrM, vkmAddressAtRoadLinkEnd.get.addrM)
               Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(roadLinkMissingAddress.linkId, orderedAddress.head.road,
                 orderedAddress.head.roadPart, track, orderedAddress.head.addrM, orderedAddress.last.addrM,
                 0, GeometryUtils.geometryLength(roadLinkMissingAddress.geometry), roadLinkMissingAddress.geometry, Some(tempRoadAddressSideCode), municipalityCode = Some(roadLinkMissingAddress.municipalityCode))))
@@ -341,7 +341,8 @@ trait ResolvingFrozenRoadLinks {
       recalculateTrack(viiteAddressesWithPoints, tempAddressesToCreate, Seq())
     }.toSeq
 
-    (newAddress, stateRoadLinksMissingAddress.filterNot(missing => newAddress.map(_.roadAddress.linkId).contains(missing.linkId)))
+    val roadLinksAddressNotResolved = stateRoadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
+    (resolvedAddresses, roadLinksAddressNotResolved)
   }
 
   def recalculateTrack(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint],
@@ -382,7 +383,6 @@ trait ResolvingFrozenRoadLinks {
     municipalities.foreach { municipality =>
       PostGISDatabase.withDynTransaction {
         val (overlappingToCreate, missing) = resolveAddressesOnOverlappingGeometry(municipality)
-
         val adjacentsToCreate = resolveAddressesUsingAdjacentAddresses(missing, overlappingToCreate)
 
         logger.info(
@@ -393,8 +393,9 @@ trait ResolvingFrozenRoadLinks {
              |New state road links without road address info: ${missing.size - adjacentsToCreate.size}
              |Municipality: $municipality
              |""".stripMargin)
-        (adjacentsToCreate ++ overlappingToCreate.map(_.roadAddress)).foreach { frozen =>
-          roadLinkTempDao.insertInfo(frozen, username)
+
+        (adjacentsToCreate ++ overlappingToCreate.map(_.roadAddress)).foreach { resolvedAddress =>
+          roadLinkTempDao.insertInfo(resolvedAddress, username)
         }
       }
     }
@@ -409,8 +410,6 @@ trait ResolvingFrozenRoadLinks {
     * @return Final result temp road addresses to be created
     */
   def resolveAddressesUsingAdjacentAddresses(missing: Seq[RoadLink], toCreate: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMP] = {
-
-
     val roadLinksMissingAddressWithAdjacents = missing.map { roadLink =>
       val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
       val adjacentRoadLinks = roadLinkService.getAdjacent(roadLink.linkId, newTransaction = false)
@@ -433,17 +432,25 @@ trait ResolvingFrozenRoadLinks {
       }
     }
 
-    cleanning(roadLinksMissingAddressWithAdjacents, mappedAddresses ++ toCreate, Seq())
-
+    resolveAddressesRecursively(roadLinksMissingAddressWithAdjacents, mappedAddresses ++ toCreate, Seq())
   }
 
-  def cleanning(missingRoadLinks: Seq[RoadLinkWithPointsAndAdjacents], tempRoadAddresses: Seq[RoadAddressTEMPwithPoint], result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMP] = {
-    val newResult = cleanner(missingRoadLinks, tempRoadAddresses)
+  /**
+    * Resolve temp addresses on new links where VKM could not provide addresses
+    * Tries to resolve addresses recursively using already resolved temp addresses and Viite addresses
+    * from adjacent road links until no new addresses are resolved
+    * @param missingRoadLinks Road links still missing address info
+    * @param allAddresses Viite and Temp addresses to be used in resolving process
+    * @param result Resulting resolved temp road addresses from previous execution
+    * @return Resulting resolved temp road addresses
+    */
+  def resolveAddressesRecursively(missingRoadLinks: Seq[RoadLinkWithPointsAndAdjacents], allAddresses: Seq[RoadAddressTEMPwithPoint], result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMP] = {
+    val resolvedAddresses = resolveUsingAdjacents(missingRoadLinks, allAddresses)
 
-    if (newResult.nonEmpty) {
+    if (resolvedAddresses.nonEmpty) {
       val roadLinksStillMissingAddress = missingRoadLinks.filterNot(roadLinkMissing =>
-        newResult.map(_.roadAddress.linkId).contains(roadLinkMissing.roadLinkWithPoints.roadLink.linkId))
-      cleanning(roadLinksStillMissingAddress, tempRoadAddresses ++ newResult, result ++ newResult)
+        resolvedAddresses.map(_.roadAddress.linkId).contains(roadLinkMissing.roadLinkWithPoints.roadLink.linkId))
+      resolveAddressesRecursively(roadLinksStillMissingAddress, allAddresses ++ resolvedAddresses, result ++ resolvedAddresses)
     } else
       result.map(_.roadAddress)
 
