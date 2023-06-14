@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
-import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -98,10 +98,10 @@ trait ResolvingFrozenRoadLinks {
 
     tempAddressTrack match {
       case Some(track) =>
+        logger.info(s"""calculated track value: ${track.value} using first point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track)))
-
       case _ =>
-        logger.error("Could not calculate track for temp address on linkID: " + tempAddressToCalculate.roadAddress.linkId)
+        logger.info(s"""could not calculate track using first point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq()
     }
   }
@@ -140,8 +140,11 @@ trait ResolvingFrozenRoadLinks {
 
     tempAddressTrack match {
       case Some(track) =>
+        logger.info(s"""calculated track value: ${track.value} using last point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track)))
-      case _ => Seq()
+      case _ =>
+        logger.info(s"""could not calculate track using last point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
+        Seq()
     }
   }
 
@@ -339,10 +342,9 @@ trait ResolvingFrozenRoadLinks {
   def process(): Unit = {
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = Seq(508)
-//      PostGISDatabase.withDynSession {
-//      Queries.getMunicipalities
-//    }
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
 
     municipalities.foreach { municipality =>
       PostGISDatabase.withDynTransaction {
