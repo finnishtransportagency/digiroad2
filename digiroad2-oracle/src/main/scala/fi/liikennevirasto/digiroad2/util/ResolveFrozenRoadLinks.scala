@@ -202,7 +202,7 @@ trait ResolvingFrozenRoadLinks {
         } else
           None
 
-      recalculateTrack(mappedAddresses, resolvedAddresses.toSeq, Seq())
+      recalculateTracksRecursively(mappedAddresses, resolvedAddresses.toSeq, Seq())
     }
   }
 
@@ -213,7 +213,6 @@ trait ResolvingFrozenRoadLinks {
     * @return Generated temp road addresses with start and end points, and state road links still missing road address
     */
   def resolveAddressesOnOverlappingGeometry(municipality: Int): (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
-    logger.info(s"Working on municipality : $municipality")
 
     val existingTempRoadAddress = roadLinkTempDao.getByMunicipality(municipality)
     val roadLinksInMunicipality = roadLinkService.getRoadLinksByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == State)
@@ -303,22 +302,22 @@ trait ResolvingFrozenRoadLinks {
         }
       }
 
-      recalculateTrack(viiteAddressesWithPoints, tempAddressesToCreate, Seq())
+      recalculateTracksRecursively(viiteAddressesWithPoints, tempAddressesToCreate, Seq())
     }.toSeq
 
     val roadLinksAddressNotResolved = stateRoadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
     (resolvedAddresses, roadLinksAddressNotResolved)
   }
 
-  def recalculateTrack(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint],
-                       result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+  def recalculateTracksRecursively(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint],
+                                   result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
     val newResult = calculateTrack(viiteAddressesWithPoints, tempAddresses).filterNot(x => x.roadAddress.track == Track.Unknown)
 
     if (newResult.isEmpty) {
       result
     } else {
       val newResultLinkIds = newResult.map(_.roadAddress.linkId)
-      recalculateTrack(newResult ++ viiteAddressesWithPoints, tempAddresses.filterNot(x => newResultLinkIds.contains(x.roadAddress.linkId)), result ++ newResult)
+      recalculateTracksRecursively(newResult ++ viiteAddressesWithPoints, tempAddresses.filterNot(x => newResultLinkIds.contains(x.roadAddress.linkId)), result ++ newResult)
     }
   }
 
@@ -347,13 +346,15 @@ trait ResolvingFrozenRoadLinks {
 
     municipalities.foreach { municipality =>
       PostGISDatabase.withDynTransaction {
+        logger.info(s"Resolving addresses on new road links in municipality: $municipality")
         val (overlappingToCreate, missing) = resolveAddressesOnOverlappingGeometry(municipality)
         val adjacentsToCreate = resolveAddressesUsingAdjacentAddresses(missing, overlappingToCreate)
 
         logger.info(
           s"""
              |Resolved ${overlappingToCreate.size} addresses on overlapping geometry
-             |Resolved ${adjacentsToCreate.size} addreses using adjacent addresses
+             |Resolved ${adjacentsToCreate.size} addreses using adjacent addresses on linkIds:
+             | ${adjacentsToCreate.map(_.linkId).mkString(", ")}
              |Total: ${(overlappingToCreate ++ adjacentsToCreate).size}
              |New state road links without road address info: ${missing.size - adjacentsToCreate.size}
              |Municipality: $municipality
@@ -367,12 +368,15 @@ trait ResolvingFrozenRoadLinks {
 
   }
 
-  //TODO PÄÄTTELEE TEMP ROAD ADDRESS INFON LINKEILLE, JOLTA SE PUUTTUU HYÖDYNTÄEN VIEREISTEN LINKKIEN VIITE JA TEMP TIEOSOITE TIETOJA
-  // Pitää nimenomaan hyödyntää myös luotuja temp tietoja, jotta voidaan ratkoa tilanteita, joissa VKM ei pystynyt auttamaan
+  //TODO This method has not been tested properly due to insufficient test data,
+  // could not find municipalities where addresses could be resolved using adjacent road address info
+  // monitor this methods behaviour trough logs
   /**
+    * Use possible adjacent Viite road addresses and resolved temp road addresses to resolve road addresses on links
+    * where VKM could not resolve them
     * @param missing  State road links still missing road address info
-    * @param toCreate Temp road addresses to be created
-    * @return Final result temp road addresses to be created
+    * @param toCreate Resolved temp road addresses to be created
+    * @return Road addresses resolved using adjacent road link addresses
     */
   def resolveAddressesUsingAdjacentAddresses(missing: Seq[RoadLink], toCreate: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMP] = {
     val roadLinksMissingAddressWithAdjacents = missing.map { roadLink =>
@@ -401,12 +405,12 @@ trait ResolvingFrozenRoadLinks {
   }
 
   /**
-    * Resolve temp addresses on new links where VKM could not provide addresses
+    * Resolve temp addresses on new links where VKM could not provide addresses.
     * Tries to resolve addresses recursively using already resolved temp addresses and Viite addresses
     * from adjacent road links until no new addresses are resolved
     * @param missingRoadLinks Road links still missing address info
     * @param allAddresses Viite and Temp addresses to be used in resolving process
-    * @param result Resulting resolved temp road addresses from previous execution
+    * @param result Resulting resolved temp road addresses from past executions
     * @return Resulting resolved temp road addresses
     */
   def resolveAddressesRecursively(missingRoadLinks: Seq[RoadLinkWithPointsAndAdjacents], allAddresses: Seq[RoadAddressTEMPwithPoint], result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMP] = {
