@@ -146,41 +146,6 @@ trait ResolvingFrozenRoadLinks {
   }
 
   /**
-    * THIS METHOD HAS BEEN USED ONLY FOR LOGGING PURPOSES
-    * Recalculates temp road address for links' which end points have different road parts
-    * The method tries to form a road address by fetching addresses from VKM for each two adjacent points in road link geometry
-    * @param frozen road link missing road address info
-    * @return Formed temp road addresses with points for given road link
-    */
-  def recalculateAddress(frozen: RoadLink): Seq[RoadAddressTEMPwithPoint] = {
-    logger.info(s"Recalculate Address on linkId ${frozen.linkId}")
-    frozen.geometry.zip(frozen.geometry.tail).foldLeft(Seq.empty[RoadAddressTEMPwithPoint]) { case (result, (p1, p2)) =>
-      val roadNumber = Try(frozen.roadNumber.map(_.toInt).head).toOption
-      val roadPartNumber = Try(frozen.roadPartNumber.map(_.toInt).head).toOption
-      val address = vkmClient.coordsToAddresses(Seq(p1, p2), roadNumber, roadPartNumber, includePedestrian = Some(true))
-
-      if (result.isEmpty) {
-        val orderedAddress = address.sortBy(_.addrM)
-        Seq(RoadAddressTEMPwithPoint(p1, p2, RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown,
-          orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(Seq(p1, p2)), Seq(p1, p2), municipalityCode = Some(frozen.municipalityCode))))
-      } else {
-        val addressHead = address.head
-
-        if (result.exists(x => x.roadAddress.road == addressHead.road && x.roadAddress.roadPart == addressHead.roadPart)) {
-          val partOfEndValue = GeometryUtils.geometryLength(Seq(p1, p2))
-          val resultToChange = result.filter(x => x.roadAddress.road == addressHead.road && x.roadAddress.roadPart == addressHead.roadPart).head
-          result.filterNot(x => x.roadAddress.road == addressHead.road && x.roadAddress.roadPart == addressHead.roadPart) :+
-            resultToChange.copy(roadAddress = resultToChange.roadAddress.copy(endAddressM = address.last.addrM, endMValue = partOfEndValue + resultToChange.roadAddress.endMValue, geom = Seq(p1, p2) ++ resultToChange.roadAddress.geom))
-        } else {
-          val startValue = result.maxBy(_.roadAddress.endMValue).roadAddress.endMValue
-          result :+ RoadAddressTEMPwithPoint(p1, p2, RoadAddressTEMP(frozen.linkId, addressHead.road, addressHead.roadPart, Track.Unknown, addressHead.addrM, address.last.addrM,
-            startValue, startValue + GeometryUtils.geometryLength(Seq(p1, p2)), Seq(p1, p2), municipalityCode = Some(frozen.municipalityCode)))
-        }
-      }
-    }
-  }
-
-  /**
     * Try to create temp road address for links still missing road address info, by using adjacent
     * links road addresses and KGV road number and KGV road part number fields
     * @param roadLinksMissingAddress road links still missing address with adjacent road links
