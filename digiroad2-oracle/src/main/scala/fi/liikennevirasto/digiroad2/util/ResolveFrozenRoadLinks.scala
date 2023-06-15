@@ -68,21 +68,21 @@ trait ResolvingFrozenRoadLinks {
   }
 
   // Compare temp address to digitizing direction start adjacent link
-  def calculateTrackUsingFirstPoint(tempAddressToCalculate: RoadAddressTEMPwithPoint, viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
-    val adjacentOrder = viiteAddressesWithPoints.filter { address =>
+  def calculateTrackUsingFirstPoint(tempAddressToCalculate: RoadAddressTEMPwithPoint, resolvedAddresses: Seq[RoadAddressTEMPwithPoint], otherTempAddressesNotResolved: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+    val adjacentOrder = resolvedAddresses.filter { address =>
       GeometryUtils.areAdjacent(tempAddressToCalculate.firstP, address.lastP)
     }
 
-    val adjacentReverse = viiteAddressesWithPoints.filter { address =>
+    val adjacentReverse = resolvedAddresses.filter { address =>
       GeometryUtils.areAdjacent(tempAddressToCalculate.firstP, address.firstP)
     }
 
-    val frozenAdjacents = tempAddresses.filter { frozen =>
+    val nonResolvedAdjacents = otherTempAddressesNotResolved.filter { frozen =>
       GeometryUtils.areAdjacent(tempAddressToCalculate.firstP, frozen.lastP) || GeometryUtils.areAdjacent(tempAddressToCalculate.firstP, frozen.firstP)
     }
     val adjacents = adjacentOrder ++ adjacentReverse
 
-    val tempAddressTrack = (adjacents.size, frozenAdjacents.size) match {
+    val tempAddressTrack = (adjacents.size, nonResolvedAdjacents.size) match {
       case (2, 0) =>
           if (adjacents.exists(_.roadAddress.track == Track.RightSide) && adjacents.exists(_.roadAddress.track == Track.LeftSide))
             Some(Track.Combined)
@@ -107,24 +107,24 @@ trait ResolvingFrozenRoadLinks {
   }
 
   // Compare temp address to digitizing direction end adjacent link
-  def calculateTrackUsingLastPoint(tempAddressToCalculate: RoadAddressTEMPwithPoint, viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint],
-                                   tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+  def calculateTrackUsingLastPoint(tempAddressToCalculate: RoadAddressTEMPwithPoint, resolvedAddresses: Seq[RoadAddressTEMPwithPoint],
+                                   otherTempAddressesNotResolved: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
 
-    val adjacentOrder = viiteAddressesWithPoints.filter { address =>
+    val adjacentOrder = resolvedAddresses.filter { address =>
       GeometryUtils.areAdjacent(tempAddressToCalculate.lastP, address.firstP)
     }
 
-    val adjacentReverse = viiteAddressesWithPoints.filter { address =>
+    val adjacentReverse = resolvedAddresses.filter { address =>
       GeometryUtils.areAdjacent(tempAddressToCalculate.lastP, address.lastP)
     }
 
-    val frozenAdjacents = tempAddresses.filter { frozen =>
+    val nonResolvedAdjacents = otherTempAddressesNotResolved.filter { frozen =>
       GeometryUtils.areAdjacent(tempAddressToCalculate.lastP, frozen.firstP) || GeometryUtils.areAdjacent(tempAddressToCalculate.lastP, frozen.lastP)
     }
 
     val adjacents = adjacentOrder ++ adjacentReverse
 
-    val tempAddressTrack = (adjacents.size, frozenAdjacents.size) match {
+    val tempAddressTrack = (adjacents.size, nonResolvedAdjacents.size) match {
       case (2, 1) =>
         if (adjacents.exists(_.roadAddress.track == Track.RightSide) && adjacents.exists(_.roadAddress.track == Track.LeftSide))
           Some(Track.Combined)
@@ -312,30 +312,32 @@ trait ResolvingFrozenRoadLinks {
     (resolvedAddresses, roadLinksAddressNotResolved)
   }
 
-  def recalculateTracksRecursively(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint],
+  def recalculateTracksRecursively(resolvedAddresses: Seq[RoadAddressTEMPwithPoint], tempAddressesNotResolved: Seq[RoadAddressTEMPwithPoint],
                                    result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
-    val newResult = calculateTrack(viiteAddressesWithPoints, tempAddresses).filterNot(x => x.roadAddress.track == Track.Unknown)
+    val newResult = calculateTrack(resolvedAddresses, tempAddressesNotResolved).filterNot(x => x.roadAddress.track == Track.Unknown)
 
     if (newResult.isEmpty) {
       result
     } else {
       val newResultLinkIds = newResult.map(_.roadAddress.linkId)
-      recalculateTracksRecursively(newResult ++ viiteAddressesWithPoints, tempAddresses.filterNot(x => newResultLinkIds.contains(x.roadAddress.linkId)), result ++ newResult)
+      recalculateTracksRecursively(newResult ++ resolvedAddresses, tempAddressesNotResolved.filterNot(x => newResultLinkIds.contains(x.roadAddress.linkId)), result ++ newResult)
     }
   }
 
   // Try to calculate temp road address Track using adjacent road address info
-  def calculateTrack(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+  def calculateTrack(resolvedAddresses: Seq[RoadAddressTEMPwithPoint], tempAddressesNotResolved: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
 
-    tempAddresses.flatMap { tempAddressToCalculate =>
-      val missingFrozen = tempAddresses.filterNot(x => x.roadAddress.linkId == tempAddressToCalculate.roadAddress.linkId)
+    tempAddressesNotResolved.flatMap { tempAddressToCalculate =>
+      val otherTempAddressesNotResolved = tempAddressesNotResolved.filterNot(x => x.roadAddress.linkId == tempAddressToCalculate.roadAddress.linkId)
+      val resolvedAddressesOnSameRoadPart = resolvedAddresses.filter(resolvedAddress => resolvedAddress.roadAddress.road == tempAddressToCalculate.roadAddress.road &&
+        resolvedAddress.roadAddress.roadPart == tempAddressToCalculate.roadAddress.roadPart)
 
-      val frozenAddrFirst = calculateTrackUsingFirstPoint(tempAddressToCalculate, viiteAddressesWithPoints, missingFrozen)
+      val frozenAddrFirst = calculateTrackUsingFirstPoint(tempAddressToCalculate, resolvedAddressesOnSameRoadPart, otherTempAddressesNotResolved)
 
       if (frozenAddrFirst.nonEmpty) {
         frozenAddrFirst
       } else
-        calculateTrackUsingLastPoint(tempAddressToCalculate, viiteAddressesWithPoints, tempAddresses)
+        calculateTrackUsingLastPoint(tempAddressToCalculate, resolvedAddressesOnSameRoadPart, tempAddressesNotResolved)
     }
   }
 
