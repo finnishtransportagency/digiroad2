@@ -56,58 +56,8 @@ object SpeedLimitFiller extends AssetFiller {
     if(geometryChanged) fillOperations
     else adjustmentOperations
   }
-  
-  override def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
-    val startError = asset.startMeasure
-    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val endMeasureDifference = roadLinkLength - asset.endMeasure
-    val mAdjustment =
-      if (startError > MaxAllowedMValueError || endMeasureDifference > MaxAllowedMValueError)
-        Seq(MValueAdjustment(asset.id, asset.linkId, 0, roadLinkLength))
-      else
-        Nil
-    val modifiedSegment = asset.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
-    (modifiedSegment, mAdjustment)
-  }
-  
-  private def adjustTwoWaySegments(roadLink: RoadLinkForFillTopology,
-                                   assets: Seq[PieceWiseLinearAsset]):
-  (Seq[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
-    val twoWaySegments = assets.filter(_.sideCode == SideCode.BothDirections).sortWith(modifiedSort)
-    if (twoWaySegments.length == 1 && assets.forall(_.sideCode == SideCode.BothDirections)) {
-      val segment = assets.last
-      val (adjustedSegment, mValueAdjustments) = adjustAsset(segment, roadLink)
-      (Seq(adjustedSegment), mValueAdjustments)
-    } else {
-      (twoWaySegments, Nil)
-    }
-  }
 
-  private def adjustOneWaySegments(roadLink: RoadLinkForFillTopology,
-                                   assets: Seq[PieceWiseLinearAsset],
-                                   runningDirection: SideCode):
-  (Seq[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
-    val segmentsTowardsRunningDirection = assets.filter(_.sideCode == runningDirection).sortWith(modifiedSort)
-    if (segmentsTowardsRunningDirection.length == 1 && !assets.exists(_.sideCode == SideCode.BothDirections)) {
-      val segment = segmentsTowardsRunningDirection.last
-      val (adjustedSegment, mValueAdjustments) = adjustAsset(segment, roadLink)
-      (Seq(adjustedSegment), mValueAdjustments)
-    } else {
-      (segmentsTowardsRunningDirection, Nil)
-    }
-  }
-
-  override def adjustAssets(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val (towardsGeometrySegments, towardsGeometryAdjustments) = adjustOneWaySegments(roadLink, assets, SideCode.TowardsDigitizing)
-    val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(roadLink, assets, SideCode.AgainstDigitizing)
-    val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(roadLink, assets)
-    val mValueAdjustments = towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments
-    val (asset,changeSetCopy)=(towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments,
-      changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
-    adjustLopsidedLimit(roadLink,asset,changeSetCopy)
-  }
-  
-  private  def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  override protected def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val onlyLimitOnLink = assets.length == 1 && assets.head.sideCode != SideCode.BothDirections
     if (onlyLimitOnLink) {
       val segment = assets.head
@@ -124,7 +74,7 @@ object SpeedLimitFiller extends AssetFiller {
     val limits = assets.filterNot { x => limitsToDrop.contains(x.id) }
     (limits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ limitsToDrop))
   }
-  
+
   override protected def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5 }
@@ -136,7 +86,7 @@ object SpeedLimitFiller extends AssetFiller {
     } else Seq.empty[PieceWiseLinearAsset]
     (segments ++ generatedLinearAssets, changeSet)
   }
-  
+
   override protected def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val generated = if (roadLink.trafficDirection == TrafficDirection.BothDirections && roadLink.isSimpleCarTrafficRoad) {
       val lrmPositions: Seq[(Double, Double)] = segments
@@ -152,7 +102,7 @@ object SpeedLimitFiller extends AssetFiller {
     }
     (segments ++ generated, changeSet)
   }
-  
+
   override def fillTopology(roadLinks: Seq[RoadLinkForFillTopology], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId:Int, changedSet: Option[ChangeSet] = None,
                             geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations = getOperations(geometryChanged)
@@ -208,7 +158,7 @@ object SpeedLimitFiller extends AssetFiller {
         adjustedSideCodes = Seq.empty[SideCodeAdjustment],
         valueAdjustments = Seq.empty[ValueAdjustment])
     }
-    // if links does not have any asset filter it away 
+    // if links does not have any asset filter it away
     topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
@@ -230,7 +180,7 @@ object SpeedLimitFiller extends AssetFiller {
       (existingAssets ++ adjustedAssets, noDuplicate)
     }
   }
-  
+
   /**
     * For debugging; print speed limit relevant data
     * @param speedLimit speedlimit to print
@@ -250,5 +200,5 @@ object SpeedLimitFiller extends AssetFiller {
       println("%s %s %s".format(ids, dir, details))
     }
   }
-  
+
 }
