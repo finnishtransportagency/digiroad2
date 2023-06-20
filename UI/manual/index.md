@@ -51,13 +51,13 @@ Sovelluksen toimiessa virheellisesti tee näin:
 
 ### Kirjautuminen Digiroad-sovellukseen
 
-Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://digiroad.vaylapilvi.fi/  target="_blank">https://digiroad.vaylapilvi.fi. </a>Kirjautumiseen tarvitaan voimassa olevat Väyläviraston tunnukset. Tunnuksia saa Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
+Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://digiroad.vaylapilvi.fi/  target="_blank">https://digiroad.vaylapilvi.fi. </a>Kirjautumiseen tarvitaan voimassa olevat Väyläviraston tunnukset. Tunnuksia saa Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](https://digiroad.vaylapilvi.fi/manual/index.html#!index.md#1._Miten_p%C3%A4%C3%A4sen_alkuun?)).
 
 ![Kirjautuminen Digiroadiin.](k2.PNG)
 
 _Kirjautuminen Digiroadiin._
 
-Kirjautumisen j&auml;lkeen avautuu Digiroad-selainsovelluksen karttak&auml;ytt&ouml;liittym&auml;n katselutila. Maantieteellisesti kartalla on n&auml;kyviss&auml; alue, johon k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
+Kirjautumisen j&auml;lkeen avautuu Digiroad-selainsovelluksen karttak&auml;ytt&ouml;liittym&auml;n katselutila. Maantieteellisesti kartalla on n&auml;kyviss&auml; alue, johon k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](https://digiroad.vaylapilvi.fi/manual/index.html#!index.md#1._Miten_p%C3%A4%C3%A4sen_alkuun?)).
 
 ![Katselutila](Manuaali2.PNG)
 
