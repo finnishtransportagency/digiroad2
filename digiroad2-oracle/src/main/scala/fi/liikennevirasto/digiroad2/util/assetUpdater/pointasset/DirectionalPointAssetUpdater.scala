@@ -4,14 +4,15 @@ import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedPointAsset, Point,
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkInfo}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 
 class DirectionalPointAssetUpdater(service: PointAssetOperations) extends PointAssetUpdater(service: PointAssetOperations) {
-  override def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo,
-                           newLink: Option[RoadLinkInfo]): (Boolean, Option[FloatingReason]) = {
+  override def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo, newLinkInfo: Option[RoadLinkInfo],
+                           newLink: Option[RoadLink]): (Boolean, Option[FloatingReason]) = {
     newLink match {
       case Some(link) if !directionMatches(asset.getValidityDirection, link.trafficDirection, replaceInfo.digitizationChange) =>
         (true, Some(FloatingReason.TrafficDirectionNotMatch))
-      case _ => super.shouldFloat(asset, replaceInfo, newLink)
+      case _ => super.shouldFloat(asset, replaceInfo, newLinkInfo, newLink)
     }
   }
 
@@ -35,5 +36,11 @@ class DirectionalPointAssetUpdater(service: PointAssetOperations) extends PointA
 
   override def calculateBearing(point: Point, geometry: Seq[Point]): Option[Int] = {
     Some(PointAssetOperations.calculateBearing(point, geometry))
+  }
+
+  override def getRoadLink(link: Option[RoadLinkInfo]): Option[RoadLink] = {
+    if (link.isDefined)
+      roadLinkService.getRoadLinkAndComplementaryByLinkId(link.get.linkId, false)
+    else None
   }
 }

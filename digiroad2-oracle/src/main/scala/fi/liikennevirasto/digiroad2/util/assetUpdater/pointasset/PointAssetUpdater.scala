@@ -7,6 +7,9 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
 import fi.liikennevirasto.digiroad2.util.assetUpdater._
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
 import org.json4s.JsonDSL._
 import org.json4s.jackson.compactJson
@@ -16,10 +19,15 @@ class PointAssetUpdater(service: PointAssetOperations) {
   val roadLinkChangeClient = new RoadLinkChangeClient
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
+  lazy val eventBus: DigiroadEventBus = new DummyEventBus
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
+
   val MaxDistanceDiffAllowed = 3.0 // Meters
 
   def adjustValidityDirection(assetDirection: Option[Int], digitizationChange: Boolean): Option[Int] = None
   def calculateBearing(point: Point, geometry: Seq[Point]): Option[Int] = None
+  def getRoadLink(newLink: Option[RoadLinkInfo]): Option[RoadLink] = None
 
   def updatePointAssets(typeId: Int): Unit = {
     val latestSuccess = PostGISDatabase.withDynSession ( Queries.getLatestSuccessfulSamuutus(typeId) )
@@ -88,7 +96,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
       case (_, Some(replace)) =>
         (roadLinkChange.oldLink, roadLinkChange.newLinks.find(_.linkId == replace.newLinkId)) match {
           case (Some(oldLink), Some(newLink)) =>
-            val (floating, floatingReason) = shouldFloat(asset, replace, Some(newLink))
+            val (floating, floatingReason) = shouldFloat(asset, replace, Some(newLink), getRoadLink(Some(newLink)))
             if (floating)   setAssetAsFloating(asset, floatingReason)
             else            snapAssetToNewLink(asset, newLink, oldLink, replace.digitizationChange)
           case _ => setAssetAsFloating(asset, Some(FloatingReason.NoRoadLinkFound))
@@ -97,9 +105,9 @@ class PointAssetUpdater(service: PointAssetOperations) {
     }
   }
 
-  protected def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo,
-                            newLink: Option[RoadLinkInfo]): (Boolean, Option[FloatingReason]) = {
-    newLink match {
+  protected def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo, newLinkInfo: Option[RoadLinkInfo],
+                            newLink: Option[RoadLink]): (Boolean, Option[FloatingReason]) = {
+    newLinkInfo match {
       case Some(link) if link.municipality != asset.municipalityCode =>
         (true, Some(FloatingReason.DifferentMunicipalityCode))
       case None =>
