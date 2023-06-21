@@ -90,7 +90,8 @@ class PointAssetUpdater(service: PointAssetOperations) {
 
   def correctPersistedAsset(asset: PersistedPointAsset, roadLinkChange: RoadLinkChange): AssetUpdate = {
     val nearestReplace = roadLinkChange.replaceInfo.find(change =>
-      change.oldFromMValue <= asset.mValue && asset.mValue <= change.oldToMValue)
+      (change.oldFromMValue <= asset.mValue && asset.mValue <= change.oldToMValue) ||
+        (change.oldFromMValue >= asset.mValue && asset.mValue >= change.oldToMValue))
     (roadLinkChange.changeType, nearestReplace) match {
       case (RoadLinkChangeType.Remove, _) => setAssetAsFloating(asset, Some(FloatingReason.NoRoadLinkFound))
       case (_, Some(replace)) =>
