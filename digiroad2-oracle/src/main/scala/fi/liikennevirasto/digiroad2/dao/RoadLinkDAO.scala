@@ -308,7 +308,11 @@ class RoadLinkDAO {
     getExpiredRoadLinks()
   }
   def fetchExpiredRoadLink(linkId: String): Seq[RoadLinkFetched] = {
-    getExpiredRoadLinkById(linkId)
+    fetchExpiredByLinkIds(Set(linkId))
+  }
+
+  def fetchExpiredByLinkIds(linkIds: Set[String]): Seq[RoadLinkFetched] = {
+    getExpiredByMultipleValues(linkIds, withLinkIdFilter)
   }
   
   /**
@@ -317,6 +321,15 @@ class RoadLinkDAO {
   private def getByMultipleValues[T, A](values: Set[A],
                                         filter: Set[A] => String): Seq[T] = {
     if (values.nonEmpty) getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
+    else Seq.empty[T]
+  }
+
+  /**
+    * Calls db operation to fetch expired road links with given filter.
+    */
+  private def getExpiredByMultipleValues[T, A](values: Set[A],
+                                        filter: Set[A] => String): Seq[T] = {
+    if (values.nonEmpty) getExpiredLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
     else Seq.empty[T]
   }
 
@@ -347,13 +360,13 @@ class RoadLinkDAO {
           """.as[RoadLinkFetched].list
   }
 
-  protected def getExpiredRoadLinkById(id:String): Seq[RoadLinkFetched] = {
+  protected def getExpiredLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
                  surfacetype, geometrylength
           from kgv_roadlink
-          where expired_date is not null and linkid in ($id)
+          where expired_date is not null and #$filter
           """.as[RoadLinkFetched].list
   }
 
