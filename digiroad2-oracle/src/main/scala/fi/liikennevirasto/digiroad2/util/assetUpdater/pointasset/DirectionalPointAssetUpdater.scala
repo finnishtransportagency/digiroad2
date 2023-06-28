@@ -40,7 +40,7 @@ class DirectionalPointAssetUpdater(service: PointAssetOperations) extends PointA
 
   override def getRoadLink(link: Option[RoadLinkInfo]): Option[RoadLink] = {
     if (link.isDefined)
-      roadLinkService.getRoadLinkAndComplementaryByLinkId(link.get.linkId, false)
+      roadLinkService.getCurrentOrExpiredRoadLinkByLinkId(link.get.linkId, false)
     else None
   }
 }

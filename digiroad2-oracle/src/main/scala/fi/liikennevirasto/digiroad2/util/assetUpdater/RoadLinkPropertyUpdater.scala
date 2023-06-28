@@ -158,7 +158,7 @@ class RoadLinkPropertyUpdater {
     }
   }
 
-  def transferOrGenerateFunctionalClassesAndLinkTypes(changes: Seq[RoadLinkChange]) = {
+  def transferOrGenerateFunctionalClassesAndLinkTypes(changes: Seq[RoadLinkChange]): Seq[ReportedChange] = {
     val incompleteLinks = new ListBuffer[IncompleteLink]()
     val createdProperties = new ListBuffer[Option[ReportedChange]]()
     changes.foreach { change =>
@@ -174,13 +174,13 @@ class RoadLinkPropertyUpdater {
         }
       }
     }
-    val roadLinkData = roadLinkService.getRoadLinksByLinkIds(incompleteLinks.map(_.linkId).toSet, false)
+    val roadLinkData = roadLinkService.getCurrentAndExpiredRoadLinksByLinkIds(incompleteLinks.map(_.linkId).toSet, false)
     val incompleteLinksInUse = incompleteLinks.filter(il => incompleteLinkIsInUse(il, roadLinkData))
     roadLinkService.updateIncompleteLinks(incompleteLinksInUse)
     createdProperties.flatten
   }
 
-  def transferOverriddenPropertiesAndPrivateRoadInfo(changes: Seq[RoadLinkChange]) = {
+  def transferOverriddenPropertiesAndPrivateRoadInfo(changes: Seq[RoadLinkChange]): Seq[ReportedChange] = {
     def applyDigitizationChange(digitizationChange: Boolean, trafficDirectionValue: Int) = {
       digitizationChange match {
         case true =>

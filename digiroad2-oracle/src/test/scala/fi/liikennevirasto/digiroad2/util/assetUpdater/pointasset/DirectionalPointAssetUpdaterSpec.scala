@@ -48,8 +48,8 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     val newLink2 = RoadLink(newLinkId2, newLinkInfo2.geometry, newLinkInfo2.linkLength, Municipality, 1, TrafficDirection.BothDirections,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId1, false)).thenReturn(Some(newLink1))
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId2, false)).thenReturn(Some(newLink2))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId1, false)).thenReturn(Some(newLink1))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId2, false)).thenReturn(Some(newLink2))
 
     val asset1 = testDirectionalPointAsset(1, 367475.5758941994, 6673657.346462522, 49, oldLinkId,
       353.2503573773719, true, 0, SideCode.TowardsDigitizing.value, Some(341), NormalLinkInterface)
@@ -81,7 +81,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change1.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.AgainstDigitizing,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val asset1 = testDirectionalPointAsset(1, 391922.1567866767, 6672845.986092816, 91, oldLinkId1,
       13.736569359264589, true, 0, SideCode.AgainstDigitizing.value, Some(341), NormalLinkInterface)
@@ -110,7 +110,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.AgainstDigitizing,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val asset = testDirectionalPointAsset(1, 391936.8899081593, 6672840.334351871, 91, oldLinkId,
       4.773532861864595, false, 0, SideCode.AgainstDigitizing.value, Some(23), NormalLinkInterface)
@@ -132,7 +132,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.TowardsDigitizing,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val asset = testDirectionalPointAsset(1, 391936.8899081593, 6672840.334351871, 91, oldLinkId,
       4.773532861864595, false, 0, SideCode.AgainstDigitizing.value, Some(23), NormalLinkInterface)
@@ -154,7 +154,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.BothDirections,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val corrected = updater.correctPersistedAsset(asset, change)
     corrected.floating should be(false)
@@ -173,7 +173,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.BothDirections,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val corrected = updater.correctPersistedAsset(asset, change)
     val distanceToOldLocation = Point(corrected.lon, corrected.lat).distance2DTo(Point(asset.lon, asset.lat))
@@ -192,7 +192,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.BothDirections,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val corrected = updater.correctPersistedAsset(asset, change)
     corrected.floating should be(true)
@@ -209,7 +209,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.BothDirections,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val corrected = updater.correctPersistedAsset(asset, change)
     corrected.floating should be(false)
@@ -232,7 +232,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.BothDirections,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(assetMunicipality)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val corrected = updater.correctPersistedAsset(asset, change)
     corrected.floating should be(true)
@@ -261,7 +261,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val newLinkInfo = change.newLinks.find(_.linkId == newLinkId).get
     val newLink = RoadLink(newLinkId, newLinkInfo.geometry, newLinkInfo.linkLength, Municipality, 1, TrafficDirection.BothDirections,
       Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(newLinkId, false)).thenReturn(Some(newLink))
+    when(mockRoadLinkService.getCurrentOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
     val corrected = updater.correctPersistedAsset(asset, change)
     corrected.floating should be(true)

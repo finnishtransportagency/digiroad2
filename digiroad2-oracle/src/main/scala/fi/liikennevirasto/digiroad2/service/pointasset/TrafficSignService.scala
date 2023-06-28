@@ -224,7 +224,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     val validityDirection = adjustment.validityDirection.getOrElse(persistedAsset.validityDirection)
     val updated = IncomingTrafficSign(adjustment.lon, adjustment.lat, adjustment.linkId, propertyData,
       validityDirection, adjustment.bearing)
-    val roadLink = roadLinkService.getRoadLinkByLinkId(link.linkId, newTransaction = false)
+    val roadLink = roadLinkService.getCurrentOrExpiredRoadLinkByLinkId(link.linkId, newTransaction = false)
       .getOrElse(throw new NoSuchElementException("Road link no longer available"))
 
     updateWithoutTransaction(adjustment.assetId, updated, roadLink,
