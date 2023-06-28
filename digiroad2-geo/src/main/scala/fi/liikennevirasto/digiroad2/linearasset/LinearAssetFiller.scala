@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.asset.SideCode
 
 object LinearAssetFiller {
-  case class MValueAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double)
-  case class VVHChangesAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double, timeStamp: Long)
+  case class MValueAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double,timeStamp: Long=0)
+  case class VVHChangesAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double, timeStamp: Long=0)
   case class SideCodeAdjustment(assetId: Long, sideCode: SideCode, typeId: Int)
   case class ValueAdjustment(asset: PieceWiseLinearAsset)
   case class ChangeSet(droppedAssetIds: Set[Long],
@@ -30,5 +30,13 @@ object LinearAssetFiller {
         this.expiredAssetIds.filterNot(_ <= 0),
         this.valueAdjustments.filterNot(_.asset.id <= 0))
     }
+  }
+
+  def cleanRedundantMValueAdjustments(changeSet: ChangeSet, originalAssets: Seq[PieceWiseLinearAsset]): ChangeSet = {
+    val redundantFiltered = changeSet.adjustedMValues.filterNot(adjustment => {
+      val originalAsset = originalAssets.find(_.id == adjustment.assetId).get
+      originalAsset.startMeasure == adjustment.startMeasure && originalAsset.endMeasure == adjustment.endMeasure
+    })
+    changeSet.copy(adjustedMValues = redundantFiltered)
   }
 }

@@ -29,8 +29,10 @@ case class PersistedTrafficSign(id: Long, linkId: String,
                                 bearing: Option[Int],
                                 linkSource: LinkGeomSource,
                                 expired: Boolean = false,
-                                externalId: Option[String] = None) extends PersistedPoint
-
+                                externalId: Option[String] = None) extends PersistedPoint {
+  override def getValidityDirection: Option[Int] = Some(this.validityDirection)
+  override def getBearing: Option[Int] = this.bearing
+}
 
 case class TrafficSignRow(id: Long, linkId: String,
                           lon: Double, lat: Double,
@@ -53,7 +55,7 @@ object PostGISTrafficSignDao {
 
   private def query() =
     """
-        select a.id as asset_id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
+        select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp,a.municipality_code,
                p.id as property_id, p.public_id, p.property_type, p.required, ev.value,
                case
                 when ev.name_fi is not null then ev.name_fi
@@ -61,13 +63,13 @@ object PostGISTrafficSignDao {
                 when dpv.date_time is not null then to_char(dpv.date_time, 'DD.MM.YYYY')
                 when npv.value is not null then cast(npv.value as text)
                 else null
-               end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
-                lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
+               end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source, a.bearing,
+                pos.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
                ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color,
                case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.external_id
         from asset a
         join asset_link al on a.id = al.asset_id
-        join lrm_position lp on al.position_id = lp.id
+        join lrm_position pos on al.position_id = pos.id
         join property p on a.asset_type_id = p.asset_type_id
         left join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id and p.property_type = 'checkbox'
         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
