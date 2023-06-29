@@ -215,7 +215,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplaceNewVersion(linkIdVersion1, linkIdVersion2)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkIdVersion2))).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(linkIdVersion2))).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       service.persistUnknown(Seq(UnknownSpeedLimit(linkIdVersion1, 60, Municipality)))
       val unknownBefore = service.getUnknownByLinkIds(Set(linkIdVersion1))
@@ -240,10 +240,10 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplacechangeReplaceLengthenedFromEndBothDirections(linkId)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"))).thenReturn(Seq(newLink))
+      when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"))).thenReturn(Seq(newLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
+      when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, Seq(change))
       val unknown =  service.getUnknownByLinkIds(Set("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"),newTransaction = false)
       unknown .size should be(1)
