@@ -230,10 +230,10 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   def getRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksByLinkIds(Set(linkId), newTransaction: Boolean).headOption
 
   /**
-   * This method returns current and expired road links by link ids. Used by samuutus.
+   * This method returns existing and expired road links by link ids. Used by samuutus.
    * ATTENTION: Use this method always with transaction, never with session.
    */
-  def getCurrentAndExpiredRoadLinksByLinkIds(linkIds: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
+  def getExistingAndExpiredRoadLinksByLinkIds(linkIds: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
     def getLinks: Seq[RoadLinkFetched] = {
       val nonExpiredLinks = fetchRoadlinksByIds(linkIds)
       val missingLinkIds = linkIds.diff(nonExpiredLinks.map(_.linkId).toSet)
@@ -248,8 +248,8 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     else enrichFetchedRoadLinks(getLinks)
   }
 
-  def getCurrentOrExpiredRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] =
-    getCurrentAndExpiredRoadLinksByLinkIds(Set(linkId), newTransaction).headOption
+  def getExistingOrExpiredRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] =
+    getExistingAndExpiredRoadLinksByLinkIds(Set(linkId), newTransaction).headOption
 
   def getExpiredRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = {
     val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(linkId)

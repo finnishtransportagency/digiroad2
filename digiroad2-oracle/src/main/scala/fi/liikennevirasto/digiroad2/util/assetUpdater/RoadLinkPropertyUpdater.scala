@@ -174,7 +174,7 @@ class RoadLinkPropertyUpdater {
         }
       }
     }
-    val roadLinkData = roadLinkService.getCurrentAndExpiredRoadLinksByLinkIds(incompleteLinks.map(_.linkId).toSet, false)
+    val roadLinkData = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(incompleteLinks.map(_.linkId).toSet, false)
     val incompleteLinksInUse = incompleteLinks.filter(il => incompleteLinkIsInUse(il, roadLinkData))
     roadLinkService.updateIncompleteLinks(incompleteLinksInUse)
     createdProperties.flatten
