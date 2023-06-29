@@ -465,6 +465,7 @@ trait LinearAssetOperations {
     */
   def drop(ids: Set[Long]): Unit = {
     withDynTransaction {
+      ids.foreach(id => dao.updateExpiration(id))
       dao.floatLinearAssets(ids)
     }
   }

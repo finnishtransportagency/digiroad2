@@ -489,6 +489,7 @@ class PostGISLinearAssetDao() {
           or
             (a.created_date > $sinceDate and a.created_date <= $untilDate)
           )
+          and a.floating = '0'
           #$withAutoAdjustFilter
        ) derivedAsset #$recordLimit""".as[ProhibitionsRow].list
 

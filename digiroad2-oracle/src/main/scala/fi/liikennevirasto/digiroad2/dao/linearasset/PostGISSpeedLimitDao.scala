@@ -657,15 +657,4 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMeasure, segment.endMeasure)
     segment.copy(geometry = geometry, endpoints = geometry.toSet)
   }
-
-  /**
-    * Sets floating flag of linear assets true in db. Used in LinearAssetService.drop.
-    */
-  def floatLinearAssets(ids: Set[Long]): Unit = {
-    if (ids.nonEmpty) {
-      MassQuery.withIds(ids) { idTableName =>
-        sqlu"""update asset set floating = '1' where id in (select id from #$idTableName)""".execute
-      }
-    }
-  }
 }

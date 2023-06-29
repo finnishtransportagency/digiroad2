@@ -276,6 +276,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   def updateChangeSet(changeSet: ChangeSet): Unit = {
+    changeSet.droppedAssetIds.foreach(id => dao.updateExpiration(id))
     dao.floatLinearAssets(changeSet.droppedAssetIds)
 
     if (changeSet.adjustedMValues.nonEmpty)
