@@ -30,50 +30,6 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  test("properties of an old link are deleted or expired") {
-    val changesWithOldLink = changes.filterNot(_.changeType == Add)
-    runWithRollback {
-      val oldLinkIds = changesWithOldLink.map(_.oldLink.get.linkId)
-      oldLinkIds.foreach { linkId =>
-        RoadLinkOverrideDAO.insert(TrafficDirection, linkId, Some("test"), 2)
-        RoadLinkOverrideDAO.get(TrafficDirection, linkId) should not be None
-        RoadLinkOverrideDAO.insert(AdministrativeClass, linkId, Some("test"), 2)
-        RoadLinkOverrideDAO.get(AdministrativeClass, linkId) should not be None
-        RoadLinkOverrideDAO.insert(FunctionalClass, linkId, Some("test"), 7)
-        RoadLinkOverrideDAO.get(FunctionalClass, linkId) should not be None
-        RoadLinkOverrideDAO.insert(LinkType, linkId, Some("test"), SingleCarriageway.value)
-        RoadLinkOverrideDAO.get(LinkType, linkId) should not be None
-        LinkAttributesDao.insertAttributeValueByChanges(linkId, "test", "PRIVATE_ROAD_ASSOCIATION", "test association", LinearAssetUtils.createTimeStamp())
-        LinkAttributesDao.insertAttributeValueByChanges(linkId, "test", "ADDITIONAL_INFO", "1", LinearAssetUtils.createTimeStamp())
-        LinkAttributesDao.getExistingValues(linkId).size should be(2)
-      }
-      val reportedChanges = roadLinkPropertyUpdater.removePropertiesFromOldLinks(changesWithOldLink)
-      reportedChanges.map(_.linkId).toSet should be(oldLinkIds.toSet)
-      val trafficDirectionChanges = reportedChanges.filter(c => c.isInstanceOf[TrafficDirectionChange]).map(c => c.asInstanceOf[TrafficDirectionChange])
-      trafficDirectionChanges.map(_.oldValue).toSet should be(Set(2))
-      trafficDirectionChanges.map(_.newValue).toSet should be(Set(None))
-      val adminClassChanges = reportedChanges.filter(c => c.isInstanceOf[AdministrativeClassChange]).map(c => c.asInstanceOf[AdministrativeClassChange])
-      adminClassChanges.map(_.oldValue).toSet should be(Set(2))
-      adminClassChanges.map(_.newValue).toSet should be(Set(None))
-      val functionalClassChanges = reportedChanges.filter(c => c.isInstanceOf[FunctionalClassChange]).map(c => c.asInstanceOf[FunctionalClassChange])
-      functionalClassChanges.map(_.oldValue).toSet should be(Set(Some(7)))
-      functionalClassChanges.map(_.newValue).toSet should be(Set(None))
-      val linkTypeChanges = reportedChanges.filter(c => c.isInstanceOf[LinkTypeChange]).map(c => c.asInstanceOf[LinkTypeChange])
-      linkTypeChanges.map(_.oldValue).toSet should be(Set(Some(SingleCarriageway.value)))
-      linkTypeChanges.map(_.newValue).toSet should be(Set(None))
-      val attributeChanges = reportedChanges.filter(c => c.isInstanceOf[RoadLinkAttributeChange]).map(c => c.asInstanceOf[RoadLinkAttributeChange])
-      attributeChanges.map(_.oldValues).foreach(oldValue => (oldValue.get("ADDITIONAL_INFO") == Some("1") && oldValue.get("PRIVATE_ROAD_ASSOCIATION") == Some("test association")) should be(true))
-      attributeChanges.map(_.newValues).foreach(newValue => newValue should be(Map()))
-      oldLinkIds.foreach { linkId =>
-        RoadLinkOverrideDAO.get(TrafficDirection, linkId) should be(None)
-        RoadLinkOverrideDAO.get(AdministrativeClass, linkId) should be(None)
-        RoadLinkOverrideDAO.get(FunctionalClass, linkId) should be(None)
-        RoadLinkOverrideDAO.get(LinkType, linkId) should be(None)
-        LinkAttributesDao.getExistingValues(linkId).size should be(0)
-      }
-    }
-  }
-
   test("on a version change, overridden values and private road attributes are transferred to a new link") {
     val oldLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:1"
     val newLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:2"

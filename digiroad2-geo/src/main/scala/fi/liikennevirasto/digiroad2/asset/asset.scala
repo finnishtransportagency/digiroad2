@@ -974,18 +974,18 @@ case object NumberOfLanes extends AssetTypeInfo { val typeId = 140; def geometry
 case object MassTransitLane extends AssetTypeInfo { val typeId = 160; def geometryType = "linear"; val label = "MassTransitLane"; val layerName = "massTransitLanes"; val nameFI = "Joukkoliikennekaistat"  }
 case object TrafficVolume extends AssetTypeInfo { val typeId = 170; def geometryType = "linear"; val label = "TrafficVolume"; val layerName = "trafficVolume"; val nameFI = "Liikennemäärä" }
 case object WinterSpeedLimit extends AssetTypeInfo { val typeId = 180; def geometryType = "linear"; val label = "WinterSpeedLimit"; val layerName = "winterSpeedLimits"; val nameFI = "Talvinopeusrajoitukset"  }
-case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = ""; val layerName = "prohibition"; val nameFI = "Ajokielto" }
+case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = "Prohibition"; val layerName = "prohibition"; val nameFI = "Ajokielto" }
 case object PedestrianCrossings extends AssetTypeInfo { val typeId = 200; def geometryType = "point"; val label = "PedestrianCrossings"; val layerName = "pedestrianCrossings"; val nameFI = "Suojatie" }
 case object HazmatTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = "HazmatTransportProhibition"; val layerName = "hazardousMaterialTransportProhibition"; val nameFI = "VAK-rajoitus" }
-case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = ""; val layerName = "obstacles"; val nameFI = "Esterakennelma" }
-case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = ""; val layerName = "railwayCrossings"; val nameFI = "Rautatien tasoristeys" }
-case object DirectionalTrafficSigns extends AssetTypeInfo { val typeId = 240; def geometryType = "point"; val label = ""; val layerName = "directionalTrafficSigns"; val nameFI = "Opastustaulu ja sen informaatio" }
-case object ServicePoints extends AssetTypeInfo { val typeId = 250; def geometryType = "point"; val label = ""; val layerName = "servicePoints"; val nameFI = "Palvelupiste" }
-case object EuropeanRoads extends AssetTypeInfo { val typeId = 260; def geometryType = "linear"; val label = ""; val layerName = "europeanRoads"; val nameFI = "Eurooppatienumero" }
-case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryType = "linear"; val label = ""; val layerName = "exitNumbers"; val nameFI = "Liittymänumero" }
-case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label =  ""; val layerName = "trafficLights"; val nameFI = "Liikennevalo"}
-case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = ""; val layerName = "maintenanceRoads"; val nameFI = "Huoltotie" }
-case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""; val layerName = "trafficSigns"; val nameFI = "Liikennemerkki"}
+case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = "Obstacles"; val layerName = "obstacles"; val nameFI = "Esterakennelma" }
+case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = "RailwayCrossings"; val layerName = "railwayCrossings"; val nameFI = "Rautatien tasoristeys" }
+case object DirectionalTrafficSigns extends AssetTypeInfo { val typeId = 240; def geometryType = "point"; val label = "DirectionalTrafficSigns"; val layerName = "directionalTrafficSigns"; val nameFI = "Opastustaulu ja sen informaatio" }
+case object ServicePoints extends AssetTypeInfo { val typeId = 250; def geometryType = "point"; val label = "ServicePoints"; val layerName = "servicePoints"; val nameFI = "Palvelupiste" }
+case object EuropeanRoads extends AssetTypeInfo { val typeId = 260; def geometryType = "linear"; val label = "EuropeanRoads"; val layerName = "europeanRoads"; val nameFI = "Eurooppatienumero" }
+case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryType = "linear"; val label = "ExitNumbers"; val layerName = "exitNumbers"; val nameFI = "Liittymänumero" }
+case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label = "TrafficLights"; val layerName = "trafficLights"; val nameFI = "Liikennevalo"}
+case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = "MaintenanceRoads"; val layerName = "maintenanceRoads"; val nameFI = "Huoltotie" }
+case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = "TrafficSigns"; val layerName = "trafficSigns"; val nameFI = "Liikennemerkki"}
 case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit"; val layerName = "totalWeightLimit"; val nameFI = "Tierekisteri Nopeusrajoitukset" }
 case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""; val layerName = ""; val nameFI = ""}
 case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometryType = "point"; val label = "TrWeightLimit"; val layerName = "trWeightLimits"; val nameFI = "Tierekisteri Suurin sallittu massa"}

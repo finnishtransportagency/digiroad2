@@ -205,24 +205,31 @@ object LaneUpdater {
 
 
   def updateLanes(): Unit = {
-    withDynTransaction {
-      val lastSuccessfulSamuutus = Queries.getLatestSuccessfulSamuutus(Lanes.typeId)
-      val allRoadLinkChanges = roadLinkChangeClient.getRoadLinkChanges(lastSuccessfulSamuutus)
-      updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
-      val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
-      val changeSet = handleChanges(roadLinkChanges, workListChanges)
-      val changedLanes = updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
-      val changeReport = ChangeReport(Lanes.typeId, changedLanes)
-      generateAndSaveReport(changeReport)
-      Queries.updateLatestSuccessfulSamuutus(Lanes.typeId)
-    }
+    val lastSuccess = PostGISDatabase.withDynSession( Queries.getLatestSuccessfulSamuutus(Lanes.typeId) )
+    val changeSets = roadLinkChangeClient.getRoadLinkChanges(lastSuccess)
+
+    changeSets.foreach( roadLinkChangeSet => {
+      withDynTransaction {
+        logger.info(s"Started processing change set ${roadLinkChangeSet.key}")
+        val allRoadLinkChanges = roadLinkChangeSet.changes
+        updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
+        val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
+        val changeSet = handleChanges(roadLinkChanges, workListChanges)
+        val changedLanes = updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
+        val changeReport = ChangeReport(Lanes.typeId, changedLanes)
+        generateAndSaveReport(changeReport, roadLinkChangeSet.targetDate)
+        Queries.updateLatestSuccessfulSamuutus(Lanes.typeId, roadLinkChangeSet.targetDate)
+      }
+    })
   }
 
-  def generateAndSaveReport(changeReport: ChangeReport): Unit = {
+  def generateAndSaveReport(changeReport: ChangeReport, processedTo: DateTime): Unit = {
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
-    ChangeReporter.saveReportToLocalFile(Lanes.label, reportBody, contentRowCount)
+    ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBody, contentRowCount)
+    //ChangeReporter.saveReportToLocalFile(Lanes.label, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
-    ChangeReporter.saveReportToLocalFile(Lanes.label, reportBodyWithGeom, contentRowCount, hasGeometry = true)
+    ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
+    //ChangeReporter.saveReportToLocalFile(Lanes.label, reportBodyWithGeom, contentRowCount, hasGeometry = true)
   }
 
   def updateTrafficDirectionChangesLaneWorkList(roadLinkChanges: Seq[RoadLinkChange]): Unit = {
@@ -280,7 +287,7 @@ object LaneUpdater {
     val createdMainLanes = workListChanges.flatMap(change => {
       val newLinkIds = change.newLinks.map(_.linkId)
       // Need to fetch RoadLinks because Link Type is needed for main lane creation
-      val addedRoadLinks = roadLinkService.getRoadLinksByLinkIds(newLinkIds.toSet)
+      val addedRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet)
       val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(addedRoadLinks, saveResult = false)
       createdMainLanes
     })
@@ -334,7 +341,7 @@ object LaneUpdater {
     val oldWorkListLinkIds = workListChanges.flatMap(_.oldLink).map(_.linkId)
 
     val newLinkIds = roadLinkChanges.flatMap(_.newLinks.map(_.linkId))
-    val newRoadLinks = roadLinkService.getRoadLinksByLinkIds(newLinkIds.toSet)
+    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet)
 
     val lanesOnOldRoadLinks = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false)
     val lanesOnWorkListLinks = laneService.fetchAllLanesByLinkIds(oldWorkListLinkIds, newTransaction = false)

@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, Unknown}
 import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{BusStopType, MassTransitStopOperations, MassTransitStopService}
 import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedPointAsset}
 
@@ -10,15 +11,16 @@ class MassTransitStopUpdater(service: MassTransitStopService) extends Directiona
 
   val massTransitStopDao = new MassTransitStopDao
 
-  override def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo, newLink: Option[RoadLinkInfo]): (Boolean, Option[FloatingReason]) = {
+  override def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo, newLinkInfo: Option[RoadLinkInfo],
+                           newLink: Option[RoadLink]): (Boolean, Option[FloatingReason]) = {
     val assetAdministrativeClass = MassTransitStopOperations.getAdministrationClass(asset.propertyData).getOrElse(Unknown)
     newLink match {
-      case Some(newLink) if MassTransitStopOperations.administrativeClassMismatch(assetAdministrativeClass, Some(newLink.adminClass)) =>
+      case Some(newLink) if MassTransitStopOperations.administrativeClassMismatch(assetAdministrativeClass, Some(newLink.administrativeClass)) =>
         (true, Some(FloatingReason.RoadOwnerChanged))
-      case Some(newLink) if isTerminal(asset) && massTransitStopDao.countTerminalChildBusStops(asset.id) == 0 =>
+      case Some(_) if isTerminal(asset) && massTransitStopDao.countTerminalChildBusStops(asset.id) == 0 =>
         (true, Some(FloatingReason.TerminalChildless))
       case _ =>
-        super.shouldFloat(asset, replaceInfo, newLink)
+        super.shouldFloat(asset, replaceInfo, newLinkInfo, newLink)
     }
   }
 
