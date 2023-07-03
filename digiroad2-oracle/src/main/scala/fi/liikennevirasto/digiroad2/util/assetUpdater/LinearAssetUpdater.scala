@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils}
+import org.joda.time.DateTime
 import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -56,8 +57,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   val emptyStep: OperationStep = OperationStep(Seq(),  None, None, "",Seq())
-
-
+  
   protected val removePart: Int = -1
 
   def updateLinearAssets(typeId: Int): Unit = {
@@ -70,7 +70,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         updateByRoadLinks(typeId, changeSet.changes)
         Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
       }
-      generateAndSaveReport(typeId)
+      generateAndSaveReport(typeId,changeSet.targetDate)
     })
   }
 
@@ -178,12 +178,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     operationSteps
   }
 
-  def generateAndSaveReport(typeId: Int): Unit = {
+  def generateAndSaveReport(typeId: Int, processedTo: DateTime): Unit = {
     val changeReport = ChangeReport(typeId, changesForReport)
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
-    ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label, reportBody, contentRowCount)
+    ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label,processedTo, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
-    ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label, reportBodyWithGeom, contentRowCount, hasGeometry = true)
+    ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label,processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
   }
 
   def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {

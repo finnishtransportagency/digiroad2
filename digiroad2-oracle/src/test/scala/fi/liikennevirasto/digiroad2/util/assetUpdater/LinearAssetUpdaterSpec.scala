@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
+import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
@@ -932,7 +933,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted(1).endMeasure should be(9.0)
       sorted(1).value.isEmpty should be(false)
       sorted(1).value.get should be(NumericValue(5))
-      TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
+      TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId,DateTime.now())
 
       val oldIds = Seq(id1, id2)
       val assets = TestLinearAssetUpdater.changesForReport.map(a => PairAsset(a.before, a.after.headOption))
@@ -1221,7 +1222,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.AgainstDigitizing)
-      TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
+      TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId,DateTime.now())
       
       val oldIds = Seq(id1,id2)
       val assets = TestLinearAssetUpdater.changesForReport.map(a => PairAsset(a.before, a.after.headOption))
