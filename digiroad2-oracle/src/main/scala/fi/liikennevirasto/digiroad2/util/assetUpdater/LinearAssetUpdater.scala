@@ -23,7 +23,6 @@ import scala.annotation.tailrec
 import scala.collection.{Seq, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
-
 case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(), changeInfo: Option[ChangeSet] = None, roadLinkChange: Option[RoadLinkChange] = None, newLinkId: String = "", assetsBefore: Seq[PersistedLinearAsset] = Seq())
 
 case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset])
@@ -51,6 +50,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   val roadLinkChangeClient = new RoadLinkChangeClient
 
   val changesForReport: mutable.ListBuffer[ChangedAsset] = ListBuffer()
+  
+  val propertyChangesBasedOnLink: ListBuffer[(Long,Long)] = ListBuffer()
 
   def resetReport(): Unit = {
     changesForReport.clear
@@ -162,7 +163,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         val measures = Measures(ol.startMeasure, ol.endMeasure).roundMeasures()
         val linearReference = LinearReference(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, measures.length())
         Some(Asset(ol.id, values, Some(linkOld.municipality), Some(assetGeometry), Some(linearReference)))
-      case None => None
+      case None => 
+        val linkOld = relevantRoadLinkChange.oldLink.get
+        val linearReference = LinearReference(linkOld.linkId, 0,None, None, None, 0)
+        Some(Asset(0, "", Some(linkOld.municipality), None, Some(linearReference)))
     }
 
     val after = newAssets.map(asset => {
@@ -173,12 +177,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val linearReference = LinearReference(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, measures.length())
       Asset(asset.id, values, Some(newLink.municipality), Some(assetGeometry), Some(linearReference))
     })
-
+    
+// what about we check here is it property changes or not?
     changesForReport.append(ChangedAsset(linkId, assetId, rowType, relevantRoadLinkChange.changeType, before, after.toSeq))
     operationSteps
   }
 
-  def generateAndSaveReport(typeId: Int, processedTo: DateTime): Unit = {
+  def generateAndSaveReport(typeId: Int, processedTo: DateTime=DateTime.now()): Unit = {
     val changeReport = ChangeReport(typeId, changesForReport)
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
     ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label,processedTo, reportBody, contentRowCount)
@@ -200,6 +205,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def additionalRemoveOperationMass(expiredLinks: Seq[String]): Unit = {}
 
   def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
+    change.changeType match {
+      case _ => None
+    }
+  }
+
+  def nonAssetUpdate(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
     change.changeType match {
       case _ => None
     }
@@ -233,7 +244,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     updateChangeSet(changedSet)
     persistProjectedLinearAssets(projectedAssets.filterNot(_.id == removePart).filter(_.id == 0L))
   }
-
   protected def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, convertedLink: Seq[RoadLinkForFillTopology],
                                                        assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
                                                        changeSets: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
@@ -250,93 +260,102 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
             change.changeType match {
               case RoadLinkChangeType.Replace =>
                 assets.map(projecting(changeSets, change, _)).
-                  filter(_.nonEmpty).map(p => Some(p.get.copy(roadLinkChange = Some(change)))).
-                  foldLeft(Some(initStep))(mergerOperations)
+                  filter(_.nonEmpty).map(p => Some(p.get.copy(roadLinkChange = Some(change))))
+                  .foldLeft(Some(initStep))(mergerOperations)
               case RoadLinkChangeType.Split =>
                 handleSplits(typeId, convertedLink, changeSets, initStep, change, assets)
               case _ => None
             }
           } else None
       }
-      val additionalChanges = if (defaultResult.nonEmpty) {
-        additionalUpdateOrChange(change, defaultResult.get.assetsAfter, defaultResult.get.changeInfo.getOrElse(LinearAssetFiller.emptyChangeSet))
-      } else None
-      if (additionalChanges.nonEmpty) additionalChanges else defaultResult
+      
+      nonAssetUpdate(change, Seq(), null)
+      
+      defaultResult
     }).filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty)
 
     val (otherAdjustments, replace) = adjustAllButReplacement.partition(p => p.get.roadLinkChange.get.changeType != RoadLinkChangeType.Replace)
-    val operatedChanges = replace.map(_.get.roadLinkChange.get)
-
-    val (handledMergers, handledReplace) = splitReplacement(operatedChanges)
-    val adjustedMerger = handledMergers.map(adjustAndReportReplacement(typeId, convertedLink, assetsAll, changes, replace, _)).toSeq
-    val adjustedReplace = handledReplace.map(adjustAndReportReplacement(typeId, convertedLink, assetsAll, changes, replace, _, true)).toSeq
-
-    val mergingOperations = (otherAdjustments ++ adjustedMerger ++ adjustedReplace).foldLeft(Some(initStep))(mergerOperationsDropLinksChange)
+  
+    val adjustments = adjustAndReportReplacement(typeId, convertedLink, replace,initStep).map(a=>Some(a)).toSeq
+    
+    val mergingOperations = (otherAdjustments ++ adjustments).foldLeft(Some(initStep))(mergerOperationsDropLinksChange)
 
     val OperationStep(assetsOperated, changeInfo, _, _, _) = mergingOperations.get
 
     changeInfo.get.expiredAssetIds.map(a => {
-      val expiringAsset = assetsAll.find(_.id == a)
-      reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, ChangeTypeReport.Deletion)
+      val alreadyReported = changesForReport.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
+      if (!alreadyReported.contains(a)) {
+        val expiringAsset = assetsAll.find(_.id == a)
+        reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, ChangeTypeReport.Deletion)
+      }
     })
 
     (assetsOperated, changeInfo.get)
   }
+  case class LinkAndOperation(newLinkId:String,operation:OperationStep)
+  private def adjustAndReportReplacement(typeId: Int, convertedLink: Seq[RoadLinkForFillTopology],
+                                         assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep): Option[OperationStep] = {
+
+    val groupByNewLink = assetUnderReplace.map(_.get).groupBy(_.newLinkId)
+
+    val mergeSteps = groupByNewLink.map(a => {
+      LinkAndOperation(a._1, a._2.map(a => Option(a)).foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations).get)
+    })
+
+    val adjustedAssets = mergeSteps.map(a => LinkAndOperation(a.newLinkId, adjustAssets(typeId, convertedLink, a.operation)))
+
+    def additionalOperation(a: LinkAndOperation) = {
+      if (a.operation.assetsAfter.nonEmpty) {
+        val additionalChange2 = additionalUpdateOrChangeReplace(a.operation.roadLinkChange.get, a.operation, a.operation.assetsAfter, a.operation.changeInfo.get)
+        if (additionalChange2.nonEmpty) {
+          additionalChange2.get
+        } else a.operation
+      } else a.operation
+    }
+
+    val additionalSteps = adjustedAssets.map(a => {
+      val additionalChanges = additionalOperation(a)
+      LinkAndOperation(a.newLinkId, additionalChanges)
+    })
+
+    val reported = additionalSteps.map(grouped => {
+      val pairs = grouped.operation.assetsAfter.flatMap(asset => {
+        createPair(Some(asset), grouped.operation.assetsBefore)
+      }
+      ).distinct
+      val report = pairs.filter(_.newAsset.isDefined).map(pair => {
+        Some(reportAssetChanges(pair.oldAsset, pair.newAsset, Seq(grouped.operation.roadLinkChange.get), grouped.operation, ChangeTypeReport.Replaced, useGivenChange = true))
+      }).foldLeft(Some(initStep))(mergerOperations)
+      report
+    }).foldLeft(Some(initStep))(mergerOperations)
+    reported
+  }
   
-  def splitReplacement(changes: Seq[RoadLinkChange]): (Map[String, Seq[RoadLinkChange]], Map[String, Seq[RoadLinkChange]]) = {
-    val p = changes.groupBy(_.changeType).partition(recognizeMerger)
-    (Try(p._1.head._2.groupBy(_.newLinks.head.linkId)).getOrElse(Map.empty[String, Seq[RoadLinkChange]]),
-      Try(p._2.head._2.groupBy(_.newLinks.head.linkId)).getOrElse(Map.empty[String, Seq[RoadLinkChange]]))
-  }
-
-  def recognizeMerger(change: (RoadLinkChangeType, Seq[RoadLinkChange])): Boolean = {
-    change._1 == RoadLinkChangeType.Replace && change._2.size > 1
-  }
-  private def adjustAndReportReplacement(typeId: Int, convertedLink: Seq[RoadLinkForFillTopology], assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
-                                         assetUnderReplace: Seq[Option[OperationStep]], grouped: (String, Seq[RoadLinkChange]), nonMerge: Boolean = false): Option[OperationStep] = {
-    val oldLinks = grouped._2.map(_.oldLink.get.linkId)
-
-    val assetMerged = assetUnderReplace.filter(_.get.newLinkId == grouped._1)
-    val extractChanges = assetMerged.map(_.get.roadLinkChange.get)
-    val adjusted = adjustAssets(typeId, convertedLink, assetMerged.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations).get)
-
-    val adjustedList = adjusted.assetsAfter.sortBy(_.endMeasure)
-    val oldAssets = assetsAll.filter(a => oldLinks.contains(a.linkId)).sortBy(_.endMeasure)
-    val pairs=oldAssets.flatMap(asset => {
-      val change = extractChanges.find(_.oldLink.get.linkId == asset.linkId).get
-      change.replaceInfo.flatMap(a => {
-        if (nonMerge) createPair(a, adjustedList, oldAssets) else createPairMerge(a, adjustedList, oldAssets, change.newLinks.head.linkLength)
-      })
-    }).distinct
-    pairs.filter(_.newAsset.isDefined).map(a => reportAssetChanges(a.oldAsset, a.newAsset, extractChanges, adjusted, ChangeTypeReport.Replaced)).headOption
-  }
-
-  //TODO somehow limit creation of duplicated row so we do not need to run distinct and goes over whole list or find better implementation
-  private def createPair(info: ReplaceInfo, updatedAssets: Seq[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]) = {
-    val oldAssetsSet = oldAssets.filter(_.linkId == info.oldLinkId).filter(fallInReplaceInfoOld(info, _)).map(Some(_))
-    val newAssetsSet = updatedAssets.filter(_.linkId == info.newLinkId)
-    oldAssetsSet.map(a => Pair(a, newAssetsSet.find(_.id == a.get.id)))
-  }
-  private def createPairMerge(info: ReplaceInfo, updatedAssets: Seq[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset], wholeLinkLenth: Double) = {
-    val oldAssetsSet = oldAssets.filter(_.linkId == info.oldLinkId).filter(fallInReplaceInfoOld(info, _)).map(Some(_))
-    val newAssetsSet = updatedAssets.filter(_.linkId == info.newLinkId).filter(fallInReplaceInfoNewMerger(info, _, wholeLinkLenth)).map(Some(_))
-    oldAssetsSet.zipAll(newAssetsSet, None, None).map(p => Pair(p._1, p._2))
+  
+  // retain history only if we can find old id
+  private def createPair(updatedAssets: Option[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]) = {
+    val oldAsset = oldAssets.find(_.id==updatedAssets.get.id)
+    if (oldAsset.isDefined) {
+      Seq(Pair(oldAsset,updatedAssets))
+    }else {
+      Seq(Pair(None,updatedAssets))
+    }
   }
 
   private def adjustAssets(typeId: Int, convertedLink: Seq[RoadLinkForFillTopology], p: OperationStep): OperationStep = {
-    val assetsOperated = p.assetsAfter
     val changeSetFromOperation = p.changeInfo
+    val assetsOperated = p.assetsAfter.filterNot(a=>changeSetFromOperation.get.expiredAssetIds.contains(a.id))
     val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(assetsOperated, convertedLink).groupBy(_.linkId)
     val (adjusted, changeSet) = adjustLinearAssetsOnChangesGeometry(convertedLink, groupedAssets, typeId, changeSetFromOperation)
     OperationStep(adjusted.toSet.map(convertToPersisted).toSeq, Some(changeSet), p.roadLinkChange, p.newLinkId, p.assetsBefore)
   }
+  
+  private def projectingSlice(changeSets: ChangeSet, change: RoadLinkChange, sliced: PersistedLinearAsset, beforeAsset:PersistedLinearAsset): Some[OperationStep] = {
 
-  private def projectingSlice(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset,beforeAsset:PersistedLinearAsset): Some[OperationStep] = {
-
-    val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw new Exception("Did not found replace info for asset"))
+    val info = sortAndFind(change, sliced, fallInReplaceInfoOld).getOrElse(throw new Exception("Did not found replace info for asset"))
     val link = change.newLinks.find(_.linkId == info.newLinkId).get
 
-    val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = info.newLinkId),
+    val (projected, changeSet) = projectLinearAsset(sliced.copy(linkId = info.newLinkId),
       Projection(
         info.oldFromMValue, info.oldToMValue,
         info.newFromMValue, info.newToMValue,
@@ -363,8 +382,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (bBefore, newLinkIdB, assetsB, changeInfoB, roadLinkChangeB) = (b.get.assetsBefore, b.get.newLinkId, b.get.assetsAfter, b.get.changeInfo, b.get.roadLinkChange)
     val roadLinkChange = if (roadLinkChangeA.isEmpty) roadLinkChangeB else roadLinkChangeA
     val newLinkId = if (newLinkIdA.isEmpty) newLinkIdB else newLinkIdA
-    val before = if (aBefore.isEmpty) bBefore else aBefore
-    Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), roadLinkChange, newLinkId, before))
+    Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), roadLinkChange, newLinkId, (aBefore ++ bBefore).distinct))
   }
 
   private def mergerOperationsDropLinksChange(a: Option[OperationStep], b: Option[OperationStep]): Some[OperationStep] = {
@@ -373,53 +391,62 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get))))
   }
 
+  def additionalUpdateOrChangeReplace(change: RoadLinkChange, operatio: OperationStep, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
+    None
+  }
+
+  def additionalUpdateOrChangeSplit(change: RoadLinkChange,operatio:OperationStep, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
+  None  
+  }
+  
   private def handleSplits(typeId: Int, convertedLink: Seq[RoadLinkForFillTopology], changeSets: ChangeSet,
                            initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset]): Option[OperationStep] = {
     
-    def createPairForSplit(info: ReplaceInfo, updatedAssets: Seq[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]) = {
-      val oldAssetsSet = oldAssets.filter(fallInWhenSlicing(info, _)).map(Some(_))
-      val newAssetsSet = updatedAssets.filter(fallInReplaceInfoNew(info, _)).map(Some(_))
-      oldAssetsSet.zipAll(newAssetsSet, None, None).map(p => Pair(p._1, p._2))
+    def additionalOperation(a: LinkAndOperation) = {
+      if (a.operation.assetsAfter.nonEmpty) {
+        val additionalChange2 = additionalUpdateOrChangeSplit(change, a.operation, a.operation.assetsAfter, changeSets)
+        if (additionalChange2.nonEmpty) {
+          additionalChange2.get
+        } else a.operation
+      } else a.operation
     }
     
-    val operation = operationForSplit(change, assets, changeSets).map(adjustAssets(typeId, convertedLink, _))
-    val pairs = operation.flatMap(a=>a.assetsAfter.map(a2 => {
-      val info = a.roadLinkChange.get.replaceInfo.find(_.newLinkId == a2.linkId).get
-      /*createPairForSplit(info, operation.assetsAfter
-        .filter(_.linkId == info.newLinkId), operation.assetsBefore.
-        filter(_.linkId == info.oldLinkId))*/
-      
-      Pair(newAsset=Some(a2),oldAsset=a.assetsBefore.headOption)
-    })).distinct
+    val split = operationForSplit(change, assets, changeSets).map(a=>Option(a))
     
-    pairs.filter(_.newAsset.isDefined).map(p => {
-      val fromWhichSplit = if (p.oldAsset.isDefined) p.oldAsset else {
-        if (p.newAsset.get.id == 0 && assets.size == 1) {
-          assets.headOption
-        } else {
-          assets.find(_.id == p.newAsset.get.id)
-        }
-      }
-      val merge = operation.map(a=> Some(a)).foldLeft(Some(OperationStep(Seq(), Some(changeSets))))(mergerOperations)
-      
-      Some(reportAssetChanges(fromWhichSplit, p.newAsset, Seq(change),merge.get , ChangeTypeReport.Divided, useGivenChange = true))
+    val groupByNewLink = split.map(_.get).groupBy(_.newLinkId)
+
+    val mergeSteps = groupByNewLink.map(a=> {
+      LinkAndOperation(a._1,a._2.map(a=>Option(a)).foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations).get )
+    })
+    
+    val adjustedAssets = mergeSteps.map(a=> LinkAndOperation(a.newLinkId,adjustAssets(typeId, convertedLink,a.operation)))
+    
+    val additionalSteps=adjustedAssets.map(a => {
+      val additionalChanges = additionalOperation(a)
+      LinkAndOperation(a.newLinkId, additionalChanges)
+    })
+
+    val reported = additionalSteps.map(a1 => {
+      val pairs = a1.operation.assetsAfter.flatMap(a => {
+        val info = change.replaceInfo.find(_.newLinkId == a.linkId).get
+        createPair(Some(a), a1.operation.assetsBefore.filter(_.linkId == info.oldLinkId))}).distinct
+      val report = pairs.filter(_.newAsset.isDefined).map(p => {
+        Some(reportAssetChanges(p.oldAsset, p.newAsset, Seq(change), a1.operation, ChangeTypeReport.Divided, useGivenChange = true))
+      }).foldLeft(Some(initStep))(mergerOperations)
+      report
     }).foldLeft(Some(initStep))(mergerOperations)
+    reported
   }
   
   private def operationForSplit(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[OperationStep] = {
     val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
 
-    val sliced = assets.map(a => {
-      val sliced: Seq[PersistedLinearAsset] = slicer(Seq(a), Seq(), change)
-
-      (a, sliced)
+    val sliced = assets.flatMap(before => {
+      val sliced: Seq[PersistedLinearAsset] = slicer(Seq(before), Seq(), change)
+      sliced.map(projectingSlice(changeSets, change, _,before))
     })
     
-   // val sliced: Seq[PersistedLinearAsset] = slicer(assets, Seq(), change)
-  //  sliced.map(a=>a._2.map(projectingSlice(changeSets, change, _))).foldLeft(Some(OperationStep(Seq(), Some(changeSets))))(mergerOperations).map(p => p.copy(roadLinkChange = Some(change)))
-
-    val projected = sliced.flatMap(a=>a._2.map(projectingSlice(changeSets, change, _,a._1)))
-    val addChange = projected.map(p => p.get.copy(roadLinkChange = Some(change)))
+    val addChange = sliced.map(p => p.get.copy(roadLinkChange = Some(change)))
     addChange
   }
 

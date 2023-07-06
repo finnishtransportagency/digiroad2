@@ -37,8 +37,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     }
     
   }
-
-
+  
   override def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
     change.changeType match {
       //remove pavement
@@ -47,7 +46,9 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
           val replace = change.newLinks.find(_.linkId == asset.linkId).get
           if (replace.surfaceType == SurfaceType.None) {
             if (asset.id != 0){
-              OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))),Some(change),replace.linkId,Seq(asset))
+              OperationStep(Seq(), Some(
+                changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)
+              )),Some(change),replace.linkId,Seq(asset))
             } else {
               reportAssetChanges(Some(asset),None, Seq(change),   OperationStep(Seq(asset.copy(id = removePart)), Some(changeSets),Some(change),replace.linkId,Seq(asset)),ChangeTypeReport.Deletion)
             }
@@ -55,7 +56,8 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
             OperationStep(Seq(asset), Some(changeSets),Some(change),replace.linkId,Seq(asset))
           }
         }).foldLeft(OperationStep(assetsAll,Some(changeSets),Some(change)))((a, b) => {
-          OperationStep(a.assetsAfter ++ b.assetsAfter, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)),a.roadLinkChange,b.newLinkId,b.assetsBefore)
+          OperationStep(a.assetsAfter ++ b.assetsAfter, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get).copy(
+          )),a.roadLinkChange,b.newLinkId,b.assetsBefore)
         })
         Some(expiredPavement)
       case _ => None

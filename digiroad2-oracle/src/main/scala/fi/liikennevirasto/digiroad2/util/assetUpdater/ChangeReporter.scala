@@ -13,6 +13,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.file.{Files, Paths}
+import java.util.UUID
 
 /**
   *  For point like asset mark [[endMValue]] None
@@ -279,8 +280,8 @@ object ChangeReporter {
       val beforeFields = assetBefore match {
         case Some(before) =>
           val linearReference = before.linearReference.get
-          Seq(before.assetId, before.geometryToString, before.values, before.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
-            linearReference.startMValue.toString, linearReference.endMValue.get.toString, linearReference.length.toString, before.getUrl)
+          Seq(before.assetId, before.geometryToString, before.values, before.municipalityCode.getOrElse(0), linearReference.sideCode.getOrElse(0), linearReference.linkId,
+            linearReference.startMValue.toString, linearReference.endMValue.getOrElse(0).toString, linearReference.length.toString, before.getUrl)
         case None => Seq("", "", "", "", "", "", "","", "", "")
       }
       val beforeFieldsWithoutGeometry = beforeFields.patch(1, Nil, 1)
@@ -384,7 +385,7 @@ object ChangeReporter {
     val untilDate = changesProcessedUntil.toString("YYYY-MM-dd")
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
     Files.createDirectories(Paths.get(localReportDirectoryName, date))
-    val path = s"$localReportDirectoryName/$date/${assetName}_${untilDate}_${contentRowCount}content_rows$withGeometry.csv"
+    val path = s"$localReportDirectoryName/$date/${assetName}_${untilDate}_${contentRowCount}content_rows${withGeometry}_${UUID.randomUUID()}_.csv"
 
     new PrintWriter(path) {
       write(body)
