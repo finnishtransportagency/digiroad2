@@ -189,7 +189,7 @@ Resources:
     Properties:
       Name: !Sub "${Environment}-${ApplicationName}-start-road-link-change-handler-event"
       Description: "Scheduled event to start fetching of road link changes"
-      ScheduleExpression: "cron(0 1 ? * 1-5 *)" # Runs every weekday at 01:00 UTC
+      ScheduleExpression: "cron(0 1 ? * 2-6 *)" # Runs every weekday at 01:00 UTC
       State: ENABLED
       Targets:
         - Arn: !GetAtt Lambda.Arn
