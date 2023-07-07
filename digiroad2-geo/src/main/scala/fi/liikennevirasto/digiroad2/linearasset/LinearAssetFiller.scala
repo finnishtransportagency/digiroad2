@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 object LinearAssetFiller {
   case class MValueAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double,timeStamp: Long=0,oldLinkId:Option[String] = None)
   case class VVHChangesAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double, timeStamp: Long=0)
-  case class SideCodeAdjustment(assetId: Long, sideCode: SideCode, typeId: Int,oldLinkId:Option[String] = None)
+  case class SideCodeAdjustment(assetId: Long, sideCode: SideCode, typeId: Int,oldLinkId:Option[String] = None,oldId:Long = 0 )
   case class ValueAdjustment(asset: PieceWiseLinearAsset)
   case class ChangeSet(droppedAssetIds: Set[Long],
                        adjustedMValues: Seq[MValueAdjustment],
