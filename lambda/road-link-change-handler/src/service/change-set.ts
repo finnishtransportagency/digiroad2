@@ -15,16 +15,15 @@ export class ChangeSet {
 
     constructor(links: KgvLink[], replaceInfo: ReplaceInfo[]) {
         this.links = links.map(link => this.extractKeyLinkProperties(link));
-        const groupedByOldLinkId = replaceInfo.reduce((group: GroupedReplaces, replace: ReplaceInfo) => {
-            const groupKey = replace.oldLinkId;
-            if (groupKey) {
-                group[groupKey] = group[groupKey] ?? [];
-                group[groupKey].push(replace);
-            }
-            return group;
-        }, {});
-        const withOldLink = Object.entries(groupedByOldLinkId).map(([, replaces]) => replaces);
-        const withoutOldLink = replaceInfo.filter(replace => !replace.oldLinkId).map(replace => [replace]);
+        const [groupedByOldLinkId, groupedByNewLinkId] = replaceInfo.reduce(([withOldLink, withoutOldLink]: GroupedReplaces[], replace: ReplaceInfo) => {
+            if (replace.oldLinkId)
+                this.addToMap(replace.oldLinkId, withOldLink, replace);
+            else if (replace.newLinkId)
+                this.addToMap(replace.newLinkId, withoutOldLink, replace);
+            return [withOldLink, withoutOldLink];
+        }, [{}, {}]);
+        const withOldLink = this.extractReplaces(groupedByOldLinkId);
+        const withoutOldLink = this.extractReplaces(groupedByNewLinkId);
         const allChanges = withOldLink.concat(withoutOldLink);
         this.changeEntries = allChanges.map(change => this.toChangeEntry(change));
     }
@@ -63,6 +62,15 @@ export class ChangeSet {
             surfaceType:        link.surfaceType,
             trafficDirection:   link.directionType
         }
+    }
+
+    protected addToMap(groupKey: string, groups: GroupedReplaces, replace: ReplaceInfo): void {
+        groups[groupKey] = groups[groupKey] ?? [];
+        groups[groupKey].push(replace);
+    }
+
+    protected extractReplaces(groupedReplaces: GroupedReplaces): ReplaceInfo[][] {
+        return Object.entries(groupedReplaces).map(([, replaces]) => replaces);
     }
 }
 

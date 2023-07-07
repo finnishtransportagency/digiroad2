@@ -13,7 +13,6 @@ export const handler = async (event: Event) => {
     const [since, until] = await s3Service.getChangeTimeframe(event);
     console.info(`Fetching changes since ${since} until ${until}`);
 
-    // TODO: Commented out until Tiekamu is working properly
     const replacements: ReplaceInfo[] = await vkmClient.fetchChanges(since, until);
     console.info(`Got ${replacements.length} replacements`);
 
@@ -21,13 +20,12 @@ export const handler = async (event: Event) => {
     const newLinkIds = replacements.map(replacement => replacement.newLinkId).filter(value => value != undefined) as string[];
 
     const links = await kgvClient.fetchRoadLinksByLinkId(newLinkIds.concat(oldLinkIds));
-
+    const newLinks = links.filter(link => newLinkIds.includes(link.id));
     const changeSet = new ChangeSet(links, replacements).toJson();
 
     // TODO: Commented out until Tiekamu is working properly
-    //const newLinks = links.filter(link => newLinkIds.includes(link.id));
-    //await roadLinkDao.saveLinkChangesToDb(oldLinkIds, newLinks);
-    //await s3Service.uploadToBucket(since, until, changeSet);
+    //await roadLinkDao.saveLinkChangesToDb(oldLinkIds, newLinks);  // Save links to Digiroad db
+    //await s3Service.uploadToBucket(since, until, changeSet);      // Put change set to s3
 }
 
 export interface Event {
