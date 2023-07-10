@@ -37,31 +37,36 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     }
     
   }
-  
-  override def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
-    change.changeType match {
-      //remove pavement
-      case RoadLinkChangeType.Replace | RoadLinkChangeType.Split =>
-        val expiredPavement = assetsAll.filter(a => change.newLinks.map(_.linkId).contains(a.linkId)).map(asset => {
-          val replace = change.newLinks.find(_.linkId == asset.linkId).get
-          if (replace.surfaceType == SurfaceType.None) {
-            if (asset.id != 0){
-              OperationStep(Seq(), Some(
-                changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)
-              )),Some(change),replace.linkId,Seq(asset))
-            } else {
-              reportAssetChanges(Some(asset),None, Seq(change),   OperationStep(Seq(asset.copy(id = removePart)), Some(changeSets),Some(change),replace.linkId,Seq(asset)),ChangeTypeReport.Deletion)
-            }
-          } else {
-            OperationStep(Seq(asset), Some(changeSets),Some(change),replace.linkId,Seq(asset))
-          }
-        }).foldLeft(OperationStep(assetsAll,Some(changeSets),Some(change)))((a, b) => {
-          OperationStep(a.assetsAfter ++ b.assetsAfter, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get).copy(
-          )),a.roadLinkChange,b.newLinkId,b.assetsBefore)
-        })
-        Some(expiredPavement)
-      case _ => None
-    }
+
+  private def removePavement(operatio: OperationStep) = {
+    val change: RoadLinkChange = operatio.roadLinkChange.get
+    val assetsAll: Seq[PersistedLinearAsset] = operatio.assetsAfter
+    val changeSets: ChangeSet = operatio.changeInfo.get
+    
+    val expiredPavement = assetsAll.filter(a => change.newLinks.map(_.linkId).contains(a.linkId)).map(asset => {
+      val remove = change.newLinks.find(_.linkId == asset.linkId).get
+      if (remove.surfaceType == SurfaceType.None) {
+        if (asset.id != 0) {
+          operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
+        } else {
+          reportAssetChanges(Some(asset), None, Seq(change),  operatio.copy(assetsAfter = Seq(asset.copy(id = removePart)))
+            , ChangeTypeReport.Deletion)
+        }
+      } else {
+        operatio
+      }
+    }).foldLeft(OperationStep(assetsAll, Some(changeSets), Some(change)))((a, b) => {
+      OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get))
+        , a.roadLinkChange, b.newLinkId, b.assetsBefore)
+    })
+    Some(expiredPavement)
+  }
+  override def additionalUpdateOrChangeReplace(operationStep: OperationStep): Option[OperationStep] = {
+    removePavement(operationStep)
+  }
+
+  override def additionalUpdateOrChangeSplit(operationStep: OperationStep): Option[OperationStep] = {
+    removePavement(operationStep)
   }
 
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {

@@ -386,7 +386,8 @@ object ChangeReporter {
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
     Files.createDirectories(Paths.get(localReportDirectoryName, date))
     val path = s"$localReportDirectoryName/$date/${assetName}_${untilDate}_${contentRowCount}content_rows${withGeometry}_${UUID.randomUUID()}_.csv"
-
+    
+    println(s"saved: $path")
     new PrintWriter(path) {
       write(body)
       close()
