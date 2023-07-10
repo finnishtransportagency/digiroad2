@@ -2,9 +2,10 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 object LinearAssetFiller {
-  case class MValueAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double,timeStamp: Long=0,oldLinkId:Option[String] = None)
+  case class MValueAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double,timeStamp: Long=0)
+  // TODO remember to remove this class when removing VVH from code base
   case class VVHChangesAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double, timeStamp: Long=0)
-  case class SideCodeAdjustment(assetId: Long, sideCode: SideCode, typeId: Int,oldLinkId:Option[String] = None,oldId:Long = 0 )
+  case class SideCodeAdjustment(assetId: Long, sideCode: SideCode, typeId: Int,oldId:Long = 0 )
   case class ValueAdjustment(asset: PieceWiseLinearAsset)
   case class ChangeSet(droppedAssetIds: Set[Long],
                        adjustedMValues: Seq[MValueAdjustment],
@@ -38,8 +39,17 @@ object LinearAssetFiller {
     })
     changeSet.copy(adjustedMValues = redundantFiltered)
   }
+  def initWithExpiredIn(existingAssets: Seq[PersistedLinearAsset], deletedLinks: Seq[String]) = {
+    ChangeSet(droppedAssetIds = Set.empty[Long],
+      expiredAssetIds = existingAssets.filter(asset => deletedLinks.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
+      adjustedMValues = Seq.empty[MValueAdjustment],
+      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+      valueAdjustments = Seq.empty[ValueAdjustment])
+  }
   
-  val emptyChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
+  
+  val emptyChangeSet: ChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
     expiredAssetIds = Set.empty[Long],
     adjustedMValues = Seq.empty[MValueAdjustment],
     adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],

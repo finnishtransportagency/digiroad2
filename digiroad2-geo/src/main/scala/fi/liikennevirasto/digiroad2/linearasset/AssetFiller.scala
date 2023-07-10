@@ -40,7 +40,6 @@ class AssetFiller {
     logger.debug(operationName)
     logger.debug(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
     logger.debug(s"mValue adjustment count: ${changeSet.adjustedMValues.size}")
-    logger.debug(s"vvh change adjustment count: ${changeSet.adjustedVVHChanges.size}")
     logger.debug(s"expire adjustment count: ${changeSet.expiredAssetIds.size}")
     logger.debug(s"dropped adjustment count: ${changeSet.droppedAssetIds.size}")
     (segments, changeSet)
@@ -717,7 +716,6 @@ class AssetFiller {
 
       val noDuplicate = filterExpiredAway.copy(
         adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
-        adjustedVVHChanges = filterExpiredAway.adjustedVVHChanges.distinct,
         adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
         valueAdjustments = filterExpiredAway.valueAdjustments.distinct
       )

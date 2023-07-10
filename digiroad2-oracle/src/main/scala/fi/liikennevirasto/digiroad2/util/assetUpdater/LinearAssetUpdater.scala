@@ -269,12 +269,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
 
-    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = existingAssets.filter(asset => deletedLinks.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
+    val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets,deletedLinks)
 
     additionalRemoveOperationMass(deletedLinks)
     val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFillTopology(_)(overridedAdmin, overridedTrafficDirection, linkTypes)))
@@ -283,6 +278,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     updateChangeSet(changedSet)
     persistProjectedLinearAssets(projectedAssets.filterNot(_.id == removePart).filter(_.id == 0L))
   }
+
   protected def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, convertedLink: Seq[RoadLinkForFillTopology],
                                                        assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
                                                        changeSets: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {

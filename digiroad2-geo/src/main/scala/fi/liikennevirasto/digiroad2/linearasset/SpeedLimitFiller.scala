@@ -212,7 +212,6 @@ object SpeedLimitFiller extends AssetFiller {
 
       val noDuplicate = filterExpiredAway.copy(
         adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
-        adjustedVVHChanges = filterExpiredAway.adjustedVVHChanges.distinct,
         adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
         valueAdjustments = filterExpiredAway.valueAdjustments.distinct
       )
