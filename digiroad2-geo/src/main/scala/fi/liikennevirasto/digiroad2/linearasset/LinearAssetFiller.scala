@@ -39,7 +39,7 @@ object LinearAssetFiller {
     })
     changeSet.copy(adjustedMValues = redundantFiltered)
   }
-  def initWithExpiredIn(existingAssets: Seq[PersistedLinearAsset], deletedLinks: Seq[String]) = {
+  def initWithExpiredIn(existingAssets: Seq[PersistedLinearAsset], deletedLinks: Seq[String]): ChangeSet = {
     ChangeSet(droppedAssetIds = Set.empty[Long],
       expiredAssetIds = existingAssets.filter(asset => deletedLinks.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
       adjustedMValues = Seq.empty[MValueAdjustment],
@@ -47,7 +47,6 @@ object LinearAssetFiller {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
   }
-  
   
   val emptyChangeSet: ChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
     expiredAssetIds = Set.empty[Long],
