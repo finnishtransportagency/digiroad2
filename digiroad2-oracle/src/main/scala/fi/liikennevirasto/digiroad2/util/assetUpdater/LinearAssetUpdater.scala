@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, LinkTypeDao, TrafficDirectionDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkValue}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, _}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -20,21 +20,17 @@ import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.collection.{Seq, mutable}
 import scala.collection.mutable.ListBuffer
-import scala.util.Try
+import scala.collection.{Seq, mutable}
 case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(), changeInfo: Option[ChangeSet] = None, roadLinkChange: Option[RoadLinkChange] = None, newLinkId: String = "", assetsBefore: Seq[PersistedLinearAsset] = Seq())
 
 case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset])
 
 case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset],changeType:Option[ChangeType]=None)
 sealed case class LinkAndOperation(newLinkId:String,operation:OperationStep)
-//TODO remove updater call from service level
-//TODO check performance in some stage,
-//TODO add test 
 
-/**
-  * override  [[filterChanges]], [[operationForNewLink]], [[additionalRemoveOperation]], [[additionalRemoveOperationMass]] and [[additionalUpdateOrChange]]
+  /**
+  * override  [[filterChanges]], [[operationForNewLink]], [[additionalRemoveOperation]], [[additionalRemoveOperationMass]], [[nonAssetUpdate]] , [[additionalUpdateOrChangeReplace]] and [[additionalUpdateOrChangeSplit]]
   * with your needed additional logic
   *
   * @param service
@@ -194,7 +190,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     step
   }
 
-  private def reporting(initStep: OperationStep, grouped: LinkAndOperation) = {
+  private def reporting(initStep: OperationStep, grouped: LinkAndOperation): Some[OperationStep] = {
     val pairs = grouped.operation.assetsAfter.flatMap(asset => createPair(Some(asset), grouped.operation.assetsBefore)).distinct
     val report = pairs.filter(_.newAsset.isDefined).map(pair => {
       if (!grouped.operation.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
@@ -204,7 +200,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     report
   }
 
-  private def reportingSplit(initStep: OperationStep, grouped: LinkAndOperation, change: RoadLinkChange) = {
+  private def reportingSplit(initStep: OperationStep, grouped: LinkAndOperation, change: RoadLinkChange):Some[OperationStep] = {
     val pairs = grouped.operation.assetsAfter.flatMap(asset => {
       val info = change.replaceInfo.find(_.newLinkId == asset.linkId).get
       createPair(Some(asset), grouped.operation.assetsBefore.filter(_.linkId == info.oldLinkId))
@@ -232,7 +228,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   def generateAndSaveReport(typeId: Int, processedTo: DateTime=DateTime.now()): Unit = {
-    val changeReport = ChangeReport(typeId, getReport)
+    val changeReport = ChangeReport(typeId, getReport())
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
     ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label,processedTo, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
