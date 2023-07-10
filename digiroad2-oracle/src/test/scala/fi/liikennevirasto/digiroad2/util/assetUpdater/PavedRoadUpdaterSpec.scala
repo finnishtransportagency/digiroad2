@@ -123,8 +123,6 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
 
       assets.size should  be(1)
       TestPavedRoadUpdater.getReport().head.changeType should be(ChangeTypeReport.Creation)
-      
-      TestPavedRoadUpdater.generateAndSaveReport(PavedRoad.typeId)
     }
   }
   private def generateRandomKmtkId(): String = s"${UUID.randomUUID()}"
@@ -153,7 +151,6 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(0)
       
-      TestPavedRoadUpdaterMock.generateAndSaveReport(PavedRoad.typeId)
       val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(1)
       TestPavedRoadUpdaterMock.getReport().head.changeType should be(ChangeTypeReport.Deletion)

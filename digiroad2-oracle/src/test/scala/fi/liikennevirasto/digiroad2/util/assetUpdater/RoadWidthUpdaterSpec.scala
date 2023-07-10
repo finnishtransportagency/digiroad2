@@ -99,8 +99,6 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
       assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties.nonEmpty should be(true)
       val properties = assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties
       properties.filter(_.publicId=="width").head.values.head.value should be("650")
-
-      TestRoadWidthUpdater.generateAndSaveReport(RoadWidth.typeId,DateTime.now())
     }
   }
   
@@ -283,7 +281,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
       extractPropertyValue("width",assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties).head should be("650")
 
       val oldIds = Seq(id1, id2)
-      TestRoadWidthUpdater.generateAndSaveReport(RoadWidth.typeId,DateTime.now())
+      
       val assets = TestRoadWidthUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,Some(a.changeType)))
       assets.size should be(2)
       val (before,emptyBefore) = assets.partition(_.changeType.get != ChangeTypeReport.Deletion)
