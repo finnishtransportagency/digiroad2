@@ -112,8 +112,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
     val linkId = "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1"
     val newLinks = Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1", "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1")
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
-
-
+    
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
       val oldRoadLinkRaw = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(linkId)
@@ -181,10 +180,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val oldIds = Seq(id1)
       val assets = TestRoadWidthUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
-     
-      //TestRoadWidthUpdater.changesForReport.head.changeType should be(ChangeTypeReport.Creation)
-      TestRoadWidthUpdater.generateAndSaveReport(RoadWidth.typeId,DateTime.now())
-      assets.size should be(2)
+      assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
@@ -250,7 +246,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
 
-  test("case 2.1 links under asset is merged, longer one") {
+  test("case 2.1 links under asset is merged, longer one, remove one part of width") {
     val linksid1 = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
     val linksid2 = "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1"
     val linkGeometry1 = generateGeometry(0, 6)
@@ -289,7 +285,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
       val oldIds = Seq(id1, id2)
       TestRoadWidthUpdater.generateAndSaveReport(RoadWidth.typeId,DateTime.now())
       val assets = TestRoadWidthUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,Some(a.changeType)))
-      assets.size should be(3)
+      assets.size should be(2)
       val (before,emptyBefore) = assets.partition(_.changeType.get != ChangeTypeReport.Deletion)
       emptyBefore.size should be(1)
       before.map(a => {
@@ -300,7 +296,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
 
-  test("case 10.7 links under asset is split, different values each side first part change to one direction") {
+  test("case 10.7 links under asset is split, update width for only part of road") {
     val linkId = "609d430a-de96-4cb7-987c-3caa9c72c08d:1"
     val newLinks = Seq("4b061477-a7bc-4b72-b5fe-5484e3cec03d:1", "b0b54052-7a0e-4714-80e0-9de0ea62a347:1")
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
@@ -321,13 +317,9 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
       assetsAfter2.size should be(1)
       extractPropertyValue("width",assetsAfter2.head.value.get.asInstanceOf[DynamicValue].value.properties).head should be("400")
       extractPropertyValue("width",assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties).head should be("650")
-
-      //TODO TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId) pairing is not working
-      //TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId,DateTime.now())
+      
       val oldIds = Seq(id, id2)
-      val rows = TestRoadWidthUpdater.getReport()
       val assets = TestRoadWidthUpdater.getReport().filter(p=>newLinks.contains(p.after.head.linearReference.get.linkId)).map(a => PairAsset(a.before, a.after.headOption))
-      //TestRoadWidthUpdater.generateAndSaveReport(RoadWidth.typeId,DateTime.now())
       assets.size should be(3)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)

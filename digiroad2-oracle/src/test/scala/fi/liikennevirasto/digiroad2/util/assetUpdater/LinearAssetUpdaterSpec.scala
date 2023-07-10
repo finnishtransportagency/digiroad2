@@ -365,12 +365,15 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val oldIds = Seq(id)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(3)
-      TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
       
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
       })
+
+      val (generated, oldPart) = assets.partition(a => a.newAsset.get.assetId == 0)
+      generated.size should be(2)
+      oldPart.size should be(1)
     }
   }
 
@@ -403,12 +406,14 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       
       val oldIds = Seq(id1,id2)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
-      TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
+      
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
       })
+
+      TestLinearAssetUpdaterNoRoadLinkMock.getReport().groupBy(_.changeType).find(_._1 == ChangeTypeReport.Deletion).get._2.size should be(1)
     }
   }
 
@@ -454,6 +459,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
       })
+
+      TestLinearAssetUpdater.getReport().groupBy(_.changeType).find(_._1 == ChangeTypeReport.Deletion).get._2.size should be(1)
     }
   }
 
@@ -594,7 +601,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val assetsAfter = service.getPersistedAssetsByIds(TrafficVolume.typeId, Seq(id1).toSet, false)
       assetsAfter.size should be(1)
       assetsAfter.head.expired should be(true)
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -651,18 +657,18 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       asset4.startMeasure should be(18.842)
       asset4.endMeasure should be(34.906)
       asset4.value.get should be(NumericValue(5))
-
-      TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
-
+      
       val oldIds = Seq(id1,id2,id3)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(4)
-      //TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(_.changeType should be(ChangeTypeReport.Divided))
+      TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(_.changeType should be(ChangeTypeReport.Divided))
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
       })
-
+      val (generated,oldPart) =assets.partition(a=>a.newAsset.get.assetId == 0)
+      generated.size should be(2)
+      oldPart.size should be(2)
     }
   }
 
@@ -715,9 +721,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       asset4.startMeasure should be(53.476)
       asset4.endMeasure should be(89.728)
       asset4.value.get should be(NumericValue(6))
-      
-     //TODO
-      TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1, id2, id3,id4)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -775,8 +778,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted(3).endMeasure should be(223.872)
       sorted(3).value.get should be(NumericValue(6))
       
-      //TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
-
       val oldIds = Seq(id1, id2,id3,id4)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(4)
@@ -817,7 +818,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.last.startMeasure should be(103.841)
       sorted.last.endMeasure should be(107.093)
       sorted.last.value.get should be(NumericValue(4))
-      //TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1, id2)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -886,7 +886,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       asset4.startMeasure should be(10.4)
       asset4.endMeasure should be(14.0)
       asset4.value.get should be(NumericValue(6))
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1, id2,id3,id4)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -937,7 +936,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted(1).endMeasure should be(9.0)
       sorted(1).value.isEmpty should be(false)
       sorted(1).value.get should be(NumericValue(5))
-      TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId,DateTime.now())
 
       val oldIds = Seq(id1, id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -977,16 +975,17 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.endMeasure should be(4)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
-
+      
       val oldIds = Seq(id1, id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
-        //a.oldAsset.get.assetId should be( a.newAsset.get.assetId) TODO check this
       })
+
+      TestLinearAssetUpdater.getReport().groupBy(_.changeType).find(_._1 == ChangeTypeReport.Deletion).get._2.size should be(1)
+      TestLinearAssetUpdater.getReport().groupBy(_.changeType).find(_._1 == ChangeTypeReport.Replaced).get._2.size should be(1)
     }
   }
   
@@ -1024,7 +1023,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -1072,7 +1070,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.AgainstDigitizing)
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -1122,7 +1119,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.AgainstDigitizing)
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -1172,8 +1168,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.TowardsDigitizing)
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
-
+      
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(1)
@@ -1183,13 +1178,11 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         a.oldAsset.get.assetId should be(a.newAsset.get.assetId)
         a.newAsset.get.linearReference.get.sideCode.get should be(SideCode.TowardsDigitizing.value)
       })
-
-      //TestLinearAssetUpdater.getReport().groupBy(_.changeType).find(_._1 == ChangeTypeReport.Deletion).get._2.size should be(1)
+      
     }
     
   }
-  // check for split situation
-  // and merge
+  
   test("case 10.1 Road changes to one ways and there more than one asset to both direction ") {
     val linkId = generateRandomLinkId()
     val geometry = generateGeometry(0, 5)
@@ -1226,7 +1219,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.AgainstDigitizing)
-      TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId,DateTime.now())
       
       val oldIds = Seq(id1,id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -1277,8 +1269,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(4))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
-      //TODO TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
-
+      
       val oldIds = Seq(id1,id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(2)
@@ -1338,7 +1329,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.foreach(p=>{
         SideCode.apply(p.sideCode) should be(SideCode.TowardsDigitizing)
       })
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1,id2,id3,id4)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -1398,7 +1388,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.foreach(p => {
         SideCode.apply(p.sideCode) should be(SideCode.AgainstDigitizing)
       })
-      // TODO TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1, id2, id3, id4)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -1449,7 +1438,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
-      //TODO  TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1, id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -1501,7 +1489,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.AgainstDigitizing)
-      //TODO  TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
 
       val oldIds = Seq(id1, id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -1553,8 +1540,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
-      //TODO  TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
-      //TestLinearAssetUpdater.generateAndSaveReport(TrafficVolume.typeId)
+      
       val oldIds = Seq(id1, id2,id3)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(3)
@@ -1602,15 +1588,14 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       twoDirectionalLink.last.endMeasure should be(35.010)
       twoDirectionalLink.last.value.get should be(NumericValue(3))
       SideCode(twoDirectionalLink.last.sideCode) should be(SideCode.AgainstDigitizing)
-      //TODO TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId) pairing is not working
-      TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId,DateTime.now())
+      
       val oldIds =  Seq(id,id2)
       val assets= TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption))  
       assets.size should be(3)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
-      } )
+      })
       
     }
   }
@@ -1719,7 +1704,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted(1).value.isEmpty should be(false)
       sorted(1).value.get should be(NumericValue(3))
       SideCode.apply(sorted(1).sideCode) should be(SideCode.AgainstDigitizing)
-      //TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
       TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption)).size should be(2)
 
       val oldIds = Seq(id1,id2)
@@ -1756,7 +1740,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.value.isEmpty should be(false)
       sorted.head.value.get should be(NumericValue(3))
       SideCode.apply(sorted.head.sideCode) should be(SideCode.AgainstDigitizing)
-      // //TODO TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
+      
       TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption)).size should be(1)
 
       val oldIds = Seq(id1)
