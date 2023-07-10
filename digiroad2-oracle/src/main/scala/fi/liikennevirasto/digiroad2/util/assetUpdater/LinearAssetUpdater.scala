@@ -219,9 +219,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def generateAndSaveReport(typeId: Int, processedTo: DateTime = DateTime.now()): Unit = {
     val changeReport = ChangeReport(typeId, getReport())
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
-    ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBody, contentRowCount)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
-    ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
   }
 
   def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = changes

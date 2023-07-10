@@ -226,10 +226,8 @@ object LaneUpdater {
   def generateAndSaveReport(changeReport: ChangeReport, processedTo: DateTime): Unit = {
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
     ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBody, contentRowCount)
-    //ChangeReporter.saveReportToLocalFile(Lanes.label, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
     ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
-    //ChangeReporter.saveReportToLocalFile(Lanes.label, reportBodyWithGeom, contentRowCount, hasGeometry = true)
   }
 
   def updateTrafficDirectionChangesLaneWorkList(roadLinkChanges: Seq[RoadLinkChange]): Unit = {

@@ -13,7 +13,6 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.file.{Files, Paths}
-import java.util.UUID
 
 /**
   *  For point like asset mark [[endMValue]] None
@@ -29,7 +28,7 @@ sealed case class LinearReference(linkId: String, startMValue: Double, endMValue
 /**
   * 
   * @param assetId
-  * @param values values as string. Convert into json format. TODO add json formatter into class as needed.
+  * @param values values as string. Convert into json format.
   * @param municipalityCode
   * @param geometry
   * @param linearReference Where asset is in. For floating use None.
@@ -385,9 +384,7 @@ object ChangeReporter {
     val untilDate = changesProcessedUntil.toString("YYYY-MM-dd")
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
     Files.createDirectories(Paths.get(localReportDirectoryName, date))
-    val path = s"$localReportDirectoryName/$date/${assetName}_${untilDate}_${contentRowCount}content_rows${withGeometry}_${UUID.randomUUID()}_.csv"
-    
-    println(s"saved: $path")
+    val path = s"$localReportDirectoryName/$date/${assetName}_${untilDate}_${contentRowCount}content_rows$withGeometry.csv"
     new PrintWriter(path) {
       write(body)
       close()
