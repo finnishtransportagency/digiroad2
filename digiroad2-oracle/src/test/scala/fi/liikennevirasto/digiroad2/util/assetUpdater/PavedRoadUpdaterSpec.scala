@@ -11,7 +11,6 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetServi
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -119,7 +118,13 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties.nonEmpty should be(true)
       val properties = assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties
       properties.head.values.head.value should be("99")
+
+      val assets = TestPavedRoadUpdater.getReport().filter(_.linkId =="624df3a8-b403-4b42-a032-41d4b59e1840:1").map(a => PairAsset(a.before, a.after.headOption))
+
+      assets.size should  be(1)
+      TestPavedRoadUpdater.getReport().head.changeType should be(ChangeTypeReport.Creation)
       
+      TestPavedRoadUpdater.generateAndSaveReport(PavedRoad.typeId)
     }
   }
   private def generateRandomKmtkId(): String = s"${UUID.randomUUID()}"
@@ -147,6 +152,12 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       TestPavedRoadUpdaterMock.updateByRoadLinks(PavedRoad.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(0)
+      
+      TestPavedRoadUpdaterMock.generateAndSaveReport(PavedRoad.typeId)
+      val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      assets.size should be(1)
+      TestPavedRoadUpdaterMock.getReport().head.changeType should be(ChangeTypeReport.Deletion)
+
     }
   }
 
