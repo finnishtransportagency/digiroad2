@@ -216,12 +216,17 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     if (oldAsset.isDefined) Seq(Pair(oldAsset, updatedAssets)) else findByOldId(updatedAssets, oldAssets)
   }
 
+
+  /**
+    * Each report saving array [[LinearAssetUpdater.changesForReport]] is erased.
+    */
   def generateAndSaveReport(typeId: Int, processedTo: DateTime = DateTime.now()): Unit = {
     val changeReport = ChangeReport(typeId, getReport())
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
     ChangeReporter.saveReportToS3(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
     ChangeReporter.saveReportToS3(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
+    resetReport()
   }
 
   def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = changes
@@ -242,7 +247,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def updateLinearAssets(typeId: Int): Unit = {
     val latestSuccess = PostGISDatabase.withDynSession(Queries.getLatestSuccessfulSamuutus(typeId))
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(latestSuccess)
-    
+    logger.info(s"Processing ${changeSets.size}} road link changes set")
     changeSets.foreach(changeSet => {
       logger.info(s"Started processing change set ${changeSet.key}")
       withDynTransaction {
