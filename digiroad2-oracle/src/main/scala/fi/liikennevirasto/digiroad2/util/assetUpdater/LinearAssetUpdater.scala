@@ -23,11 +23,11 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Seq, mutable}
 
-case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(), changeInfo: Option[ChangeSet] = None, roadLinkChange: Option[RoadLinkChange] = None, newLinkId: String = "", assetsBefore: Seq[PersistedLinearAsset] = Seq())
+sealed case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(), changeInfo: Option[ChangeSet] = None, roadLinkChange: Option[RoadLinkChange] = None, newLinkId: String = "", assetsBefore: Seq[PersistedLinearAsset] = Seq())
 
-case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset])
+sealed case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset])
 
-case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], changeType: Option[ChangeType] = None)
+sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], changeType: Option[ChangeType] = None)
 
 sealed case class LinkAndOperation(newLinkId: String, operation: OperationStep)
 
