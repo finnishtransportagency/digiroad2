@@ -179,7 +179,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     operationSteps
   }
 
-  private def reporting(initStep: OperationStep, grouped: LinkAndOperation): Some[OperationStep] = {
+  private def reportingReplacement(initStep: OperationStep, grouped: LinkAndOperation): Some[OperationStep] = {
     val pairs = grouped.operation.assetsAfter.flatMap(asset => createPair(Some(asset), grouped.operation.assetsBefore)).distinct
     val report = pairs.filter(_.newAsset.isDefined).map(pair => {
       if (!grouped.operation.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
@@ -340,7 +340,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                          assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep): Option[OperationStep] = {
     val groupByNewLink = assetUnderReplace.groupBy(a => a.get.newLinkId)
     val adjusted = adjustAndAdditionalOperations(typeId, links, groupByNewLink, additionalUpdateOrChangeReplace)
-    adjusted.map(reporting(initStep, _)).foldLeft(Some(initStep))(mergerOperations)
+    adjusted.map(reportingReplacement(initStep, _)).foldLeft(Some(initStep))(mergerOperations)
   }
 
   private def adjustAndAdditionalOperations(typeId: Int, links: Seq[RoadLinkForFillTopology],
