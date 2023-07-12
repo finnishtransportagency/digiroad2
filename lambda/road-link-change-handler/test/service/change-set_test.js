@@ -264,8 +264,8 @@ describe('Change Set', function () {
                     "newLinkId": null,
                     "oldFromMValue": 0,
                     "oldToMValue": 3.975,
-                    "newFromMValue": 0,
-                    "newToMValue": 0,
+                    "newFromMValue": null,
+                    "newToMValue": null,
                     "digitizationChange": false
                 },
                 {
