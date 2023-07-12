@@ -52,6 +52,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private val emptyStep: OperationStep = OperationStep(Seq(), None, None, "", Seq())
 
+  // Mark generated part to be removed. Used when removing pavement in PaveRoadUpdater
   protected val removePart: Int = -1
 
   def resetReport(): Unit = {
@@ -112,6 +113,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       asset.geomModifiedDate, asset.linkSource, asset.verifiedBy, asset.verifiedDate, asset.informationSource, asset.oldId)
   }
 
+  /**
+    * Merge assetsBefore, assetsAfter and changeInfo from two given [[OperationStep]]
+    * @param a
+    * @param b
+    * @return [[Some[OperationStep]]]
+    */
   private def mergerOperations(a: Option[OperationStep], b: Option[OperationStep]): Some[OperationStep] = {
     val (aBefore, newLinkIdA, assetsA, changeInfoA, roadLinkChangeA) = (a.get.assetsBefore, a.get.newLinkId, a.get.assetsAfter, a.get.changeInfo, a.get.roadLinkChange)
     val (bBefore, newLinkIdB, assetsB, changeInfoB, roadLinkChangeB) = (b.get.assetsBefore, b.get.newLinkId, b.get.assetsAfter, b.get.changeInfo, b.get.roadLinkChange)
@@ -119,7 +126,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val newLinkId = if (newLinkIdA.isEmpty) newLinkIdB else newLinkIdA
     Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), roadLinkChange, newLinkId, (aBefore ++ bBefore).distinct))
   }
-
+  /**
+    * Merge assetsBefore, assetsAfter and changeInfo from two given [[OperationStep]]. Drop RoadLinkChange
+    *
+    * @param a
+    * @param b
+    * @return [[Some[OperationStep]]]
+    */
   private def mergerOperationsDropLinksChange(a: Option[OperationStep], b: Option[OperationStep]): Some[OperationStep] = {
     val (assetsA, changeInfoA) = (a.get.assetsAfter, a.get.changeInfo)
     val (assetsB, changeInfoB) = (b.get.assetsAfter, b.get.changeInfo)
