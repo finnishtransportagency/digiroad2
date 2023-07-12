@@ -67,9 +67,9 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     filterChanges ++ remove
   }
   
-  override def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
+  override def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFillTopology], assets: Map[String, Seq[PieceWiseLinearAsset]],
                                                    typeId: Int, changeSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-   assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
+   assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
   }
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
