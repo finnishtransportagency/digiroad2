@@ -746,7 +746,9 @@ object DateParser {
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue], groupedId: Long = 0) extends AbstractProperty
-case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
+case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue]) {
+  def toJson = JObject(JField("publicId", JString(publicId)), JField("propertyType", JString(propertyType)), JField("required", JBool(required)), JField("values", JArray(values.map(_.toJson).toList)))
+}
 
 abstract class AbstractProperty {
   def publicId: String
@@ -830,7 +832,9 @@ case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[Str
     JString(propertyDisplayValue.getOrElse(null))))
 }
 
-case class DynamicPropertyValue(value: Any)
+case class DynamicPropertyValue(value: Any) {
+  def toJson = JString(value.toString)
+}
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: String, bearing: Option[Int])

@@ -44,7 +44,8 @@ object Digiroad2Build extends Build {
             "org.geotools" % "gt-opengis" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-opengis/19.0/gt-opengis-19.0.jar",
             "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
             "com.vividsolutions" % "jts-core" % "1.14.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar",
-            "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
+            "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
+            "ch.qos.logback" % "logback-classic" % "1.2.3"
           )
         )
       )
@@ -67,7 +68,8 @@ object Digiroad2Build extends Build {
             "org.json4s" %% "json4s-jackson" % "3.5.3",
             "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
             "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
-            "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
+            "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
+            "ch.qos.logback" % "logback-classic" % "1.2.3"
           )
         )
       )

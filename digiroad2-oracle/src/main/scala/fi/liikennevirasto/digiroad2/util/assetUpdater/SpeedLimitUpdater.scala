@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{FunctionalClassDao, TrafficDirectionDao}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -14,17 +14,16 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
 
   override def assetFiller: AssetFiller = SpeedLimitFiller
   
-  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
     service.persistUnknown(Seq(UnknownSpeedLimit(change.newLinks.head.linkId, change.newLinks.head.municipality, change.newLinks.head.adminClass)),newTransaction = false)
-    Seq.empty[(PersistedLinearAsset, ChangeSet)]
+    None
   }
 
   override def additionalRemoveOperationMass(expiredLinks:Seq[String]): Unit = {
     service.purgeUnknown(Set(),expiredLinks,newTransaction = false)
-    Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
 
-  override def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+  override def nonAssetUpdate(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
     change.changeType match {
       case RoadLinkChangeType.Replace | RoadLinkChangeType.Split => {
         val oldLinkIds = change.oldLink.get.linkId
@@ -34,9 +33,9 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
           service.purgeUnknown(Set(),oldUnknownLSpeedLimit.map(_.linkId),newTransaction = false) // recreate unknown speedlimit
           service.persistUnknown(change.newLinks.map(l=>UnknownSpeedLimit(l.linkId, l.municipality, l.adminClass)),newTransaction = false)
         }
-        Seq.empty[(PersistedLinearAsset, ChangeSet)]
+        None
       }
-      case _ =>Seq.empty[(PersistedLinearAsset, ChangeSet)]
+      case _ => None
     }
   }
   
@@ -68,11 +67,9 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     filterChanges ++ remove
   }
   
-  override def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
-                                                   typeId: Int, changeSet: Option[ChangeSet] = None, counter: Int = 1): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val (assetOnly, filterExpiredAway) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
-    updateChangeSet(filterExpiredAway)
-    (assetOnly, filterExpiredAway)
+  override def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFillTopology], assets: Map[String, Seq[PieceWiseLinearAsset]],
+                                                   typeId: Int, changeSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+   assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
   }
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {

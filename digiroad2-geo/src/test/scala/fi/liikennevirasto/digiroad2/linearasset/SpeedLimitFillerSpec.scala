@@ -20,12 +20,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   }
 
 
-  val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-    expiredAssetIds = Set.empty[Long],
-    adjustedMValues = Seq.empty[MValueAdjustment],
-    adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-    adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-    valueAdjustments = Seq.empty[ValueAdjustment])
+  val initChangeSet = LinearAssetFiller.emptyChangeSet
 
 
   private def generateRandomLinkId(): String = s"${UUID.randomUUID()}:${Random.nextInt(100)}"
@@ -93,7 +88,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
     filledTopology.head.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 10.0)), Nil, Nil, Set.empty, Nil))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 10.0)), Nil, Set.empty, Nil))
   }
 
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
