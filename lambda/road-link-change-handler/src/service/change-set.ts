@@ -1,5 +1,6 @@
 import {KgvLink} from "../client/kgv-client";
 import {ReplaceInfo} from "../client/vkm-client";
+import _ from "lodash";
 
 const ChangeTypes = {
     add:        "add",
@@ -36,8 +37,14 @@ export class ChangeSet {
         const oldLinkId     = change.map(value => value.oldLinkId).filter(item => item)[0];
         const newLinkIds    = [...new Set(change.map(value => value.newLinkId))].filter(item => item) as string[];
 
+        const defaultChangeType = this.extractChangeType(newLinkIds, oldLinkId)
+      
+        const replaceWithDelete = defaultChangeType == ChangeTypes.replace && _.filter(newLinkIds,e=>e == null).length > 1
+        
+        const changeTypeFinal: string = replaceWithDelete  ? ChangeTypes.split: defaultChangeType
+        
         return {
-            changeType:     this.extractChangeType(newLinkIds, oldLinkId),
+            changeType:     changeTypeFinal,
             old:            this.links.find(link => link.linkId == oldLinkId) ?? null,
             new:            this.links.filter(link => newLinkIds.includes(link.linkId)),
             replaceInfo:    change

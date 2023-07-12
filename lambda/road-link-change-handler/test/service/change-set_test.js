@@ -221,6 +221,68 @@ describe('Change Set', function () {
         assert.equal(changeSet.toJson(), JSON.stringify(expected));
     });
 
+    it('Link split, one part is removed and other moved', function () {
+        const oldGeom  = 'SRID=3067;LINESTRING ZM(463081.329 6750374.612 78.202 0,463082.714 6750385.729 78.269 11.203,463084.009 6750395.805 78.593 21.362,463086.129 6750410.791 79.371 36.497,463087.523 6750420.157 79.826 45.966,463086.688 6750429.784 80.3 55.629,463084.137 6750441.187 80.807 67.314,463080.461 6750451.094 81.275 77.881,463075.128 6750461.473 81.803 89.55,463070.188 6750469.693 82.19 99.14,463065.041 6750476.849 82.491 107.955,463056.939 6750486.33 82.464 120.426)';
+        const newGeom1 = 'SRID=3067;LINESTRING ZM(463081.819 6750378.557 78.147 0,463082.714 6750385.729 78.269 7.228,463084.009 6750395.805 78.593 17.387,463086.129 6750410.791 79.371 32.522,463087.523 6750420.157 79.826 41.991,463086.688 6750429.784 80.3 51.654,463084.137 6750441.187 80.807 63.339,463080.461 6750451.094 81.275 73.906,463075.128 6750461.473 81.803 85.575,463070.188 6750469.693 82.19 95.165,463065.041 6750476.849 82.491 103.98,463060.195 6750482.577 82.567 111.483)';
+
+        const oldLink  = new KgvLink("old:1", oldGeom, 123, 2, 142, 120.42636809, 0, 12131);
+        const newLink1 = new KgvLink("new2:1", newGeom1, 125, 2, 142, 111.48272932, 0, 12131);
+
+        const changes = [
+            new ReplaceInfo(oldLink.id, null, 0, 3.975, null, null),
+            new ReplaceInfo(oldLink.id, newLink1.id, 3.975, 115.458, 0, 111.483),
+        ];
+
+        const changeSet = new ChangeSet([oldLink, newLink1], changes);
+        const expected = [{
+            "changeType": "split",
+            "old": {
+                "linkId": oldLink.id,
+                "linkLength": oldLink.length,
+                "geometry": oldLink.geometry,
+                "roadClass": oldLink.roadClass,
+                "adminClass": oldLink.adminClass,
+                "municipality": oldLink.municipality,
+                "surfaceType": null,
+                "trafficDirection": oldLink.directionType
+            },
+            "new": [
+                {
+                    "linkId": newLink1.id,
+                    "linkLength": newLink1.length,
+                    "geometry": newLink1.geometry,
+                    "roadClass": newLink1.roadClass,
+                    "adminClass": newLink1.adminClass,
+                    "municipality": newLink1.municipality,
+                    "surfaceType": null,
+                    "trafficDirection": newLink1.directionType
+                },
+            ],
+            "replaceInfo": [
+                {
+                    "oldLinkId": oldLink.id,
+                    "newLinkId": null,
+                    "oldFromMValue": 0,
+                    "oldToMValue": 3.975,
+                    "newFromMValue": 0,
+                    "newToMValue": 0,
+                    "digitizationChange": false
+                },
+                {
+                    "oldLinkId": oldLink.id,
+                    "newLinkId": newLink1.id,
+                    "oldFromMValue": 3.975,
+                    "oldToMValue": 115.458,
+                    "newFromMValue": 0,
+                    "newToMValue": 111.483,
+                    "digitizationChange": false
+                },
+            ]
+        }];
+        assert.equal(changeSet.changeEntries[0].changeType, "split");
+        assert.equal(changeSet.toJson(), JSON.stringify(expected));
+    });
+
     it('Links merged', function () {
         const oldGeom1 = 'SRID=3067;LINESTRING ZM(426632.935 7111261.572 96.606 0,426634.266 7111272.439 96.676 10.948,426637.384 7111283.768 96.976 22.698,426641.674 7111296.6 97.275 36.229,426648.54 7111310.958 97.832 52.144,426654.383 7111321.984 98.023 64.622,426654.483 7111322.164 98.023 64.828)';
         const oldGeom2 = 'SRID=3067;LINESTRING ZM(426654.483 7111322.164 98.023 0,426658.886 7111330.74 98.044 9.64,426661.739 7111340.464 97.981 19.774,426664.116 7111346.486 97.987 26.248,426668.526 7111350.387 97.956 32.136)';
