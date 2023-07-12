@@ -402,13 +402,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       LinkAndOperation(linkAndAssets._1, linkAndAssets._2.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations).get)
     ).map(a => LinkAndOperation(a.newLinkId, adjustAssets(typeId, links, a.operation))).toSeq
   }
-
+  
   private def adjustAssets(typeId: Int, links: Seq[RoadLinkForFillTopology], operationStep: OperationStep): OperationStep = {
-    val changeSetFromOperation = operationStep.changeInfo
-    val assetsOperated = operationStep.assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
+    val OperationStep(assetsAfter,changeSetFromOperation,roadLinkChange,newLinkId,assetsBefore) = operationStep
+    val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
     val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(assetsOperated, links).groupBy(_.linkId)
     val (adjusted, changeSet) = adjustLinearAssetsOnChangesGeometry(links, groupedAssets, typeId, changeSetFromOperation)
-    OperationStep(adjusted.toSet.map(convertToPersisted).toSeq, Some(changeSet), operationStep.roadLinkChange, operationStep.newLinkId, operationStep.assetsBefore)
+    OperationStep(adjusted.toSet.map(convertToPersisted).toSeq, Some(changeSet), roadLinkChange, newLinkId, assetsBefore)
   }
 
   protected def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFillTopology], assets: Map[String, Seq[PieceWiseLinearAsset]],
