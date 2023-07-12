@@ -157,8 +157,8 @@ object PostGISDirectionalTrafficSignDao {
     sqlu"""
         insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
         values ($id, 240, $username, current_timestamp, $municipality, ${sign.bearing}, $floating);
-        insert into lrm_position(id, start_measure, end_measure, link_id, side_code)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection});
+        insert into lrm_position(id, start_measure, link_id, side_code)
+        values ($lrmPositionId, $mValue, ${sign.linkId}, ${sign.validityDirection});
         insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
     """.execute
@@ -178,8 +178,8 @@ object PostGISDirectionalTrafficSignDao {
     sqlu"""
        insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
         values ($id, $externalIdFromUpdate, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $username, current_timestamp);
-        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp);
+        insert into lrm_position(id, start_measure, link_id, side_code, modified_date)
+        values ($lrmPositionId, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp);
        insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
     """.execute
