@@ -37,12 +37,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-  val initChangeSet: ChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-                                           expiredAssetIds = Set.empty[Long],
-                                           adjustedMValues = Seq.empty[MValueAdjustment],
-                                           adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                           adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-                                           valueAdjustments = Seq.empty[ValueAdjustment])
+  val initChangeSet: ChangeSet = LinearAssetFiller.emptyChangeSet
 
   val randomLinkId1: String = LinkIdGenerator.generateRandom()
   val randomLinkId2: String = LinkIdGenerator.generateRandom()

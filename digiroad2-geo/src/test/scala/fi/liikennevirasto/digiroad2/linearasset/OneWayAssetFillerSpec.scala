@@ -2,9 +2,9 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
 import org.scalatest.{FunSuite, Matchers}
 
 import java.util.UUID
@@ -52,7 +52,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
     filledTopology.filter(_.id == 4l).map(_.sideCode) should be(Seq(TowardsDigitizing))
     filledTopology.filter(_.id == 4l).map(_.linkId) should be(Seq(linkId2))
 
-    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(4,TowardsDigitizing,110)))
+    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(4, TowardsDigitizing, 110)))
   }
 
   test("generate one-sided asset when two-way road link only has asset on the other side") {
@@ -64,12 +64,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
       linkId -> oneWayAssetFiller.toLinearAsset(Seq(PersistedLinearAsset(1l, linkId, TowardsDigitizing.value, Some(NumericValue(1)),
         0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.map(oneWayAssetFiller.toRoadLinkForFillTopology).head))
 
-    val changeSet = ChangeSet( droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = Set.empty[Long],
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
+    val changeSet = LinearAssetFiller.emptyChangeSet
 
     val filledTopology = oneWayAssetFiller.fillTopology(topology.map(oneWayAssetFiller.toRoadLinkForFillTopology), linearAssets, 110, Some(changeSet), geometryChanged = false)._1
 

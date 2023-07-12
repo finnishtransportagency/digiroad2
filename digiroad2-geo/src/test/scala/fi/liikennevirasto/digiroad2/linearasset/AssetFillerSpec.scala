@@ -1,13 +1,11 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.Motorcycle
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import org.joda.time.DateTime
 import org.scalatest._
 
 import java.util.UUID
@@ -85,23 +83,13 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
   val (linkId1, linkId2, linkId3) = (generateRandomLinkId(), generateRandomLinkId(), generateRandomLinkId())
 
-  val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-    expiredAssetIds = Set.empty[Long],
-    adjustedMValues = Seq.empty[MValueAdjustment],
-    adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-    adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-    valueAdjustments = Seq.empty[ValueAdjustment])
+  val initChangeSet = LinearAssetFiller.emptyChangeSet
 
   test("create non-existent linear assets on empty road links") {
     val topology = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
-    val changeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = Set.empty[Long],
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
+    val changeSet = LinearAssetFiller.emptyChangeSet
     val linearAssets = Map.empty[String, Seq[PieceWiseLinearAsset]]
     val filledTopology = assetFiller.fillTopology(topology.map(assetFiller.toRoadLinkForFillTopology), linearAssets, 30, Some(changeSet), geometryChanged = false)._1
 

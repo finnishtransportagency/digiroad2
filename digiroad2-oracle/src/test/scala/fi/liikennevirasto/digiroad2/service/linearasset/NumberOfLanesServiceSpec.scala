@@ -60,7 +60,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, List(SideCodeAdjustment(0,SideCode.BothDirections,170)), Set.empty[Long], valueAdjustments = Seq.empty[ValueAdjustment]))
+        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, List(SideCodeAdjustment(0,SideCode.BothDirections,170)), Set.empty[Long], valueAdjustments = Seq.empty[ValueAdjustment]))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
@@ -101,7 +101,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("linearAssets:update", ChangeSet(Set(0), Nil, Nil, Nil, Set.empty[Long], Nil))
+        .publish("linearAssets:update", ChangeSet(Set(0), Nil, Nil, Set.empty[Long], Nil))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())

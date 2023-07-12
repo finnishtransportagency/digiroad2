@@ -170,6 +170,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   ignore("fetch changes from S3 and convert to RoadLinkChange") {
     val roadlinkChanges_all = roadLinkChangeClient.getRoadLinkChanges()
     roadlinkChanges_all.size should not be(0)
-    roadlinkChanges_all.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true))
+    roadlinkChanges_all.foreach(
+      _.changes.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true)))
   }
 }
