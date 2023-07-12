@@ -24,7 +24,7 @@ class AssetFiller {
   val AllowedTolerance = 2.0
   val MinAllowedLength = 2.0
   protected val MaxAllowedMValueError = 0.1
-  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, WinterSpeedLimit.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
+  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
     CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId)
   
   /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
