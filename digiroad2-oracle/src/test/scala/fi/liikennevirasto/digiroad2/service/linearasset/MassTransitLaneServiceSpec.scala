@@ -96,7 +96,7 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
 
       withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
         verify(mockEventBus, times(1))
-          .publish("dynamicAsset:update", ChangeSet(Set(),List(),List(),List(),Set(), Nil))
+          .publish("dynamicAsset:update", ChangeSet(Set(),List(),List(),Set(), Nil))
 
         val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
         verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("dynamicAsset:saveProjectedAssets"), captor.capture())

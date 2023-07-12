@@ -3,13 +3,13 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao, Queries}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{getAssetUpdater}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.getAssetUpdater
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -42,6 +42,10 @@ case class Measures(startMeasure: Double, endMeasure: Double){
   def roundMeasures(): Measures = {
     val exponentOfTen = Math.pow(10, 3)
     Measures(Math.round(startMeasure * exponentOfTen).toDouble / exponentOfTen,Math.round(endMeasure * exponentOfTen).toDouble / exponentOfTen)
+  }
+  def length():Double  ={
+    val exponentOfTen = Math.pow(10, 3)
+    Math.round((endMeasure - startMeasure) * exponentOfTen).toDouble / exponentOfTen
   }
 }
 

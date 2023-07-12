@@ -40,7 +40,6 @@ class AssetFiller {
     logger.debug(operationName)
     logger.debug(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
     logger.debug(s"mValue adjustment count: ${changeSet.adjustedMValues.size}")
-    logger.debug(s"vvh change adjustment count: ${changeSet.adjustedVVHChanges.size}")
     logger.debug(s"expire adjustment count: ${changeSet.expiredAssetIds.size}")
     logger.debug(s"dropped adjustment count: ${changeSet.droppedAssetIds.size}")
     (segments, changeSet)
@@ -114,15 +113,15 @@ class AssetFiller {
       val adjusted = roadLink.trafficDirection match {
         case TrafficDirection.AgainstDigitizing => segments.map { s =>
           s.sideCode match {
-            case SideCode.BothDirections => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId))
-            case SideCode.TowardsDigitizing => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId))
+            case SideCode.BothDirections => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId,oldId = s.oldId))
+            case SideCode.TowardsDigitizing => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId,oldId = s.oldId))
             case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId))
           }
         }
         case TrafficDirection.TowardsDigitizing => segments.map { s =>
           s.sideCode match {
-            case SideCode.BothDirections => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId))
-            case SideCode.AgainstDigitizing => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId))
+            case SideCode.BothDirections => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId,oldId = s.oldId))
+            case SideCode.AgainstDigitizing => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId,oldId = s.oldId))
             case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId))
           }
         }
@@ -363,7 +362,9 @@ class AssetFiller {
         dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired, dbAsset.startMeasure,
         dbAsset.endMeasure, Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime, dbAsset.createdBy,
         dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection, dbAsset.timeStamp, dbAsset.geomModifiedDate,
-        dbAsset.linkSource, roadLink.administrativeClass,  verifiedBy = dbAsset.verifiedBy, verifiedDate = dbAsset.verifiedDate, informationSource = dbAsset.informationSource)
+        dbAsset.linkSource, roadLink.administrativeClass,  verifiedBy = dbAsset.verifiedBy, verifiedDate = dbAsset.verifiedDate, informationSource = dbAsset.informationSource,
+        oldId = dbAsset.oldId
+      )
     }
   }
 
@@ -665,12 +666,7 @@ class AssetFiller {
     
     val changeSet = changedSet match {
       case Some(change) => change
-      case None => ChangeSet( droppedAssetIds = Set.empty[Long],
-                              expiredAssetIds = Set.empty[Long],
-                              adjustedMValues = Seq.empty[MValueAdjustment],
-                              adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                              adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-                              valueAdjustments = Seq.empty[ValueAdjustment])
+      case None => LinearAssetFiller.emptyChangeSet
     }
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
@@ -706,12 +702,7 @@ class AssetFiller {
 
     val changeSet = changedSet match {
       case Some(change) => change
-      case None => ChangeSet(droppedAssetIds = Set.empty[Long],
-        expiredAssetIds = Set.empty[Long],
-        adjustedMValues = Seq.empty[MValueAdjustment],
-        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-        valueAdjustments = Seq.empty[ValueAdjustment])
+      case None => LinearAssetFiller.emptyChangeSet
     }
     // if links does not have any asset filter it away 
     topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
@@ -725,7 +716,6 @@ class AssetFiller {
 
       val noDuplicate = filterExpiredAway.copy(
         adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
-        adjustedVVHChanges = filterExpiredAway.adjustedVVHChanges.distinct,
         adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
         valueAdjustments = filterExpiredAway.valueAdjustments.distinct
       )
