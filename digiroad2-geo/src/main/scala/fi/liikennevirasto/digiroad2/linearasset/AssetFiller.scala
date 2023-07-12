@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import com.sun.org.slf4j.internal.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 import scala.util.Try
 

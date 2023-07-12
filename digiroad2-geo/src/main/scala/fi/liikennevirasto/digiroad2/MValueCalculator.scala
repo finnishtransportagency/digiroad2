@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import com.sun.org.slf4j.internal.LoggerFactory
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import org.slf4j.LoggerFactory
 
 sealed case class AssetLinearReference(id: Long, startMeasure: Double, endMeasure: Double, sideCode: Int)
 
