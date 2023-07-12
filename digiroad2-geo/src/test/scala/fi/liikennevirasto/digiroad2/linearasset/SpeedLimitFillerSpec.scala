@@ -116,7 +116,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(4.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(4.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)), Nil, Nil, Set.empty, Nil))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)), Nil, Set.empty, Nil))
   }
 
   test("adjust two-sided speed limits from both ends leaving the middle with two one-sided limits intact") {
@@ -150,7 +150,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(4.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(4.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(4, linkId1, 4.9, 10.0)), Nil, Nil, Set.empty, Nil))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(4, linkId1, 4.9, 10.0)), Nil, Set.empty, Nil))
   }
 
   test("adjust two-sided speed limits from both ends leaving the middle with one one-sided limit intact") {
@@ -178,7 +178,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(4.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(4.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)), Nil, Nil, Set.empty, Nil))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)), Nil, Set.empty, Nil))
   }
 
   test("adjust one-sided limits when there is one on one side and two on the other") {
@@ -207,7 +207,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.startMeasure should be(0.0)
     sortedFilledTopology.last.endMeasure should be(10.0)
     changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 2.9, 10.0),
-      MValueAdjustment(3, linkId1, 0.0, 10.0)), Nil, Nil, Set.empty, Nil))
+      MValueAdjustment(3, linkId1, 0.0, 10.0)), Nil, Set.empty, Nil))
   }
 
   test("two opposite side directions with smallest start measure are adjusted") {
@@ -236,7 +236,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.startMeasure should be(2.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
     changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 0.0, 2.9)),
-      Nil, Nil, Set.empty, Nil))
+      Nil, Set.empty, Nil))
   }
 
   test("only the one-sided limit with the smallest start measure is adjusted when the two smallest are on the same side") {
@@ -265,7 +265,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(5.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Nil, Set.empty, Nil))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
   }
 
   test("two opposite side directions with largest end measure and the two-sided limit in the beginning are adjusted") {
@@ -294,7 +294,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.startMeasure should be(2.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
     changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(3, linkId1, 2.9, 10.0), MValueAdjustment(2, linkId1, 2.9, 10.0),
-      MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Nil, Set.empty, Nil))
+      MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
   }
 
   test("only the one-sided limit with the largest end measure is adjusted when the two largest are on the same side") {
@@ -323,7 +323,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(5.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(3, linkId1, 5.9, 10.0), MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Nil, Set.empty, Nil))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(3, linkId1, 5.9, 10.0), MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
   }
 
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
