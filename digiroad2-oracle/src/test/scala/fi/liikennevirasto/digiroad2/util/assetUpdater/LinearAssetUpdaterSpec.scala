@@ -33,7 +33,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     new RoadLinkService(roadLinkClient, mockEventBus, new DummySerializer)
   }
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
-  
+
   object TestLinearAssetUpdater extends LinearAssetUpdater(service) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
@@ -69,8 +69,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     (points.toList, GeometryUtils.geometryLength(points))
   }
 
-  def createAsset(measures: Measures, value: Value, link: RoadLink, sideCode:SideCode = SideCode.BothDirections ): Long = {
-    service.createWithoutTransaction(TrafficVolume.typeId, link.linkId, value, sideCode.value,
+  def createAsset(measures: Measures, value: Value, link: RoadLink, sideCode:SideCode = SideCode.BothDirections, typeId: Int = TrafficVolume.typeId): Long = {
+    service.createWithoutTransaction(typeId, link.linkId, value, sideCode.value,
       measures, "testuser", 0L, Some(link), false, None, None)
   }
 
@@ -361,11 +361,11 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       assetsAfter.map(v => v.value.isEmpty should be(false))
       assetsAfter.map(v => v.value.get should be(NumericValue(3)))
-    
+
       val oldIds = Seq(id)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(3)
-      
+
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
@@ -403,10 +403,10 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.endMeasure should be(89.728)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      
+
       val oldIds = Seq(id1,id2)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
-      
+
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -451,7 +451,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.endMeasure should be(14)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      
+
       val oldIds = Seq(id1, id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(2)
@@ -530,7 +530,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.endMeasure should be(4)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      
+
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(1)
@@ -569,7 +569,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.endMeasure should be(8)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      
+
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(1)
@@ -657,7 +657,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       asset4.startMeasure should be(18.842)
       asset4.endMeasure should be(34.906)
       asset4.value.get should be(NumericValue(5))
-      
+
       val oldIds = Seq(id1,id2,id3)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(4)
@@ -777,7 +777,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted(3).startMeasure should be(215.304)
       sorted(3).endMeasure should be(223.872)
       sorted(3).value.get should be(NumericValue(6))
-      
+
       val oldIds = Seq(id1, id2,id3,id4)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(4)
@@ -797,15 +797,15 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid1).get
       val oldMaxLength = 11.715
 
-      val id1 = createAsset(Measures(0, 5), NumericValue(3), oldRoadLink)
-      val id2 = createAsset(Measures(5, oldMaxLength), NumericValue(4), oldRoadLink)
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
+      val id1 = createAsset(Measures(0, 5), NumericValue(3), oldRoadLink, SideCode.BothDirections, HeightLimit.typeId)
+      val id2 = createAsset(Measures(5, oldMaxLength), NumericValue(4), oldRoadLink, SideCode.BothDirections, HeightLimit.typeId)
+      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1, id2), false)
       
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("619d3fb8-056c-4745-8988-d143c29af659:1"), false)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(HeightLimit.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq("619d3fb8-056c-4745-8988-d143c29af659:1"), false)
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
       sorted.size should be(2)
@@ -975,7 +975,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.endMeasure should be(4)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      
+
       val oldIds = Seq(id1, id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(2)
@@ -1168,7 +1168,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.TowardsDigitizing)
-      
+
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(1)
@@ -1178,11 +1178,11 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         a.oldAsset.get.assetId should be(a.newAsset.get.assetId)
         a.newAsset.get.linearReference.get.sideCode.get should be(SideCode.TowardsDigitizing.value)
       })
-      
+
     }
     
   }
-  
+
   test("case 10.1 Road changes to one ways and there more than one asset to both direction ") {
     val linkId = generateRandomLinkId()
     val geometry = generateGeometry(0, 5)
@@ -1219,7 +1219,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.AgainstDigitizing)
-      
+
       val oldIds = Seq(id1,id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(2)
@@ -1269,7 +1269,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(4))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
-      
+
       val oldIds = Seq(id1,id2)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(2)
@@ -1338,7 +1338,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
         a.newAsset.get.linearReference.get.sideCode.get should be(SideCode.TowardsDigitizing.value)
       })
-      
+
       TestLinearAssetUpdater.getReport().groupBy(_.changeType).find(_._1 == ChangeTypeReport.Deletion).get._2.size should be(2)
     }
   }
@@ -1418,16 +1418,15 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     runWithRollback {
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      
+      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
    
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
+      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
-      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
+      TestLinearAssetUpdater.updateByRoadLinks(HeightLimit.typeId, Seq(change))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
       assetsAfter.size should be(1)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
@@ -1469,16 +1468,16 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     runWithRollback {
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
 
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
+      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
-      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
+      TestLinearAssetUpdater.updateByRoadLinks(HeightLimit.typeId, Seq(change))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
       assetsAfter.size should be(1)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
@@ -1520,16 +1519,16 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     runWithRollback {
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id3 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(4), SideCode.AgainstDigitizing.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id3 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(4), SideCode.AgainstDigitizing.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2,id3), false)
+      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1, id2,id3), false)
       assetsBefore.size should be(3)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
-      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
+      TestLinearAssetUpdater.updateByRoadLinks(HeightLimit.typeId, Seq(change))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
       assetsAfter.size should be(1)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
@@ -1540,7 +1539,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
-      
+
       val oldIds = Seq(id1, id2,id3)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(3)
@@ -1553,7 +1552,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       TestLinearAssetUpdater.getReport().groupBy(_.changeType).find(_._1 == ChangeTypeReport.Deletion).get._2.size should be(2)
     }
   }
-  
+
   test("case 10.7 links under asset is split, different values each side first part change to one direction") {
     val linkId = "609d430a-de96-4cb7-987c-3caa9c72c08d:1"
     val newLinks = Seq("4b061477-a7bc-4b72-b5fe-5484e3cec03d:1", "b0b54052-7a0e-4714-80e0-9de0ea62a347:1")
@@ -1588,15 +1587,15 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       twoDirectionalLink.last.endMeasure should be(35.010)
       twoDirectionalLink.last.value.get should be(NumericValue(3))
       SideCode(twoDirectionalLink.last.sideCode) should be(SideCode.AgainstDigitizing)
-      
+
       val oldIds =  Seq(id,id2)
-      val assets= TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption))  
+      val assets= TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption))
       assets.size should be(3)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
       })
-      
+
     }
   }
   test("case 10.8 links under asset is split, different values each side first part change to one direction") {
@@ -1626,7 +1625,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       assetsAfter.map(v => v.value.isEmpty should be(false))
       assetsAfter.map(v => v.value.get should be(NumericValue(3)))
-      
+
       val oldIds = Seq(id)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(2)
@@ -1634,7 +1633,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         a.oldAsset.isDefined should be(true)
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
       })
-      
+
     }
   }
   
@@ -1646,14 +1645,14 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
  
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linkIdNew), false)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(HeightLimit.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq(linkIdNew), false)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
@@ -1662,7 +1661,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.value.isEmpty should be(false)
       sorted.head.value.get should be(NumericValue(3))
       SideCode.apply(sorted.head.sideCode) should be(SideCode.BothDirections)
-      
+
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
       assets.size should be(1)
@@ -1681,15 +1680,15 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(4), SideCode.AgainstDigitizing.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(4), SideCode.AgainstDigitizing.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
+      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linkIdNew), false)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(HeightLimit.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq(linkIdNew), false)
 
       val sorted = assetsAfter.sortBy(_.sideCode)
 
@@ -1724,14 +1723,14 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 18.081), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 18.081), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linkIdNew), false)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(HeightLimit.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq(linkIdNew), false)
       
       val sorted = assetsAfter.sortBy(_.endMeasure)
       
@@ -1740,7 +1739,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.value.isEmpty should be(false)
       sorted.head.value.get should be(NumericValue(3))
       SideCode.apply(sorted.head.sideCode) should be(SideCode.AgainstDigitizing)
-      
+
       TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption)).size should be(1)
 
       val oldIds = Seq(id1)
