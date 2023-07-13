@@ -138,8 +138,8 @@ class VKMClient {
 
   def fetchLinkIdsBetweenTwoRoadLinks(startLinkId: String, endLinkId: String, roadNumber: Long): Set[String] = {
     val params = Map(
-      VkmLinkId -> Some(startLinkId),
-      VkmLinkIdEnd -> Some(endLinkId),
+      VkmKmtkId -> Some(startLinkId),
+      VkmKmtkIdEnd -> Some(endLinkId),
       VkmRoad -> Some(roadNumber)
     )
 
@@ -167,8 +167,8 @@ class VKMClient {
 
     request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=6&" + urlParams(params)) match {
       case Left(featureCollection) =>
-        featureCollection.features.map(feature => (feature.properties(VkmLinkId).asInstanceOf[BigInt].toString(),
-          feature.properties(VkmLinkIdEnd).asInstanceOf[BigInt].toString())).toSet
+        featureCollection.features.map(feature => (feature.properties(VkmKmtkId).asInstanceOf[String],
+          feature.properties(VkmKmtkIdEnd).asInstanceOf[String])).toSet
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
