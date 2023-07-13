@@ -151,7 +151,6 @@ class VKMClient {
 
   // TODO VKM does not provide all road links when transforming road address range to roadLinks, only start and end links
   //  Support for this is coming to VKM in early 2023, change implementation to use the feature when it's available.
-  //  KmtkId not supported as of January 2023, use linkID for now
   def fetchStartAndEndLinkIdForAddrRange(roadAddressRange: RoadAddressRange): Set[(String, String)] = {
     val params = Map(
       VkmRoad -> Some(roadAddressRange.roadNumber),
