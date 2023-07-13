@@ -48,7 +48,7 @@ class AssetFiller {
   }
 
   protected def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
-    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val roadLinkLength = roadLink.length
     val adjustedStartMeasure = if (asset.startMeasure != 0.0 && asset.startMeasure < AllowedTolerance) Some(0.0) else None
     val endMeasureDifference: Double = roadLinkLength - asset.endMeasure
     val adjustedEndMeasure = if (endMeasureDifference != 0.0 && endMeasureDifference < AllowedTolerance) Some(roadLinkLength) else None
@@ -84,7 +84,7 @@ class AssetFiller {
     * @return assets and changeSet
     */
   protected def capToGeometry(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val linkLength = roadLink.length
     val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
     val cappedSegments = overflowingSegments.map { s =>
       (s.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, Math.min(s.startMeasure, linkLength), linkLength), endMeasure = linkLength),
@@ -536,7 +536,7 @@ class AssetFiller {
   }
 
   def adjustRoadLinkLongAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
-    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val roadLinkLength = roadLink.length
     val mAdjustment =
       if (asset.startMeasure > 0 || asset.endMeasure < roadLinkLength)
         Seq(MValueAdjustment(asset.id, asset.linkId, 0, roadLinkLength))
@@ -557,7 +557,7 @@ class AssetFiller {
   }
 
   def adjustRoadLinkLongAssetTail(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (Option[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
-    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val roadLinkLength = roadLink.length
     if (asset.endMeasure < roadLinkLength) {
       val mAdjustment= Seq(MValueAdjustment(asset.id, asset.linkId, asset.startMeasure, roadLinkLength))
       val modifiedSegment = asset.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, roadLinkLength), startMeasure = asset.startMeasure, endMeasure = roadLinkLength)

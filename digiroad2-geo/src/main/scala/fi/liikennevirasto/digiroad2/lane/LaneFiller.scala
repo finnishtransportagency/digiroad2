@@ -200,7 +200,7 @@ class LaneFiller {
   }
 
   private def adjustAsset(lane: PersistedLane, roadLink: RoadLink): (PersistedLane, Seq[MValueAdjustment]) = {
-    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val roadLinkLength = roadLink.length
     val adjustedStartMeasure = if (lane.startMeasure < AllowedTolerance && lane.startMeasure > MaxAllowedError) Some(0.0) else None
     val endMeasureDifference: Double = roadLinkLength - lane.endMeasure
     val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference > MaxAllowedError) Some(roadLinkLength) else None
