@@ -9,7 +9,7 @@ export class KgvClient extends ClientBase {
 
     private readonly path = "keskilinjavarasto:road_links_versions/items";
 
-    private readonly maxBatchSize = 100;
+    private readonly maxBatchSize = parseInt(process.env.BATCH_SIZE || '100');
 
     constructor() {
         if (!process.env.KGV_API_URL || !process.env.KGV_API_KEY) {
@@ -45,7 +45,7 @@ export class KgvClient extends ClientBase {
             "crs": "EPSG:3067",
             "filter": `id in ('${linkIds.join("','")}')`
         };
-        return await this.getRequest(instance, this.path, params);
+        return await this.postRequest(instance, this.path, params);
     }
 
     protected extractLinks(results: KgvFeatureCollection[]): Array<KgvLink> {

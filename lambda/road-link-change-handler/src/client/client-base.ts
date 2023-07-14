@@ -64,6 +64,7 @@ export class ClientBase {
 
     processErrorAndExtractMessage(error: any, url: string): string {
         if (axios.isAxiosError(error)) {
+            console.error("Error code :"+error.response?.status);
             console.error(error.response?.data);
             return `Error happened during fetch of ${url} (${error.response?.status}: ${error.response?.statusText.substring(0, 100)})`;
         } else {

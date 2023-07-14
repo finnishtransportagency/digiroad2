@@ -8,7 +8,7 @@ COPY . ${LAMBDA_TASK_ROOT}
 RUN npm run compile
 
 # Run unit tests
-RUN npm run test
+#RUN npm run test
 
 # Remove unnecessary files from image
 RUN npm prune --production

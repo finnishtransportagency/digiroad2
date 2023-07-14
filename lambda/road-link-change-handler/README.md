@@ -50,8 +50,8 @@ cd ..\..\..\lambda\asset-history-processor
 
 #### Lambdan ajaminen
 ```sh
-sam build -t aws/sam/template.yaml --region REGION
-sam local invoke Lambda --profile RoadLinkChangeLambdaRole --region REGION --env-vars env.json --log-file debug.log --event event.json
+sam build -t aws/sam/template.yaml --region eu-west-1
+sam local invoke Lambda --profile RoadLinkChangeLambdaRole --region eu-west-1 --env-vars env.json --log-file debug.log --event event.json
 ```
 
 - "sam build" muodostaa container imagen. Ajetaan aina muutoksien jälkeen.
