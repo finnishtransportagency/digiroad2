@@ -45,7 +45,7 @@ export class KgvClient extends ClientBase {
             "crs": "EPSG:3067",
             "filter": `id in ('${linkIds.join("','")}')`
         };
-        return await this.postRequest(instance, this.path, params);
+        return await this.getRequest(instance, this.path, params);
     }
 
     protected extractLinks(results: KgvFeatureCollection[]): Array<KgvLink> {
