@@ -9,7 +9,7 @@ export class KgvClient extends ClientBase {
 
     private readonly path = "keskilinjavarasto:road_links_versions/items";
 
-    private readonly maxBatchSize = parseInt(process.env.BATCH_SIZE || '100');
+    private readonly maxBatchSize = parseInt(process.env.BATCH_SIZE || '160');
 
     constructor() {
         if (!process.env.KGV_API_URL || !process.env.KGV_API_KEY) {
