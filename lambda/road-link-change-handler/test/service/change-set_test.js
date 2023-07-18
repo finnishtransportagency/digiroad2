@@ -86,7 +86,7 @@ describe('Change Set', function () {
         assert.equal(changeSet.toJson(), JSON.stringify(expected));
     });
 
-    it('New link added and partial add in multiple par', function () {
+    it('New link added and partial add in multiple part', function () {
         const newLinkId = "testi:1";
         const newLinkId2 = "testi:2";
         const newLink = new KgvLink(newLinkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, 12141);
@@ -126,7 +126,7 @@ describe('Change Set', function () {
         assert.equal(changeSet.toJson(), JSON.stringify(expected));
     });
 
-    it('New link added and partial add and both in multiple par', function () {
+    it('New link added and partial add and both in multiple part', function () {
         const newLinkId = "testi:1";
         const newLinkId2 = "testi:2";
         const newLink = new KgvLink(newLinkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, 12141);
