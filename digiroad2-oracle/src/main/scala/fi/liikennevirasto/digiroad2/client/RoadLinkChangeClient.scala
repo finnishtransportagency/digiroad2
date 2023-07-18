@@ -204,20 +204,4 @@ class RoadLinkChangeClient {
       RoadLinkChangeSet(key.key, key.statusDate, key.targetDate, convertToRoadLinkChange(changes))
     })
   }
-
-  // Transforms Nulls into Constant values from the fields where they are expected. In case of failure returns the original json
-  def transformNullValuesFromRoadLinkChanges(parsedChangeJson: JValue) : JValue = {
-    try {
-      parsedChangeJson.camelizeKeys.transformField {
-        case ("newLinkId", JNull) => ("newLinkId", JString(""))
-        case ("newFromMValue", JNull) => ("newFromMValue", JDouble(0.0))
-        case ("newToMValue", JNull) => ("newToMValue", JDouble(0.0))
-        case other => other
-      }
-    } catch {
-      case e: Throwable =>
-        logger.error(e.getMessage)
-        parsedChangeJson
-    }
-  }
 }

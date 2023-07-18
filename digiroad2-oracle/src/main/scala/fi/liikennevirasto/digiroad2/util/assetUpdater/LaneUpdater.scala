@@ -268,7 +268,7 @@ object LaneUpdater {
     change.newLinks.exists(newLink => {
       val oldOriginalTrafficDirection = change.oldLink.get.trafficDirection
       val newOriginalTrafficDirection = newLink.trafficDirection
-      val replaceInfo = change.replaceInfo.find(_.newLinkId == newLink.linkId).get
+      val replaceInfo = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get
       val isDigitizationChange = replaceInfo.digitizationChange
       val overWrittenTdValueOnNewLink = TrafficDirectionDao.getExistingValue(newLink.linkId)
 
@@ -448,7 +448,7 @@ object LaneUpdater {
   def fillReplacementLinksWithExistingLanes(lanesToUpdate: Seq[PersistedLane], change: RoadLinkChange): Seq[(LanePositionAdjustment, PersistedLane)] = {
     val newRoadLinks = change.newLinks
     newRoadLinks.flatMap(newRoadlink => {
-      val replaceInfo = change.replaceInfo.find(_.newLinkId == newRoadlink.linkId).get
+      val replaceInfo = change.replaceInfo.find(_.newLinkId.get == newRoadlink.linkId).get
       val laneAdjustmentsOnLink = lanesToUpdate.map(lane => {
         val laneLinearReference = AssetLinearReference(lane.id, lane.startMeasure, lane.endMeasure, lane.sideCode)
         val projection = Projection(replaceInfo.oldFromMValue, replaceInfo.oldToMValue, replaceInfo.newFromMValue.get, replaceInfo.newToMValue.get)
