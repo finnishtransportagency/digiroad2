@@ -132,8 +132,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -160,8 +160,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -188,8 +188,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -216,8 +216,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -244,8 +244,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
   
@@ -272,8 +272,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = oldLinkGeometry._2, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = oldLinkGeometry._2, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -303,8 +303,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId1, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 0.0, newToMValue = 5, false)
+          ReplaceInfo(oldId1, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(0.0), newToMValue = Option(5), false)
         )
     ),
       RoadLinkChange(
@@ -328,8 +328,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
             trafficDirection = TrafficDirection.BothDirections
           )),
         replaceInfo =
-          List(ReplaceInfo(oldId2, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 5.0, newToMValue = newLinkGeometry1._2, false))
+          List(ReplaceInfo(oldId2, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(5.0), newToMValue = Option(newLinkGeometry1._2), false))
       )
     )
   }

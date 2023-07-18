@@ -37,7 +37,7 @@ object RoadLinkChangeType {
 case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int,
                         adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection,
                         surfaceType: SurfaceType = SurfaceType.Unknown)
-case class ReplaceInfo(oldLinkId: String, newLinkId: String, oldFromMValue: Double, oldToMValue: Double, newFromMValue: Double, newToMValue: Double, digitizationChange: Boolean)
+case class ReplaceInfo(oldLinkId: String, newLinkId: Option[String], oldFromMValue: Double, oldToMValue: Double, newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
 case class ChangeSetId(key: String, statusDate: DateTime, targetDate: DateTime)
 case class RoadLinkChangeSet(key: String, statusDate: DateTime, targetDate: DateTime, changes: Seq[RoadLinkChange])
@@ -73,6 +73,15 @@ class RoadLinkChangeClient {
       case changeType: RoadLinkChangeType =>
         JObject(JField("changeType", JString(changeType.value)))
     }
+  ))
+
+  object ReplaceInfoNullValueSerializer extends CustomSerializer[RoadLinkChangeType](_ => ( {
+    case JString(stringValue) =>
+      RoadLinkChangeType(stringValue)
+  }, {
+    case changeType: RoadLinkChangeType =>
+      JObject(JField("changeType", JString(changeType.value)))
+  }
   ))
 
   object AdminClassSerializer extends CustomSerializer[AdministrativeClass](_ => (
@@ -178,6 +187,8 @@ class RoadLinkChangeClient {
   def convertToRoadLinkChange(changeJson: String) : Seq[RoadLinkChange] = {
     val json = parseJson(changeJson)
     try {
+      //val jsonWithNullsTransformed = transformNullValuesFromRoadLinkChanges(json)
+      //jsonWithNullsTransformed.extract[Seq[RoadLinkChange]]
       json.extract[Seq[RoadLinkChange]]
     } catch {
       case e: Throwable =>
@@ -192,5 +203,21 @@ class RoadLinkChangeClient {
       val changes = fetchChangeSetFromS3(key.key)
       RoadLinkChangeSet(key.key, key.statusDate, key.targetDate, convertToRoadLinkChange(changes))
     })
+  }
+
+  // Transforms Nulls into Constant values from the fields where they are expected. In case of failure returns the original json
+  def transformNullValuesFromRoadLinkChanges(parsedChangeJson: JValue) : JValue = {
+    try {
+      parsedChangeJson.camelizeKeys.transformField {
+        case ("newLinkId", JNull) => ("newLinkId", JString(""))
+        case ("newFromMValue", JNull) => ("newFromMValue", JDouble(0.0))
+        case ("newToMValue", JNull) => ("newToMValue", JDouble(0.0))
+        case other => other
+      }
+    } catch {
+      case e: Throwable =>
+        logger.error(e.getMessage)
+        parsedChangeJson
+    }
   }
 }

@@ -78,8 +78,8 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
   private def generateRandomKmtkId(): String = s"${UUID.randomUUID()}"
@@ -212,8 +212,8 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId1, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 0.0, newToMValue = 5, false)
+          ReplaceInfo(oldId1, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(0.0), newToMValue = Option(5), false)
         )
     ),
       RoadLinkChange(
@@ -237,8 +237,8 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
             trafficDirection = TrafficDirection.BothDirections
           )),
         replaceInfo =
-          List(ReplaceInfo(oldId2, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 5.0, newToMValue = newLinkGeometry1._2, false))
+          List(ReplaceInfo(oldId2, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(5.0), newToMValue = Option(newLinkGeometry1._2), false))
       )
     )
   }
