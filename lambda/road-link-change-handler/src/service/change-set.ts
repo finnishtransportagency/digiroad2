@@ -27,9 +27,9 @@ export class ChangeSet {
         const withoutOldLink = this.extractReplaces(groupedByNewLinkId);
         const allChanges = withOldLink.concat(withoutOldLink);
         const converted = allChanges.map(change => this.toChangeEntry(change));
-        const seperated = _.partition(converted,p=>p.changeType == ChangeTypes.add);
-        const add = _.filter(seperated[0], p=> {return this.filterPartialAdds(p);});
-        this.changeEntries = seperated[1].concat(add);
+        const separated = _.partition(converted,p=>p.changeType == ChangeTypes.add);
+        const add = _.filter(separated[0], p=> {return this.filterPartialAdds(p);});
+        this.changeEntries = separated[1].concat(add);
     }
 
     private filterPartialAdds(p: ChangeEntry) {
