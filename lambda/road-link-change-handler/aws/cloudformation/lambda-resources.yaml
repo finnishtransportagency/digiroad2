@@ -165,7 +165,7 @@ Resources:
       Environment:
         Variables:
           CHANGE_BUCKET:  !Sub ${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
-          BATCH_SIZE:     !Sub PgUser
+          BATCH_SIZE:     !Sub BatchSize
           VKM_API_URL:    !Ref VkmApi
           VKM_API_KEY:    !Ref VkmApiKeySSM
           KGV_API_URL:    !Ref KgvApi
