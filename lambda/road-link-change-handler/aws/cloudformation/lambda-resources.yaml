@@ -48,6 +48,10 @@ Parameters:
   PgUser:
     Description: Database user
     Type: String
+  BatchSize:
+    Description: Max size of cql id in query
+    Default: '160'
+    Type: String
 
 Conditions:
   IsDev:
@@ -141,8 +145,8 @@ Resources:
     Properties:
       FunctionName: !Sub "${Environment}-${ApplicationName}-road-link-change-handler"
       Description: Lambda for fetching road link changes, saving them and generating change sets
-      MemorySize: 128 # Increase according to need
-      Timeout: 30     # Increase according to need
+      MemorySize: 10240 # Increase according to need
+      Timeout: 900     # Increase according to need
       Role: !GetAtt LambdaRole.Arn
       PackageType: Image
       Code:
@@ -161,6 +165,7 @@ Resources:
       Environment:
         Variables:
           CHANGE_BUCKET:  !Sub ${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
+          BATCH_SIZE:     !Sub PgUser
           VKM_API_URL:    !Ref VkmApi
           VKM_API_KEY:    !Ref VkmApiKeySSM
           KGV_API_URL:    !Ref KgvApi
