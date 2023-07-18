@@ -26,7 +26,18 @@ export class ChangeSet {
         const withOldLink = this.extractReplaces(groupedByOldLinkId);
         const withoutOldLink = this.extractReplaces(groupedByNewLinkId);
         const allChanges = withOldLink.concat(withoutOldLink);
-        this.changeEntries = allChanges.map(change => this.toChangeEntry(change));
+        const converted = allChanges.map(change => this.toChangeEntry(change));
+        const seperated = _.partition(converted,p=>p.changeType == ChangeTypes.add);
+        const add = _.filter(seperated[0], p=> {return this.filterPartialAdds(p);});
+        this.changeEntries = seperated[1].concat(add);
+    }
+
+    private filterPartialAdds(p: ChangeEntry) {
+        const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue)).reverse()
+        const startPart = _.last(sorted)?.newFromMValue
+        const endPart = sorted[0].newToMValue
+        const newLinkLength = p.new[0].linkLength
+        return endPart == newLinkLength && startPart == 0
     }
 
     toJson(): string {
