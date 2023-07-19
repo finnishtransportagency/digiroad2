@@ -333,9 +333,10 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val changeSet = LaneUpdater.handleChanges(relevantChange)
       LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChange)
 
-      // Verify that the Additional Lane within deleted Link is removed
+      // Verify that the Additional Lane within deleted Link is removed and Main lane is still present
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
       lanesAfterChanges.size should equal(1)
+      lanesAfterChanges.head.laneCode should equal(1)
     }
   }
 
