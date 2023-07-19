@@ -214,7 +214,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private def reportingSplit(initStep: OperationStep, assetsInNewLink: LinkAndOperation, change: RoadLinkChange): Some[OperationStep] = {
     val pairs = assetsInNewLink.operation.assetsAfter.flatMap(asset => {
-      val info = change.replaceInfo.find(_.newLinkId == asset.linkId).get
+      val info = change.replaceInfo.find(_.newLinkId.get == asset.linkId).get
       createPair(Some(asset), assetsInNewLink.operation.assetsBefore.filter(_.linkId == info.oldLinkId))
     }).distinct
     val report = pairs.filter(_.newAsset.isDefined).map(pair => {
@@ -482,7 +482,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     */
   private def projecting(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset, beforeAsset: PersistedLinearAsset) = {
     val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw new Exception("Did not found replace info for asset"))
-    val link = change.newLinks.find(_.linkId == info.newLinkId).get
+    val infoNewLinkId = info.newLinkId.get
+    val link = change.newLinks.find(_.linkId == infoNewLinkId).get
     val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = info.newLinkId.get),
       Projection(
         info.oldFromMValue, info.oldToMValue,
