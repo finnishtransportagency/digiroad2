@@ -446,7 +446,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(14)
       assetsAfter.head.value.isEmpty should be(false)
@@ -486,7 +486,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -525,7 +525,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4)
       assetsAfter.head.value.isEmpty should be(false)
@@ -925,13 +925,13 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       assetsAfter.size should be(2)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       sorted.head.value.isEmpty should be(false)
       sorted.head.value.get should be(NumericValue(3))
 
-      sorted(1).linkId should be(change.replaceInfo.head.newLinkId)
+      sorted(1).linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted(1).startMeasure should be(4.5)
       sorted(1).endMeasure should be(9.0)
       sorted(1).value.isEmpty should be(false)
@@ -970,7 +970,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.size should be(1)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1017,7 +1017,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1064,7 +1064,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1113,7 +1113,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1162,7 +1162,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1213,7 +1213,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1263,7 +1263,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1315,7 +1315,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       sorted.head.value.isEmpty should be(false)
@@ -1374,7 +1374,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       sorted.head.value.isEmpty should be(false)
@@ -1432,7 +1432,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(4.5)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1483,7 +1483,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1534,7 +1534,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       assetsAfter.head.value.isEmpty should be(false)

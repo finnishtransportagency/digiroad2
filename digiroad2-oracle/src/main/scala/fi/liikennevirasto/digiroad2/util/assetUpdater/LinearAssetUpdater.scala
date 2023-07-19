@@ -482,8 +482,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     */
   private def projecting(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset, beforeAsset: PersistedLinearAsset) = {
     val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw new Exception("Did not found replace info for asset"))
-    val infoNewLinkId = info.newLinkId.get
-    val link = change.newLinks.find(_.linkId == infoNewLinkId).get
+    val link = change.newLinks.find(_.linkId == info.newLinkId.get).get
     val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = info.newLinkId.get),
       Projection(
         info.oldFromMValue, info.oldToMValue,
