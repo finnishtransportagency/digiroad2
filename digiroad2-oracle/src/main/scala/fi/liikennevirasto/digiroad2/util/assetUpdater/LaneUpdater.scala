@@ -428,8 +428,8 @@ object LaneUpdater {
         val newSideCode = if(replaceInfo.digitizationChange) switch(SideCode.apply(originalMainLane.sideCode)).value
         else originalMainLane.sideCode
         val splitLaneStartMeasure = 0.0
-        val splitLaneEndMeasure = if (replaceInfo.newToMValue.isEmpty) 0.0 else LaneUtils.roundMeasure(replaceInfo.newToMValue.get)
-        originalMainLane.copy(id = 0, linkId = if (replaceInfo.newLinkId.isEmpty) "" else replaceInfo.newLinkId.get, sideCode = newSideCode, startMeasure = splitLaneStartMeasure, endMeasure = splitLaneEndMeasure)
+        val splitLaneEndMeasure = LaneUtils.roundMeasure(replaceInfo.newToMValue.getOrElse(0.0))
+        originalMainLane.copy(id = 0, linkId =replaceInfo.newLinkId.getOrElse(""), sideCode = newSideCode, startMeasure = splitLaneStartMeasure, endMeasure = splitLaneEndMeasure)
       })
       LaneSplit(splitMainLanesToCreate, originalMainLane)
     })
