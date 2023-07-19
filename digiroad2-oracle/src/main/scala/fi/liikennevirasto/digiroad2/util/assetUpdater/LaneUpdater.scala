@@ -408,7 +408,7 @@ object LaneUpdater {
           GeometryUtils.liesInBetween(replaceInfo.oldToMValue, (originalAdditionalLane.startMeasure, originalAdditionalLane.endMeasure))
       })
       val lanesSplitFromOriginal = replaceInfosAffectingLane.map(replaceInfo => {
-        val newId = if (replaceInfo.newLinkId.nonEmpty) replaceInfo.newLinkId.get else ""
+        val newId = replaceInfo.newLinkId.getOrElse("")
         val newRoadLinkLength = if (newId.nonEmpty) change.newLinks.find(_.linkId == newId).get.linkLength else 0
         val laneLinearReference = AssetLinearReference(originalAdditionalLane.id, originalAdditionalLane.startMeasure,
           originalAdditionalLane.endMeasure, originalAdditionalLane.sideCode)
