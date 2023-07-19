@@ -767,7 +767,7 @@ Painikkeen painamisen jälkeen voi uusille kielloille antaa arvot alasvetovaliko
 Uudet kiellot tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen kielto jää voimaan.
 Jos tallennuksen jälkeen yhteen suuntaan voimassa oleville kielloille antaa saman arvon, sovellus yhdistää ne molempiin voimassa oleviksi.
 
-# 9. VAK-rahoitus (Vaarallisten aineiden kuljetus)
+# 9. VAK-rajoitus (Vaarallisten aineiden kuljetus)
 
 Vaarallisten aineiden kuljetus –rajoitus eli VAK-rajoitukset ovat rajoituksia, jotka koskevat vain tiettyj&auml; ajoneuvoja. VAK-rajoituksessa voi olla my&ouml;s poikkeus, kuten kellonaika, jolloin rajoitus on voimassa. Karttaikkunaan voi valita VAK-rajoitukset valitsemalla tietolajivalikosta (1) VAK-rajoitus. Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Tielinkit, joilla on VAK-rajoitus, on visualisoitu punaisella v&auml;rill&auml;.
 
@@ -1990,6 +1990,8 @@ Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin valtakunnallisella ID:
  <a href=https://digiroad.vaylapilvi.fi/#massTransitStop/95374  target="_blank">https://digiroad.vaylapilvi.fi/#massTransitStopNationalId/164599   </a>(2)
 
 jossa numerosarja 164599 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustietoikkuna (3) aukeaa sivun oikealle puolelle. 
+
+Pysäkkejä voi hakea myös hakukentästä syöttämällä hakukenttään valtakunnallisen ID:n. Jos haluaa etsiä pysäkkiä pysäkin matkustajatunnuksen perusteella (esim. H2234), tulee hakukenttään kirjoittaa aluksi "mt" ja sitten pysäkin matkustajatunnus (esim. mt H2234).
 
 ![Pys&auml;kkien haku](pysäkit_2_2.png)
 

@@ -1,0 +1,38 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad3"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad3"
+  },
+  {
+    "ParameterKey": "TaskDefinitionForService",
+    "ParameterValue": "digiroad2-dev-test"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ContainerPort",
+    "ParameterValue": "8080"
+  },
+  {
+    "ParameterKey": "RouteRecordName",
+    "ParameterValue": "digiroadalb2"
+  }
+]
