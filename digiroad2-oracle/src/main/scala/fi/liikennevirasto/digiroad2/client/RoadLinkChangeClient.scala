@@ -75,15 +75,6 @@ class RoadLinkChangeClient {
     }
   ))
 
-  object ReplaceInfoNullValueSerializer extends CustomSerializer[RoadLinkChangeType](_ => ( {
-    case JString(stringValue) =>
-      RoadLinkChangeType(stringValue)
-  }, {
-    case changeType: RoadLinkChangeType =>
-      JObject(JField("changeType", JString(changeType.value)))
-  }
-  ))
-
   object AdminClassSerializer extends CustomSerializer[AdministrativeClass](_ => (
     {
       case JInt(bigIntValue) =>
