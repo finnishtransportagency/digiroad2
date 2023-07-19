@@ -325,9 +325,8 @@ object LaneUpdater {
 
     val after = newLanes.map(nl => {
       val maybeLink = relevantRoadLinkChange.newLinks.find(_.linkId == nl.linkId)
-      val newLink = if (maybeLink.nonEmpty) maybeLink.get else null
       val values = compactJson(JObject(nl.attributes.flatMap(_.toJson).toList))
-      val linkGeometry = if (newLink != null) newLink.geometry else List.empty[Point]
+      val linkGeometry = if (maybeLink.nonEmpty) maybeLink.get.geometry else Seq.empty[Point]
       val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, nl.startMeasure, nl.endMeasure)
       val linearReference = LinearReference(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, nl.endMeasure - nl.startMeasure)
       Asset(nl.id, values, Some(nl.municipalityCode.toInt), Some(laneGeometry), Some(linearReference))
