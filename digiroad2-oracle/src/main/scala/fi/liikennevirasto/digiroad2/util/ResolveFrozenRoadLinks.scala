@@ -43,8 +43,9 @@ trait ResolvingFrozenRoadLinks {
   lazy val username: String = "batch_process_temp_road_address"
 
   //Timestamp for the instant when Viite road links were frozen
-  lazy val viiteTimestamp: Long = 1667925243000L
-
+  // 20.05.2023 16:29:59
+  lazy val viiteTimestamp: Long = 1684589399000L
+  
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def calculateSideCodeUsingEndPointAddrs(addrMAtStart: Int, addrMAtEnd: Int): SideCode = {
