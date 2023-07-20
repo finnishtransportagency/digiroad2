@@ -2,13 +2,14 @@ import {AxiosInstance} from "axios";
 import array from "lodash";
 import {ClientBase} from "./client-base";
 import {Utils} from "../utils/utils";
+import {ReplaceInfo} from "./vkm-client";
 
 export class KgvClient extends ClientBase {
     private readonly url: string;
     private readonly apiKey: string;
 
     private readonly path = "keskilinjavarasto:road_links_versions/items";
-
+    private readonly pathChange = "keskilinjavarasto:change/items";
     private readonly maxBatchSize = parseInt(process.env.BATCH_SIZE || '160');
 
     constructor() {
@@ -28,7 +29,7 @@ export class KgvClient extends ClientBase {
         const batches = array.chunk(uniqueIds, this.maxBatchSize);
         const promises = batches.map(batch => this.fetchLinkVersions(batch, instance));
         const results = await Promise.allSettled(promises);
-        const succeeded = Utils.checkResultsForErrors(results, "Unable to fetch road links") as KgvFeatureCollection[];
+        const succeeded = Utils.checkResultsForErrors(results, "Unable to fetch road links") as KgvFeatureCollection<KgvFeature>[];
         const links = this.extractLinks(succeeded);
         if (links.length != uniqueIds.length) {
             const retrievedLinks = links.map(link => link.id);
@@ -39,7 +40,52 @@ export class KgvClient extends ClientBase {
         return links;
     }
 
-    protected async fetchLinkVersions(linkIds: string[], instance: AxiosInstance): Promise<KgvFeatureCollection> {
+    /**
+     * Fetch changes happened during time period
+     * @param since
+     * @param until
+     */
+    async fetchChanges(since: string, until: string): Promise<ReplaceInfo[]> {
+        console.log(this.formatDate(since))
+        console.log(this.formatDate(until))
+       
+        const instance = await this.createInstance(this.url, this.apiKey);
+        const params = {
+            "filter-lang": "cql-text",
+            "crs": "EPSG:3067",
+            "filter": `ctime >= '${this.formatDate(since)}' and ctime <= '${this.formatDate(until)}'`,
+            "limit":"100000000000"
+        };
+        const response = await this.getRequest(instance, this.pathChange, params) as KgvFeatureCollection<KgvFeatureChange>;
+       return response.features.map(f=> {
+           return this.changeResponseToReplaceInfo(f.properties)
+        })
+    }
+    
+    
+    private formatDate (date :string) {
+        const dateConverted = date.split(".")
+        const year =dateConverted[2]
+        const month = dateConverted[1]
+        const day = dateConverted[0]
+        return `${year}-${month}-${day}`   
+    }
+    protected changeResponseToReplaceInfo(properties: ChangeProperties): ReplaceInfo {
+        return new ReplaceInfo(
+            this.checkId(properties.oldkmtkid,properties.oldversion),
+            this.checkId(properties.newkmtkid,properties.newversion),
+            this.round(properties.mfromold), this.round(properties.mtoold),
+            this.round(properties.mfromnew), this.round( properties.mtonew)
+        );
+    }
+    
+    protected round(i: number | undefined ): number | undefined {
+       //const v =  this.extractNumberOrNull(input)
+        if ( i !== undefined ) { return  Number(i?.toFixed(3))
+        } else return  i
+    }
+
+    protected async fetchLinkVersions(linkIds: string[], instance: AxiosInstance): Promise<KgvFeatureCollection<KgvFeature>> {
         const params = {
             "filter-lang": "cql-text",
             "crs": "EPSG:3067",
@@ -47,8 +93,13 @@ export class KgvClient extends ClientBase {
         };
         return await this.getRequest(instance, this.path, params);
     }
+    
+    private checkId (id:string|undefined, versio:string|undefined) {
+        if (id != undefined && versio != undefined) { return `${id}:${versio}`
+        } else return undefined
+    } 
 
-    protected extractLinks(results: KgvFeatureCollection[]): Array<KgvLink> {
+    protected extractLinks(results: KgvFeatureCollection<KgvFeature>[]): Array<KgvLink> {
         return results.map(result => result.features.map(feature => {
             const props = feature.properties;
             const geometry = this.extractLinkGeometry(feature.geometry);
@@ -136,9 +187,9 @@ export class KgvLink {
     }
 }
 
-interface KgvFeatureCollection {
+interface KgvFeatureCollection<T> {
     type                    : string;
-    features                : Array<KgvFeature>;
+    features                : Array<T>;
 }
 
 export interface KgvFeature {
@@ -148,6 +199,32 @@ export interface KgvFeature {
     geometry_name           : string;
     properties              : KgvProperties;
     bbox                    ?: Array<number>;
+}
+
+export interface KgvFeatureChange {
+    type                    : string;
+    id                      : string;
+    geometry                : Geometry;
+    geometry_name           : string;
+    properties              : ChangeProperties;
+    bbox                    ?: Array<number>;
+}
+
+interface ChangeProperties {
+    ptp_id          ?: number;
+    id              ?: number;
+    oldkmtkid       ?: string;
+    oldversion      ?: string;
+    newkmtkid       ?: string;
+    newversion      ?: string;
+    type            ?: number;
+    ruleid          ?: string;
+    ctime           ?: string;
+    mfromold        ?: number;
+    mtoold          ?: number;
+    mfromnew        ?: number;
+    mtonew          ?: number;
+    taskid          ?: string;
 }
 
 export interface Geometry {
