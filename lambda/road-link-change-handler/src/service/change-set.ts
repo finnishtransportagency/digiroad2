@@ -34,18 +34,16 @@ export class ChangeSet {
 
     private filterPartialAdds(p: ChangeEntry) {
         let continuity: boolean = true
-        const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue)).reverse()
-        const sortedForContinuity = _.sortBy(p.replaceInfo, (a => a.newToMValue))
-        const startPart = _.last(sorted)?.newFromMValue
-        const endPart = sorted[0].newToMValue
+        const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue))
+        const startPart = sorted[0]?.newFromMValue
+        const endPart = _.last(sorted)?.newToMValue
         const newLinkLength = p.new[0].linkLength
-        const  continuityCheckSteps = this.checkContinuity(sortedForContinuity);
+        const continuityCheckSteps = this.checkContinuity(sorted);
 
-        const wholes = continuityCheckSteps.filter(p => !p)
-        if (wholes.length >= 1) {
+        const partitionByTrueOrFalse = _.partition(continuityCheckSteps,p=>!p)
+        if (partitionByTrueOrFalse[0].length >= 1) {
             continuity = false
-            const continuousParts = continuityCheckSteps.filter(p => p)
-            if (continuousParts.length >= 1) {
+            if (partitionByTrueOrFalse[1].length >= 1) {
                 console.warn("There are continuity whole but also continuous parts")
                 console.warn(this.convertToJson(p.replaceInfo))
             }
@@ -53,12 +51,12 @@ export class ChangeSet {
         return endPart == newLinkLength && startPart == 0 && continuity
     }
 
-    private checkContinuity(sortedForContinuity: ReplaceInfo[]) {
+    private checkContinuity(infos: ReplaceInfo[]) {
         const continuityCheckSteps: boolean[] = []
-        if (sortedForContinuity.length > 1) {
-            for (let i = 0; i < sortedForContinuity.length; i++) {
-                const firstItem = sortedForContinuity[i]
-                const nextItem = sortedForContinuity[i + 1]
+        if (infos.length > 1) {
+            for (let i = 0; i < infos.length; i++) {
+                const firstItem = infos[i]
+                const nextItem = infos[i + 1]
                 const partAreDefined = !_.isNil(firstItem) && !_.isNil(nextItem)
                 const notContinuous = partAreDefined && firstItem.newToMValue != nextItem.newFromMValue;
                 if (notContinuous) {
