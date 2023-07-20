@@ -178,8 +178,6 @@ class RoadLinkChangeClient {
   def convertToRoadLinkChange(changeJson: String) : Seq[RoadLinkChange] = {
     val json = parseJson(changeJson)
     try {
-      //val jsonWithNullsTransformed = transformNullValuesFromRoadLinkChanges(json)
-      //jsonWithNullsTransformed.extract[Seq[RoadLinkChange]]
       json.extract[Seq[RoadLinkChange]]
     } catch {
       case e: Throwable =>
