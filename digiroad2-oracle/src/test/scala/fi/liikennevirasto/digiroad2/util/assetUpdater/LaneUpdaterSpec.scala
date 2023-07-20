@@ -282,8 +282,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
   test("Split. Given a Road Link that is split into 2 new Links; when 1 new Link is deleted; then the Main Lane's length should equal remaining Link's length.") {
     runWithRollback {
-      val oldLinkID = "1d231ff5-1133-4d7d-b688-374ebcdb8f21:1"
-      val newLinkID2 = "1d231ff5-1133-4d7d-b688-374ebcdb8f31:1"
+      val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
+      val newLinkID2 = "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1"
 
       val relevantChange = testChanges.filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
 
@@ -312,8 +312,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
   test("Split. Given a Road Link that is split into 2 new Links; when 1 new Link is deleted; then Additional Lane within deleted Link should be removed.") {
     runWithRollback {
-      val oldLinkID = "1d231ff5-1133-4d7d-b688-374ebcdb8f21:1"
-      val newLinkID2 = "1d231ff5-1133-4d7d-b688-374ebcdb8f31:1"
+      val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
+      val newLinkID2 = "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1"
 
       val relevantChange = testChanges.filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
 
@@ -340,10 +340,10 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  /*test("Split. Given a Road Link that is split into 2 new Links, when 1 new Link is deleted, then Additional Lane within both new Links should be correct length.") {
+  test("Split. Given a Road Link that is split into 2 new Links, when 1 new Link is deleted, then Additional Lane within both the deleted and the remaining Link should have correct length.") {
     runWithRollback {
-      val oldLinkID = "1d231ff5-1133-4d7d-b688-374ebcdb8f21:1"
-      val newLinkID2 = "1d231ff5-1133-4d7d-b688-374ebcdb8f31:1"
+      val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
+      val newLinkID2 = "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1"
 
       val relevantChange = testChanges.filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
 
@@ -358,19 +358,18 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val changeSet = LaneUpdater.handleChanges(relevantChange)
       LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChange)
 
-      // Verify that the Lane within both new Links ise correct length.
+      // Verify that the Lane within both the deleted and the remaining Link has correct length.
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
       lanesAfterChanges.size should equal(1)
-      val originalAdditionalLane = existingLanes.find(_.laneCode == 2).get
-      val originalAdditionalLaneLength = originalAdditionalLane.endMeasure - originalAdditionalLane.startMeasure
-      val additionalLaneLengths = additionalLanesAfterChanges.map(additionalLane => additionalLane.endMeasure - additionalLane.startMeasure)
-      val additionalLanesTotalLength = additionalLaneLengths.foldLeft(0.0)((length1, length2) => length1 + length2)
-      val lengthDifferenceAfterChange = Math.abs(originalAdditionalLaneLength - additionalLanesTotalLength)
+      lanesAfterChanges.head.laneCode should equal(2)
+      val additionalLaneCutOnNewLink = 0.22 // 22% = additional lane's cut of remaining Link's length
+      val newLinkLength = 111.028
+      val additionalLaneApproxLengthAfterChange = newLinkLength * additionalLaneCutOnNewLink
+      val additionalLaneTrueLengthAfterChange = lanesAfterChanges.map(additionalLane => additionalLane.endMeasure - additionalLane.startMeasure).head
+      val lengthDifferenceAfterChange = Math.abs(additionalLaneTrueLengthAfterChange - additionalLaneApproxLengthAfterChange)
       (lengthDifferenceAfterChange < measureTolerance) should equal(true)
-
-
     }
-  }*/
+  }
 
   test("Merge. 4 links merged together. Main lanes and two additional lanes should fuse together.") {
     runWithRollback {
