@@ -44,7 +44,7 @@ export class ChangeSet {
         if (partitionByTrueOrFalse[0].length >= 1) {
             continuity = false
             if (partitionByTrueOrFalse[1].length >= 1) {
-                console.warn("There are continuity whole but also continuous parts")
+                console.warn("Some part of change entries are not contiguous")
                 console.warn(this.convertToJson(p.replaceInfo))
             }
         }
