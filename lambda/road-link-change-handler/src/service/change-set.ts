@@ -33,15 +33,44 @@ export class ChangeSet {
     }
 
     private filterPartialAdds(p: ChangeEntry) {
+        let continuity: boolean = true
+        const continuityCheckSteps: boolean[] = []
         const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue)).reverse()
+        const sortedForContinuity = _.sortBy(p.replaceInfo, (a => a.newToMValue))
         const startPart = _.last(sorted)?.newFromMValue
         const endPart = sorted[0].newToMValue
         const newLinkLength = p.new[0].linkLength
-        return endPart == newLinkLength && startPart == 0
+        if (sortedForContinuity.length > 1) {
+            for (let i = 0; i < sortedForContinuity.length; i++) {
+                const firstItem = sortedForContinuity[i]
+                const nextItem = sortedForContinuity[i + 1]
+                const partAreDefined = !_.isNil(firstItem) && !_.isNil(nextItem)
+                const notContinuous = partAreDefined && firstItem.newToMValue != nextItem.newFromMValue;
+                if (notContinuous) {
+                    continuityCheckSteps.push(false)
+                } else if (partAreDefined) {
+                    continuityCheckSteps.push(true)
+                }
+            }
+        }
+
+        const wholes = continuityCheckSteps.filter(p => !p)
+        if (wholes.length >= 1) {
+            continuity = false
+            const continuousParts = continuityCheckSteps.filter(p => p)
+            if (continuousParts.length >= 1) {
+                console.warn("There are continuity whole but also continuous parts")
+                console.warn(this.convertToJson(p.replaceInfo))
+            }
+        }
+        return endPart == newLinkLength && startPart == 0 && continuity
     }
 
     toJson(): string {
         return JSON.stringify(this.changeEntries);
+    }
+    convertToJson(input: object): string {
+        return JSON.stringify(input);
     }
 
     protected toChangeEntry(change: ReplaceInfo[]): ChangeEntry {
