@@ -178,11 +178,37 @@ class RoadLinkChangeClient {
   def convertToRoadLinkChange(changeJson: String) : Seq[RoadLinkChange] = {
     val json = parseJson(changeJson)
     try {
-      json.extract[Seq[RoadLinkChange]]
+      mergeReplaceInfoWithSameLink(json.extract[Seq[RoadLinkChange]])
     } catch {
       case e: Throwable =>
         logger.error(e.getMessage)
         Seq.empty[RoadLinkChange]
+    }
+  }
+
+  // this removes the unnecessary split caused by road address changes in Tiekamu
+  // TODO Check functionality after DROTH-3782
+  def mergeReplaceInfoWithSameLink(roadLinkChanges: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+
+    roadLinkChanges.map { change =>
+      val groupedReplaceInfo = change.replaceInfo.groupBy(r => (r.oldLinkId, r.newLinkId))
+      val mergedReplaceInfo = groupedReplaceInfo.map { groupedInfo =>
+        val replaceInfoSeq = groupedInfo._2
+        if (replaceInfoSeq.size > 1) {
+          ReplaceInfo(
+            replaceInfoSeq.head.oldLinkId,
+            replaceInfoSeq.head.newLinkId,
+            replaceInfoSeq.map(_.oldFromMValue).min,
+            replaceInfoSeq.map(_.oldToMValue).max,
+            replaceInfoSeq.map(_.newFromMValue).min,
+            replaceInfoSeq.map(_.newToMValue).max,
+            replaceInfoSeq.head.digitizationChange
+          )
+        } else {
+          replaceInfoSeq.head
+        }
+      }
+      change.copy(replaceInfo = mergedReplaceInfo.toSeq)
     }
   }
 
