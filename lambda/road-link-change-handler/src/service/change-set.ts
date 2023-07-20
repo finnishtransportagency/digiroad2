@@ -33,15 +33,47 @@ export class ChangeSet {
     }
 
     private filterPartialAdds(p: ChangeEntry) {
-        const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue)).reverse()
-        const startPart = _.last(sorted)?.newFromMValue
-        const endPart = sorted[0].newToMValue
+        let continuity: boolean = true
+        const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue))
+        const startPart = sorted[0]?.newFromMValue
+        const endPart = _.last(sorted)?.newToMValue
         const newLinkLength = p.new[0].linkLength
-        return endPart == newLinkLength && startPart == 0
+        const continuityCheckSteps = this.checkContinuity(sorted);
+
+        const partitionByTrueOrFalse = _.partition(continuityCheckSteps,p=>!p)
+        if (partitionByTrueOrFalse[0].length >= 1) {
+            continuity = false
+            if (partitionByTrueOrFalse[1].length >= 1) {
+                console.warn("Some part of change entries are not contiguous")
+                console.warn(this.convertToJson(p.replaceInfo))
+            }
+        }
+        return endPart == newLinkLength && startPart == 0 && continuity
+    }
+
+    private checkContinuity(infos: ReplaceInfo[]) {
+        const continuityCheckSteps: boolean[] = []
+        if (infos.length > 1) {
+            for (let i = 0; i < infos.length; i++) {
+                const firstItem = infos[i]
+                const nextItem = infos[i + 1]
+                const partAreDefined = !_.isNil(firstItem) && !_.isNil(nextItem)
+                const notContinuous = partAreDefined && firstItem.newToMValue != nextItem.newFromMValue;
+                if (notContinuous) {
+                    continuityCheckSteps.push(false)
+                } else if (partAreDefined) {
+                    continuityCheckSteps.push(true)
+                }
+            }
+        }
+        return continuityCheckSteps
     }
 
     toJson(): string {
         return JSON.stringify(this.changeEntries);
+    }
+    convertToJson(input: object): string {
+        return JSON.stringify(input);
     }
 
     protected toChangeEntry(change: ReplaceInfo[]): ChangeEntry {
