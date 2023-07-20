@@ -21,12 +21,14 @@ export const handler = async (event: Event) => {
     console.info(`Fetching ${newLinkIds.concat(oldLinkIds).length} links`);
     const links = await kgvClient.fetchRoadLinksByLinkId(newLinkIds.concat(oldLinkIds));
     const newLinks = links.filter(link => newLinkIds.includes(link.id));
-    const changeSet = new ChangeSet(links, replacements).toJson();
-    console.info(`Got ${changeSet.length} changes`);
-    //console.info(changeSet)
+    console.info(`Got ${newLinks.length} links`);
+    const changeSet = new ChangeSet(links, replacements);
+    const changeSetString = changeSet.toJson();
+    console.info(`Got ${changeSet.changeEntries.length} changes`);
+    //console.log(changeSetString)
     // TODO: Commented out until Tiekamu is working properly
     //await roadLinkDao.saveLinkChangesToDb(oldLinkIds, newLinks);  // Save links to Digiroad db
-    //await s3Service.uploadToBucket(since, until, changeSet);      // Put change set to s3
+    //await s3Service.uploadToBucket(since, until, changeSetString);      // Put change set to s3
 }
 
 export interface Event {
