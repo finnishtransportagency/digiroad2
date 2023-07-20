@@ -126,6 +126,46 @@ describe('Change Set', function () {
         assert.equal(changeSet.toJson(), JSON.stringify(expected));
     });
 
+    it('New link added and partial add in multiple part, no continuity', function () {
+        const newLinkId = "testi:1";
+        const newLinkId2 = "testi:2";
+        const newLink = new KgvLink(newLinkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, 12141);
+        const change = new ReplaceInfo(undefined, newLinkId, undefined, undefined, 0, 16.937);
+        const newLink2 = new KgvLink(newLinkId2, testLinkGeom1, 123, 3, 149, 16.93706266, 0, 12141);
+        const change2 = new ReplaceInfo(undefined, newLinkId2, undefined, undefined, 0, 4.937);
+        const change3 = new ReplaceInfo(undefined, newLinkId2, undefined, undefined, 5.937,  16.93706266);
+        const changeSet = new ChangeSet([newLink,newLink2], [change,change3,change2]);
+        const expected = [{
+            "changeType": "add",
+            "old": null,
+            "new": [
+                {
+                    "linkId": newLinkId,
+                    "linkLength": 16.937,
+                    "geometry": testLinkGeom1,
+                    "roadClass": 12141,
+                    "adminClass": 3,
+                    "municipality": 149,
+                    "surfaceType": null,
+                    "trafficDirection": 0
+                }
+            ],
+            "replaceInfo": [
+                {
+                    "oldLinkId": null,
+                    "newLinkId": newLinkId,
+                    "oldFromMValue": null,
+                    "oldToMValue": null,
+                    "newFromMValue": 0,
+                    "newToMValue": 16.937,
+                    "digitizationChange": false
+                }
+            ]}];
+        console.log(changeSet)
+        assert.equal(changeSet.changeEntries[0].changeType, "add");
+        assert.equal(changeSet.toJson(), JSON.stringify(expected));
+    });
+    
     it('New link added and partial add and both in multiple part', function () {
         const newLinkId = "testi:1";
         const newLinkId2 = "testi:2";
