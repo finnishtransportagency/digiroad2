@@ -17,7 +17,7 @@ import org.scalatest.{FunSuite, Matchers}
 import java.util.UUID
 import scala.collection.mutable.ListBuffer
 
-class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UtilsSuite {
+class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   
   val speedLimitDao = new PostGISLinearAssetDao()
   val speedLimitService = new SpeedLimitService(mockEventBus,mockRoadLinkService)

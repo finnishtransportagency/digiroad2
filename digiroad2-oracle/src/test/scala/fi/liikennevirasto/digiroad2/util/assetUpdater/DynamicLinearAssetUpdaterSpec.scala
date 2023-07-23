@@ -11,7 +11,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{FunSuite, Matchers}
 
-class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UtilsSuite {
+class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   
   val serviceDynamic = new DynamicLinearAssetService(mockRoadLinkService, mockEventBus)
 

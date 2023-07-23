@@ -14,7 +14,7 @@ import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-class HazMatTransportProhibitionUpdaterSpec extends FunSuite with Matchers with UtilsSuite {
+class HazMatTransportProhibitionUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   
   val serviceHazmat = new HazmatTransportProhibitionService(mockRoadLinkService, mockEventBus)
   

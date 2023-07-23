@@ -17,8 +17,8 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import java.util.UUID
 import scala.collection.mutable.ListBuffer
 
-
-trait UtilsSuite {
+ 
+trait UpdaterUtilsSuite {
 
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -336,7 +336,7 @@ trait UtilsSuite {
   }
 }
 
-class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers with UtilsSuite {
+class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers with UpdaterUtilsSuite {
   object TestLinearAssetUpdater extends LinearAssetUpdater(service) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService

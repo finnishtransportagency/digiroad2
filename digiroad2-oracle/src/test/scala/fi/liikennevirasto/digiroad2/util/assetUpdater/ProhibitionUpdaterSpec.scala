@@ -14,7 +14,7 @@ import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-class ProhibitionUpdaterSpec extends FunSuite with Matchers with UtilsSuite {
+class ProhibitionUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   val prohibitionService = new ProhibitionService(mockRoadLinkService, mockEventBus)
 
   object TestProhibitionUpdater extends ProhibitionUpdater(prohibitionService) {

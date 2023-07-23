@@ -15,7 +15,7 @@ import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers with UtilsSuite {
+class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty[String])).thenReturn(Seq())
   

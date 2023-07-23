@@ -18,7 +18,7 @@ import org.scalatest.{FunSuite, Matchers}
 import java.util.UUID
 import scala.collection.mutable.ListBuffer
 
-class PavedRoadUpdaterSpec extends FunSuite with Matchers with UtilsSuite {
+class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]

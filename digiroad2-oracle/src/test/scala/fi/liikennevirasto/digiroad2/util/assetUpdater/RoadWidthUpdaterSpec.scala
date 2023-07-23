@@ -11,7 +11,7 @@ import org.mockito.Mockito.when
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 
-class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers with UtilsSuite  {
+class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers with UpdaterUtilsSuite  {
   
   val roadWidthService = new RoadWidthService(mockRoadLinkService, mockEventBus)
 
