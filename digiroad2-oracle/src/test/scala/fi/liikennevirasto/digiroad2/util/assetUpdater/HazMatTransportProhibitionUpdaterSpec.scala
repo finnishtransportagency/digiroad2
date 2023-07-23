@@ -1,24 +1,19 @@
 
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibition, Prohibition, SideCode}
-import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeClient, RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
+import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibition, SideCode}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, LinearAssetTypes, Measures}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, Measures}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class HazMatTransportProhibitionUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   
   val serviceHazmat = new HazmatTransportProhibitionService(mockRoadLinkService, mockEventBus)
-  
-
   object TestHazMatProhibitionUpdater extends HazMatTransportProhibitionUpdater(serviceHazmat) {
     override def withDynTransaction[T](f: => T): T = f
     override def dao: PostGISLinearAssetDao = linearAssetDao

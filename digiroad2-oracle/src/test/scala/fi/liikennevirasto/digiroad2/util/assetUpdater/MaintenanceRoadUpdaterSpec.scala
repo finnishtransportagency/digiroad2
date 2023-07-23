@@ -1,15 +1,14 @@
 
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeClient, RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -85,4 +84,3 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtil
     }
   }
 }
-

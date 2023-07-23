@@ -4,17 +4,14 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.MTKClassWidth.CarRoad_IIIa
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, MTKClassWidth, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, MTKClassWidth}
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, RoadWidthService}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-
-
 class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers with UpdaterUtilsSuite  {
   
   val roadWidthService = new RoadWidthService(mockRoadLinkService, mockEventBus)
-
   object TestRoadWidthUpdater extends RoadWidthUpdater(roadWidthService) {
     override def roadLinkService = mockRoadLinkService
     override def withDynTransaction[T](f: => T): T = f
@@ -327,7 +324,4 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       assetsAfter.head.value.get.equals(valueDynamic)
     }
   }
-
 }
-
-

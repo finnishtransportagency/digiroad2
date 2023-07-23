@@ -66,4 +66,3 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
     }
   }
 }
-

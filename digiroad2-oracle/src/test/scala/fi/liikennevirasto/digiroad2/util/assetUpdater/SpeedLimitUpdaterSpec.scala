@@ -1,24 +1,17 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-import java.util.UUID
-import scala.collection.mutable.ListBuffer
-
 class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
-  
   val speedLimitDao = new PostGISLinearAssetDao()
   val speedLimitService = new SpeedLimitService(mockEventBus,mockRoadLinkService)
   val speedLimitServiceNoMock = new SpeedLimitService(mockEventBus,roadLinkService)

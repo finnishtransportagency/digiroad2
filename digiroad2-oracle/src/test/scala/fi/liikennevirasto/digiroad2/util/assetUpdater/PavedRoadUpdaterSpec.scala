@@ -2,25 +2,19 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType, RoadLinkClient, RoadLinkFetched, RoadLinkInfo}
+import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkChangeType, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, MTKClassWidth, RoadLink, SurfaceType}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-import java.util.UUID
-import scala.collection.mutable.ListBuffer
-
 class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
-
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val dynamicLinearAssetService = new DynamicLinearAssetService(mockRoadLinkService, mockEventBus)
 
@@ -165,5 +159,4 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       assetsAfter.map(v => v.value.get.equals(assetValues))
     }
   }
-  
 }
