@@ -59,7 +59,7 @@ trait UpdaterUtilsSuite {
   val linkId8 = "7c21ce6f-d81b-481f-a67e-14778ad2b59c:1";   val linkId9 = "609d430a-de96-4cb7-987c-3caa9c72c08d:1";
   val linkId10 = "4b061477-a7bc-4b72-b5fe-5484e3cec03d:1";  val linkId11 = "b0b54052-7a0e-4714-80e0-9de0ea62a347:1";
   val linkId12 = "6d283aeb-a0f5-4606-8154-c6702bd69f2e:1";  val linkId13 = "769e6848-e77b-44d3-9d38-e63cdc7b1677:1"; 
-  val linkId14 = "524c67d9-b8af-4070-a4a1-52d7aec0526c:1";
+  val linkId14 = "524c67d9-b8af-4070-a4a1-52d7aec0526c:1";  val linkId15 = "624df3a8-b403-4b42-a032-41d4b59e1840:1"
   val linkId1011 = Seq(linkId10, linkId11)
   val newLinks1_2_4 = Seq(linkId2, linkId1, linkId4)
 

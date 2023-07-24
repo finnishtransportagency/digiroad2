@@ -79,7 +79,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
     runWithRollback {
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
-      val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq("624df3a8-b403-4b42-a032-41d4b59e1840:1"), false)
+      val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkId15), false)
       assetsAfter.size should be(1)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
@@ -89,7 +89,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       val properties = assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties
       properties.head.values.head.value should be("99")
 
-      val assets = TestPavedRoadUpdater.getReport().filter(_.linkId =="624df3a8-b403-4b42-a032-41d4b59e1840:1").map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestPavedRoadUpdater.getReport().filter(_.linkId ==linkId15).map(a => PairAsset(a.before, a.after.headOption))
 
       assets.size should  be(1)
       TestPavedRoadUpdater.getReport().head.changeType should be(ChangeTypeReport.Creation)
@@ -100,12 +100,10 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
     val linkIdVersion1 = s"$linkId:1"
     val linkIdVersion2 = s"$linkId:2"
     val geometry = generateGeometry(0, 9)
-    val oldRoadLink = RoadLink(linkIdVersion1, geometry._1, geometry._2, Municipality,
-      60, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    val newRoadLink = RoadLink(linkIdVersion2, geometry._1, geometry._2, Municipality,
-      60, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(1)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val oldRoadLink = createRoadLink(linkIdVersion1,geometry,paved = SurfaceType.Paved)
+    val newRoadLink =  createRoadLink(linkIdVersion2,geometry,paved = SurfaceType.None)
+    
+    createRoadLink(linkIdVersion2,geometry,paved = SurfaceType.None)
     val change = changeReplaceNewVersionChangePavement(linkIdVersion1, linkIdVersion2)
 
     runWithRollback {
