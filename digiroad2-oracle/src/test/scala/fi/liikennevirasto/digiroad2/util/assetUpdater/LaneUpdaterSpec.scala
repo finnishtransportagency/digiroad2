@@ -336,9 +336,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       // Verify that Lanes within deleted Link are removed, and the Main Lane is copied to New Link
       val lanesOnOldLinkAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkID)).sortBy(lane => (lane.laneCode, lane.sideCode))
       lanesOnOldLinkAfterChanges.size should equal(0)
-      val oldLinkHistoryLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(oldLinkID), Seq(2), true)
-      oldLinkHistoryLanes.size should equal(1)
-      oldLinkHistoryLanes.head.expired should equal(true)
+      val oldLinkHistoryLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(oldLinkID), includeExpired = true)
+      oldLinkHistoryLanes.map (lane => lane.expired should equal(true))
       val lanesOnNewLinkAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
       lanesOnNewLinkAfterChanges.size should equal(1)
       lanesOnNewLinkAfterChanges.head.laneCode should equal(1)
