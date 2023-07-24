@@ -1790,4 +1790,41 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       })
     }
   }
+  
+  
+  test ("change come in multiple part, values same") {
+
+    val oldLink1 = "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1"
+    val oldLink2 = "197f22f2-3427-4412-9d2a-3848a570c996:1"
+
+    val linkIdNew1 = "59704775-596d-46c8-99cf-e85013bbcb56:1"
+    val linkIdNew2 = "d989ee2b-f6d0-4433-b5b6-0a4fe3d62400:1"
+    
+    val change = roadLinkChangeClient.convertToRoadLinkChange(source)
+    runWithRollback {
+      val oldRoadLink1 = roadLinkService.getExpiredRoadLinkByLinkId(oldLink1).get
+      val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(oldLink2).get
+      val id1 = service.createWithoutTransaction(HeightLimit.typeId, oldLink1, NumericValue(3), SideCode.BothDirections.value, Measures(0, 389.737), "testuser", 0L, Some(oldRoadLink1), false, None, None)
+      val id2 = service.createWithoutTransaction(HeightLimit.typeId, oldLink2, NumericValue(3), SideCode.BothDirections.value, Measures(0, 49.772), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1,id2), false)
+      assetsBefore.size should be(2)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(HeightLimit.typeId, change)
+
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq(linkIdNew1,linkIdNew2), false)
+
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+
+      sorted.foreach(p => {
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
+      
+      sorted.size should be(2)
+      
+    }
+    
+  }
+  
 }

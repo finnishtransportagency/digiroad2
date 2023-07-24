@@ -50,7 +50,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
           operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
           reportAssetChanges(Some(asset), None, Seq(change),  operatio.copy(assetsAfter = Seq(asset.copy(id = removePart)))
-            , ChangeTypeReport.Deletion)
+            , Some(ChangeTypeReport.Deletion))
         }
       } else {
         operatio

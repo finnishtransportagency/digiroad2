@@ -69,7 +69,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
             )),
             changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)))
           )
-          reportAssetChanges(operation.assetsBefore.find(_.id == asset.id), operation.assetsAfter.headOption, Seq(change), operation, ChangeTypeReport.PropertyChange)
+          reportAssetChanges(operation.assetsBefore.find(_.id == asset.id), operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.PropertyChange))
         } else {
           handleGeneratedPart(change, changeSets, asset, replace,operationStep)
         }
@@ -91,12 +91,12 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     )
     val oldAsset = operationUpdated.assetsBefore.find(_.id == asset.oldId)
     if (extractPropertyValue("width", asset.value.get.asInstanceOf[DynamicValue].value.properties).head != replace._3.width.toString && oldAsset.isDefined) {
-      reportAssetChanges(oldAsset, Some(asset.copy(value = Some(newValue))), Seq(change), operationUpdated, ChangeTypeReport.PropertyChange)
+      reportAssetChanges(oldAsset, Some(asset.copy(value = Some(newValue))), Seq(change), operationUpdated, Some(ChangeTypeReport.PropertyChange))
     } else {
       if (oldAsset.isEmpty) { 
         // this coverage case where asset is split multiple time when running slicing loop or part does not have any former history,
         // might be more theoretical case
-        reportAssetChanges(None, Some(asset.copy(value = Some(newValue))), Seq(change), operationUpdated, ChangeTypeReport.Creation)
+        reportAssetChanges(None, Some(asset.copy(value = Some(newValue))), Seq(change), operationUpdated, Some(ChangeTypeReport.Creation))
       } else {
         operationUpdated
       }
