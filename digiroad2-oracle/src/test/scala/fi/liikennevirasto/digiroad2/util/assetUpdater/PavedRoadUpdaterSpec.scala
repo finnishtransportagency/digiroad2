@@ -100,10 +100,9 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
     val linkIdVersion1 = s"$linkId:1"
     val linkIdVersion2 = s"$linkId:2"
     val geometry = generateGeometry(0, 9)
-    val oldRoadLink = createRoadLink(linkIdVersion1,geometry,paved = SurfaceType.Paved)
-    val newRoadLink =  createRoadLink(linkIdVersion2,geometry,paved = SurfaceType.None)
+    val oldRoadLink = createRoadLink(linkIdVersion1,geometry, functionalClassI = AnotherPrivateRoad,paved = SurfaceType.Paved)
+    val newRoadLink =  createRoadLink(linkIdVersion2,geometry,functionalClassI = AnotherPrivateRoad,paved = SurfaceType.None)
     
-    createRoadLink(linkIdVersion2,geometry,paved = SurfaceType.None)
     val change = changeReplaceNewVersionChangePavement(linkIdVersion1, linkIdVersion2)
 
     runWithRollback {
