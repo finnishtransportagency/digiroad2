@@ -17,7 +17,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
   test("test json convert with whole set") {
-    changes.size should be(35)
+    changes.size should be(36)
   }
 
   test("RoadLinkChange for 'add' contains correct info") {
@@ -140,30 +140,44 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.newLinks.last.surfaceType should be(SurfaceType.Paved)
 
     splitChange.replaceInfo.size should be(3)
+    val sortedReplaceInfo = splitChange.replaceInfo.sortBy(_.newLinkId)
 
-    splitChange.replaceInfo.head.oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
-    splitChange.replaceInfo.head.newLinkId should be("0d92e4a4-51cf-4abe-8f0e-8ee22241c3ff:1")
-    splitChange.replaceInfo.head.oldFromMValue should be(0)
-    splitChange.replaceInfo.head.oldToMValue should be(17.305)
-    splitChange.replaceInfo.head.newFromMValue should be(0)
-    splitChange.replaceInfo.head.newToMValue should be(17.305)
-    splitChange.replaceInfo.head.digitizationChange should be(false)
+    sortedReplaceInfo.head.oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
+    sortedReplaceInfo.head.newLinkId should be("0d92e4a4-51cf-4abe-8f0e-8ee22241c3ff:1")
+    sortedReplaceInfo.head.oldFromMValue should be(0)
+    sortedReplaceInfo.head.oldToMValue should be(17.305)
+    sortedReplaceInfo.head.newFromMValue should be(0)
+    sortedReplaceInfo.head.newToMValue should be(17.305)
+    sortedReplaceInfo.head.digitizationChange should be(false)
 
-    splitChange.replaceInfo(1).oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
-    splitChange.replaceInfo(1).newLinkId should be("d59dd3a9-a94d-4f26-b311-6b9b8361c717:1")
-    splitChange.replaceInfo(1).oldFromMValue should be(34.733)
-    splitChange.replaceInfo(1).oldToMValue should be(121.673)
-    splitChange.replaceInfo(1).newFromMValue should be(0)
-    splitChange.replaceInfo(1).newToMValue should be(86.941)
-    splitChange.replaceInfo(1).digitizationChange should be(false)
+    sortedReplaceInfo(1).oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
+    sortedReplaceInfo(1).newLinkId should be("d59dd3a9-a94d-4f26-b311-6b9b8361c717:1")
+    sortedReplaceInfo(1).oldFromMValue should be(34.733)
+    sortedReplaceInfo(1).oldToMValue should be(121.673)
+    sortedReplaceInfo(1).newFromMValue should be(0)
+    sortedReplaceInfo(1).newToMValue should be(86.941)
+    sortedReplaceInfo(1).digitizationChange should be(false)
 
-    splitChange.replaceInfo.last.oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
-    splitChange.replaceInfo.last.newLinkId should be("e92c98c9-5a62-4995-a9c0-e40ae0b65747:1")
-    splitChange.replaceInfo.last.oldFromMValue should be(17.305)
-    splitChange.replaceInfo.last.oldToMValue should be(34.733)
-    splitChange.replaceInfo.last.newFromMValue should be(0)
-    splitChange.replaceInfo.last.newToMValue should be(17.432)
-    splitChange.replaceInfo.last.digitizationChange should be(false)
+
+    sortedReplaceInfo.last.oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
+    sortedReplaceInfo.last.newLinkId should be("e92c98c9-5a62-4995-a9c0-e40ae0b65747:1")
+    sortedReplaceInfo.last.oldFromMValue should be(17.305)
+    sortedReplaceInfo.last.oldToMValue should be(34.733)
+    sortedReplaceInfo.last.newFromMValue should be(0)
+    sortedReplaceInfo.last.newToMValue should be(17.432)
+    sortedReplaceInfo.last.digitizationChange should be(false)
+  }
+
+  test("merge replace info with same old and new link") {
+    val replaceInfo = changes(35).replaceInfo
+    replaceInfo.size should be(1)
+    replaceInfo.head.oldLinkId should be("350e7577-020e-4abe-bf12-509f070371ed:1")
+    replaceInfo.head.newLinkId should be("dfdf4f1e-9e12-4dc0-9b44-868320164539:1")
+    replaceInfo.head.oldFromMValue should be(0)
+    replaceInfo.head.oldToMValue should be(189.231)
+    replaceInfo.head.newFromMValue should be(0)
+    replaceInfo.head.newToMValue should be(191.552)
+    replaceInfo.head.digitizationChange should be(false)
   }
 
   // ignored by default, used to test locally that the fetch and convert process works

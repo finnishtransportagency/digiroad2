@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -21,9 +22,10 @@ case class RoadLinkForFillTopology(linkId: String, length:Double, trafficDirecti
 
 class AssetFiller {
   val AllowedTolerance = 2.0
-  val MaxAllowedError = 0.001
   val MinAllowedLength = 2.0
   protected val MaxAllowedMValueError = 0.1
+  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
+    CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId)
   
   /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
      See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems */
@@ -46,10 +48,10 @@ class AssetFiller {
   }
 
   protected def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
-    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance && asset.startMeasure >= MaxAllowedError) Some(0.0) else None
+    val roadLinkLength = roadLink.length
+    val adjustedStartMeasure = if (asset.startMeasure != 0.0 && asset.startMeasure < AllowedTolerance) Some(0.0) else None
     val endMeasureDifference: Double = roadLinkLength - asset.endMeasure
-    val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference >= MaxAllowedError) Some(roadLinkLength) else None
+    val adjustedEndMeasure = if (endMeasureDifference != 0.0 && endMeasureDifference < AllowedTolerance) Some(roadLinkLength) else None
     val mValueAdjustments = (adjustedStartMeasure, adjustedEndMeasure) match {
       case (None, None) => Nil
       case (s, e)       => Seq(MValueAdjustment(asset.id, asset.linkId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure)))
@@ -82,7 +84,7 @@ class AssetFiller {
     * @return assets and changeSet
     */
   protected def capToGeometry(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val linkLength = roadLink.length
     val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
     val cappedSegments = overflowingSegments.map { s =>
       (s.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, Math.min(s.startMeasure, linkLength), linkLength), endMeasure = linkLength),
@@ -532,6 +534,148 @@ class AssetFiller {
       (linearAssets, changeSet.copy(adjustedMValues = redundantFiltered))
     }
   }
+
+  def adjustRoadLinkLongAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
+    val roadLinkLength = roadLink.length
+    val mAdjustment =
+      if (asset.startMeasure > 0 || asset.endMeasure < roadLinkLength)
+        Seq(MValueAdjustment(asset.id, asset.linkId, 0, roadLinkLength))
+      else
+        Nil
+    val modifiedSegment = asset.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
+    (modifiedSegment, mAdjustment)
+  }
+
+  def adjustRoadLinkLongAssetHead(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (Option[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
+    if (asset.startMeasure > 0) {
+      val mAdjustment= Seq(MValueAdjustment(asset.id, asset.linkId, 0, asset.endMeasure))
+      val modifiedSegment = asset.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, asset.endMeasure), startMeasure = 0, endMeasure = asset.endMeasure)
+      (Some(modifiedSegment), mAdjustment)
+    }else {
+      (Some(asset), Nil)
+    }
+  }
+
+  def adjustRoadLinkLongAssetTail(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (Option[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
+    val roadLinkLength = roadLink.length
+    if (asset.endMeasure < roadLinkLength) {
+      val mAdjustment= Seq(MValueAdjustment(asset.id, asset.linkId, asset.startMeasure, roadLinkLength))
+      val modifiedSegment = asset.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, roadLinkLength), startMeasure = asset.startMeasure, endMeasure = roadLinkLength)
+      (Some(modifiedSegment), mAdjustment)
+    } else {
+      (Some(asset), Nil)
+    }
+  }
+
+  private def adjustTwoWaySegments(roadLink: RoadLinkForFillTopology,
+                                   assets: Seq[PieceWiseLinearAsset]):
+  (Seq[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
+    val twoWaySegments = assets.filter(_.sideCode == SideCode.BothDirections).sortBy(_.startMeasure)
+    if (twoWaySegments.isEmpty) {
+      (Nil, Nil)
+    }
+    else if (twoWaySegments.length == 1  && assets.forall(_.sideCode == SideCode.BothDirections)) {
+      val segment = assets.last
+      val (adjustedSegment, mValueAdjustments) = adjustRoadLinkLongAsset(segment, roadLink)
+      (Seq(adjustedSegment), mValueAdjustments)
+    } else {
+      val head = twoWaySegments.head
+      val last = twoWaySegments.last
+      val (adjustedHead, mValueAdjustmentsHead) = if (head.startMeasure <= assets.sortBy(_.startMeasure).head.startMeasure) adjustRoadLinkLongAssetHead(head, roadLink) else (None, Nil)
+      val (adjustedLast, mValueAdjustmentsLast) = if (last.endMeasure >= assets.sortBy(_.endMeasure).last.endMeasure) adjustRoadLinkLongAssetTail(last, roadLink) else (None, Nil)
+      (adjustedHead, adjustedLast) match {
+        case (Some(aH), Some(aL)) =>
+          val rest = twoWaySegments.filterNot(a => a.id == aH.id || a.id == aL.id)
+          (Seq(aH, aL) ++ rest, mValueAdjustmentsHead ++ mValueAdjustmentsLast)
+        case (Some(aH), None) =>
+          val rest = twoWaySegments.filterNot(a => a.id == aH.id)
+          (Seq(aH) ++ rest, mValueAdjustmentsHead)
+        case (None, Some(aL)) =>
+          val rest = twoWaySegments.filterNot(a => a.id == aL.id)
+          (Seq(aL) ++ rest, mValueAdjustmentsLast)
+        case (None, None) =>
+          (twoWaySegments, Nil)
+      }
+    }
+  }
+
+  private def adjustOneWaySegments(roadLink: RoadLinkForFillTopology,
+                                   assets: Seq[PieceWiseLinearAsset],
+                                   runningDirection: SideCode):
+  (Seq[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
+    val segmentsTowardsRunningDirection = assets.filter(_.sideCode == runningDirection).sortBy(_.startMeasure)
+    if (segmentsTowardsRunningDirection.isEmpty) {
+      (Nil, Nil)
+    } else if (segmentsTowardsRunningDirection.length == 1 && !assets.exists(_.sideCode == SideCode.BothDirections)) {
+      val segment = segmentsTowardsRunningDirection.last
+      val (adjustedSegment, mValueAdjustments) = adjustRoadLinkLongAsset(segment, roadLink)
+      (Seq(adjustedSegment), mValueAdjustments)
+    } else {
+      val head = segmentsTowardsRunningDirection.head
+      val firstTwo = assets.sortBy(_.startMeasure).slice(0, 2)
+      val (adjustedHead, mValueAdjustmentsHead) = {
+        val othersThanHead = firstTwo.filterNot(a => a.id == head.id)
+        // the first asset with inspected side code is not among the two first
+        if (othersThanHead.size == 2) {
+          (None, Nil)
+        // the first asset with inspected side code is the first of all
+        } else if (head.id == firstTwo.head.id) {
+          adjustRoadLinkLongAssetHead(head, roadLink)
+        // the first asset with inspected side code is opposite to the first asset of all
+        } else if (head.sideCode != othersThanHead.head.sideCode && othersThanHead.head.sideCode != BothDirections) {
+          adjustRoadLinkLongAssetHead(head, roadLink)
+        } else {
+          (None, Nil)
+        }
+      }
+
+      val last = segmentsTowardsRunningDirection.last
+      val lastTwo = assets.sortBy(_.endMeasure).slice(assets.length - 2, assets.length)
+      val (adjustedLast, mValueAdjustmentsLast) = {
+        val othersThanLast = lastTwo.filterNot(a => a.id == last.id)
+        // the last asset with inspected side code is not among the two last
+        if (othersThanLast.size == 2) {
+          (None, Nil)
+        // the last asset with inspected side code is the last of all
+        } else if (last.id == lastTwo.last.id) {
+          adjustRoadLinkLongAssetTail(last, roadLink)
+        // the last asset with inspected side code is opposite to the last asset of all
+        } else if (head.sideCode != othersThanLast.head.sideCode && othersThanLast.head.sideCode != BothDirections) {
+          adjustRoadLinkLongAssetTail(last, roadLink)
+        } else {
+          (None, Nil)
+        }
+      }
+      (adjustedHead, adjustedLast) match {
+        case (Some(aH), Some(aL)) =>
+          val rest = segmentsTowardsRunningDirection.filterNot(a => a.id == aH.id || a.id == aL.id)
+          (Seq(aH, aL) ++ rest, mValueAdjustmentsHead ++ mValueAdjustmentsLast)
+        case (Some(aH), None) =>
+          val rest = segmentsTowardsRunningDirection.filterNot(a => a.id == aH.id)
+          (Seq(aH) ++ rest, mValueAdjustmentsHead)
+        case (None, Some(aL)) =>
+          val rest = segmentsTowardsRunningDirection.filterNot(a => a.id == aL.id)
+          (Seq(aL) ++ rest, mValueAdjustmentsLast)
+        case (None, None) =>
+          (segmentsTowardsRunningDirection, Nil)
+      }
+    }
+  }
+
+  def adjustRoadLinkLongAssets(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val (towardsGeometrySegments, towardsGeometryAdjustments) = adjustOneWaySegments(roadLink, assets, SideCode.TowardsDigitizing)
+    val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(roadLink, assets, SideCode.AgainstDigitizing)
+    val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(roadLink, assets)
+    val mValueAdjustments = towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments
+    val (asset,changeSetCopy)=(towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments,
+      changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
+    adjustLopsidedLimit(roadLink,asset,changeSetCopy)
+  }
+
+
+  protected def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet):
+  (Seq[PieceWiseLinearAsset], ChangeSet) = (assets, changeSet)
+
   /**
     * Finally adjust asset length by snapping to links start and endpoint. <br> <pre> 
     * RoadLink -------
@@ -547,10 +691,20 @@ class AssetFiller {
     * @return assets and changeSet
     */
   def adjustAssets(roadLink: RoadLinkForFillTopology, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    linearAssets.foldLeft((Seq[PieceWiseLinearAsset](), changeSet)){
-      case ((resultAssets, change),linearAsset) =>
-        val (asset, adjustmentsMValues) = adjustAsset(linearAsset, roadLink)
-        (resultAssets ++ Seq(asset), change.copy(adjustedMValues = change.adjustedMValues ++ adjustmentsMValues))
+    if (linearAssets.nonEmpty && roadLinkLongAssets.contains(linearAssets.head.typeId)) {
+      val (towardsGeometrySegments, towardsGeometryAdjustments) = adjustOneWaySegments(roadLink, linearAssets, SideCode.TowardsDigitizing)
+      val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(roadLink, linearAssets, SideCode.AgainstDigitizing)
+      val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(roadLink, linearAssets)
+      val mValueAdjustments = towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments
+      val (asset,changeSetCopy)=(towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments,
+        changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
+      adjustLopsidedLimit(roadLink,asset,changeSetCopy)
+    } else {
+      linearAssets.foldLeft((Seq[PieceWiseLinearAsset](), changeSet)) {
+        case ((resultAssets, change), linearAsset) =>
+          val (asset, adjustmentsMValues) = adjustAsset(linearAsset, roadLink)
+          (resultAssets ++ Seq(asset), change.copy(adjustedMValues = change.adjustedMValues ++ adjustmentsMValues))
+      }
     }
   }
 
