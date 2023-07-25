@@ -12,11 +12,11 @@ import fi.liikennevirasto.digiroad2.util.{GeometryTransform, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, FloatingReason, PersistedPointAsset, Point}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
 import org.mockito.Mockito.when
+import slick.jdbc.StaticQuery.interpolation
 
 class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
 

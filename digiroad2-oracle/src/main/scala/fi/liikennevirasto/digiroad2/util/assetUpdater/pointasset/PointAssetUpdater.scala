@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.AssetTypeInfo
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
-import fi.liikennevirasto.digiroad2.util.assetUpdater._
-import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
+import fi.liikennevirasto.digiroad2.util.assetUpdater._
 import org.joda.time.DateTime
 import org.json4s.JsonDSL._
 import org.json4s.jackson.compactJson

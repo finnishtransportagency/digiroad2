@@ -1,10 +1,10 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 
-import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedPointAsset, Point, PointAssetOperations}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedPointAsset, Point, PointAssetOperations}
 
 class DirectionalPointAssetUpdater(service: PointAssetOperations) extends PointAssetUpdater(service: PointAssetOperations) {
   override def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo, newLinkInfo: Option[RoadLinkInfo],
