@@ -104,15 +104,15 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId)).thenReturn(oldRoadLinkRaw)
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
 
-      val id = service.createWithoutTransaction(CyclingAndWalking.typeId, oldLinkId,
+      val id = serviceDynamic.createWithoutTransaction(CyclingAndWalking.typeId, oldLinkId,
         cyclingAndWalkingValue, SideCode.BothDirections.value, Measures(0, 16.465), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val assetsBefore = service.getPersistedAssetsByIds(CyclingAndWalking.typeId, Set(id), false)
+      val assetsBefore = serviceDynamic.getPersistedAssetsByIds(CyclingAndWalking.typeId, Set(id), false)
 
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
       TestDynamicLinearAssetUpdater.updateByRoadLinks(CyclingAndWalking.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, Seq(newLinkId), false)
+      val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, Seq(newLinkId), false)
 
       assetsAfter.size should be(1)
       assetsAfter.head.value.get.toString should be(cyclingAndWalkingValue.toString)
