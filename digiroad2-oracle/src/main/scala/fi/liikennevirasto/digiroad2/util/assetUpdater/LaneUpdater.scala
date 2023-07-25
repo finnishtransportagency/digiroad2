@@ -17,6 +17,7 @@ import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, MainLanePopulationProcess}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.Point
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.json4s.JsonAST.JObject
@@ -267,7 +268,7 @@ object LaneUpdater {
     change.newLinks.exists(newLink => {
       val oldOriginalTrafficDirection = change.oldLink.get.trafficDirection
       val newOriginalTrafficDirection = newLink.trafficDirection
-      val replaceInfo = change.replaceInfo.find(_.newLinkId == newLink.linkId).get
+      val replaceInfo = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get
       val isDigitizationChange = replaceInfo.digitizationChange
       val overWrittenTdValueOnNewLink = TrafficDirectionDao.getExistingValue(newLink.linkId)
 
@@ -323,9 +324,9 @@ object LaneUpdater {
     }
 
     val after = newLanes.map(nl => {
-      val newLink = relevantRoadLinkChange.newLinks.find(_.linkId == nl.linkId).get
+      val maybeLink = relevantRoadLinkChange.newLinks.find(_.linkId == nl.linkId)
       val values = compactJson(JObject(nl.attributes.flatMap(_.toJson).toList))
-      val linkGeometry = newLink.geometry
+      val linkGeometry = if (maybeLink.nonEmpty) maybeLink.get.geometry else Seq.empty[Point]
       val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, nl.startMeasure, nl.endMeasure)
       val linearReference = LinearReference(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, nl.endMeasure - nl.startMeasure)
       Asset(nl.id, values, Some(nl.municipalityCode.toInt), Some(laneGeometry), Some(linearReference))
@@ -407,12 +408,14 @@ object LaneUpdater {
           GeometryUtils.liesInBetween(replaceInfo.oldToMValue, (originalAdditionalLane.startMeasure, originalAdditionalLane.endMeasure))
       })
       val lanesSplitFromOriginal = replaceInfosAffectingLane.map(replaceInfo => {
-        val newRoadLinkLength = change.newLinks.find(_.linkId == replaceInfo.newLinkId).get.linkLength
+        val newId = replaceInfo.newLinkId.getOrElse("")
+        val newRoadLinkLength = if (newId.nonEmpty) change.newLinks.find(_.linkId == newId).get.linkLength else 0
         val laneLinearReference = AssetLinearReference(originalAdditionalLane.id, originalAdditionalLane.startMeasure,
           originalAdditionalLane.endMeasure, originalAdditionalLane.sideCode)
-        val projection = Projection(replaceInfo.oldFromMValue, replaceInfo.oldToMValue, replaceInfo.newFromMValue, replaceInfo.newToMValue)
+        val newMValues = if (replaceInfo.newFromMValue.nonEmpty && replaceInfo.newToMValue.nonEmpty) (replaceInfo.newFromMValue.get, replaceInfo.newToMValue.get) else (0.0, 0.0)
+        val projection = Projection(replaceInfo.oldFromMValue, replaceInfo.oldToMValue, newMValues._1, newMValues._2)
         val (newStartM, newEndM, newSideCode) = MValueCalculator.calculateNewMValues(laneLinearReference, projection, newRoadLinkLength, replaceInfo.digitizationChange)
-        originalAdditionalLane.copy(id = 0 ,startMeasure = newStartM, endMeasure = newEndM, linkId = replaceInfo.newLinkId, sideCode = newSideCode)
+        originalAdditionalLane.copy(id = 0 ,startMeasure = newStartM, endMeasure = newEndM, linkId = newId, sideCode = newSideCode)
       })
       LaneSplit(lanesSplitFromOriginal, originalAdditionalLane)
     })
@@ -425,8 +428,8 @@ object LaneUpdater {
         val newSideCode = if(replaceInfo.digitizationChange) switch(SideCode.apply(originalMainLane.sideCode)).value
         else originalMainLane.sideCode
         val splitLaneStartMeasure = 0.0
-        val splitLaneEndMeasure = LaneUtils.roundMeasure(replaceInfo.newToMValue)
-        originalMainLane.copy(id = 0, linkId = replaceInfo.newLinkId, sideCode = newSideCode, startMeasure = splitLaneStartMeasure, endMeasure = splitLaneEndMeasure)
+        val splitLaneEndMeasure = LaneUtils.roundMeasure(replaceInfo.newToMValue.getOrElse(0.0))
+        originalMainLane.copy(id = 0, linkId =replaceInfo.newLinkId.getOrElse(""), sideCode = newSideCode, startMeasure = splitLaneStartMeasure, endMeasure = splitLaneEndMeasure)
       })
       LaneSplit(splitMainLanesToCreate, originalMainLane)
     })
@@ -444,10 +447,10 @@ object LaneUpdater {
   def fillReplacementLinksWithExistingLanes(lanesToUpdate: Seq[PersistedLane], change: RoadLinkChange): Seq[(LanePositionAdjustment, PersistedLane)] = {
     val newRoadLinks = change.newLinks
     newRoadLinks.flatMap(newRoadlink => {
-      val replaceInfo = change.replaceInfo.find(_.newLinkId == newRoadlink.linkId).get
+      val replaceInfo = change.replaceInfo.find(_.newLinkId.get == newRoadlink.linkId).get
       val laneAdjustmentsOnLink = lanesToUpdate.map(lane => {
         val laneLinearReference = AssetLinearReference(lane.id, lane.startMeasure, lane.endMeasure, lane.sideCode)
-        val projection = Projection(replaceInfo.oldFromMValue, replaceInfo.oldToMValue, replaceInfo.newFromMValue, replaceInfo.newToMValue)
+        val projection = Projection(replaceInfo.oldFromMValue, replaceInfo.oldToMValue, replaceInfo.newFromMValue.get, replaceInfo.newToMValue.get)
         val (newStartM, newEndM, newSideCode) = MValueCalculator.calculateNewMValues(laneLinearReference, projection, newRoadlink.linkLength, replaceInfo.digitizationChange)
         val adjustment = LanePositionAdjustment(lane.id, newRoadlink.linkId, newStartM, newEndM, SideCode.apply(newSideCode))
         val adjustedLane = lane.copy(linkId = newRoadlink.linkId, startMeasure = newStartM, endMeasure = newEndM, sideCode = newSideCode)

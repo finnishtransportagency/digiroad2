@@ -131,8 +131,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -159,8 +159,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -187,8 +187,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -215,8 +215,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -243,8 +243,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -271,8 +271,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = oldLinkGeometry._2, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = oldLinkGeometry._2, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -302,8 +302,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId1, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 0.0, newToMValue = 5, false)
+          ReplaceInfo(oldId1, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(0.0), newToMValue = Option(5), false)
         )
     ),
       RoadLinkChange(
@@ -327,8 +327,8 @@ trait UpdaterUtilsSuite {
             trafficDirection = TrafficDirection.BothDirections
           )),
         replaceInfo =
-          List(ReplaceInfo(oldId2, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 5.0, newToMValue = newLinkGeometry1._2, false))
+          List(ReplaceInfo(oldId2, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(5.0), newToMValue = Option(newLinkGeometry1._2), false))
       )
     )
   }
@@ -462,7 +462,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(14)
       assetsAfter.head.value.isEmpty should be(false)
@@ -502,7 +502,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -540,7 +540,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4)
       assetsAfter.head.value.isEmpty should be(false)
@@ -934,13 +934,13 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       assetsAfter.size should be(2)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       sorted.head.value.isEmpty should be(false)
       sorted.head.value.get should be(NumericValue(3))
 
-      sorted(1).linkId should be(change.replaceInfo.head.newLinkId)
+      sorted(1).linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted(1).startMeasure should be(4.5)
       sorted(1).endMeasure should be(9.0)
       sorted(1).value.isEmpty should be(false)
@@ -978,7 +978,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.size should be(1)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1020,7 +1020,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1063,7 +1063,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1105,7 +1105,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1147,7 +1147,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1191,7 +1191,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1234,7 +1234,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1279,7 +1279,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       sorted.head.value.isEmpty should be(false)
@@ -1330,7 +1330,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       sorted.head.value.isEmpty should be(false)
@@ -1379,7 +1379,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(4.5)
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1422,7 +1422,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1466,7 +1466,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4.5)
       assetsAfter.head.value.isEmpty should be(false)
@@ -1721,6 +1721,28 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
         oldIds.contains(a.oldAsset.get.assetId) should be(true)
         a.newAsset.get.linearReference.get.sideCode.get should be(SideCode.TowardsDigitizing.value)
       })
+    }
+  }
+
+  test("Split. Given a Road Link that is split into 2 new Links; when 1 new Link is deleted; then the Linear Asset's length should equal remaining Link's length.") {
+    val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
+    val newLinkID2 = "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID2).get
+      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0, 79.405), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLinkID2), false)
+      assetsAfter.size should be(1)
+      assetsAfter.head.typeId should be(assetsBefore.head.typeId)
+      val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
+      assetLength should be(newRoadLink.length)
     }
   }
 }

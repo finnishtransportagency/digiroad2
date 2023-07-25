@@ -49,8 +49,8 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -182,8 +182,8 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId1, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 0.0, newToMValue = 5, false)
+          ReplaceInfo(oldId1, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(0.0), newToMValue = Option(5), false)
         )
     ),
       RoadLinkChange(
@@ -207,8 +207,8 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
             trafficDirection = TrafficDirection.BothDirections
           )),
         replaceInfo =
-          List(ReplaceInfo(oldId2, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 5.0, newToMValue = newLinkGeometry1._2, false))
+          List(ReplaceInfo(oldId2, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(5.0), newToMValue = Option(newLinkGeometry1._2), false))
       )
     )
   }
@@ -242,7 +242,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(14)
       assetsAfter.head.value.isEmpty should be(false)

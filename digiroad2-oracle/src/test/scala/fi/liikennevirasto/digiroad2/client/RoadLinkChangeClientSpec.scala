@@ -17,7 +17,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
   test("test json convert with whole set") {
-    changes.size should be(36)
+    changes.size should be(37)
   }
 
   test("RoadLinkChange for 'add' contains correct info") {
@@ -82,11 +82,11 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
 
     replaceChange.replaceInfo.size should be(1)
     replaceChange.replaceInfo.head.oldLinkId should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:1")
-    replaceChange.replaceInfo.head.newLinkId should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:2")
+    replaceChange.replaceInfo.head.newLinkId.get should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:2")
     replaceChange.replaceInfo.head.oldFromMValue should be(0)
     replaceChange.replaceInfo.head.oldToMValue should be(16.465)
-    replaceChange.replaceInfo.head.newFromMValue should be(0)
-    replaceChange.replaceInfo.head.newToMValue should be(16.465)
+    replaceChange.replaceInfo.head.newFromMValue.get should be(0)
+    replaceChange.replaceInfo.head.newToMValue.get should be(16.465)
     replaceChange.replaceInfo.head.digitizationChange should be(false)
   }
 
@@ -143,40 +143,40 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     val sortedReplaceInfo = splitChange.replaceInfo.sortBy(_.newLinkId)
 
     sortedReplaceInfo.head.oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
-    sortedReplaceInfo.head.newLinkId should be("0d92e4a4-51cf-4abe-8f0e-8ee22241c3ff:1")
+    sortedReplaceInfo.head.newLinkId.get should be("0d92e4a4-51cf-4abe-8f0e-8ee22241c3ff:1")
     sortedReplaceInfo.head.oldFromMValue should be(0)
     sortedReplaceInfo.head.oldToMValue should be(17.305)
-    sortedReplaceInfo.head.newFromMValue should be(0)
-    sortedReplaceInfo.head.newToMValue should be(17.305)
+    sortedReplaceInfo.head.newFromMValue.get should be(0)
+    sortedReplaceInfo.head.newToMValue.get should be(17.305)
     sortedReplaceInfo.head.digitizationChange should be(false)
 
     sortedReplaceInfo(1).oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
-    sortedReplaceInfo(1).newLinkId should be("d59dd3a9-a94d-4f26-b311-6b9b8361c717:1")
+    sortedReplaceInfo(1).newLinkId.get should be("d59dd3a9-a94d-4f26-b311-6b9b8361c717:1")
     sortedReplaceInfo(1).oldFromMValue should be(34.733)
     sortedReplaceInfo(1).oldToMValue should be(121.673)
-    sortedReplaceInfo(1).newFromMValue should be(0)
-    sortedReplaceInfo(1).newToMValue should be(86.941)
+    sortedReplaceInfo(1).newFromMValue.get should be(0)
+    sortedReplaceInfo(1).newToMValue.get should be(86.941)
     sortedReplaceInfo(1).digitizationChange should be(false)
 
 
     sortedReplaceInfo.last.oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
-    sortedReplaceInfo.last.newLinkId should be("e92c98c9-5a62-4995-a9c0-e40ae0b65747:1")
+    sortedReplaceInfo.last.newLinkId.get should be("e92c98c9-5a62-4995-a9c0-e40ae0b65747:1")
     sortedReplaceInfo.last.oldFromMValue should be(17.305)
     sortedReplaceInfo.last.oldToMValue should be(34.733)
-    sortedReplaceInfo.last.newFromMValue should be(0)
-    sortedReplaceInfo.last.newToMValue should be(17.432)
+    sortedReplaceInfo.last.newFromMValue.get should be(0)
+    sortedReplaceInfo.last.newToMValue.get should be(17.432)
     sortedReplaceInfo.last.digitizationChange should be(false)
   }
 
   test("merge replace info with same old and new link") {
-    val replaceInfo = changes(35).replaceInfo
+    val replaceInfo = changes(36).replaceInfo
     replaceInfo.size should be(1)
     replaceInfo.head.oldLinkId should be("350e7577-020e-4abe-bf12-509f070371ed:1")
-    replaceInfo.head.newLinkId should be("dfdf4f1e-9e12-4dc0-9b44-868320164539:1")
+    replaceInfo.head.newLinkId.get should be("dfdf4f1e-9e12-4dc0-9b44-868320164539:1")
     replaceInfo.head.oldFromMValue should be(0)
     replaceInfo.head.oldToMValue should be(189.231)
-    replaceInfo.head.newFromMValue should be(0)
-    replaceInfo.head.newToMValue should be(191.552)
+    replaceInfo.head.newFromMValue.get should be(0)
+    replaceInfo.head.newToMValue.get should be(191.552)
     replaceInfo.head.digitizationChange should be(false)
   }
 
