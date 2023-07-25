@@ -95,7 +95,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
     (roadLinkChange.changeType, nearestReplace) match {
       case (RoadLinkChangeType.Remove, _) => setAssetAsFloating(asset, Some(FloatingReason.NoRoadLinkFound))
       case (_, Some(replace)) =>
-        (roadLinkChange.oldLink, roadLinkChange.newLinks.find(_.linkId == replace.newLinkId)) match {
+        (roadLinkChange.oldLink, roadLinkChange.newLinks.find(_.linkId == replace.newLinkId.getOrElse(""))) match {
           case (Some(oldLink), Some(newLink)) =>
             val (floating, floatingReason) = shouldFloat(asset, replace, Some(newLink), getRoadLink(Some(newLink)))
             if (floating)   setAssetAsFloating(asset, floatingReason)

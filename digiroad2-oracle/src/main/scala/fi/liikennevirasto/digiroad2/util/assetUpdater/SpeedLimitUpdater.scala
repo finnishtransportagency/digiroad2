@@ -43,7 +43,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     change.newLinks.exists(newLink => {
       val oldOriginalTrafficDirection = change.oldLink.get.trafficDirection
       val newOriginalTrafficDirection = newLink.trafficDirection
-      val replaceInfo = change.replaceInfo.find(_.newLinkId == newLink.linkId).get
+      val replaceInfo = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get
       val isDigitizationChange = replaceInfo.digitizationChange
       val overWrittenTdValueOnNewLink = TrafficDirectionDao.getExistingValue(newLink.linkId)
 

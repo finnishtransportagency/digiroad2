@@ -242,7 +242,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
+      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId.get)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(14)
       assetsAfter.head.value.isEmpty should be(false)
