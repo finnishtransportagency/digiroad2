@@ -2,36 +2,21 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType, RoadLinkClient, RoadLinkFetched, RoadLinkInfo}
+import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkChangeType, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, MTKClassWidth, RoadLink, SurfaceType}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-import java.util.UUID
-import scala.collection.mutable.ListBuffer
-
-class PavedRoadUpdaterSpec extends FunSuite with Matchers{
-  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val linearAssetDao = new PostGISLinearAssetDao()
+class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
-
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
-  val service = new DynamicLinearAssetService(mockRoadLinkService, mockEventBus)
-  lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-  }
-  
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+  val dynamicLinearAssetService = new DynamicLinearAssetService(mockRoadLinkService, mockEventBus)
 
   object Service extends PavedRoadService(mockRoadLinkService, mockEventBus) {
     override def polygonTools: PolygonTools = mockPolygonTools
@@ -53,14 +38,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
     override def roadLinkService = mockRoadLinkService
   }
   
-  lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(roadLinkClient, mockEventBus, new DummySerializer)
-  }
-  
-  val roadLinkChangeClient = new RoadLinkChangeClient
-
-
-  def changeReplaceNewVersion(oldRoadLinkId: String, newRoadLikId: String): RoadLinkChange = {
+  def changeReplaceNewVersionChangePavement(oldRoadLinkId: String, newRoadLikId: String): RoadLinkChange = {
     val (oldLinkGeometry, oldId) = (generateGeometry(0, 9), oldRoadLinkId)
     val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 9), newRoadLikId)
 
@@ -90,15 +68,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
             oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
-  def generateGeometry(startPoint: Double, numberPoint: Long): (List[Point], Double) = {
-    val points = new ListBuffer[Point]
-    for (i <- 1 to numberPoint.toInt) {
-      points.append(Point(i + startPoint, 0))
-    }
-    (points.toList, GeometryUtils.geometryLength(points))
-  }
   
-  lazy val source = scala.io.Source.fromFile("digiroad2-oracle/src/test/resources/smallChangeSet.json").mkString
   val assetValues = DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka","single_choice",false,List(DynamicPropertyValue(99)))
     , DynamicProperty("suggest_box","checkbox",false,List())
   )))
@@ -109,7 +79,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
 
     runWithRollback {
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq("624df3a8-b403-4b42-a032-41d4b59e1840:1"), false)
+      val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkId15), false)
       assetsAfter.size should be(1)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
@@ -119,36 +89,32 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       val properties = assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties
       properties.head.values.head.value should be("99")
 
-      val assets = TestPavedRoadUpdater.getReport().filter(_.linkId =="624df3a8-b403-4b42-a032-41d4b59e1840:1").map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestPavedRoadUpdater.getReport().filter(_.linkId ==linkId15).map(a => PairAsset(a.before, a.after.headOption))
 
       assets.size should  be(1)
       TestPavedRoadUpdater.getReport().head.changeType should be(ChangeTypeReport.Creation)
     }
   }
-  private def generateRandomKmtkId(): String = s"${UUID.randomUUID()}"
   test("case 6 links version and no pavement, expire") {
     val linkId = generateRandomKmtkId()
     val linkIdVersion1 = s"$linkId:1"
     val linkIdVersion2 = s"$linkId:2"
     val geometry = generateGeometry(0, 9)
-    val oldRoadLink = RoadLink(linkIdVersion1, geometry._1, geometry._2, Municipality,
-      60, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    val newRoadLink = RoadLink(linkIdVersion2, geometry._1, geometry._2, Municipality,
-      60, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(1)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    val change = changeReplaceNewVersion(linkIdVersion1, linkIdVersion2)
+    val oldRoadLink =  createRoadLink(linkIdVersion1,geometry, functionalClassI = AnotherPrivateRoad,paved = SurfaceType.Paved)
+    val newRoadLink =  createRoadLink(linkIdVersion2,geometry,functionalClassI = AnotherPrivateRoad,paved = SurfaceType.None)
+    
+    val change = changeReplaceNewVersionChangePavement(linkIdVersion1, linkIdVersion2)
 
     runWithRollback {
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(linkIdVersion2), false)).thenReturn(Seq(newRoadLink))
-      val id1 = service.createWithoutTransaction(PavedRoad.typeId, linkIdVersion1, assetValues, SideCode.BothDirections.value, Measures(0, geometry._2), AutoGeneratedUsername.mtkClassDefault, 0L, Some(oldRoadLink), false, None, None)
+      val id1 = dynamicLinearAssetService.createWithoutTransaction(PavedRoad.typeId, linkIdVersion1, assetValues, SideCode.BothDirections.value, Measures(0, geometry._2), AutoGeneratedUsername.mtkClassDefault, 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id1), false)
+      val assetsBefore = dynamicLinearAssetService.getPersistedAssetsByIds(PavedRoad.typeId, Set(id1), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
       TestPavedRoadUpdaterMock.updateByRoadLinks(PavedRoad.typeId, Seq(change))
-      val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
+      val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(0)
       
       val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
@@ -159,22 +125,22 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("case 1 links under asset is split, smoke test") {
-    val linkId = "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1"
-    val newLinks = Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1", "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1")
+    val linkId = linkId5
+    val newLinks = newLinks1_2_4
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
 
-      val id = service.createWithoutTransaction(PavedRoad.typeId, linkId,
+      val id = dynamicLinearAssetService.createWithoutTransaction(PavedRoad.typeId, linkId,
         assetValues, SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val assetsBefore = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
+      val assetsBefore = dynamicLinearAssetService.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
 
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, newLinks, false)
+      val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, newLinks, false)
       assetsAfter.size should be(3)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
@@ -190,5 +156,4 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       assetsAfter.map(v => v.value.get.equals(assetValues))
     }
   }
-  
 }

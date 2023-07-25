@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 
 import fi.liikennevirasto.digiroad2.FloatingReason.NoRoadLinkFound
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient}
@@ -8,7 +9,6 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{ObstacleService, PedestrianCrossingService, RailwayCrossingService}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
-import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar

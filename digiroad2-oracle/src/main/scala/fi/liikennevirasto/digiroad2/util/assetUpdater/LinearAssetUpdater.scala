@@ -2,13 +2,10 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, LinkTypeDao, TrafficDirectionDao}
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkValue}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -101,21 +98,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
     }
   }
-
-  private def toRoadLinkForFillTopology(roadLink: RoadLinkInfo)(trafficDirectionOverrideds: Seq[RoadLinkValue], 
-                                                                adminClassOverrideds: Seq[RoadLinkValue], 
-                                                                linkTypes: Seq[RoadLinkValue]): RoadLinkForFillTopology = {
-    val overridedAdminClass = adminClassOverrideds.find(_.linkId == roadLink.linkId)
-    val overridedDirection = trafficDirectionOverrideds.find(_.linkId == roadLink.linkId)
-    val linkType = linkTypes.find(_.linkId == roadLink.linkId)
-
-    val adminClass = if (overridedAdminClass.nonEmpty) AdministrativeClass.apply(overridedAdminClass.get.value.get) else roadLink.adminClass
-    val trafficDirection = if (overridedDirection.nonEmpty) TrafficDirection.apply(overridedDirection.get.value) else roadLink.trafficDirection
-    val linkTypeExtract = if (linkType.nonEmpty) LinkType.apply(linkType.get.value.get) else UnknownLinkType
-
-    RoadLinkForFillTopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = trafficDirection, administrativeClass = adminClass,
-      linkSource = NormalLinkInterface, linkType = linkTypeExtract, constructionType = UnknownConstructionType, geometry = roadLink.geometry, municipalityCode = roadLink.municipality)
+  
+  private def toRoadLinkForFillTopology(roadLink: RoadLink): RoadLinkForFillTopology = {
+    RoadLinkForFillTopology(linkId = roadLink.linkId, length = roadLink.length, 
+      trafficDirection = roadLink.trafficDirection, administrativeClass = roadLink.administrativeClass,
+      linkSource = roadLink.linkSource, linkType = roadLink.linkType, 
+      constructionType = roadLink.constructionType, 
+      geometry = roadLink.geometry, municipalityCode = roadLink.municipalityCode)
   }
+  
   private def convertToPersisted(asset: PieceWiseLinearAsset): PersistedLinearAsset = {
     PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value,
       asset.value, asset.startMeasure, asset.endMeasure, asset.createdBy,
@@ -298,23 +289,20 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]): Unit = {
     val changes = filterChanges(changesAll)
     val oldIds = changes.filterNot(isDeletedOrNew).map(_.oldLink.get.linkId)
-    val newIds = changes.filterNot(isDeletedOrNew).flatMap(_.newLinks)
     val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
     val newLinks = changes.filter(isNew).flatMap(_.newLinks).size
     // here we assume that RoadLinkProperties updater has already remove override if KMTK version traffic direction is same.
     // still valid overrided has also been samuuted
-    val overridedAdmin = AdministrativeClassDao.getExistingValues(newIds.map(_.linkId))
-    val overridedTrafficDirection = TrafficDirectionDao.getExistingValues(newIds.map(_.linkId))
-    val linkTypes = LinkTypeDao.getExistingValues(newIds.map(_.linkId))
+    val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
+    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet)
+    
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
     val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
-
-    val links = changes.flatMap(_.newLinks.map(toRoadLinkForFillTopology(_)(overridedAdmin, overridedTrafficDirection, linkTypes)))
     
     logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of changes in the sets: ${changes.size}")
     logger.info(s"Deleted links count: ${deletedLinks}, new links count: ${newLinks}")
     val (projectedAssets, changedSet) = LogUtils.time(logger, s"Samuuting logic finished: ") {
-      fillNewRoadLinksWithPreviousAssetsData(typeId, links, existingAssets, changes, initChangeSet)
+      fillNewRoadLinksWithPreviousAssetsData(typeId, newRoadLinks, existingAssets, changes, initChangeSet)
     }
     
     additionalRemoveOperationMass(deletedLinks)
@@ -326,7 +314,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, links: Seq[RoadLinkForFillTopology],
+  private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, links: Seq[RoadLink],
                                                        assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
                                                        changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val initStep = OperationStep(Seq(), Some(changeSet))
@@ -349,7 +337,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     (assetsOperated, changeInfo.get)
   }
-  private def goThroughChanges(typeId: Int, links: Seq[RoadLinkForFillTopology], assetsAll: Seq[PersistedLinearAsset],
+  private def goThroughChanges(typeId: Int, links: Seq[RoadLink], assetsAll: Seq[PersistedLinearAsset],
                                 changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange): Option[OperationStep] = {
     nonAssetUpdate(change, Seq(), null)
     change.changeType match {
@@ -373,14 +361,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         } else None
     }
   }
-  private def adjustAndReportReplacement(typeId: Int, links: Seq[RoadLinkForFillTopology],
+  private def adjustAndReportReplacement(typeId: Int, links: Seq[RoadLink],
                                          assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep): Option[OperationStep] = {
     val groupByNewLink = assetUnderReplace.groupBy(a => a.get.newLinkId)
     val adjusted = adjustAndAdditionalOperations(typeId, links, groupByNewLink, additionalUpdateOrChangeReplace)
     adjusted.map(reportingReplacement(initStep, _)).foldLeft(Some(initStep))(mergerOperations)
   }
 
-  private def adjustAndAdditionalOperations(typeId: Int, links: Seq[RoadLinkForFillTopology],
+  private def adjustAndAdditionalOperations(typeId: Int, links: Seq[RoadLink],
                                             assets: Map[String, Seq[Option[OperationStep]]],
                                             operation: OperationStep => Option[OperationStep]) = {
     val mergeAndAdjust = adjust(typeId, links, assets)
@@ -397,17 +385,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param assets assets grouped new link id 
     * @return
     */
-  private def adjust(typeId: Int, links: Seq[RoadLinkForFillTopology], assets: Map[String, Seq[Option[OperationStep]]]): Seq[LinkAndOperation] = {
+  private def adjust(typeId: Int, links: Seq[RoadLink], assets: Map[String, Seq[Option[OperationStep]]]): Seq[LinkAndOperation] = {
     assets.map(linkAndAssets => 
       LinkAndOperation(linkAndAssets._1, linkAndAssets._2.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations).get)
     ).map(a => LinkAndOperation(a.newLinkId, adjustAssets(typeId, links, a.operation))).toSeq
   }
   
-  private def adjustAssets(typeId: Int, links: Seq[RoadLinkForFillTopology], operationStep: OperationStep): OperationStep = {
+  private def adjustAssets(typeId: Int, links: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
     val OperationStep(assetsAfter,changeSetFromOperation,roadLinkChange,newLinkId,assetsBefore) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
-    val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(assetsOperated, links).groupBy(_.linkId)
-    val (adjusted, changeSet) = adjustLinearAssetsOnChangesGeometry(links, groupedAssets, typeId, changeSetFromOperation)
+    val convert = links.map(toRoadLinkForFillTopology)
+    val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(assetsOperated, convert).groupBy(_.linkId)
+    val (adjusted, changeSet) = adjustLinearAssetsOnChangesGeometry(convert, groupedAssets, typeId, changeSetFromOperation)
     OperationStep(adjusted.toSet.map(convertToPersisted).toSeq, Some(changeSet), roadLinkChange, newLinkId, assetsBefore)
   }
 
@@ -416,7 +405,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
   }
 
-  private def handleSplits(typeId: Int, links: Seq[RoadLinkForFillTopology], changeSet: ChangeSet,
+  private def handleSplits(typeId: Int, links: Seq[RoadLink], changeSet: ChangeSet,
                            initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset]): Option[OperationStep] = {
     val groupByNewLink = operationForSplit(change, assets, changeSet).map(a => Some(a)).groupBy(a => a.get.newLinkId)
     val adjusted = adjustAndAdditionalOperations(typeId, links, groupByNewLink, additionalUpdateOrChangeSplit)
