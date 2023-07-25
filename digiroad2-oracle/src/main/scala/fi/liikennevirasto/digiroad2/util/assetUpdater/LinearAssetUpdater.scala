@@ -482,15 +482,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     */
   private def projecting(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset, beforeAsset: PersistedLinearAsset) = {
     val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw new Exception("Did not found replace info for asset"))
-    val link = change.newLinks.find(_.linkId == info.newLinkId.get).get
-    val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = info.newLinkId.get),
+    val newId = info.newLinkId.getOrElse("")
+    val maybeLink = change.newLinks.find(_.linkId == newId)
+    val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
+
+    val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = newId),
       Projection(
         info.oldFromMValue, info.oldToMValue,
-        info.newFromMValue.get, info.newToMValue.get,
+        info.newFromMValue.getOrElse(0), info.newToMValue.getOrElse(0),
         LinearAssetUtils.createTimeStamp(),
-        info.newLinkId.get, link.linkLength),
+        newId, maybeLinkLength),
       changeSets, info.digitizationChange)
-    Some(OperationStep(Seq(projected), Some(changeSet), newLinkId = info.newLinkId.get, assetsBefore = Seq(beforeAsset)))
+    Some(OperationStep(Seq(projected), Some(changeSet), newLinkId = newId, assetsBefore = Seq(beforeAsset)))
   }
 
   private def projectLinearAsset(asset: PersistedLinearAsset, projection: Projection, changedSet: ChangeSet, digitizationChanges: Boolean): (PersistedLinearAsset, ChangeSet) = {
