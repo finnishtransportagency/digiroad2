@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListServi
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, MainLanePopulationProcess}
-import fi.liikennevirasto.digiroad2.{AssetLinearReference, DummyEventBus, DummySerializer, GeometryUtils, MValueCalculator}
+import fi.liikennevirasto.digiroad2._
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.json4s.JsonAST.JObject
