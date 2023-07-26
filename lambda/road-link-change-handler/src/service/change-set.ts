@@ -50,6 +50,12 @@ export class ChangeSet {
         this.changeEntries = this.convertToEntries(allChanges, groupByLinkId)
     }
 
+    /**
+     *  This is performance critical part of Lambda. Check performance when doing big change. 
+     * @param allChanges
+     * @param links
+     * @private
+     */
     private convertToEntries(allChanges:ReplaceInfo[][],links:GroupByLink[]) {
        
             console.time("convertToEntries total time ")
