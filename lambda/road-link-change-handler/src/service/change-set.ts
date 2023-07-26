@@ -18,9 +18,8 @@ export class ChangeSet {
         console.time("extractKeyLinkProperties")
         this.links = links.map(link => this.extractKeyLinkProperties(link));
         console.timeEnd("extractKeyLinkProperties")
-        
+
         console.time("Group changes")
-        
         const [groupedByOldLinkId, groupedByNewLinkId] = replaceInfo.reduce(([withOldLink, withoutOldLink]: GroupedReplaces[], replace: ReplaceInfo) => {
             if (replace.oldLinkId)
                 this.addToMap(replace.oldLinkId, withOldLink, replace);
@@ -28,7 +27,7 @@ export class ChangeSet {
                 this.addToMap(replace.newLinkId, withoutOldLink, replace);
             return [withOldLink, withoutOldLink];
         }, [{}, {}]);
-        
+
         console.timeEnd("Group changes")
 
         console.time("Extract replaces with old")
@@ -38,24 +37,84 @@ export class ChangeSet {
         console.time("Extract replaces, no old")
         const withoutOldLink = this.extractReplaces(groupedByNewLinkId);
         console.timeEnd("Extract replaces, no old")
-        
+
         console.time("Merge replaces")
         const allChanges = withOldLink.concat(withoutOldLink);
         console.timeEnd("Merge replaces")
-        
-        console.time("Convert to change entries")
-        const converted = allChanges.map(change => this.toChangeEntry(change));
-        console.timeEnd("Convert to change entries")
 
-        console.time("Separate Add")
-        const separated = _.partition(converted,p=>p.changeType == ChangeTypes.add);
-        console.timeEnd("Separate Add")
-        
-        console.time("Filter unneeded")
-        const add = _.filter(separated[0], p=> {return this.filterPartialAdds(p);});
-        console.timeEnd("Filter unneeded")
-        
-        this.changeEntries = separated[1].concat(add);
+        console.time("Grouping road links")
+        const groupByLinkId = _.chain(this.links).groupBy(p => p.linkId).map((value, key) => ({
+            linkId: key, link: value[0]})).value() as GroupByLink[]
+        console.timeEnd("Grouping road links")
+
+        this.changeEntries = this.convertToEntries(allChanges, groupByLinkId)
+    }
+
+    private convertToEntries(allChanges:ReplaceInfo[][],links:GroupByLink[]) {
+       
+            console.time("convertToEntries total time ")
+            console.time("Convert to change entries ")
+            const convertedArray: ChangeEntry[] = []
+            for (const item of allChanges) {
+                convertedArray.push(this.toChangeEntry(item, links))
+            }
+            const converted = convertedArray
+            
+            console.timeEnd("Convert to change entries ")
+
+            console.time("Separate Add ")
+            const separated = _.partition(converted, p => p.changeType == ChangeTypes.add);
+            console.timeEnd("Separate Add ")
+
+            console.time("Filter unneeded ")
+            const add = _.filter(separated[0], p => { return this.filterPartialAdds(p); });
+            console.timeEnd("Filter unneeded ")
+
+            console.time("Merging add back ")
+            const list = separated[1].concat(add)
+            console.timeEnd("Merging add back ")
+
+            console.timeEnd("convertToEntries total time ")
+            return list
+    }
+
+    private toChangeEntry(change: ReplaceInfo[], links: GroupByLink[]): ChangeEntry {
+        const oldLinkIds: string[] = []
+        const newLinkIds: Set<string> = new Set()
+        const newLinkIdsContainNulls: Set<string | null> = new Set()
+        const onlyRelevantLinks: Set<KeyLinkProperties> = new Set()
+        for (const item of change) {
+            if (item.oldLinkId != null) {
+                const oldLink = _.find(links, p => p.linkId == item.oldLinkId)
+                oldLinkIds.push(item.oldLinkId);
+                if (oldLink?.link != null) onlyRelevantLinks.add(oldLink.link)
+            }
+            if (item.newLinkId != null) {
+                const newLink = _.find(links, p => p.linkId == item.newLinkId)
+                newLinkIds.add(item.newLinkId);
+                if (newLink?.link != null) onlyRelevantLinks.add(newLink.link)
+            }
+            newLinkIdsContainNulls.add(item.newLinkId)
+        }
+        const oldLinkId = oldLinkIds[0];
+        const type = this.extractChangeType(newLinkIds, oldLinkId, Array.from(newLinkIdsContainNulls))
+        const onlyRelevantLinksArray = Array.from(onlyRelevantLinks)
+        const oldLink = _.find(onlyRelevantLinksArray, (link => link.linkId == oldLinkId)) ?? null
+        const newLink = _.filter(onlyRelevantLinksArray, (link => _.includes(Array.from(newLinkIds), link.linkId)))
+        return {
+            changeType: type,
+            old: oldLink,
+            new: newLink,
+            replaceInfo: change
+        }
+    }
+
+    private extractChangeType(newIds: Set<string>, oldId: string | null, newLinkIdsContainNulls: (string | null)[]): string {
+        const isSplit = newIds.size > 1 || _.filter(newLinkIdsContainNulls, e => e == null).length >= 1
+        if (oldId == null) return ChangeTypes.add;
+        else if (newIds.size == 0) return ChangeTypes.remove;
+        else if (isSplit) return ChangeTypes.split;
+        else return ChangeTypes.replace;
     }
 
     private filterPartialAdds(p: ChangeEntry) {
@@ -68,27 +127,6 @@ export class ChangeSet {
 
     toJson(): string {
         return JSON.stringify(this.changeEntries);
-    }
-
-    protected toChangeEntry(change: ReplaceInfo[]): ChangeEntry {
-        const oldLinkId     = change.map(value => value.oldLinkId).filter(item => item)[0];
-        const newLinkIds    = [...new Set(change.map(value => value.newLinkId))].filter(item => item) as string[];
-        const newLinkIdsContainNulls    = [...new Set(change.map(value => value.newLinkId))] as string[];
-        
-        return {
-            changeType:     this.extractChangeType(newLinkIds, oldLinkId,newLinkIdsContainNulls),
-            old:            this.links.find(link => link.linkId == oldLinkId) ?? null,
-            new:            this.links.filter(link => newLinkIds.includes(link.linkId)),
-            replaceInfo:    change
-        }
-    }
-
-    protected extractChangeType(newIds: string[], oldId: string | null, newLinkIdsContainNulls:string[]): string {
-        const isSplit = newIds.length > 1 || _.filter(newLinkIdsContainNulls,e=>e == null).length >= 1
-        if      (oldId == null)         return ChangeTypes.add;
-        else if (newIds.length == 0)    return ChangeTypes.remove;
-        else if (isSplit)               return ChangeTypes.split;
-        else                            return ChangeTypes.replace;
     }
 
     protected extractKeyLinkProperties(link: KgvLink): KeyLinkProperties {
@@ -116,6 +154,11 @@ export class ChangeSet {
 
 interface GroupedReplaces {
     [key: string]   : ReplaceInfo[];
+}
+
+interface GroupByLink {
+ linkId: string; 
+ link: KeyLinkProperties 
 }
 
 interface ChangeEntry {
