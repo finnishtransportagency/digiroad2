@@ -109,24 +109,21 @@ export class ChangeSet {
             newLinkIdsContainNulls.add(item.newLinkId)
         }
         const oldLinkId = oldLinkIds[0];
-        const type = this.extractChangeType(newLinkIds, oldLinkId, Array.from(newLinkIdsContainNulls))
         const onlyRelevantLinksArray = Array.from(onlyRelevantLinks)
-        const oldLink = _.find(onlyRelevantLinksArray, (link => link.linkId == oldLinkId)) ?? null
-        const newLink = _.filter(onlyRelevantLinksArray, (link => _.includes(Array.from(newLinkIds), link.linkId)))
         return {
-            changeType: type,
-            old: oldLink,
-            new: newLink,
-            replaceInfo: change
+            changeType:     this.extractChangeType(newLinkIds, oldLinkId, Array.from(newLinkIdsContainNulls)),
+            old:            _.find(onlyRelevantLinksArray, (link => link.linkId == oldLinkId)) ?? null,
+            new:            _.filter(onlyRelevantLinksArray, (link => _.includes(Array.from(newLinkIds), link.linkId))),
+            replaceInfo:    change
         }
     }
     
     private extractChangeType(newIds: Set<string>, oldId: string | null, newLinkIdsContainNulls: (string | null)[]): string {
         const isSplit = newIds.size > 1 || _.filter(newLinkIdsContainNulls, e => e == null).length >= 1
-        if (oldId == null) return ChangeTypes.add;
-        else if (newIds.size == 0) return ChangeTypes.remove;
-        else if (isSplit) return ChangeTypes.split;
-        else return ChangeTypes.replace;
+        if (oldId == null)          return ChangeTypes.add;
+        else if (newIds.size == 0)  return ChangeTypes.remove;
+        else if (isSplit)           return ChangeTypes.split;
+        else                        return ChangeTypes.replace;
     }
 
     protected extractKeyLinkProperties(link: KgvLink): KeyLinkProperties {
