@@ -77,8 +77,20 @@ export class ChangeSet {
             console.timeEnd("convertToEntries total time ")
             return list
     }
+    
+    private filterPartialAdds(p: ChangeEntry) {
+        const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue)).reverse()
+        const startPart = _.last(sorted)?.newFromMValue
+        const endPart = sorted[0].newToMValue
+        const newLinkLength = p.new[0].linkLength
+        return endPart == newLinkLength && startPart == 0
+    }
+    
+    toJson(): string {
+        return JSON.stringify(this.changeEntries);
+    }
 
-    private toChangeEntry(change: ReplaceInfo[], links: GroupByLink[]): ChangeEntry {
+    protected toChangeEntry(change: ReplaceInfo[], links: GroupByLink[]): ChangeEntry {
         const oldLinkIds: string[] = []
         const newLinkIds: Set<string> = new Set()
         const newLinkIdsContainNulls: Set<string | null> = new Set()
@@ -108,19 +120,7 @@ export class ChangeSet {
             replaceInfo: change
         }
     }
-
-    private filterPartialAdds(p: ChangeEntry) {
-        const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue)).reverse()
-        const startPart = _.last(sorted)?.newFromMValue
-        const endPart = sorted[0].newToMValue
-        const newLinkLength = p.new[0].linkLength
-        return endPart == newLinkLength && startPart == 0
-    }
-
-    toJson(): string {
-        return JSON.stringify(this.changeEntries);
-    }
-
+    
     private extractChangeType(newIds: Set<string>, oldId: string | null, newLinkIdsContainNulls: (string | null)[]): string {
         const isSplit = newIds.size > 1 || _.filter(newLinkIdsContainNulls, e => e == null).length >= 1
         if (oldId == null) return ChangeTypes.add;
