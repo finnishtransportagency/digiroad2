@@ -29,7 +29,7 @@
   },
   {
     "ParameterKey": "VkmApi",
-    "ParameterValue": "https://devapi.testivaylapilvi.fi/viitekehysmuunnin/"
+    "ParameterValue": "https://paikkatietodev.testivaylapilvi.fi/viitekehysmuunnin/"
   },
   {
     "ParameterKey": "VkmApiKeySSM",
@@ -37,11 +37,11 @@
   },
   {
     "ParameterKey": "KgvApi",
-    "ParameterValue": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/"
   },
   {
     "ParameterKey": "KgvApiKeySSM",
-    "ParameterValue": "/dev/apikey/kgv.apikey"
+    "ParameterValue": "/prod/apikey/kgv.apikey"
   },
   {
     "ParameterKey": "PgHost",

@@ -15,7 +15,12 @@ export class ChangeSet {
     private readonly links: KeyLinkProperties[];
 
     constructor(links: KgvLink[], replaceInfo: ReplaceInfo[]) {
+        console.time("extractKeyLinkProperties")
         this.links = links.map(link => this.extractKeyLinkProperties(link));
+        console.timeEnd("extractKeyLinkProperties")
+        
+        console.time("Group changes")
+        
         const [groupedByOldLinkId, groupedByNewLinkId] = replaceInfo.reduce(([withOldLink, withoutOldLink]: GroupedReplaces[], replace: ReplaceInfo) => {
             if (replace.oldLinkId)
                 this.addToMap(replace.oldLinkId, withOldLink, replace);
@@ -23,12 +28,33 @@ export class ChangeSet {
                 this.addToMap(replace.newLinkId, withoutOldLink, replace);
             return [withOldLink, withoutOldLink];
         }, [{}, {}]);
+        
+        console.timeEnd("Group changes")
+
+        console.time("Extract replaces with old")
         const withOldLink = this.extractReplaces(groupedByOldLinkId);
+        console.timeEnd("Extract replaces with old")
+
+        console.time("Extract replaces, no old")
         const withoutOldLink = this.extractReplaces(groupedByNewLinkId);
+        console.timeEnd("Extract replaces, no old")
+        
+        console.time("Merge replaces")
         const allChanges = withOldLink.concat(withoutOldLink);
+        console.timeEnd("Merge replaces")
+        
+        console.time("Convert to change entries")
         const converted = allChanges.map(change => this.toChangeEntry(change));
+        console.timeEnd("Convert to change entries")
+
+        console.time("Separate Add")
         const separated = _.partition(converted,p=>p.changeType == ChangeTypes.add);
+        console.timeEnd("Separate Add")
+        
+        console.time("Filter unneeded")
         const add = _.filter(separated[0], p=> {return this.filterPartialAdds(p);});
+        console.timeEnd("Filter unneeded")
+        
         this.changeEntries = separated[1].concat(add);
     }
 
