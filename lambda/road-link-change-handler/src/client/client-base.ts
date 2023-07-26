@@ -30,7 +30,7 @@ export class ClientBase {
             return response.data;
         } catch (err) {
             const queryParams = JSON.stringify(params).substring(0, 100);
-            console.error(`Request ${client.getUri() + url} with params ${queryParams}... responded with error (retry: ${retry}):`);
+            //console.error(`Request ${client.getUri() + url} with params ${queryParams}... responded with error (retry: ${retry}):`);
             const errorMsg = this.processErrorAndExtractMessage(err, client.getUri() + url);
             if (retry < this.maxRetriesPerQuery) {
                 await this.exponentialTimeout(retry);
@@ -64,8 +64,8 @@ export class ClientBase {
 
     processErrorAndExtractMessage(error: any, url: string): string {
         if (axios.isAxiosError(error)) {
-            console.error("Error code :"+error.response?.status);
-            console.error(error.response?.data);
+            //console.error("Error code :"+error.response?.status);
+            //console.error(error.response?.data);
             return `Error happened during fetch of ${url} (${error.response?.status}: ${error.response?.statusText.substring(0, 100)})`;
         } else {
             console.error(error);

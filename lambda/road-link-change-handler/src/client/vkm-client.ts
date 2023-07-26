@@ -32,7 +32,7 @@ export class VkmClient extends ClientBase {
             if (feature.properties.virheet) {
                 console.error(`Tiekamu responded with error: ${feature.properties.virheet}`);
             } else if (feature.properties.link_id === feature.properties.link_id_kohdepvm) {
-                console.warn(`Skipping change. Kmtk_id and kmtk_id_historia are both: ${feature.properties.link_id }`);
+                //console.warn(`Skipping change. link_id and link_id_kohdepvm are both: ${feature.properties.link_id }`);
             } else array.push(this.tiekamuResponseToReplaceInfo(feature.properties));
             return array;
         }, []);
