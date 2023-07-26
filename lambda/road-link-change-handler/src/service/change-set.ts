@@ -109,14 +109,6 @@ export class ChangeSet {
         }
     }
 
-    private extractChangeType(newIds: Set<string>, oldId: string | null, newLinkIdsContainNulls: (string | null)[]): string {
-        const isSplit = newIds.size > 1 || _.filter(newLinkIdsContainNulls, e => e == null).length >= 1
-        if (oldId == null) return ChangeTypes.add;
-        else if (newIds.size == 0) return ChangeTypes.remove;
-        else if (isSplit) return ChangeTypes.split;
-        else return ChangeTypes.replace;
-    }
-
     private filterPartialAdds(p: ChangeEntry) {
         const sorted = _.sortBy(p.replaceInfo, (a => a.newToMValue)).reverse()
         const startPart = _.last(sorted)?.newFromMValue
@@ -127,6 +119,14 @@ export class ChangeSet {
 
     toJson(): string {
         return JSON.stringify(this.changeEntries);
+    }
+
+    private extractChangeType(newIds: Set<string>, oldId: string | null, newLinkIdsContainNulls: (string | null)[]): string {
+        const isSplit = newIds.size > 1 || _.filter(newLinkIdsContainNulls, e => e == null).length >= 1
+        if (oldId == null) return ChangeTypes.add;
+        else if (newIds.size == 0) return ChangeTypes.remove;
+        else if (isSplit) return ChangeTypes.split;
+        else return ChangeTypes.replace;
     }
 
     protected extractKeyLinkProperties(link: KgvLink): KeyLinkProperties {

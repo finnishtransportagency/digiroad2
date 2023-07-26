@@ -3,7 +3,6 @@ import {KgvClient} from "./client/kgv-client";
 import {ChangeSet} from "./service/change-set";
 import {S3Service} from "./service/s3-service";
 import {RoadLinkDao} from "./dao/road-link-dao";
-import _ from "lodash";
 
 const s3Service     = new S3Service();
 const vkmClient     = new VkmClient();
