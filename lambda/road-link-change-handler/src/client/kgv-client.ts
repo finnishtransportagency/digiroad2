@@ -62,8 +62,7 @@ export class KgvClient extends ClientBase {
     }
 
     protected extractLinkGeometry(geometry: Geometry): string {
-       return  "";
-        // return `SRID=3067;LINESTRING ZM(${geometry.coordinates.map(coord => coord.join(' ')).join(',')})`;
+        return `SRID=3067;LINESTRING ZM(${geometry.coordinates.map(coord => coord.join(' ')).join(',')})`;
     }
 }
 
