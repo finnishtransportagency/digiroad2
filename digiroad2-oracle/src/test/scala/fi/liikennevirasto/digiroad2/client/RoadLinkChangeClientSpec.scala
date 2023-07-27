@@ -17,7 +17,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
   test("test json convert with whole set") {
-    changes.size should be(37)
+    changes.size should be(39)
   }
 
   test("RoadLinkChange for 'add' contains correct info") {
@@ -158,7 +158,6 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     sortedReplaceInfo(1).newToMValue.get should be(86.941)
     sortedReplaceInfo(1).digitizationChange should be(false)
 
-
     sortedReplaceInfo.last.oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
     sortedReplaceInfo.last.newLinkId.get should be("e92c98c9-5a62-4995-a9c0-e40ae0b65747:1")
     sortedReplaceInfo.last.oldFromMValue should be(17.305)
@@ -178,6 +177,58 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceInfo.head.newFromMValue.get should be(0)
     replaceInfo.head.newToMValue.get should be(191.552)
     replaceInfo.head.digitizationChange should be(false)
+  }
+
+  test("merge replace info with same old and new link with a gap in between") {
+    val replaceInfo = changes(37).replaceInfo
+    replaceInfo.size should be(3)
+    val sortedReplaceInfo = replaceInfo.sortBy(_.oldFromMValue)
+
+    sortedReplaceInfo.head.oldLinkId should be("151128c6-a2d5-44b4-a756-391b0b40fff5:1")
+    sortedReplaceInfo.head.newLinkId.get should be("4cc65e5d-4f63-4ace-bc92-fbf8e8013239:2")
+    sortedReplaceInfo.head.oldFromMValue should be(0)
+    sortedReplaceInfo.head.oldToMValue should be(149.987)
+    sortedReplaceInfo.head.newFromMValue.get should be(0)
+    sortedReplaceInfo.head.newToMValue.get should be(157.289)
+    sortedReplaceInfo.head.digitizationChange should be(false)
+
+    sortedReplaceInfo(1).oldLinkId should be("151128c6-a2d5-44b4-a756-391b0b40fff5:1")
+    sortedReplaceInfo(1).newLinkId should be(None)
+    sortedReplaceInfo(1).oldFromMValue should be(149.987)
+    sortedReplaceInfo(1).oldToMValue should be(206.728)
+    sortedReplaceInfo(1).newFromMValue should be(None)
+    sortedReplaceInfo(1).newToMValue should be(None)
+    sortedReplaceInfo(1).digitizationChange should be(false)
+
+    sortedReplaceInfo.last.oldLinkId should be("151128c6-a2d5-44b4-a756-391b0b40fff5:1")
+    sortedReplaceInfo.last.newLinkId.get should be("4cc65e5d-4f63-4ace-bc92-fbf8e8013239:2")
+    sortedReplaceInfo.last.oldFromMValue should be(206.728)
+    sortedReplaceInfo.last.oldToMValue should be(382.644)
+    sortedReplaceInfo.last.newFromMValue.get should be(259.19)
+    sortedReplaceInfo.last.newToMValue.get should be(436.091)
+    sortedReplaceInfo.last.digitizationChange should be(false)
+  }
+
+  test("merge replace info with same old and new link with duplicate info") {
+    val replaceInfo = changes(38).replaceInfo
+    replaceInfo.size should be(2)
+    val sortedReplaceInfo = replaceInfo.sortBy(_.oldFromMValue)
+
+    sortedReplaceInfo.head.oldLinkId should be("8f053004-b583-4d0d-a0da-508aaa7567b2: 1")
+    sortedReplaceInfo.head.newLinkId.get should be("8117fcd6-0b75-4147-9a40-152faa5a5f9c: 1")
+    sortedReplaceInfo.head.oldFromMValue should be(0)
+    sortedReplaceInfo.head.oldToMValue should be(471.388)
+    sortedReplaceInfo.head.newFromMValue.get should be(1096.937)
+    sortedReplaceInfo.head.newToMValue.get should be(627.487)
+    sortedReplaceInfo.head.digitizationChange should be(true)
+
+    sortedReplaceInfo.last.oldLinkId should be("8f053004-b583-4d0d-a0da-508aaa7567b2: 1")
+    sortedReplaceInfo.last.newLinkId.get should be("8117fcd6-0b75-4147-9a40-152faa5a5f9c: 1")
+    sortedReplaceInfo.last.oldFromMValue should be(685.718)
+    sortedReplaceInfo.last.oldToMValue should be(786.052)
+    sortedReplaceInfo.last.newFromMValue.get should be(627.487)
+    sortedReplaceInfo.last.newToMValue.get should be(727.409)
+    sortedReplaceInfo.last.digitizationChange should be(false)
   }
 
   // ignored by default, used to test locally that the fetch and convert process works
