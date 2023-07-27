@@ -31,7 +31,7 @@ export const handler = async (event: Event) => {
     console.time("Filter to only new links")
     const newLinks = links.filter(link => newLinkIds.includes(link.id));
     console.timeEnd("Filter to only new links")
-    console.info(`Got ${newLinks.length} links`);
+    console.info(`Got ${newLinks.length} new links`);
     
     console.time("Total times to create changes")
     const changeSet = new ChangeSet(links, replacements);
@@ -45,8 +45,12 @@ export const handler = async (event: Event) => {
     
     //console.log(changeSetString)
     // TODO: Commented out until Tiekamu is working properly
+    //console.time("Save new links and expire old")
     //await roadLinkDao.saveLinkChangesToDb(oldLinkIds, newLinks);  // Save links to Digiroad db
+    //console.timeEnd("Save new links and expire old")
+    //console.time("Load to S3")
     //await s3Service.uploadToBucket(since, until, changeSetString);      // Put change set to s3
+    //console.timeEnd("Load to S3")
 }
 
 export interface Event {
