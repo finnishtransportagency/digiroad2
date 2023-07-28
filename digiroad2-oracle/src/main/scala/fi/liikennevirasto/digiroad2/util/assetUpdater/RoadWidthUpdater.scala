@@ -30,7 +30,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     }
   }
 
-  override def additionalUpdateOrChangeReplace(operationStep: OperationStep): Option[OperationStep] ={
+  override def additionalUpdateOrChange(operationStep: OperationStep): Option[OperationStep] ={
     expireAndCreate(operationStep)
   }
 
@@ -69,7 +69,8 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
             )),
             changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)))
           )
-          reportAssetChanges(operation.assetsBefore.find(_.id == asset.id), operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.PropertyChange))
+          //reportAssetChanges(operation.assetsBefore.find(_.id == asset.id), operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.PropertyChange))
+          operation
         } else {
           handleGeneratedPart(change, changeSets, asset, replace,operationStep)
         }

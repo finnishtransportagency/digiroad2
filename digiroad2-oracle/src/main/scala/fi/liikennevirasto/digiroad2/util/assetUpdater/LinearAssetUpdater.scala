@@ -360,10 +360,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     (assetsOperated, changeInfo.get)
   }
+
+  def additionalUpdateOrChange(operatio: OperationStep): Option[OperationStep] = {
+   None
+  }
+  
   private def goThroughChanges(typeId: Int, links: Seq[RoadLink], assetsAll: Seq[PersistedLinearAsset],
                                 changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange): Option[OperationStep] = {
     nonAssetUpdate(change, Seq(), null)
-    change.changeType match {
+    val defaultOperationResult = change.changeType match {
       case RoadLinkChangeType.Add =>
         val operation = operationForNewLink(change, assetsAll, changeSets).getOrElse(initStep).copy(roadLinkChange = Some(change))
         Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation)))
@@ -383,6 +388,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           }
         } else None
     }
+    
+    if  (defaultOperationResult.get.assetsAfter.nonEmpty){
+      val additionalChanges = additionalUpdateOrChange(defaultOperationResult.getOrElse(emptyStep))
+      if (additionalChanges.nonEmpty) additionalChanges else defaultOperationResult
+    } else { defaultOperationResult }
   }
   private def adjustAndReportReplacement(typeId: Int, links: Seq[RoadLink],
                                          assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep,changes: Seq[RoadLinkChange]): Option[OperationStep] = {

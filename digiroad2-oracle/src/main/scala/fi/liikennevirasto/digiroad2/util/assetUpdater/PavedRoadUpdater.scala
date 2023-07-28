@@ -48,8 +48,9 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         if (asset.id != 0) {
           operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
-          reportAssetChanges(Some(asset), None, Seq(change),  operatio.copy(assetsAfter = Seq(asset.copy(id = removePart)))
-            , Some(ChangeTypeReport.Deletion))
+          //reportAssetChanges(Some(asset), None, Seq(change),  operatio.copy(assetsAfter = Seq(asset.copy(id = removePart))), Some(ChangeTypeReport.Deletion))
+         val updated =  operatio.copy(assetsAfter = Seq(asset.copy(id = removePart)))
+          updated
         }
       } else {
         operatio
@@ -64,7 +65,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     removePavement(operationStep)
   }
 
-  override def additionalUpdateOrChangeSplit(operationStep: OperationStep): Option[OperationStep] = {
+  override def additionalUpdateOrChange(operationStep: OperationStep): Option[OperationStep] = {
     removePavement(operationStep)
   }
 

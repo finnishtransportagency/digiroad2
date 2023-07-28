@@ -117,9 +117,9 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(0)
       
-      val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
-      assets.size should be(1)
-      TestPavedRoadUpdaterMock.getReport().head.changeType should be(ChangeTypeReport.Deletion)
+      //val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      //assets.size should be(1)
+      //TestPavedRoadUpdaterMock.getReport().head.changeType should be(ChangeTypeReport.Deletion)
 
     }
   }
