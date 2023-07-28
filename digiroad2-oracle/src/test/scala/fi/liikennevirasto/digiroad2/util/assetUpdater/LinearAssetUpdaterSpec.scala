@@ -131,8 +131,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
+          ReplaceInfo(Option(oldId), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(8), newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -159,8 +159,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
+          ReplaceInfo(Option(oldRoadLinkId), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(4), newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -187,8 +187,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
+          ReplaceInfo(Option(oldRoadLinkId), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(4), newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -215,8 +215,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
+          ReplaceInfo(Option(oldRoadLinkId), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(4), newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -243,8 +243,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
+          ReplaceInfo(Option(oldRoadLinkId), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(4), newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -271,8 +271,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = oldLinkGeometry._2, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
+          ReplaceInfo(Option(oldRoadLinkId), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(oldLinkGeometry._2), newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -302,8 +302,8 @@ trait UpdaterUtilsSuite {
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId1, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(0.0), newToMValue = Option(5), false)
+          ReplaceInfo(Option(oldId1), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(5), newFromMValue = Option(0.0), newToMValue = Option(5), false)
         )
     ),
       RoadLinkChange(
@@ -327,8 +327,8 @@ trait UpdaterUtilsSuite {
             trafficDirection = TrafficDirection.BothDirections
           )),
         replaceInfo =
-          List(ReplaceInfo(oldId2, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(5.0), newToMValue = Option(newLinkGeometry1._2), false))
+          List(ReplaceInfo(Option(oldId2), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(5), newFromMValue = Option(5.0), newToMValue = Option(newLinkGeometry1._2), false))
       )
     )
   }
