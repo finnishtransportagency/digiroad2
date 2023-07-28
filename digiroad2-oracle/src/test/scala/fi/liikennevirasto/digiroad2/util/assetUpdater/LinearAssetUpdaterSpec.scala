@@ -604,6 +604,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
     runWithRollback {
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set.empty[String], false)).thenReturn(Seq.empty[RoadLink])
       val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, geometry._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
@@ -1773,13 +1774,4 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
       sorted.foreach(p => {
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-      
-      sorted.size should be(2)
-      
-    }
-    
-  }
-  
-}
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, startMeasure: ${
