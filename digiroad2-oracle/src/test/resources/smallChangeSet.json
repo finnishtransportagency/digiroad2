@@ -1350,6 +1350,51 @@
     ]
   },
   {
+    "changeType": "split",
+    "old": {
+      "linkId": "086404cc-ffaa-46e5-a0c5-b428a846261c:1",
+      "linkLength": 79.405,
+      "geometry": "SRID=3067;LINESTRING ZM(487320.468 6690157.707 8.098 0, 487294.165 6690172.242 7.914 30.052, 487272.566 6690182.539 6.946 53.98, 487248.206 6690189.822 5.219 79.405)",
+      "roadClass": 12131,
+      "adminClass": 2,
+      "municipality": 624,
+      "surfaceType": 1,
+      "trafficDirection": 0
+    },
+    "new": [
+      {
+        "linkId": "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1",
+        "linkLength": 111.028,
+        "geometry": "SRID=3067;LINESTRING ZM(487364.965 6690166.514 0 0, 487354.933 6690165.752 0 10.060897971699903, 487341.808 6690163.258 0 23.42075055299211, 487330.39 6690160.079 0 35.273039994212894, 487323.595 6690157.829 0 42.430869623289134, 487319.049 6690157.272 0 47.01086580222821, 487315.402 6690157.303 0 50.657997551914235, 487311.323 6690159.274 0 55.18823838427209, 487305.402 6690163.346 0 62.37429606533, 487294.165 6690172.242 0 76.70639238752617, 487273.024 6690181.714 0 99.87232998961187, 487262.098 6690183.967 0 111.028)",
+        "roadClass": 12131,
+        "adminClass": 2,
+        "municipality": 624,
+        "surfaceType": 1,
+        "trafficDirection": 0
+      }
+    ],
+    "replaceInfo": [
+      {
+        "oldLinkId": "086404cc-ffaa-46e5-a0c5-b428a846261c:1",
+        "newLinkId": null,
+        "oldFromMValue": 64.418,
+        "oldToMValue": 79.405,
+        "newFromMValue": null,
+        "newToMValue": null,
+        "digitizationChange": false
+      },
+      {
+        "oldLinkId": "086404cc-ffaa-46e5-a0c5-b428a846261c:1",
+        "newLinkId": "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1",
+        "oldFromMValue": 0.0,
+        "oldToMValue": 64.418,
+        "newFromMValue": 0.0,
+        "newToMValue": 111.028,
+        "digitizationChange": false
+      }
+    ]
+  },
+  {
     "changeType": "replace",
     "old": {
       "linkId": "350e7577-020e-4abe-bf12-509f070371ed:1",

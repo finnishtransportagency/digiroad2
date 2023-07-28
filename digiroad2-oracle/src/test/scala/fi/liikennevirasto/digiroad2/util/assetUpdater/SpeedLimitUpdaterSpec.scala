@@ -69,8 +69,8 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
   
@@ -97,8 +97,8 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+          ReplaceInfo(oldRoadLinkId, Option(newLinkId1),
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
   

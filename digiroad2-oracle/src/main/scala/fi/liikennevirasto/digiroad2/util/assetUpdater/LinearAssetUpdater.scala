@@ -229,7 +229,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
 /*  private def reportingSplit(initStep: OperationStep, assetsInNewLink: LinkAndOperation, change: RoadLinkChange): Some[OperationStep] = {
     val pairs = assetsInNewLink.operation.assetsAfter.flatMap(asset => {
-      val info = change.replaceInfo.find(_.newLinkId == asset.linkId).get
+      val info = change.replaceInfo.find(_.newLinkId.get == asset.linkId).get
       createPair(Some(asset), assetsInNewLink.operation.assetsBefore.filter(_.linkId == info.oldLinkId))
     }).distinct
     val report = pairs.filter(_.newAsset.isDefined).map(pair => {
@@ -500,15 +500,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     */
   private def projecting(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset, beforeAsset: PersistedLinearAsset) = {
     val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw new Exception("Did not found replace info for asset"))
-    val link = change.newLinks.find(_.linkId == info.newLinkId).get
-    val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = info.newLinkId),
+    val newId = info.newLinkId.getOrElse("")
+    val maybeLink = change.newLinks.find(_.linkId == newId)
+    val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
+
+    val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = newId),
       Projection(
         info.oldFromMValue, info.oldToMValue,
-        info.newFromMValue, info.newToMValue,
+        info.newFromMValue.getOrElse(0), info.newToMValue.getOrElse(0),
         LinearAssetUtils.createTimeStamp(),
-        info.newLinkId, link.linkLength),
+        newId, maybeLinkLength),
       changeSets, info.digitizationChange)
-    Some(OperationStep(Seq(projected), Some(changeSet), newLinkId = info.newLinkId, assetsBefore = Seq(beforeAsset)))
+    Some(OperationStep(Seq(projected), Some(changeSet), newLinkId = newId, assetsBefore = Seq(beforeAsset)))
   }
 
   private def projectLinearAsset(asset: PersistedLinearAsset, projection: Projection, changedSet: ChangeSet, digitizationChanges: Boolean): (PersistedLinearAsset, ChangeSet) = {
