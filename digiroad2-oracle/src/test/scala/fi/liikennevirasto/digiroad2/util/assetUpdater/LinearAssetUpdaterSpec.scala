@@ -1774,4 +1774,11 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
       sorted.foreach(p => {
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, startMeasure: ${
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
+
+      sorted.size should be(2)
+
+    }
+  }
+}
