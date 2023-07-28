@@ -222,7 +222,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
   test("Split. Given a Road Link that is split into 2 new Links; when 1 new Link is deleted; then the Point Asset on the deleted Link should be floating.") {
     val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
     val change = changes.find(change =>  change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID).get
-    val asset1 = testPersistedPointAsset(1, 367457.211214136, 6673711.584371272, 49, oldLinkID,
+    val asset1 = testPersistedPointAsset(1, 487248.206, 6690189.822, 49, oldLinkID,
       410.51770995333163, true, 0, NormalLinkInterface)
     val corrected1 = updater.correctPersistedAsset(asset1, change)
 
