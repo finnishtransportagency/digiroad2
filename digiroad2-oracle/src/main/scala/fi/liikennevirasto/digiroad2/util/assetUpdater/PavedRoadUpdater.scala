@@ -37,14 +37,15 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     
   }
 
-  private def removePavement(operatio: OperationStep) = {
-    val change: RoadLinkChange = operatio.roadLinkChange.get
+  private def removePavement(operatio: OperationStep,changes: Seq[RoadLinkChange]) = {
+    //val change: RoadLinkChange = operatio.roadLinkChange.get
     val assetsAll: Seq[PersistedLinearAsset] = operatio.assetsAfter
     val changeSets: ChangeSet = operatio.changeInfo.get
+    val changesRemovePavement =changes.flatMap(_.newLinks).filter(_.surfaceType == SurfaceType.None)
     
-    val expiredPavement = assetsAll.filter(a => change.newLinks.map(_.linkId).contains(a.linkId)).map(asset => {
-      val remove = change.newLinks.find(_.linkId == asset.linkId).get
-      if (remove.surfaceType == SurfaceType.None) {
+    val expiredPavement = assetsAll.filter(a => changesRemovePavement.map(_.linkId).contains(a.linkId)).map(asset => {
+      //val remove = change.newLinks.find(_.linkId == asset.linkId).get
+      //if (remove.surfaceType == SurfaceType.None) {
         if (asset.id != 0) {
           operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
@@ -52,21 +53,17 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
          val updated =  operatio.copy(assetsAfter = Seq(asset.copy(id = removePart)))
           updated
         }
-      } else {
+     /* } else {
         operatio
-      }
-    }).foldLeft(OperationStep(assetsAll, Some(changeSets), Some(change)))((a, b) => {
+      }*/
+    }).foldLeft(OperationStep(assetsAll, Some(changeSets)))((a, b) => {
       OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get))
-        , a.roadLinkChange, b.newLinkId, b.assetsBefore)
+        , None, b.newLinkId, b.assetsBefore)
     })
     Some(expiredPavement)
   }
-  override def additionalUpdateOrChangeReplace(operationStep: OperationStep): Option[OperationStep] = {
-    removePavement(operationStep)
-  }
-
-  override def additionalUpdateOrChange(operationStep: OperationStep): Option[OperationStep] = {
-    removePavement(operationStep)
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
+    removePavement(operationStep,changes)
   }
 
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
