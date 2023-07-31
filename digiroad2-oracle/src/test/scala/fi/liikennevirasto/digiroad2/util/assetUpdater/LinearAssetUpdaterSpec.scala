@@ -1778,7 +1778,19 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       })
 
       sorted.size should be(2)
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(101.922)
+      sorted.last.startMeasure should be(0)
+      sorted.last.endMeasure should be(337.589)
 
+      val oldIds = Seq(id1,id2)
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption, a.changeType))
+      assets.size should be(2)
+      assets.map(a => {
+        a.oldAsset.isDefined should be(true)
+        oldIds.contains(a.oldAsset.get.assetId) should be(true)
+        a.oldAsset.get.assetId should be(a.newAsset.get.assetId)
+      })
     }
   }
 }
