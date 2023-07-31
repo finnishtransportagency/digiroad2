@@ -382,7 +382,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.map(v => v.value.get should be(NumericValue(3)))
 
       val oldIds = Seq(id)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(3)
 
       assets.map(a => {
@@ -424,7 +424,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.get should be(NumericValue(3))
 
       val oldIds = Seq(id1,id2)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
 
       assets.size should be(2)
       assets.map(a => {
@@ -469,7 +469,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.get should be(NumericValue(3))
 
       val oldIds = Seq(id1, id2)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -509,7 +509,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.get should be(NumericValue(3))
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -547,7 +547,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.get should be(NumericValue(3))
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -586,7 +586,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.get should be(NumericValue(3))
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -617,7 +617,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.expired should be(true)
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       TestLinearAssetUpdater.getReport().head.changeType should be(ChangeTypeReport.Deletion)
       assets.map(a => {
@@ -673,7 +673,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       asset4.value.get should be(NumericValue(5))
 
       val oldIds = Seq(id1,id2,id3)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(4)
       TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(_.changeType should be(ChangeTypeReport.Divided))
       assets.map(a => {
@@ -737,7 +737,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       asset4.value.get should be(NumericValue(6))
 
       val oldIds = Seq(id1, id2, id3,id4)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(4)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -793,7 +793,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted(3).value.get should be(NumericValue(6))
 
       val oldIds = Seq(id1, id2,id3,id4)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(4)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -834,7 +834,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.last.value.get should be(NumericValue(4))
 
       val oldIds = Seq(id1, id2)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -899,7 +899,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       asset4.value.get should be(NumericValue(6))
 
       val oldIds = Seq(id1, id2,id3,id4)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(4)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -948,7 +948,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted(1).value.get should be(NumericValue(5))
 
       val oldIds = Seq(id1, id2)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -986,7 +986,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.value.get should be(NumericValue(3))
 
       val oldIds = Seq(id1, id2)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1029,7 +1029,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1072,7 +1072,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.AgainstDigitizing)
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1114,7 +1114,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.AgainstDigitizing)
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1156,7 +1156,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.TowardsDigitizing)
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1200,7 +1200,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.AgainstDigitizing)
 
       val oldIds = Seq(id1,id2)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.filter(_.newAsset.isDefined).map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1243,7 +1243,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
 
       val oldIds = Seq(id1,id2)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.filter(_.newAsset.isDefined).map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1296,7 +1296,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       })
 
       val oldIds = Seq(id1,id2,id3,id4)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(4)
       assets.filter(_.newAsset.isDefined).map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1347,7 +1347,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       })
 
       val oldIds = Seq(id1, id2, id3, id4)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(4)
       assets.filter(_.newAsset.isDefined).map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1388,7 +1388,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
 
       val oldIds = Seq(id1, id2)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.filter(_.newAsset.isDefined).map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1431,7 +1431,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.AgainstDigitizing)
 
       val oldIds = Seq(id1, id2)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.filter(_.newAsset.isDefined).map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1475,7 +1475,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
 
       val oldIds = Seq(id1, id2,id3)
-      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(3)
       assets.filter(_.newAsset.isDefined).map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1523,7 +1523,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode(twoDirectionalLink.last.sideCode) should be(SideCode.AgainstDigitizing)
 
       val oldIds =  Seq(id,id2)
-      val assets= TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption))
+      val assets= TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption,a.changeType))
       assets.size should be(3)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1561,7 +1561,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.map(v => v.value.get should be(NumericValue(3)))
 
       val oldIds = Seq(id)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1597,7 +1597,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       SideCode.apply(sorted.head.sideCode) should be(SideCode.BothDirections)
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1637,10 +1637,10 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted(1).value.isEmpty should be(false)
       sorted(1).value.get should be(NumericValue(3))
       SideCode.apply(sorted(1).sideCode) should be(SideCode.AgainstDigitizing)
-      TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption)).size should be(2)
+      TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption,a.changeType)).size should be(2)
 
       val oldIds = Seq(id1,id2)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(2)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1674,10 +1674,10 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.value.get should be(NumericValue(3))
       SideCode.apply(sorted.head.sideCode) should be(SideCode.AgainstDigitizing)
 
-      TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption)).size should be(1)
+      TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption,a.changeType)).size should be(1)
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
@@ -1712,10 +1712,10 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       sorted.head.value.get should be(NumericValue(3))
       SideCode.apply(sorted.head.sideCode) should be(SideCode.TowardsDigitizing)
 
-      TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption)).size should be(1)
+      TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption,a.changeType)).size should be(1)
 
       val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       assets.map(a => {
         a.oldAsset.isDefined should be(true)
