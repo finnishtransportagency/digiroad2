@@ -30,7 +30,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         linkSource = LinkGeomSource.NormalLinkInterface,
         verifiedBy = None, verifiedDate = None,
         informationSource = Some(MmlNls))
-      Some(OperationStep(Seq(newAsset), Some(changeSets),Some(change),newLink.linkId,Seq()))
+      Some(OperationStep(Seq(newAsset), Some(changeSets),Seq()))
     } else {
       None
     }
@@ -57,8 +57,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         operatio
       }*/
     }).foldLeft(OperationStep(assetsAll, Some(changeSets)))((a, b) => {
-      OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get))
-        , None, b.newLinkId, b.assetsBefore)
+      OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)), b.assetsBefore)
     })
     Some(expiredPavement)
   }
