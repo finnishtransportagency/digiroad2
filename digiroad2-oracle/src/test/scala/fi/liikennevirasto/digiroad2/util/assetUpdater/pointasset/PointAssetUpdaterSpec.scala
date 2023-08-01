@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.FloatingReason.NoRoadLinkFound
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, PropertyValue}
-import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{ObstacleService, PedestrianCrossingService, RailwayCrossingService}
@@ -217,5 +217,16 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
     reportedChange.after.head.assetId should be(1)
     reportedChange.after.head.floatingReason should be(None)
     reportedChange.after.head.values should be(s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""")
+  }
+
+  test("Split. Given a Road Link that is split into 2 new Links; when 1 new Link is deleted; then the Point Asset on the deleted Link should be floating.") {
+    val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
+    val change = changes.find(change =>  change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID).get
+    val asset1 = testPersistedPointAsset(1, 487248.206, 6690189.822, 49, oldLinkID,
+      410.51770995333163, true, 0, NormalLinkInterface)
+    val corrected1 = updater.correctPersistedAsset(asset1, change)
+
+    corrected1.linkId should be(oldLinkID)
+    corrected1.floating should be(true)
   }
 }
