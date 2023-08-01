@@ -654,8 +654,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     def updateLinkAndOperationIfEmptyNewLinkId(linkAndOperation: LinkAndOperation, expiredIds: Set[Long]): LinkAndOperation = {
       if (linkAndOperation.newLinkId.isEmpty) {
         val updatedChangeSet = updateChangeSetWithExpiredIds(linkAndOperation.operation.changeInfo,expiredIds)
-        val updatedOperation = OperationStep(linkAndOperation.operation.assetsAfter, updatedChangeSet, linkAndOperation.operation.roadLinkChange,linkAndOperation.operation.newLinkId,linkAndOperation.operation.assetsBefore)
-        val updatedLinkAndOperation = LinkAndOperation(linkAndOperation.newLinkId,updatedOperation)
+        val updatedOperation = linkAndOperation.operation.copy(changeInfo = updatedChangeSet)
+        val updatedLinkAndOperation = linkAndOperation.copy(operation = updatedOperation)
         updatedLinkAndOperation
       } else {
         linkAndOperation
