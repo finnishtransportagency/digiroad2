@@ -652,10 +652,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    */
   private def updateSplitAdjustmentsWithExpiredIds(linksAndOperations: Seq[LinkAndOperation]): Seq[LinkAndOperation] = {
     def updateLinkAndOperationWithExpiredIds(linkAndOperation: LinkAndOperation, expiredIds: Set[Long]): LinkAndOperation = {
-        val updatedChangeSet = updateChangeSetWithExpiredIds(linkAndOperation.operation.changeInfo,expiredIds)
-        val updatedOperation = linkAndOperation.operation.copy(changeInfo = updatedChangeSet)
-        val updatedLinkAndOperation = linkAndOperation.copy(operation = updatedOperation)
-        updatedLinkAndOperation
+      val updatedOperation = updateOperationStepWithExpiredIds(Some(linkAndOperation.operation),expiredIds).get
+      val updatedLinkAndOperation = linkAndOperation.copy(operation = updatedOperation)
+      updatedLinkAndOperation
     }
 
     linksAndOperations.map(linkAndOperation =>
