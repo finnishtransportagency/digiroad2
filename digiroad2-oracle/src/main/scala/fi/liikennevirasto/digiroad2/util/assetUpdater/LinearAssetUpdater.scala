@@ -412,7 +412,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val updatedAdjustments = updateSplitAdjustmentsWithExpiredIds(adjusted)
     val operationStep = updatedAdjustments.map(reportingSplit(initStep, _, change)).foldLeft(Some(initStep))(mergerOperations)
     val updatedOperationStep = updateOperationStepWithExpiredIds(operationStep, getIdsForAssetsOutsideSplitGeometry(updatedAdjustments))
-    val reportedOperation = reportAssetExpirationAfterSplit(updatedAdjustments,change)
+    reportAssetExpirationAfterSplit(updatedAdjustments,change)
     updatedOperationStep
   }
 
@@ -644,6 +644,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   }
 
+  /**
+   * Updates previous asset adjustments with expired ids of those assets that have fallen outside geometry after split.
+   *
+   * @param linksAndOperations sequence of RoadLink and related OperationStep pairs
+   * @return Seq[LinkAndOperation] returns an updated copy of original parameter
+   */
   private def updateSplitAdjustmentsWithExpiredIds(linksAndOperations: Seq[LinkAndOperation]): Seq[LinkAndOperation] = {
     def updateLinkAndOperationIfEmptyNewLinkId(linkAndOperation: LinkAndOperation, expiredIds: Set[Option[Long]]): LinkAndOperation = {
       if (linkAndOperation.newLinkId.isEmpty) {
@@ -663,6 +669,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       updateLinkAndOperationIfEmptyNewLinkId(linkAndOperation, getIdsForAssetsOutsideSplitGeometry(linksAndOperations)))
   }
 
+  /**
+   * Looks for assets that remain within split-deleted link
+   *
+   * @param linksAndOperations sequence of RoadLink and related OperationStep pairs that contain post-split information
+   * @return Set[PersistedLinearAsset] returns the found assets
+   */
   private def getAssetsOutsideSplitGeometry(linksAndOperations: Seq[LinkAndOperation]): Set[PersistedLinearAsset] = {
     val oldAssetsInsideGeometry = linksAndOperations.filter(_.newLinkId.nonEmpty).flatMap(_.operation.assetsAfter).toSet
     val oldAssetsOutsideGeometry = linksAndOperations
@@ -671,11 +683,24 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     oldAssetsOutsideGeometry
   }
 
+  /**
+   * Looks for Ids of assets that remain within split-deleted link
+   *
+   * @param linksAndOperations sequence of RoadLink and related OperationStep pairs that contain post-split information
+   * @return Set[Option[Long]] returns the found assets' Ids
+   */
   private def getIdsForAssetsOutsideSplitGeometry(linksAndOperations: Seq[LinkAndOperation]): Set[Option[Long]] = {
     getAssetsOutsideSplitGeometry(linksAndOperations)
       .map(oldAssetToExpire => Some(oldAssetToExpire.id)).toSet
   }
 
+  /**
+   * Updates an OperationStep with expired Ids of those assets that have fallen outside geometry after split.
+   *
+   * @param operationStep post-split information of assets
+   * @param expiredIds set of expired asset Ids
+   * @return Option[OperationStep] returns the updated OperationStep
+   */
   private def updateOperationStepWithExpiredIds(operationStep: Option[OperationStep], expiredIds: Set[Option[Long]]): Option[OperationStep] = {
     val updatedChangeInfo = operationStep.get.changeInfo match {
       case Some(info) => Some(ChangeSet(info.droppedAssetIds,info.adjustedMValues,info.adjustedSideCodes,info.expiredAssetIds ++ expiredIds.flatten,info.valueAdjustments))
@@ -684,9 +709,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     Some(operationStep.get.copy(changeInfo = updatedChangeInfo))
   }
 
-  private def reportAssetExpirationAfterSplit(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Set[Some[OperationStep]] = {
+  /**
+   * Reports change for each asset that has fallen outside of geometry after split-delete
+   *
+   * @param linksAndOperations sequence of RoadLink and related OperationStep pairs that contain post-split information
+   * @param change Change case information
+   * @return Set[PersistedLinearAsset] returns the reported assets
+   */
+  private def reportAssetExpirationAfterSplit(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Set[PersistedLinearAsset] = {
+    val emptyLink = linksAndOperations.filter(linkAndOperation => linkAndOperation.newLinkId.isEmpty)
+    val emptyLinkOperation = if (emptyLink.nonEmpty) emptyLink.head.operation else return Set.empty[PersistedLinearAsset]
     val assetsOutsideGeometry = getAssetsOutsideSplitGeometry(linksAndOperations)
-    val emptyLinkOperation = linksAndOperations.filter(linkAndOperation => linkAndOperation.newLinkId.isEmpty && linkAndOperation.operation.changeInfo.get.expiredAssetIds.nonEmpty).head.operation
     assetsOutsideGeometry.map(asset => Some(reportAssetChanges(Some(asset), None, Seq(change), emptyLinkOperation, ChangeTypeReport.Deletion)))
+    assetsOutsideGeometry
   }
 }
