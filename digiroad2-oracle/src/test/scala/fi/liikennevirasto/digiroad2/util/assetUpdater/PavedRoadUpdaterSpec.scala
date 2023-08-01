@@ -64,8 +64,8 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
+          ReplaceInfo(Option(oldId), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(8), newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
   

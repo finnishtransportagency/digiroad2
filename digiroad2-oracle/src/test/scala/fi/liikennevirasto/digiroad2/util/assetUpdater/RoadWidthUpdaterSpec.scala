@@ -49,8 +49,8 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
+          ReplaceInfo(Option(oldId), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(8), newFromMValue = Option(0.0), newToMValue = Option(newLinkGeometry1._2), false))
     )
   }
 
@@ -182,8 +182,8 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
         )),
       replaceInfo =
         List(
-          ReplaceInfo(oldId1, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(0.0), newToMValue = Option(5), false)
+          ReplaceInfo(Option(oldId1), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(5), newFromMValue = Option(0.0), newToMValue = Option(5), false)
         )
     ),
       RoadLinkChange(
@@ -207,8 +207,8 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
             trafficDirection = TrafficDirection.BothDirections
           )),
         replaceInfo =
-          List(ReplaceInfo(oldId2, Option(newLinkId1),
-            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = Option(5.0), newToMValue = Option(newLinkGeometry1._2), false))
+          List(ReplaceInfo(Option(oldId2), Option(newLinkId1),
+            oldFromMValue = Option(0.0), oldToMValue = Option(5), newFromMValue = Option(5.0), newToMValue = Option(newLinkGeometry1._2), false))
       )
     )
   }

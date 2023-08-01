@@ -37,7 +37,7 @@ object RoadLinkChangeType {
 case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int,
                         adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection,
                         surfaceType: SurfaceType = SurfaceType.Unknown)
-case class ReplaceInfo(oldLinkId: String, newLinkId: Option[String], oldFromMValue: Double, oldToMValue: Double, newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
+case class ReplaceInfo(oldLinkId: Option[String], newLinkId: Option[String], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
 case class ChangeSetId(key: String, statusDate: DateTime, targetDate: DateTime)
 case class RoadLinkChangeSet(key: String, statusDate: DateTime, targetDate: DateTime, changes: Seq[RoadLinkChange])
@@ -187,25 +187,50 @@ class RoadLinkChangeClient {
   }
 
   // this removes the unnecessary split caused by road address changes in Tiekamu
-  // TODO Check functionality after DROTH-3782
   def mergeReplaceInfoWithSameLink(roadLinkChanges: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+
+    def isContinuous(first: ReplaceInfo, second: ReplaceInfo) = {
+      first.oldToMValue.getOrElse(None) == second.oldFromMValue.getOrElse(None) && first.newToMValue.getOrElse(None) == second.newFromMValue.getOrElse(None) && first.digitizationChange == second.digitizationChange
+    }
+
+    def combineReplaceInfo(continuousParts: Seq[ReplaceInfo]) = {
+      ReplaceInfo(
+        continuousParts.head.oldLinkId,
+        continuousParts.head.newLinkId,
+        continuousParts.map(_.oldFromMValue).min,
+        continuousParts.map(_.oldToMValue).max,
+        continuousParts.map(_.newFromMValue).min,
+        continuousParts.map(_.newToMValue).max,
+        continuousParts.head.digitizationChange
+      )
+    }
 
     roadLinkChanges.map { change =>
       val groupedReplaceInfo = change.replaceInfo.groupBy(r => (r.oldLinkId, r.newLinkId))
-      val mergedReplaceInfo = groupedReplaceInfo.map { groupedInfo =>
+      val mergedReplaceInfo = groupedReplaceInfo.flatMap { groupedInfo =>
         val replaceInfoSeq = groupedInfo._2
         if (replaceInfoSeq.size > 1) {
-          ReplaceInfo(
-            replaceInfoSeq.head.oldLinkId,
-            replaceInfoSeq.head.newLinkId,
-            replaceInfoSeq.map(_.oldFromMValue).min,
-            replaceInfoSeq.map(_.oldToMValue).max,
-            replaceInfoSeq.map(_.newFromMValue).min,
-            replaceInfoSeq.map(_.newToMValue).max,
-            replaceInfoSeq.head.digitizationChange
-          )
+          val sortedReplaceInfoSeq = replaceInfoSeq.sortBy(_.newToMValue)
+          val continuousParts = sortedReplaceInfoSeq.foldLeft(Seq.empty[ReplaceInfo], Seq.empty[ReplaceInfo]) { (acc, next) =>
+            val (combinedReplaceInfos, currentContinuous) = acc
+            val latestPart = currentContinuous.lastOption
+            latestPart match {
+              case Some(latest: ReplaceInfo) =>
+                if (isContinuous(latest, next) || latest.equals(next)) {
+                  (combinedReplaceInfos, currentContinuous ++ Seq(next))
+                } else {
+                  val newCombined = combineReplaceInfo(currentContinuous)
+                  (combinedReplaceInfos ++ Seq(newCombined), Seq(next))
+                }
+              case _ =>
+                (combinedReplaceInfos, Seq(next))
+            }
+          }
+          val lastPartCombined = combineReplaceInfo(continuousParts._2)
+          continuousParts._1 ++ Seq(lastPartCombined)
+
         } else {
-          replaceInfoSeq.head
+          replaceInfoSeq
         }
       }
       change.copy(replaceInfo = mergedReplaceInfo.toSeq)
