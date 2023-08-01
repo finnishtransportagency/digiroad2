@@ -660,7 +660,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     linksAndOperations.map(linkAndOperation =>
       if (linkAndOperation.newLinkId.isEmpty)
         updateLinkAndOperationWithExpiredIds(linkAndOperation, getIdsForAssetsOutsideSplitGeometry(linksAndOperations))
-      else linkAndOperation)
+      else
+        linkAndOperation
+    )
   }
 
   /**
@@ -695,13 +697,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @return updated ChangeSet
    */
   private def updateChangeSetWithExpiredIds(changeSet: Option[ChangeSet], expiredIds: Set[Long]): Option[ChangeSet] = {
-    val updatedChangeSet = changeSet match {
+    changeSet match {
       case Some(info) =>
         val copiedInfo = Some(info.copy(expiredAssetIds = info.expiredAssetIds ++ expiredIds))
         copiedInfo
       case None => None
     }
-    updatedChangeSet
   }
 
   /**
@@ -712,9 +713,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @return Option[OperationStep] returns the updated OperationStep
    */
   private def updateOperationStepWithExpiredIds(operationStep: Option[OperationStep], expiredIds: Set[Long]): Option[OperationStep] = {
-    if (operationStep.isEmpty) return operationStep
-    val updatedChangeSet = updateChangeSetWithExpiredIds(operationStep.get.changeInfo,expiredIds)
-    Some(operationStep.get.copy(changeInfo = updatedChangeSet))
+    operationStep match {
+      case Some(step) =>
+        val updatedChangeSet = updateChangeSetWithExpiredIds(operationStep.get.changeInfo,expiredIds)
+        Some(operationStep.get.copy(changeInfo = updatedChangeSet))
+      case None => None
+    }
   }
 
   /**
@@ -722,13 +726,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    *
    * @param linksAndOperations sequence of RoadLink and related OperationStep pairs that contain post-split information
    * @param change Change case information
-   * @return Set[PersistedLinearAsset] returns the reported assets
+   * @return Set[PersistedLinearAsset] returns the reported assets, or no assets if no empty link was presented
    */
   private def reportAssetExpirationAfterSplit(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Set[PersistedLinearAsset] = {
     val emptyLink = linksAndOperations.filter(linkAndOperation => linkAndOperation.newLinkId.isEmpty)
     val emptyLinkOperation = if (emptyLink.nonEmpty) emptyLink.head.operation else return Set.empty[PersistedLinearAsset]
     val assetsOutsideGeometry = getAssetsOutsideSplitGeometry(linksAndOperations)
-    assetsOutsideGeometry.map(asset => Some(reportAssetChanges(Some(asset), None, Seq(change), emptyLinkOperation, ChangeTypeReport.Deletion)))
+    assetsOutsideGeometry.foreach(asset => Some(reportAssetChanges(Some(asset), None, Seq(change), emptyLinkOperation, ChangeTypeReport.Deletion)))
     assetsOutsideGeometry
   }
 }
