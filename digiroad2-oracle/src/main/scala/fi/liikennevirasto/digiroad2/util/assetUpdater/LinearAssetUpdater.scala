@@ -88,14 +88,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     change.replaceInfo.sortBy(_.oldToMValue).reverse.find(finder(_, asset))
   }
   private def fallInWhenSlicing(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
-    asset.linkId == replaceInfo.oldLinkId && asset.endMeasure >= replaceInfo.oldToMValue && asset.startMeasure >= replaceInfo.oldFromMValue
+    asset.linkId == replaceInfo.oldLinkId.getOrElse("") && asset.endMeasure >= replaceInfo.oldToMValue.getOrElse(0.0) && asset.startMeasure >= replaceInfo.oldFromMValue.getOrElse(0.0)
   }
 
   private def fallInReplaceInfoOld(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
-    if (replaceInfo.digitizationChange && replaceInfo.oldFromMValue > replaceInfo.oldToMValue) {
-      replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue >= asset.startMeasure && replaceInfo.oldToMValue <= asset.endMeasure
+    if (replaceInfo.digitizationChange && replaceInfo.oldFromMValue.getOrElse(0.0) > replaceInfo.oldToMValue.getOrElse(0.0)) {
+      replaceInfo.oldLinkId.getOrElse("") == asset.linkId && replaceInfo.oldFromMValue.getOrElse(0.0) >= asset.startMeasure && replaceInfo.oldToMValue.getOrElse(0.0) <= asset.endMeasure
     } else {
-      replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
+      replaceInfo.oldLinkId.getOrElse("") == asset.linkId && replaceInfo.oldFromMValue.getOrElse(0.0) <= asset.startMeasure && replaceInfo.oldToMValue.getOrElse(0.0) >= asset.endMeasure
     }
   }
   
@@ -205,8 +205,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private def reportingSplit(initStep: OperationStep, assetsInNewLink: LinkAndOperation, change: RoadLinkChange): Some[OperationStep] = {
     val pairs = assetsInNewLink.operation.assetsAfter.flatMap(asset => {
-      val info = change.replaceInfo.find(_.newLinkId.get == asset.linkId).get
-      createPair(Some(asset), assetsInNewLink.operation.assetsBefore.filter(_.linkId == info.oldLinkId))
+      val info = change.replaceInfo.find(_.newLinkId.getOrElse("") == asset.linkId).get
+      createPair(Some(asset), assetsInNewLink.operation.assetsBefore.filter(_.linkId == info.oldLinkId.getOrElse("")))
     }).distinct
     val report = pairs.filter(_.newAsset.isDefined).map(pair => {
       if (!assetsInNewLink.operation.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
@@ -429,8 +429,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     def slice(change: RoadLinkChange, asset: PersistedLinearAsset): Seq[PersistedLinearAsset] = {
       val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).get
       
-      val shorted = asset.copy(endMeasure = selectInfo.oldToMValue)
-      val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue, oldId = asset.id)
+      val shorted = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
+      val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = asset.id)
       
       val shortedLength = shorted.endMeasure - shorted.startMeasure
       val newPartLength = newPart.endMeasure - newPart.startMeasure
@@ -452,7 +452,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     def partitioner(asset: PersistedLinearAsset, change: RoadLinkChange): Boolean = {
       def assetIsAlreadySlicedOrFitIn(asset: PersistedLinearAsset, selectInfo: ReplaceInfo): Boolean = {
-        asset.endMeasure <= selectInfo.oldToMValue && asset.startMeasure >= selectInfo.oldFromMValue
+        asset.endMeasure <= selectInfo.oldToMValue.getOrElse(0.0) && asset.startMeasure >= selectInfo.oldFromMValue.getOrElse(0.0)
       }
 
       val selectInfoOpt = sortAndFind(change, asset, fallInReplaceInfoOld)
@@ -481,7 +481,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = newId),
       Projection(
-        info.oldFromMValue, info.oldToMValue,
+        info.oldFromMValue.getOrElse(0.0), info.oldToMValue.getOrElse(0.0),
         info.newFromMValue.getOrElse(0), info.newToMValue.getOrElse(0),
         LinearAssetUtils.createTimeStamp(),
         newId, maybeLinkLength),
