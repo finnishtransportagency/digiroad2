@@ -675,8 +675,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val oldAssetsInsideGeometry = linksAndOperations.filter(_.newLinkId.nonEmpty).flatMap(_.operation.assetsAfter).toSet
     val oldAssetsOutsideGeometry = linksAndOperations
       .filter(_.newLinkId.isEmpty).flatMap(_.operation.assetsBefore)
-      .filter(asset => !oldAssetsInsideGeometry.map(_.id).contains(asset.id)).toSet
-    oldAssetsOutsideGeometry
+      .filter(asset => !oldAssetsInsideGeometry.map(_.id).contains(asset.id))
+    oldAssetsOutsideGeometry.toSet
   }
 
   /**
@@ -687,7 +687,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    */
   private def getIdsForAssetsOutsideSplitGeometry(linksAndOperations: Seq[LinkAndOperation]): Set[Long] = {
     getAssetsOutsideSplitGeometry(linksAndOperations)
-      .map(oldAssetToExpire => oldAssetToExpire.id).toSet
+      .map(oldAssetToExpire => oldAssetToExpire.id)
   }
 
   /**
@@ -730,9 +730,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    */
   private def reportAssetExpirationAfterSplit(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Set[PersistedLinearAsset] = {
     val emptyLink = linksAndOperations.filter(linkAndOperation => linkAndOperation.newLinkId.isEmpty)
-    val emptyLinkOperation = if (emptyLink.nonEmpty) emptyLink.head.operation else return Set.empty[PersistedLinearAsset]
-    val assetsOutsideGeometry = getAssetsOutsideSplitGeometry(linksAndOperations)
-    assetsOutsideGeometry.foreach(asset => Some(reportAssetChanges(Some(asset), None, Seq(change), emptyLinkOperation, ChangeTypeReport.Deletion)))
-    assetsOutsideGeometry
+    if (emptyLink.nonEmpty) {
+      val emptyLinkOperation = emptyLink.head.operation
+      val assetsOutsideGeometry = getAssetsOutsideSplitGeometry(linksAndOperations)
+      assetsOutsideGeometry.foreach(asset => Some(reportAssetChanges(Some(asset), None, Seq(change), emptyLinkOperation, ChangeTypeReport.Deletion)))
+      assetsOutsideGeometry
+    } else
+      Set.empty[PersistedLinearAsset]
+
   }
 }
