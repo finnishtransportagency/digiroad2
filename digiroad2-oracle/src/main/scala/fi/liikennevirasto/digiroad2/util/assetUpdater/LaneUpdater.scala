@@ -65,15 +65,14 @@ object LaneUpdater {
         LaneNumber.isMainLane(targetLane.laneCode)
       } else lane.attributes.equals(targetLane.attributes)
     }
-
+    def partsAreContinues(origin: PersistedLane, sl: PersistedLane) = Math.abs(sl.startMeasure - origin.endMeasure) < 0.1
+    
     val sortedList = lanes.sortBy(_.startMeasure)
 
     if (lanes.nonEmpty) {
       val origin = sortedList.head
-      val target = sortedList.tail.find(sl => Math.abs(sl.startMeasure - origin.endMeasure) < 0.1
-        && equalAttributes(origin, sl)
-        && sl.sideCode == origin.sideCode)
-
+      val target = sortedList.tail.find(sl => partsAreContinues(origin, sl)
+        && equalAttributes(origin, sl) && sl.sideCode == origin.sideCode)
       if (target.nonEmpty) {
         // pick id if it already has one regardless of which one is newer
         val toBeFused = Seq(origin, target.get).sortWith(laneFiller.modifiedSort)
@@ -377,11 +376,17 @@ object LaneUpdater {
     })
 
     val ids   = changeSetsAndAdjustedLanes.filter(_.roadLinkChange.changeType == RoadLinkChangeType.Replace).flatMap(_.roadLinkChange.newLinks.map(_.linkId))
-    val split = changeSetsAndAdjustedLanes.filter(_.roadLinkChange.changeType == RoadLinkChangeType.Split)
-    val (_, replacementChangeSet) = fuseReplacementLanes(changeSetsAndAdjustedLanes)
-    val finalChangeSet = (split.map(_.changeSet) :+trafficDirectionChangeSet :+ replacementChangeSet).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
-    finalChangeSet.copy(splitLanes = finalChangeSet.splitLanes.map(b=> {b.copy(lanesToCreate = b.lanesToCreate.filterNot(c=>ids.contains(c.linkId)))}))
     
+    val (_, changeSetAfterFuse) = fuseReplacementLanes(changeSetsAndAdjustedLanes)
+    val finalChangeSet = Seq(trafficDirectionChangeSet, changeSetAfterFuse).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
+    val removedSplit=removeSplitWhichArePartOfMerger(finalChangeSet,ids)
+    finalChangeSet.copy(splitLanes = removedSplit
+    )
+  }
+  private def removeSplitWhichArePartOfMerger(finalChangeSet: ChangeSet,ids:Seq[String]) = {
+    finalChangeSet.splitLanes.map(b => {
+      b.copy(lanesToCreate = b.lanesToCreate.filterNot(c => ids.contains(c.linkId)))
+    })
   }
   // In case main lane's parent lanes have different start dates, we want to inherit the latest date
   def getLatestStartDatePropertiesForFusedLanes(lanesToMerge: Seq[PersistedLane]): Seq[LaneProperty] = {
