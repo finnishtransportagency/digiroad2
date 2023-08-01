@@ -653,10 +653,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def updateSplitAdjustmentsWithExpiredIds(linksAndOperations: Seq[LinkAndOperation]): Seq[LinkAndOperation] = {
     def updateLinkAndOperationIfEmptyNewLinkId(linkAndOperation: LinkAndOperation, expiredIds: Set[Long]): LinkAndOperation = {
       if (linkAndOperation.newLinkId.isEmpty) {
-        val updatedChangeSet = linkAndOperation.operation.changeInfo match {
-          case Some(info) => Some(ChangeSet(info.droppedAssetIds,info.adjustedMValues,info.adjustedSideCodes,info.expiredAssetIds ++ expiredIds,info.valueAdjustments))
-          case None => None
-        }
+        val updatedChangeSet = updateChangeSetWithExpiredIds(linkAndOperation.operation.changeInfo,expiredIds)
         val updatedOperation = OperationStep(linkAndOperation.operation.assetsAfter, updatedChangeSet, linkAndOperation.operation.roadLinkChange,linkAndOperation.operation.newLinkId,linkAndOperation.operation.assetsBefore)
         val updatedLinkAndOperation = LinkAndOperation(linkAndOperation.newLinkId,updatedOperation)
         updatedLinkAndOperation
@@ -695,6 +692,22 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   /**
+   * Updates ChangeSet by adding expiredIds
+   * @param changeSet ChangeSet to be updated
+   * @param expiredIds set of Ids to be added to changeSet
+   * @return updated ChangeSet
+   */
+  private def updateChangeSetWithExpiredIds(changeSet: Option[ChangeSet], expiredIds: Set[Long]): Option[ChangeSet] = {
+    val updatedChangeSet = changeSet match {
+      case Some(info) =>
+        val copiedInfo = Some(info.copy(expiredAssetIds = info.expiredAssetIds ++ expiredIds))
+        copiedInfo
+      case None => None
+    }
+    updatedChangeSet
+  }
+
+  /**
    * Updates an OperationStep with expired Ids of those assets that have fallen outside geometry after split.
    *
    * @param operationStep post-split information of assets
@@ -702,11 +715,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @return Option[OperationStep] returns the updated OperationStep
    */
   private def updateOperationStepWithExpiredIds(operationStep: Option[OperationStep], expiredIds: Set[Long]): Option[OperationStep] = {
-    val updatedChangeInfo = operationStep.get.changeInfo match {
-      case Some(info) => Some(ChangeSet(info.droppedAssetIds,info.adjustedMValues,info.adjustedSideCodes,info.expiredAssetIds ++ expiredIds,info.valueAdjustments))
-      case None => None
-    }
-    Some(operationStep.get.copy(changeInfo = updatedChangeInfo))
+    if (operationStep.isEmpty) return operationStep
+    val updatedChangeSet = updateChangeSetWithExpiredIds(operationStep.get.changeInfo,expiredIds)
+    Some(operationStep.get.copy(changeInfo = updatedChangeSet))
   }
 
   /**
