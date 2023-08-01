@@ -651,19 +651,17 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @return Seq[LinkAndOperation] returns an updated copy of original parameter
    */
   private def updateSplitAdjustmentsWithExpiredIds(linksAndOperations: Seq[LinkAndOperation]): Seq[LinkAndOperation] = {
-    def updateLinkAndOperationIfEmptyNewLinkId(linkAndOperation: LinkAndOperation, expiredIds: Set[Long]): LinkAndOperation = {
-      if (linkAndOperation.newLinkId.isEmpty) {
+    def updateLinkAndOperationWithExpiredIds(linkAndOperation: LinkAndOperation, expiredIds: Set[Long]): LinkAndOperation = {
         val updatedChangeSet = updateChangeSetWithExpiredIds(linkAndOperation.operation.changeInfo,expiredIds)
         val updatedOperation = linkAndOperation.operation.copy(changeInfo = updatedChangeSet)
         val updatedLinkAndOperation = linkAndOperation.copy(operation = updatedOperation)
         updatedLinkAndOperation
-      } else {
-        linkAndOperation
-      }
     }
 
     linksAndOperations.map(linkAndOperation =>
-      updateLinkAndOperationIfEmptyNewLinkId(linkAndOperation, getIdsForAssetsOutsideSplitGeometry(linksAndOperations)))
+      if (linkAndOperation.newLinkId.isEmpty)
+        updateLinkAndOperationWithExpiredIds(linkAndOperation, getIdsForAssetsOutsideSplitGeometry(linksAndOperations))
+      else linkAndOperation)
   }
 
   /**
