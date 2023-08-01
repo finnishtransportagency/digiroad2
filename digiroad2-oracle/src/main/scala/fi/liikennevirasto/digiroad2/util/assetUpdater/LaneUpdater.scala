@@ -375,17 +375,17 @@ object LaneUpdater {
       }
     })
 
-    val ids   = changeSetsAndAdjustedLanes.filter(_.roadLinkChange.changeType == RoadLinkChangeType.Replace).flatMap(_.roadLinkChange.newLinks.map(_.linkId))
+    val linksPartOfReplacement = changeSetsAndAdjustedLanes.filter(_.roadLinkChange.changeType == RoadLinkChangeType.Replace)
+      .flatMap(_.roadLinkChange.newLinks.map(_.linkId))
     
     val (_, changeSetAfterFuse) = fuseReplacementLanes(changeSetsAndAdjustedLanes)
     val finalChangeSet = Seq(trafficDirectionChangeSet, changeSetAfterFuse).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
-    val removedSplit=removeSplitWhichArePartOfMerger(finalChangeSet,ids)
-    finalChangeSet.copy(splitLanes = removedSplit
-    )
+    val removedSplit = removeSplitWhichArePartOfMerger(finalChangeSet,linksPartOfReplacement)
+    finalChangeSet.copy(splitLanes = removedSplit)
   }
-  private def removeSplitWhichArePartOfMerger(finalChangeSet: ChangeSet,ids:Seq[String]) = {
+  private def removeSplitWhichArePartOfMerger(finalChangeSet: ChangeSet,linksPartOfReplacement:Seq[String]) = {
     finalChangeSet.splitLanes.map(b => {
-      b.copy(lanesToCreate = b.lanesToCreate.filterNot(c => ids.contains(c.linkId)))
+      b.copy(lanesToCreate = b.lanesToCreate.filterNot(c => linksPartOfReplacement.contains(c.linkId)))
     })
   }
   // In case main lane's parent lanes have different start dates, we want to inherit the latest date
