@@ -43,9 +43,10 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     val newLinksMapped = changesNewLinks
       .map(a => RoadWidthMap(a.linkId, a.adminClass, MTKClassWidth(a.roadClass), a.linkLength))
       .filter(p => p.adminClass != State && p.mTKClassWidth.value != MTKClassWidth.Unknown.value)
+    val idListFromMap =  newLinksMapped.map(_.linkId)
     val filterOnlyRelevant = operationStep.
       assetsAfter.filter(selectOnlyMachineCreated)
-      .filter(a => newLinksMapped.map(_.linkId).contains(a.linkId))
+      .filter(a =>idListFromMap.contains(a.linkId))
     
     if (filterOnlyRelevant.nonEmpty) {
       val systemEditedUpdated = filterOnlyRelevant.map(asset => {
