@@ -7,7 +7,8 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, RoadWidthService}
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
-sealed case class RoadWidthMap(linkId: String, adminClass: AdministrativeClass, mTKClassWidth:MTKClassWidth, linkLength:Double)
+
+sealed case class RoadWidthMap(linkId: String, adminClass: AdministrativeClass, mTKClassWidth: MTKClassWidth, linkLength: Double)
 
 class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpdater(service) {
   
