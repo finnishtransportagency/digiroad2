@@ -39,7 +39,7 @@ object LaneUpdater {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   case class RoadLinkChangeWithResults(roadLinkChange: RoadLinkChange, changeSet: ChangeSet, lanesOnAdjustedLink: Seq[PersistedLane])
 
-  def fuseReplacementLanes(replacementResults: Seq[RoadLinkChangeWithResults]): (Seq[PersistedLane], ChangeSet) = {
+  def fuseLaneSections(replacementResults: Seq[RoadLinkChangeWithResults]): (Seq[PersistedLane], ChangeSet) = {
     val newLinkIds = replacementResults.flatMap(_.roadLinkChange.newLinks.map(_.linkId))
     val changeSets = replacementResults.map(_.changeSet)
     val lanesOnNewLinks = replacementResults.flatMap(_.lanesOnAdjustedLink)
@@ -378,12 +378,12 @@ object LaneUpdater {
     val linksPartOfReplacement = changeSetsAndAdjustedLanes.filter(_.roadLinkChange.changeType == RoadLinkChangeType.Replace)
       .flatMap(_.roadLinkChange.newLinks.map(_.linkId))
     
-    val (_, changeSetAfterFuse) = fuseReplacementLanes(changeSetsAndAdjustedLanes)
+    val (_, changeSetAfterFuse) = fuseLaneSections(changeSetsAndAdjustedLanes)
     val finalChangeSet = Seq(trafficDirectionChangeSet, changeSetAfterFuse).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
-    val removedSplit = removeSplitWhichArePartOfMerger(finalChangeSet,linksPartOfReplacement)
+    val removedSplit = removeSplitWhichAreAlsoPartOfMerger(finalChangeSet,linksPartOfReplacement)
     finalChangeSet.copy(splitLanes = removedSplit)
   }
-  private def removeSplitWhichArePartOfMerger(finalChangeSet: ChangeSet,linksPartOfReplacement:Seq[String]) = {
+  private def removeSplitWhichAreAlsoPartOfMerger(finalChangeSet: ChangeSet,linksPartOfReplacement:Seq[String]) = {
     finalChangeSet.splitLanes.map(b => {
       b.copy(lanesToCreate = b.lanesToCreate.filterNot(c => linksPartOfReplacement.contains(c.linkId)))
     })

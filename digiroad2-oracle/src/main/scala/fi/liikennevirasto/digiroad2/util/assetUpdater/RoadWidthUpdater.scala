@@ -80,7 +80,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     val newWidth = Seq(DynamicProperty("width", "integer", required = true, List(DynamicPropertyValue(replace.width.toString))))
     DynamicValue(value = DynamicAssetValue(newWidth))
   }
-  //TODO add test
+  
   private def handleGeneratedPart(changeSets: ChangeSet, asset: PersistedLinearAsset, replace: RoadWidthMap, operationStep: OperationStep) = {
     val (_, other) = asset.value.get.asInstanceOf[DynamicValue].value.properties.partition(_.publicId == "width")
     val newWidth = Seq(DynamicProperty("width", "integer", required = true, List(DynamicPropertyValue(replace.mTKClassWidth.width.toString))))
