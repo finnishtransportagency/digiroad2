@@ -506,4 +506,126 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
+  test("changes come in multiple part, values same") {
+
+    val oldLink1 = "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1"
+    val oldLink2 = "197f22f2-3427-4412-9d2a-3848a570c996:1"
+
+    val linkIdNew1 = "59704775-596d-46c8-99cf-e85013bbcb56:1"
+    val linkIdNew2 = "d989ee2b-f6d0-4433-b5b6-0a4fe3d62400:1"
+
+    val relevantChange = testChanges.filter(_.oldLink.isDefined).filter(change =>Seq(oldLink1,oldLink2).contains( change.oldLink.get.linkId))
+    
+    runWithRollback {
+      val oldRoadLink1 = roadLinkService.getExpiredRoadLinkByLinkId(oldLink1).get
+      val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(oldLink2).get
+      
+      val mainLane1 = NewLane(0, 0.0, oldRoadLink1.length, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane1), Set(oldRoadLink1.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      val mainLane2 = NewLane(0, 0.0, oldRoadLink1.length, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane2), Set(oldRoadLink1.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val mainLane3 = NewLane(0, 0.0, oldRoadLink2.length, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane3), Set(oldRoadLink2.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      val mainLane4 = NewLane(0, 0.0, oldRoadLink2.length, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane4), Set(oldRoadLink2.linkId), SideCode.TowardsDigitizing.value, testUserName)
+      
+      
+      val lanesBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink1, oldLink2))
+      lanesBefore.size should be(4)
+      lanesBefore.head.expired should be(false)
+      
+      val changeSet = LaneUpdater.handleChanges(relevantChange)
+      LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChange)
+
+      val assetsAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(linkIdNew1, linkIdNew2))
+
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+
+      sorted.foreach(p => {
+        println(s"id: ${p.id}, value: ${p.laneCode} , linkId: ${p.linkId}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
+
+      sorted.size should be(4)
+
+      sorted.filter(_.linkId == linkIdNew1).head.startMeasure should be(0)
+      sorted.filter(_.linkId == linkIdNew1).head.endMeasure should be(101.922)
+
+      sorted.filter(_.linkId == linkIdNew2).head.startMeasure should be(0)
+      sorted.filter(_.linkId == linkIdNew2).head.endMeasure should be(337.589)
+      
+    }
+  }
+
+  test("changes come in multiple part, additional lanes") {
+
+    val oldLink1 = "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1"
+    val oldLink2 = "197f22f2-3427-4412-9d2a-3848a570c996:1"
+
+    val linkIdNew1 = "59704775-596d-46c8-99cf-e85013bbcb56:1"
+    val linkIdNew2 = "d989ee2b-f6d0-4433-b5b6-0a4fe3d62400:1"
+
+    val relevantChange = testChanges.filter(_.oldLink.isDefined).filter(change => Seq(oldLink1, oldLink2).contains(change.oldLink.get.linkId))
+
+    runWithRollback {
+      val oldRoadLink1 = roadLinkService.getExpiredRoadLinkByLinkId(oldLink1).get
+      val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(oldLink2).get
+      
+      val mainLane1 = NewLane(0, 0.0, oldRoadLink1.length, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane1), Set(oldRoadLink1.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      val additionalLane1 = NewLane(0, 0.0, oldRoadLink1.length, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(additionalLane1), Set(oldRoadLink1.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+
+      val mainLane2 = NewLane(0, 0.0, oldRoadLink1.length, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane2), Set(oldRoadLink1.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val additionalLane2 = NewLane(0, 0.0, oldRoadLink1.length, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(additionalLane2), Set(oldRoadLink1.linkId), SideCode.AgainstDigitizing.value, testUserName)
+      
+      val mainLane3 = NewLane(0, 0.0, oldRoadLink2.length, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane3), Set(oldRoadLink2.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      val additionalLane3 = NewLane(0, 0.0, oldRoadLink2.length, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(additionalLane3), Set(oldRoadLink2.linkId), SideCode.AgainstDigitizing.value, testUserName)
+      
+      val mainLane4 = NewLane(0, 0.0, oldRoadLink2.length, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane4), Set(oldRoadLink2.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val additionalLane4 = NewLane(0, 0.0, oldRoadLink2.length, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(additionalLane4), Set(oldRoadLink2.linkId), SideCode.TowardsDigitizing.value, testUserName)
+      
+      val lanesBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink1, oldLink2))
+      lanesBefore.size should be(8)
+      lanesBefore.head.expired should be(false)
+
+      val changeSet = LaneUpdater.handleChanges(relevantChange)
+      LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChange)
+
+      val assetsAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(linkIdNew1, linkIdNew2))
+
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+
+      sorted.size should be(8)
+
+      val assetOnNewLink1 = sorted.filter(_.linkId == linkIdNew1).sortBy(_.startMeasure)
+
+      val assetOnNewLink2 = sorted.filter(_.linkId == linkIdNew2).sortBy(_.endMeasure)
+      
+      assetOnNewLink1.head.startMeasure should be(0)
+      assetOnNewLink1.head.endMeasure should be(101.922)
+
+      assetOnNewLink1.last.startMeasure should be(52.15)
+      assetOnNewLink1.last.endMeasure should be(101.922)
+
+      assetOnNewLink2.map(a=> {
+        a.startMeasure should be(0)
+        a.endMeasure should be(337.589)
+      })
+    }
+  }
+
 }

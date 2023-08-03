@@ -30,42 +30,30 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         linkSource = LinkGeomSource.NormalLinkInterface,
         verifiedBy = None, verifiedDate = None,
         informationSource = Some(MmlNls))
-      Some(OperationStep(Seq(newAsset), Some(changeSets),Some(change),newLink.linkId,Seq()))
+      Some(OperationStep(Seq(newAsset), Some(changeSets),Seq()))
     } else {
       None
     }
     
   }
 
-  private def removePavement(operatio: OperationStep) = {
-    val change: RoadLinkChange = operatio.roadLinkChange.get
+  private def removePavement(operatio: OperationStep,changes: Seq[RoadLinkChange]) = {
     val assetsAll: Seq[PersistedLinearAsset] = operatio.assetsAfter
     val changeSets: ChangeSet = operatio.changeInfo.get
-    
-    val expiredPavement = assetsAll.filter(a => change.newLinks.map(_.linkId).contains(a.linkId)).map(asset => {
-      val remove = change.newLinks.find(_.linkId == asset.linkId).get
-      if (remove.surfaceType == SurfaceType.None) {
+    val changesRemovePavement = changes.flatMap(_.newLinks).filter(_.surfaceType == SurfaceType.None).map(_.linkId)
+    val expiredPavement = assetsAll.filter(a => changesRemovePavement.contains(a.linkId)).map(asset => {
         if (asset.id != 0) {
           operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
-          reportAssetChanges(Some(asset), None, Seq(change),  operatio.copy(assetsAfter = Seq(asset.copy(id = removePart)))
-            , ChangeTypeReport.Deletion)
+          reportAssetChanges(Some(asset), None, changes,  operatio.copy(assetsAfter = Seq(asset.copy(id = removePart))), Some(ChangeTypeReport.Deletion))
         }
-      } else {
-        operatio
-      }
-    }).foldLeft(OperationStep(assetsAll, Some(changeSets), Some(change)))((a, b) => {
-      OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get))
-        , a.roadLinkChange, b.newLinkId, b.assetsBefore)
+    }).foldLeft(OperationStep(assetsAll, Some(changeSets)))((a, b) => {
+      OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)), b.assetsBefore)
     })
     Some(expiredPavement)
   }
-  override def additionalUpdateOrChangeReplace(operationStep: OperationStep): Option[OperationStep] = {
-    removePavement(operationStep)
-  }
-
-  override def additionalUpdateOrChangeSplit(operationStep: OperationStep): Option[OperationStep] = {
-    removePavement(operationStep)
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
+    removePavement(operationStep,changes)
   }
 
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {

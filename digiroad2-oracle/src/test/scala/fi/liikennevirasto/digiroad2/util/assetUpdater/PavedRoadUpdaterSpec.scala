@@ -89,7 +89,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       val properties = assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties
       properties.head.values.head.value should be("99")
 
-      val assets = TestPavedRoadUpdater.getReport().filter(_.linkId ==linkId15).map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestPavedRoadUpdater.getReport().filter(_.linkId ==linkId15).map(a => PairAsset(a.before, a.after.headOption,a.changeType))
 
       assets.size should  be(1)
       TestPavedRoadUpdater.getReport().head.changeType should be(ChangeTypeReport.Creation)
@@ -117,7 +117,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(0)
       
-      val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption))
+      val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
       TestPavedRoadUpdaterMock.getReport().head.changeType should be(ChangeTypeReport.Deletion)
 
