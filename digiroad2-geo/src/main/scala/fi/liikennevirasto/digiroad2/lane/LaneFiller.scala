@@ -34,12 +34,12 @@ object LaneFiller {
 
   def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (changeSet1, changeSet2) =>
     changeSet1.copy(
-      adjustedMValues = changeSet1.adjustedMValues ++ changeSet2.adjustedMValues,
-      adjustedSideCodes = changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes,
-      positionAdjustments = changeSet1.positionAdjustments ++ changeSet2.positionAdjustments,
-      expiredLaneIds = changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
-      generatedPersistedLanes = changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes,
-      splitLanes = changeSet1.splitLanes ++ changeSet2.splitLanes
+      adjustedMValues = (changeSet1.adjustedMValues ++ changeSet2.adjustedMValues).distinct,
+      adjustedSideCodes = ( changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes).distinct,
+      positionAdjustments = ( changeSet1.positionAdjustments ++ changeSet2.positionAdjustments).distinct,
+      expiredLaneIds =  changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
+      generatedPersistedLanes = ( changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes).distinct,
+      splitLanes =  (changeSet1.splitLanes ++ changeSet2.splitLanes).distinct
     )
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])

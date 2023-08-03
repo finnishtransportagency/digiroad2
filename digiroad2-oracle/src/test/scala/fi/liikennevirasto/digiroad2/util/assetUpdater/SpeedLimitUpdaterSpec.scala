@@ -158,6 +158,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId))).thenReturn(Seq(oldRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set.empty[String], false)).thenReturn(Seq.empty[RoadLink])
       speedLimitService.persistUnknown(Seq(UnknownSpeedLimit(linkId,60,Municipality)))
       val unknownBefore = speedLimitService.getUnknownByLinkIds(Set(linkId))
       unknownBefore .size should be(1)
