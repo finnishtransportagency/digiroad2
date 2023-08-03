@@ -31,7 +31,7 @@ export class ClientBase {
         } catch (err) {
             const queryParams = JSON.stringify(params).substring(0, 100);
             console.error(`Request ${client.getUri() + url} with params ${queryParams}... responded with error (retry: ${retry}):`);
-            const errorMsg = this.processErrorAndExtractMessage(err, client.getUri() + url);
+            const errorMsg = this.processErrorAndExtractMessage(err, client.getUri() + url,JSON.stringify(params));
             if (retry < this.maxRetriesPerQuery) {
                 await this.exponentialTimeout(retry);
                 return await this.getRequest(client, url, params, retry + 1);
@@ -62,10 +62,9 @@ export class ClientBase {
         }
     }
 
-    processErrorAndExtractMessage(error: any, url: string): string {
+    processErrorAndExtractMessage(error: any, url: string, payload : string = ""): string {
         if (axios.isAxiosError(error)) {
-            //console.error("Error code :"+error.response?.status);
-            //console.error(error.response?.data);
+            console.error(`Whole failed URL: ${url}, parameter: ${payload}`)
             return `Error happened during fetch of ${url} (${error.response?.status}: ${error.response?.statusText.substring(0, 100)})`;
         } else {
             console.error(error);
