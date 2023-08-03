@@ -102,10 +102,5 @@ class AwsService {
         objects
       }
     }
-
-    def listObjects(s3bucket: String) = {
-      val listObjectsRequest = ListObjectsV2Request.builder().bucket(s3bucket).build()
-      s3.listObjectsV2(listObjectsRequest).contents()
-    }
   }
 }

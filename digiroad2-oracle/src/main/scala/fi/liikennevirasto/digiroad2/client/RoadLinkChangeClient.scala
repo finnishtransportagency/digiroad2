@@ -2,7 +2,9 @@ package fi.liikennevirasto.digiroad2.client
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.SurfaceType
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.AwsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
@@ -11,7 +13,7 @@ import org.json4s.JsonAST.JString
 import org.json4s.jackson.parseJson
 import org.json4s.{CustomSerializer, _}
 import org.postgis.PGgeometry
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
 
@@ -139,10 +141,6 @@ class RoadLinkChangeClient {
 
   implicit val formats = DefaultFormats + changeItemSerializer + RoadLinkChangeTypeSerializer + GeometrySerializer +
     AdminClassSerializer + TrafficDirectionSerializer + SurfaceTypeSerializer
-
-  case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int, adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection)
-  case class ReplaceInfo(oldLinkId: String, newLinkId: String, oldFromMValue: Double, oldToMValue: Double, newFromMValue: Double, newToMValue: Double, digitizationChange: Boolean)
-  case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
 
   def fetchLatestSuccessfulUpdateDate(): DateTime = {
     // placeholder value as long as fetching this date from db is possible
