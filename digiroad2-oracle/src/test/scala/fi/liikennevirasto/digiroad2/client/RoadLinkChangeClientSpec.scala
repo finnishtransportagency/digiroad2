@@ -88,6 +88,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceChange.replaceInfo.head.newFromMValue.get should be(0)
     replaceChange.replaceInfo.head.newToMValue.get should be(16.465)
     replaceChange.replaceInfo.head.digitizationChange should be(false)
+    replaceChange.replaceInfo.head.digitizationChange should be(false)
   }
 
   test("RoadLinkChange for 'split' contains correct info") {
@@ -183,6 +184,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     val replaceInfo = changes(37).replaceInfo
     replaceInfo.size should be(3)
     val sortedReplaceInfo = replaceInfo.sortBy(_.oldFromMValue)
+    splitChange.replaceInfo(1).digitizationChange should be(false)
 
     sortedReplaceInfo.head.oldLinkId.get should be("151128c6-a2d5-44b4-a756-391b0b40fff5:1")
     sortedReplaceInfo.head.newLinkId.get should be("4cc65e5d-4f63-4ace-bc92-fbf8e8013239:2")
@@ -264,6 +266,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceInfo.head.newFromMValue.get should be(0)
     replaceInfo.head.newToMValue.get should be(915.789)
     replaceInfo.head.digitizationChange should be(false)
+    splitChange.replaceInfo.last.digitizationChange should be(false)
   }
 
   // ignored by default, used to test locally that the fetch and convert process works
