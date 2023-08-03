@@ -88,7 +88,6 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceChange.replaceInfo.head.newFromMValue.get should be(0)
     replaceChange.replaceInfo.head.newToMValue.get should be(16.465)
     replaceChange.replaceInfo.head.digitizationChange should be(false)
-    replaceChange.replaceInfo.head.digitizationChange should be(false)
   }
 
   test("RoadLinkChange for 'split' contains correct info") {
