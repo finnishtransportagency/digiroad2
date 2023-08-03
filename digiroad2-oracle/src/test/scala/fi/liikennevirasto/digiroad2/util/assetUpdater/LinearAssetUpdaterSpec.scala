@@ -1792,4 +1792,30 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.head.expired should be(false)
     }
   }
+
+  test("Replace. Given a Road Link that is replaced with a New Link; " +
+                  "when the New Link is partly outside Old Link geometry; " +
+                  "then the Linear Asset on New Link should be correct length") {
+    val oldLinkID = "be36fv60-6813-4b01-a57b-67136dvv6862:1"
+    val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
+
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 306.687), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      assetsAfter.size should be(1)
+      assetsAfter.head.linkId should be(newLinkID)
+      assetsAfter.head.expired should be(false)
+    }
+  }
 }
