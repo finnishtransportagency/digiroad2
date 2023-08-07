@@ -55,7 +55,6 @@ object LaneUpdater {
     }
 
     (lanesAfterFuse, changeSet)
-
   }
 
   def fuseLanesOnMergedRoadLink(lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
