@@ -1,5 +1,6 @@
 import axios, {AxiosInstance} from "axios";
 import {SsmService} from "../service/ssm-service";
+import * as crypto from "crypto";
 
 export class ClientBase {
     protected maxRetriesPerQuery = 3;
@@ -26,7 +27,10 @@ export class ClientBase {
     async getRequest(client: AxiosInstance, url: string, params: object = {},
                                      retry: number = 1): Promise<any> {
         try {
+           const id = crypto.randomUUID().slice(0,10)
+            console.time(id+" Request tooks ")
             const response = await client.get(url, { params: params });
+            console.timeEnd(id+" Request tooks ")
             return response.data;
         } catch (err) {
             const queryParams = JSON.stringify(params).substring(0, 100);
