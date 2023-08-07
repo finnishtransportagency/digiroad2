@@ -9,7 +9,7 @@ export class Utils {
         return date.toLocaleDateString('fi-FI', {timeZone: 'Europe/Helsinki'});
     }
 
-    static sleep(ms:number):Promise<void> { return new Promise(resolve => setTimeout(resolve, ms)); }
+    static wait(ms:number):Promise<void> { return new Promise(resolve => setTimeout(resolve, ms)); }
     /**
      * Checks if any promise contains an error. If no error is found returns results.
      */
