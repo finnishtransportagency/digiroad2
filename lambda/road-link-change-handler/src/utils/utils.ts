@@ -1,21 +1,37 @@
-export const Utils = {
+export class Utils {
+    
+    Utils () {}
+    
     /**
      * Transforms date to string DD.MM.YYYY in Helsinki time
      */
-    dateToDateString(date: Date): string {
+    static dateToDateString(date: Date): string {
         return date.toLocaleDateString('fi-FI', {timeZone: 'Europe/Helsinki'});
-    },
+    }
 
+    static wait(ms:number):Promise<void> { return new Promise(resolve => setTimeout(resolve, ms)); }
     /**
      * Checks if any promise contains an error. If no error is found returns results.
      */
-    checkResultsForErrors(results: PromiseSettledResult<any>[], errorMsg: string): any[] {
-        const errors = results.filter(({ status }) => status === 'rejected') as PromiseRejectedResult[];
+    static checkResultsForErrors(results: PromiseSettledResult<any>[], errorMsg: string): any[] {
+        this.checkError(results,errorMsg);
+        return (results as PromiseFulfilledResult<any>[]).map(result => result.value);
+    }
+
+    static checkError(results: PromiseSettledResult<any>[], errorMsg: string) {
+        const errors = results.filter(({status}) => status === 'rejected') as PromiseRejectedResult[];
         if (errors.length > 0) {
-            errors.forEach((error) => console.error(error.reason) );
+            errors.forEach((error) => console.error(error.reason));
             throw new Error(errorMsg);
         }
-        const fulfilled = results as PromiseFulfilledResult<any>[];
-        return fulfilled.map(result => result.value);
+    }
+    /**
+     * Checks if any promise contains an error. If no error is found returns results.
+     */
+    static checkResultsForErrorsNestedPromise(results:  PromiseSettledResult<PromiseSettledResult<any>[]>[], errorMsg: string): any[] {
+        this.checkError(results,errorMsg);  // check outerPromise
+        const innerPromise = (results as PromiseFulfilledResult<PromiseSettledResult<any>[]>[]).flatMap(t=>t.value);
+        this.checkError(innerPromise,errorMsg); // check innerPromise
+        return (innerPromise as PromiseFulfilledResult<any>[]).map(result => result.value);
     }
 }

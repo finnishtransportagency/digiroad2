@@ -1,7 +1,7 @@
 import {AxiosInstance} from "axios";
-import array from "lodash";
 import {ClientBase} from "./client-base";
 import {Utils} from "../utils/utils";
+import _ from "lodash";
 
 export class KgvClient extends ClientBase {
     private readonly url: string;
@@ -24,11 +24,12 @@ export class KgvClient extends ClientBase {
         if (!linkIds.length) { return []; }
 
         const instance = await this.createInstance(this.url, this.apiKey);
+        
         const uniqueIds = [...new Set(linkIds)];
-        const batches = array.chunk(uniqueIds, this.maxBatchSize);
-        const promises = batches.map(batch => this.fetchLinkVersions(batch, instance));
-        const results = await Promise.allSettled(promises);
-        const succeeded = Utils.checkResultsForErrors(results, "Unable to fetch road links") as KgvFeatureCollection[];
+        
+        const promises = this.requestLinks(uniqueIds, instance);
+        const results = await Promise.allSettled(promises.flatMap(async t => Promise.allSettled(await t)));
+        const succeeded = Utils.checkResultsForErrorsNestedPromise(results, "Unable to fetch road links") as KgvFeatureCollection[]
         const links = this.extractLinks(succeeded);
         if (links.length != uniqueIds.length) {
             const retrievedLinks = links.map(link => link.id);
@@ -37,6 +38,21 @@ export class KgvClient extends ClientBase {
             });
         }
         return links;
+    }
+
+    /**
+     *  Request links by splitting ids into batch and then making 300 request before waiting half second to not over saturate AWS api gateway 
+     * @param uniqueIds
+     * @param instance
+     * @private
+     */
+    private requestLinks(uniqueIds: string[], instance: AxiosInstance): Promise<Promise<KgvFeatureCollection>[]>[] {
+        const batches = _.chunk(uniqueIds, this.maxBatchSize);
+        const requestBatch = _.chunk(batches, 300)
+        return _.flatMap(requestBatch, async batch => {
+            await Utils.wait(0.5 * 1000); // await half second before each request batch
+            return _.flatMap(batch, t => this.fetchLinkVersions(t, instance))
+        });
     }
 
     protected async fetchLinkVersions(linkIds: string[], instance: AxiosInstance): Promise<KgvFeatureCollection> {

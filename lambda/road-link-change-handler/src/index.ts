@@ -1,8 +1,9 @@
 import {ReplaceInfo, VkmClient} from "./client/vkm-client";
-import {KgvClient} from "./client/kgv-client";
+import {KgvClient, KgvLink} from "./client/kgv-client";
 import {ChangeSet} from "./service/change-set";
 import {S3Service} from "./service/s3-service";
 import {RoadLinkDao} from "./dao/road-link-dao";
+import _ from "lodash";
 
 const s3Service     = new S3Service();
 const vkmClient     = new VkmClient();
@@ -29,8 +30,17 @@ export const handler = async (event: Event) => {
     console.timeEnd("Fetch KGV history links")
     
     console.time("Filter to only new links")
-    const newLinks = links.filter(link => newLinkIds.includes(link.id));
+    
+    function filterFunction(links: KgvLink[]) {
+        const split = _.chunk(links,1000)
+        let filtered:KgvLink[] = []
+        split.forEach(item=> {filtered = filtered.concat(item.filter(link => newLinkIds.includes(link.id)))})
+        return filtered;
+    }
+    const newLinks = filterFunction(links);
+    
     console.timeEnd("Filter to only new links")
+    
     console.info(`Got ${newLinks.length} new links`);
     
     console.time("Total times to create changes")
