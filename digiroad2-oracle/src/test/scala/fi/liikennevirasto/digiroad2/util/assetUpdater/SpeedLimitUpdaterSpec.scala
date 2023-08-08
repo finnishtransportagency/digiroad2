@@ -209,7 +209,37 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
   }
 
   test("Replace. Given a Road Link that is replaced with a New Link; " +
-    "when the New Link has grown outside of Old Link geometry; " +
+    "when the New Link has grown outside of Old Link geometry from the end; " +
+    "then the Speed Limit Asset on New Link should be New Link's length") {
+    val oldLinkID = "be36fv60-6813-4b01-a57b-67136dvv6862:1"
+    val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      assetsAfter.size should be(1)
+
+      val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
+      assetsAfter.head.linkId should be(newLinkID)
+      assetLength should be(newRoadLink.length)
+    }
+  }
+
+  test("Replace. Given a Road Link that is replaced with a New Link; " +
+    "when the New Link has grown outside of Old Link geometry from the beginning; " +
     "then the Speed Limit Asset on New Link should be New Link's length") {
     val oldLinkID = "be36fv60-6813-4b01-a57b-67136dvv6862:1"
     val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
