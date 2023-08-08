@@ -51,7 +51,7 @@ export class KgvClient extends ClientBase {
         const requestBatch = _.chunk(batches, 300)
         return _.flatMap(requestBatch, async batch => {
             await Utils.wait(0.5 * 1000); // await half second before each request batch
-            return _.flatMap(batch, t => this.fetchLinkVersions(t, instance))
+            return _.flatMap(batch, async t => await this.fetchLinkVersions(t, instance))
         });
     }
 
