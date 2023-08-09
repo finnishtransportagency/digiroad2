@@ -70,7 +70,8 @@ object LaneUpdater {
 
     if (lanes.nonEmpty) {
       val origin = sortedList.head
-      val target = sortedList.tail.find(sl => partsAreContinues(origin, sl)
+      val target = sortedList.tail.find(sl =>
+        (partsAreContinues(origin, sl) || (LaneNumber.isMainLane(origin.laneCode) && LaneNumber.isMainLane(sl.laneCode)))
         && equalAttributes(origin, sl) && sl.sideCode == origin.sideCode)
       if (target.nonEmpty) {
         // pick id if it already has one regardless of which one is newer
@@ -454,7 +455,14 @@ object LaneUpdater {
       val laneAdjustmentsOnLink = lanesToUpdate.map(lane => {
         val laneLinearReference = AssetLinearReference(lane.id, lane.startMeasure, lane.endMeasure, lane.sideCode)
         val projection = Projection(replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0), replaceInfo.newFromMValue.get, replaceInfo.newToMValue.get)
-        val (newStartM, newEndM, newSideCode) = MValueCalculator.calculateNewMValues(laneLinearReference, projection, newRoadlink.linkLength, replaceInfo.digitizationChange)
+        val (newStartM, newEndM, newSideCode) = if (LaneNumber.isMainLane(lane.laneCode)) {
+          val newMainLaneSideCode = if (replaceInfo.digitizationChange) {
+            SideCode.switch(SideCode.apply(lane.sideCode)).value
+          } else lane.sideCode
+          (0.0, MValueCalculator.roundMeasure(newRoadlink.linkLength), newMainLaneSideCode)
+        } else {
+          MValueCalculator.calculateNewMValues(laneLinearReference, projection, newRoadlink.linkLength, replaceInfo.digitizationChange)
+        }
         val adjustment = LanePositionAdjustment(lane.id, newRoadlink.linkId, newStartM, newEndM, SideCode.apply(newSideCode))
         val adjustedLane = lane.copy(linkId = newRoadlink.linkId, startMeasure = newStartM, endMeasure = newEndM, sideCode = newSideCode)
         (adjustment, adjustedLane)
