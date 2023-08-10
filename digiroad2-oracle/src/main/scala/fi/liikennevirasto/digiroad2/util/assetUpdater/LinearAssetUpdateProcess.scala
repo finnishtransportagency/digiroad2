@@ -127,8 +127,7 @@ object LinearAssetUpdateProcess {
         case "european_roads" => getAssetUpdater(EuropeanRoads.typeId).updateLinearAssets(EuropeanRoads.typeId)
         case "exit_numbers" => getAssetUpdater(ExitNumbers.typeId).updateLinearAssets(ExitNumbers.typeId)
         case "maintenance_roads" => getAssetUpdater(MaintenanceRoadAsset.typeId).updateLinearAssets(MaintenanceRoadAsset.typeId)
-
-        //Käpy?  
+        
         case "cycling_and_walking" => getAssetUpdater(CyclingAndWalking.typeId).updateLinearAssets(CyclingAndWalking.typeId)
         
         case "road_link_properties" => roadLinkPropertyUpdater.updateProperties()
