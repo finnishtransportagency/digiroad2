@@ -268,9 +268,9 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     }
   }
 
-  test("Replace. Given two Road Links that are replaced with a New Link; " +
-    "when the New Link has a gap in the middle; " +
-    "then the Speed Limit Asset at the start of New Link should grow to fill the gap in the middle") {
+  test("Replace. Given two Road Links that are replaced with a single New Link; " +
+    "When the Old Links leave a gap between them; " +
+    "Then the assets on the New Link should not grow to fill the gap") {
     val oldLinkID = "be36fv60-6813-4b01-a57b-67136dvv6862:1"
     val oldLinkID2 = "38ebf780-ae0c-49f3-8679-a6e45ff8f56f:1"
     val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
@@ -299,19 +299,19 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false)
       assetsAfter.size should be(2)
 
-      //assing values
+      //assign values
       val startAsset = assetsAfter.head
       val endAsset = assetsAfter.last
       val startAssetLength = (startAsset.endMeasure - startAsset.startMeasure)
       val endAssetLength = (endAsset.endMeasure - endAsset.startMeasure)
-      val assetBorder = (startAsset.endMeasure - endAsset.startMeasure)
+      val assetGap = (endAsset.startMeasure - startAsset.endMeasure)
 
       //check that startAsset has grown, the endAsset has not grown and there's no gap in the middle
       startAsset.linkId should be(newLinkID)
       endAsset.linkId should be(newLinkID)
-      MValueCalculator.roundMeasure(startAssetLength,3) should be(369.3)
+      MValueCalculator.roundMeasure(startAssetLength,3) should be(304.332)
       MValueCalculator.roundMeasure(endAssetLength,3) should be(66.325)
-      assetBorder should be(0)
+      MValueCalculator.roundMeasure(assetGap, 3) should be(64.968)
     }
   }
 }
