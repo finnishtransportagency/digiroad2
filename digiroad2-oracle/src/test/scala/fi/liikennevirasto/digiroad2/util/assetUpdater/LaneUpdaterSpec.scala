@@ -229,11 +229,15 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       // Cut additional lane towards digitizing
       val subLane12 = NewLane(0, 85.0, 215.0, 49, isExpired = false, isDeleted = false, subLane2Properties)
-      LaneServiceWithDao.create(Seq(subLane12), Set(oldLinkID), SideCode.TowardsDigitizing.value, testUserName)
+      val sublane12ID = LaneServiceWithDao.create(Seq(subLane12), Set(oldLinkID), SideCode.TowardsDigitizing.value, testUserName).head
+
+      // Cut additional lane against digitizing
+      val subLane22 = NewLane(0, 15.50, 120.65, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      val sublane22ID =LaneServiceWithDao.create(Seq(subLane22), Set(oldLinkID), SideCode.AgainstDigitizing.value, testUserName).head
 
       // Verify lanes are created
       val existingLanes = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkID))
-      existingLanes.size should equal (3)
+      existingLanes.size should equal (4)
 
       // Apply Changes
       val changeSet = LaneUpdater.handleChanges(relevantChange)
@@ -242,8 +246,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       // All 3 lanes should be split between two new links, main lane measures should equal new link length
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID1, newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
 
-      lanesAfterChanges.size should equal (6)
-      lanesAfterChanges.count(_.linkId == newLinkID1) should equal (3)
+      lanesAfterChanges.size should equal (7)
+      lanesAfterChanges.count(_.linkId == newLinkID1) should equal (4)
       lanesAfterChanges.count(_.linkId == newLinkID2) should equal (3)
       val (mainLanesAfterChanges, additionalLanesAfterChanges) = lanesAfterChanges.partition(_.laneCode == MainLane.oneDigitLaneCode)
 
@@ -257,21 +261,30 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       })
 
       // Verify additional lane changes
-      mainLanesAfterChanges.count(additionalLane => additionalLane.sideCode == AgainstDigitizing.value) should equal(2)
-      mainLanesAfterChanges.count(additionalLane => additionalLane.sideCode == TowardsDigitizing.value) should equal(2)
-      val originalAdditionalLane = existingLanes.find(_.laneCode == 2).get
-      val originalAdditionalLaneLength = originalAdditionalLane.endMeasure - originalAdditionalLane.startMeasure
-      val additionalLaneLengths = additionalLanesAfterChanges.map(additionalLane => additionalLane.endMeasure - additionalLane.startMeasure)
-      val additionalLanesTotalLength = additionalLaneLengths.foldLeft(0.0)((length1 ,length2) => length1 + length2)
-      val lengthDifferenceAfterChange = Math.abs(originalAdditionalLaneLength - additionalLanesTotalLength)
+      additionalLanesAfterChanges.count(additionalLane => additionalLane.sideCode == AgainstDigitizing.value) should equal(1)
+      additionalLanesAfterChanges.count(additionalLane => additionalLane.sideCode == TowardsDigitizing.value) should equal(2)
+      additionalLanesAfterChanges.count(additionalLane => additionalLane.linkId == newLinkID1) should equal(2)
+      additionalLanesAfterChanges.count(additionalLane => additionalLane.linkId == newLinkID2) should equal(1)
+      // Original lane 12 should be divided between two new links
+      val originalAdditionalLane12 = existingLanes.find(_.id == sublane12ID).get
+      val originalAdditionalLane12Length = originalAdditionalLane12.endMeasure - originalAdditionalLane12.startMeasure
+      val dividedLanes = additionalLanesAfterChanges.filter(lane => lane.sideCode == TowardsDigitizing.value)
+      val dividedLaneLengths = dividedLanes.map(additionalLane => additionalLane.endMeasure - additionalLane.startMeasure)
+      val dividedLanesTotalLength = dividedLaneLengths.foldLeft(0.0)((length1 ,length2) => length1 + length2)
+      val lengthDifferenceAfterChange = Math.abs(originalAdditionalLane12Length - dividedLanesTotalLength)
       (lengthDifferenceAfterChange < measureTolerance) should equal (true)
-
+      // Original lane 22 measures should stay the same, just moved to new link
+      val originalAdditionalLane22 = existingLanes.find(_.id == sublane22ID).get
+      val afterChangeAdditionalLane22 = additionalLanesAfterChanges.find(_.sideCode == AgainstDigitizing.value).get
+      afterChangeAdditionalLane22.startMeasure should equal(originalAdditionalLane22.startMeasure)
+      afterChangeAdditionalLane22.endMeasure should equal(originalAdditionalLane22.endMeasure)
+      afterChangeAdditionalLane22.linkId should equal(newLinkID1)
 
       //Verify lane history
       val newLaneIds = lanesAfterChanges.map(_.id)
       val oldLaneIds = existingLanes.map(_.id)
       val laneHistory = LaneServiceWithDao.historyDao.getHistoryLanesChangedSince(DateTime.now().minusDays(1), DateTime.now().plusDays(1), withAdjust = true)
-      laneHistory.size should equal(6)
+      laneHistory.size should equal(7)
       laneHistory.foreach(historyLane => {
         historyLane.expired should equal (true)
         oldLaneIds.contains(historyLane.oldId) should equal (true)
