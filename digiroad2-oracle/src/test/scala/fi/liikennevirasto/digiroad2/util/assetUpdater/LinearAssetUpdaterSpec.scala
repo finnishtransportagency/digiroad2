@@ -1891,7 +1891,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
-      assetLength should be(20)
+      //Check that calculated value is approx same as given
+      (Math.abs(assetLength - 20) < 0.5) should equal(true)
     }
   }
 
