@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, MValueCalculator}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
@@ -265,6 +265,53 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
       assetLength should be(newRoadLink.length)
+    }
+  }
+
+  test("Replace. Given two Road Links that are replaced with a New Link; " +
+    "when the New Link has a gap in the middle; " +
+    "then the Speed Limit Asset at the start of New Link should grow to fill the gap in the middle") {
+    val oldLinkID = "be36fv60-6813-4b01-a57b-67136dvv6862:1"
+    val oldLinkID2 = "38ebf780-ae0c-49f3-8679-a6e45ff8f56f:1"
+    val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.newLinks.head.linkId == newLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID2).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+
+      //create assets
+      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(40), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID2, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink2.length), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+
+      //Check that assets were created
+      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false)
+      assetsBefore.size should be(2)
+      assetsBefore.head.expired should be(false)
+
+      //make changes
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false)
+      assetsAfter.size should be(2)
+
+      //assing values
+      val startAsset = assetsAfter.head
+      val endAsset = assetsAfter.last
+      val startAssetLength = (startAsset.endMeasure - startAsset.startMeasure)
+      val endAssetLength = (endAsset.endMeasure - endAsset.startMeasure)
+      val assetBorder = (startAsset.endMeasure - endAsset.startMeasure)
+
+      //check that startAsset has grown, the endAsset has not grown and there's no gap in the middle
+      startAsset.linkId should be(newLinkID)
+      endAsset.linkId should be(newLinkID)
+      MValueCalculator.roundMeasure(startAssetLength,3) should be(369.3)
+      MValueCalculator.roundMeasure(endAssetLength,3) should be(66.325)
+      assetBorder should be(0)
     }
   }
 }
