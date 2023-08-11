@@ -275,7 +275,7 @@ object Digiroad2Context {
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
   }
-  private def clientBuilder(maxConnTotal: Int = 10000, maxConnPerRoute: Int = 10000) = {
+  private def clientBuilder(maxConnTotal: Int = 1000, maxConnPerRoute: Int = 1000) = {
     HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
       .setMaxConnTotal(maxConnTotal)
       .setMaxConnPerRoute(maxConnPerRoute)

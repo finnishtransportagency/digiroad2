@@ -21,8 +21,8 @@ object ValluSender extends AssetPropertiesReader {
     .build()
 
   val httpClient = HttpClients.custom().setDefaultRequestConfig(config)
-    .setMaxConnTotal(10000)
-    .setMaxConnPerRoute(10000)
+    .setMaxConnTotal(1000)
+    .setMaxConnPerRoute(1000)
     .build()
 
   def postToVallu(massTransitStop: EventBusMassTransitStop) {
