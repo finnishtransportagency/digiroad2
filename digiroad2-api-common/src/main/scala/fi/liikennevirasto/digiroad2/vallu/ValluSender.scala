@@ -20,7 +20,10 @@ object ValluSender extends AssetPropertiesReader {
     .setConnectTimeout(60 * 1000)
     .build()
 
-  val httpClient = HttpClients.custom().setDefaultRequestConfig(config).build()
+  val httpClient = HttpClients.custom().setDefaultRequestConfig(config)
+    .setMaxConnTotal(1000)
+    .setMaxConnPerRoute(1000)
+    .build()
 
   def postToVallu(massTransitStop: EventBusMassTransitStop) {
     val payload = ValluStoreStopChangeMessage.create(massTransitStop)
