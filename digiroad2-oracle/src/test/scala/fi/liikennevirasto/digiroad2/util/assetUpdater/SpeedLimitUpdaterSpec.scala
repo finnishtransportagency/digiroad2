@@ -285,28 +285,23 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
 
-      //create assets
       val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(40), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id2 = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID2, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink2.length), "testuser", 0L, Some(oldRoadLink2), false, None, None)
 
-      //Check that assets were created
       val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
-      //make changes
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false)
       assetsAfter.size should be(2)
 
-      //assign values
       val startAsset = assetsAfter.head
       val endAsset = assetsAfter.last
       val startAssetLength = (startAsset.endMeasure - startAsset.startMeasure)
       val endAssetLength = (endAsset.endMeasure - endAsset.startMeasure)
       val assetGap = (endAsset.startMeasure - startAsset.endMeasure)
 
-      //check that startAsset has grown, the endAsset has not grown and there's no gap in the middle
       startAsset.linkId should be(newLinkID)
       endAsset.linkId should be(newLinkID)
       MValueCalculator.roundMeasure(startAssetLength,3) should be(304.332)

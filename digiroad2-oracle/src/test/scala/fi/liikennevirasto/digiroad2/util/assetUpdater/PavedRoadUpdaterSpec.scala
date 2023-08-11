@@ -156,4 +156,33 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       assetsAfter.map(v => v.value.get.equals(assetValues))
     }
   }
+
+  test("Replace. Given a Road Link that is replaced with a New Link; " +
+    "when the New Link has grown outside of Old Link geometry from the beginning; " +
+    "then the Pavement Asset on New Link should not grow") {
+    val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
+    val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(PavedRoad.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
+      assetsAfter.size should be(1)
+
+      val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
+      assetsAfter.head.linkId should be(newLinkID)
+      assetLength should be(oldRoadLink.length)
+    }
+  }
 }
