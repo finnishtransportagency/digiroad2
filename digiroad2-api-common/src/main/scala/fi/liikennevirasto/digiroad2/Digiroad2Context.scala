@@ -311,7 +311,8 @@ object Digiroad2Context {
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, clientBuilder())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, clientBuilder(
+      10000,10000))
   }
   
   lazy val linearAssetDao: PostGISLinearAssetDao = {
