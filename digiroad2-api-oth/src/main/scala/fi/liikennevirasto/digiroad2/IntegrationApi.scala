@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, Width
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, LinearAssetOperations, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
 import org.joda.time.DateTime
@@ -25,19 +25,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   val apiId = "integration-api"
   val defaultDecimalPrecision = 3
 
-  case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
   after() {
     response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
     response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
     response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
-  }
-
-  def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
-    "muokattu_viimeksi" ->
-      timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
-        .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
-          .getOrElse(""))
   }
 
   def extractModifier(massTransitStop: PersistedMassTransitStop): (String, String) = {
@@ -191,25 +182,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
         "linkSource" -> speedLimit.linkSource.value
       )
-    }
-  }
-
-  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedLinearAsset]) = {
-
-    speedLimits.map { case ChangedLinearAsset(speedLimit, link) =>
-      val defaultPrecisionGeometry = geometryToDefaultPrecision(speedLimit.geometry)
-      Map("id" -> speedLimit.id,
-        "sideCode" -> speedLimit.sideCode.value,
-        "points" -> defaultPrecisionGeometry,
-        geometryWKTForLinearAssets(defaultPrecisionGeometry),
-        "value" -> speedLimitService.getSpeedLimitValue(speedLimit.value).get.value,
-        "startMeasure" -> doubleToDefaultPrecision(speedLimit.startMeasure),
-        "endMeasure" -> doubleToDefaultPrecision(speedLimit.endMeasure),
-        "linkId" -> speedLimit.linkId,
-        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
-        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
-        "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime),
-        "linkSource" -> speedLimit.linkSource.value)
     }
   }
 
@@ -887,53 +859,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "additionalPanelCoatingType" -> Try(AdditionalPanelCoatingType.apply(panel.coating_type).getOrElse(CoatingTypeOption99).value).getOrElse(""),
         "additionalPanelColor" -> Try(AdditionalPanelColor.apply(panel.additional_panel_color).getOrElse(ColorOption99).value).getOrElse("")
       )
-    }
-  }
-
-  private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
-    if (expired) {
-      "Remove"
-    } else if (createdDateTime.exists(_.isAfter(since))) {
-      "Add"
-    } else {
-      "Modify"
-    }
-  }
-
-  //Description of Api entry point to get assets changes by asset type and between two dates
-  val getChangesOfAssetsByType =
-    (apiOperation[Long]("getChangesOfAssetsByType")
-      .parameters(
-        queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
-        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset.").optional,
-        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presense of records modified by generated_in_update and not modified yet on the response. The value is True by default.").optional,
-        pathParam[String]("assetType").description("Asset type name to get the changes")
-      )
-      tags "Integration API (Kalpa API)"
-      summary "List all changes per assets type between two specific dates."
-      authorizations "Contact your service provider for more information"
-      description "Example URL: api/integration/changes/bogie_weight_limits?since=2018-04-12T04:00Z&until=2018-04-16T15:00Z"
-      )
-
-  get("/changes/:assetType", operation(getChangesOfAssetsByType)) {
-    contentType = formats("json")
-    ApiUtils.avoidRestrictions(apiId, request, params){ params =>
-      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-      val until = params.get("until") match {
-        case Some(dateValue) => DateTime.parse(dateValue)
-        case _ => DateTime.now()
-      }
-
-      val withAdjust = params.get("withAdjust") match{
-        case Some(value)=> value.toBoolean
-        case _ => true
-      }
-
-      val assetType = params("assetType")
-      assetType match {
-        case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(SpeedLimitAsset.typeId, since, until, withAdjust))
-        case _ => BadRequest("Invalid asset type")
-      }
     }
   }
 
