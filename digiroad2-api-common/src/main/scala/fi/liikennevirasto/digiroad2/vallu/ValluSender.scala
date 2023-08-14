@@ -3,10 +3,10 @@ package fi.liikennevirasto.digiroad2.vallu
 import java.nio.charset.Charset
 import fi.liikennevirasto.digiroad2.EventBusMassTransitStop
 import fi.liikennevirasto.digiroad2.util.{AssetPropertiesReader, Digiroad2Properties}
-import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.http.impl.client.HttpClients
+import org.apache.http.impl.client.{HttpClients, LaxRedirectStrategy}
 import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
 
@@ -18,9 +18,12 @@ object ValluSender extends AssetPropertiesReader {
   val config = RequestConfig.custom()
     .setSocketTimeout(60 * 1000)
     .setConnectTimeout(60 * 1000)
+    .setCookieSpec(CookieSpecs.STANDARD)
     .build()
-
-  val httpClient = HttpClients.custom().setDefaultRequestConfig(config).build()
+  
+  val httpClient = HttpClients.custom()
+    .setRedirectStrategy(new LaxRedirectStrategy())
+    .setDefaultRequestConfig(config).build()
 
   def postToVallu(massTransitStop: EventBusMassTransitStop) {
     val payload = ValluStoreStopChangeMessage.create(massTransitStop)
@@ -28,9 +31,9 @@ object ValluSender extends AssetPropertiesReader {
       postToVallu
     }
   }
-
+  
   private def postToVallu(payload: String) = {
-    val entity = new StringEntity(payload, ContentType.create("text/xml", "UTF-8"))
+    val entity = new StringEntity(payload, ContentType.create("application/xml", "UTF-8"))
     val httpPost = new HttpPost(address)
     httpPost.addHeader("X-API-Key",Digiroad2Properties.valluApikey)
     httpPost.setEntity(entity)
