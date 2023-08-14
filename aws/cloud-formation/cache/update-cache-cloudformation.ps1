@@ -1,3 +1,4 @@
+# example to create enviroments
 #aws cloudformation --region eu-west-1 create-stack --stack-name devCache --on-failure DELETE --capabilities CAPABILITY_NAMED_IAM  --template-body file://aws/cloud-formation/cache/cache.yaml --profile vaylaapp --parameters file://aws/cloud-formation/cache/DEV-cache-parameter.json
 #aws cloudformation --region eu-west-1 create-stack --stack-name qaCache --on-failure DELETE --capabilities CAPABILITY_NAMED_IAM  --template-body file://aws/cloud-formation/cache/cache.yaml --profile vaylaapp --parameters file://aws/cloud-formation/cache/QA-cache-parameter.json
 
