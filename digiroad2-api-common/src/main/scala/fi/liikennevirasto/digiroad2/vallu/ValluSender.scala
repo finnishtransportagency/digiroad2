@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.vallu
 
 import java.nio.charset.Charset
 import fi.liikennevirasto.digiroad2.EventBusMassTransitStop
-import fi.liikennevirasto.digiroad2.util.{AssetPropertiesReader, Digiroad2Properties, OAGAuthPropertyReader}
+import fi.liikennevirasto.digiroad2.util.{AssetPropertiesReader, Digiroad2Properties}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -32,8 +32,7 @@ object ValluSender extends AssetPropertiesReader {
   private def postToVallu(payload: String) = {
     val entity = new StringEntity(payload, ContentType.create("text/xml", "UTF-8"))
     val httpPost = new HttpPost(address)
-    val oagAuth = new OAGAuthPropertyReader
-    httpPost.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
+    httpPost.addHeader("X-API-Key",Digiroad2Properties.valluApikey)
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
