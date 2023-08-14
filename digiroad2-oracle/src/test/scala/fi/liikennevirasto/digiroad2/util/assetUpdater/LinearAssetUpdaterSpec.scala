@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.MValueCalculator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
@@ -1834,6 +1835,107 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.size should be(1)
       assetsAfter.head.linkId should be(newLinkID)
       assetsAfter.head.expired should be(false)
+    }
+  }
+
+  test("Replace. Given a Road Link that is replaced with a New Link; " +
+    "when the New Link has grown outside of Old Link geometry from the beginning; " +
+    "then the Road Works Asset on New Link should not grow") {
+    val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
+    val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(RoadWorksAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(RoadWorksAsset.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(RoadWorksAsset.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(RoadWorksAsset.typeId, Set(id), false)
+      assetsAfter.size should be(1)
+
+      val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
+      assetsAfter.head.linkId should be(newLinkID)
+      //Check that calculated value is approx same as given
+      (Math.abs(assetLength - 20) < 0.5) should equal(true)
+    }
+  }
+
+  test("Replace. Given a Road Link that is replaced with a New Link; " +
+    "when the New Link has grown outside of Old Link geometry from the end; " +
+    "then the Road Works Asset on New Link should not grow") {
+    val oldLinkID = "18ce7a01-0ddc-47a2-9df1-c8e1be193516:1"
+    val newLinkID = "016200a1-5dd4-47cc-8f4f-38ab4934eef9:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(RoadWorksAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(RoadWorksAsset.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(RoadWorksAsset.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(RoadWorksAsset.typeId, Set(id), false)
+      assetsAfter.size should be(1)
+
+      val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
+      assetsAfter.head.linkId should be(newLinkID)
+      //Check that calculated value is approx same as given
+      (Math.abs(assetLength - 20) < 0.5) should equal(true)
+    }
+  }
+
+  test("Replace. Given two Road Links that are replaced with a single New Link; " +
+    "When the Old Links leave a gap between them; " +
+    "Then the assets on the New Link should not grow to fill the gap") {
+    val oldLinkID = "be36fv60-6813-4b01-a57b-67136dvv6862:1"
+    val oldLinkID2 = "38ebf780-ae0c-49f3-8679-a6e45ff8f56f:1"
+    val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.newLinks.map(_.linkId).contains(newLinkID) && change.changeType == RoadLinkChangeType.Replace)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID2).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+
+      val id = service.createWithoutTransaction(ParkingProhibition.typeId, oldLinkID, NumericValue(1), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(ParkingProhibition.typeId, oldLinkID2, NumericValue(2), SideCode.BothDirections.value, Measures(0.0, oldRoadLink2.length), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(ParkingProhibition.typeId, Set(id, id2), false)
+      assetsBefore.size should be(2)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(ParkingProhibition.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(ParkingProhibition.typeId, Set(id, id2), false)
+      assetsAfter.size should be(2)
+
+      val startAsset = assetsAfter.head
+      val endAsset = assetsAfter.last
+      val startAssetLength = (startAsset.endMeasure - startAsset.startMeasure)
+      val endAssetLength = (endAsset.endMeasure - endAsset.startMeasure)
+      val assetGap = (endAsset.startMeasure - startAsset.endMeasure)
+
+      startAsset.linkId should be(newLinkID)
+      endAsset.linkId should be(newLinkID)
+      MValueCalculator.roundMeasure(startAssetLength, 3) should be(304.332)
+      MValueCalculator.roundMeasure(endAssetLength, 3) should be(66.325)
+      MValueCalculator.roundMeasure(assetGap, 3) should be(64.968)
     }
   }
 }

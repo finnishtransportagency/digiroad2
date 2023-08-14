@@ -324,4 +324,63 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       assetsAfter.head.value.get.equals(valueDynamic)
     }
   }
+
+  test("Replace. Given a Road Link that is replaced with a New Link; " +
+    "when the New Link has grown outside of Old Link geometry from the beginning; " +
+    "then the Road Width Asset on New Link should be New Link's length") {
+    val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
+    val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = roadWidthService.createWithoutTransaction(RoadWidth.typeId, oldLinkID, valueDynamic, SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(RoadWidth.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(RoadWidth.typeId, Set(id), false)
+      assetsAfter.size should be(1)
+
+      val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
+      assetsAfter.head.linkId should be(newLinkID)
+      assetLength should be(newRoadLink.length)
+    }
+  }
+
+  test("Replace. Given a Road Link that is replaced with a New Link; " +
+    "when the New Link has grown outside of Old Link geometry from the end; " +
+    "then the Road Width Asset on New Link should be New Link's length") {
+    val oldLinkID = "18ce7a01-0ddc-47a2-9df1-c8e1be193516:1"
+    val newLinkID = "016200a1-5dd4-47cc-8f4f-38ab4934eef9:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, valueDynamic, SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      assetsAfter.size should be(1)
+
+      val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
+      assetsAfter.head.linkId should be(newLinkID)
+      assetLength should be(newRoadLink.length)
+    }
+  }
 }
