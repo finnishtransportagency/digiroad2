@@ -335,6 +335,10 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
       lanesAfterChanges.size should equal(2)
       lanesAfterChanges.toList.head.endMeasure should equal(111.028)
+
+      val oldLinkHistoryLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(oldLinkID), includeExpired = true)
+      oldLinkHistoryLanes.map (lane => lane.expired should equal(true))
+      oldLinkHistoryLanes.size should equal(2)
     }
   }
 
@@ -366,6 +370,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       lanesOnOldLinkAfterChanges.size should equal(0)
       val oldLinkHistoryLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(oldLinkID), includeExpired = true)
       oldLinkHistoryLanes.map (lane => lane.expired should equal(true))
+      oldLinkHistoryLanes.size should equal(2)
       val lanesOnNewLinkAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
       lanesOnNewLinkAfterChanges.size should equal(1)
       lanesOnNewLinkAfterChanges.head.laneCode should equal(1)
@@ -400,6 +405,11 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val additionalLaneTrueLengthAfterChange = lanesAfterChanges.map(additionalLane => additionalLane.endMeasure - additionalLane.startMeasure).head
       val lengthDifferenceAfterChange = Math.abs(additionalLaneTrueLengthAfterChange - additionalLaneApproxLengthAfterChange)
       (lengthDifferenceAfterChange < measureTolerance) should equal(true)
+
+      val oldLinkHistoryLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(oldLinkID), includeExpired = true)
+      oldLinkHistoryLanes.map (lane => lane.expired should equal(true))
+      oldLinkHistoryLanes.size should equal(1)
+      oldLinkHistoryLanes.head.newId should equal(lanesAfterChanges.head.id)
     }
   }
 
