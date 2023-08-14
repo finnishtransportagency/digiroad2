@@ -209,7 +209,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
   }
 
   test("Replace. Given a Road Link that is replaced with a New Link; " +
-    "when the New Link has grown outside of Old Link geometry from the end; " +
+    "when the New Link has grown outside of Old Link geometry from the beginning; " +
     "then the Speed Limit Asset on New Link should be New Link's length") {
     val oldLinkID = "be36fv60-6813-4b01-a57b-67136dvv6862:1"
     val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
@@ -239,10 +239,10 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
   }
 
   test("Replace. Given a Road Link that is replaced with a New Link; " +
-    "when the New Link has grown outside of Old Link geometry from the beginning; " +
+    "when the New Link has grown outside of Old Link geometry from the end; " +
     "then the Speed Limit Asset on New Link should be New Link's length") {
-    val oldLinkID = "be36fv60-6813-4b01-a57b-67136dvv6862:1"
-    val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
+    val oldLinkID = "18ce7a01-0ddc-47a2-9df1-c8e1be193516:1"
+    val newLinkID = "016200a1-5dd4-47cc-8f4f-38ab4934eef9:1"
 
     val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
     val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
@@ -276,7 +276,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     val newLinkID = "007b3d46-526d-46c0-91a5-9e624cbb073b:1"
 
     val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
-    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.newLinks.head.linkId == newLinkID)
+    val changes = allChanges.filter(change => change.newLinks.map(_.linkId).contains(newLinkID) && change.changeType == RoadLinkChangeType.Replace)
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
