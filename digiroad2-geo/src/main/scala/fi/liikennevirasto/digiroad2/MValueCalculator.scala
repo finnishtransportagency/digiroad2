@@ -18,7 +18,7 @@ object MValueCalculator {
     * @param newLinksLength
     * @return
     */
-  def calculateNewMValues(asset: AssetLinearReference, projection: Projection, newLinksLength: Double,digitizationChange :Boolean = false) = {
+  def calculateNewMValues(asset: AssetLinearReference, projection: Projection, newLinksLength: Double,digitizationChange :Boolean = false): (Double, Double, Int) = {
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
     val linksLenght = roundMeasure(newLinksLength)
@@ -31,19 +31,14 @@ object MValueCalculator {
     if (digitizationChange) {
       calculateNewMValuesAndSideCode(asset,projection,linksLenght)
     }else {
-      // Test if asset is affected by projection
-      if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
-        (asset.startMeasure, asset.endMeasure, asset.sideCode)
-      } else {
-        val start = Math.min(linksLenght, Math.max(0.0, newStartMValue)) // take new start if it is greater than zero and smaller than roadLinkLength
-        val end = Math.max(0.0, Math.min(linksLenght, newEndMValue)) // take new end if it is greater than zero and smaller than roadLinkLength
-        logAndWarn(asset, start, end)
-        (roundMeasure(start), roundMeasure(end), asset.sideCode)
-      }
+      val start = Math.min(linksLenght, Math.max(0.0, newStartMValue)) // take new start if it is greater than zero and smaller than roadLinkLength
+      val end = Math.max(0.0, Math.min(linksLenght, newEndMValue)) // take new end if it is greater than zero and smaller than roadLinkLength
+      logAndWarn(asset, start, end)
+      (roundMeasure(start), roundMeasure(end), asset.sideCode)
     }
   }
 
-  def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: Projection, newLinksLength: Double) = {
+  def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: Projection, newLinksLength: Double): (Double, Double, Int) = {
     val newSideCode = sideCodeSwitch(asset.sideCode)
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
@@ -52,16 +47,10 @@ object MValueCalculator {
     val newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * factor
     val newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * factor
     logger.debug(s"new start $newStart, new end $newEnd, factor number $factor")
-
-    if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
-      (asset.startMeasure, asset.endMeasure, newSideCode)
-    } else {
-      val start = Math.min(newLinksLength, Math.max(0.0, newStart))
-      val end = Math.max(0.0, Math.min(newLinksLength, newEnd))
-      logAndWarn(asset, start, end)
-      (roundMeasure(start), roundMeasure(end), newSideCode)
-    }
-
+    val start = Math.min(newLinksLength, Math.max(0.0, newStart))
+    val end = Math.max(0.0, Math.min(newLinksLength, newEnd))
+    logAndWarn(asset, start, end)
+    (roundMeasure(start), roundMeasure(end), newSideCode)
   }
   private def logAndWarn(asset: AssetLinearReference, start: Double, end: Double): Unit = {
     if (end - start <= 0) logger.warn(s"new size is zero")

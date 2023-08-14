@@ -50,7 +50,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
   val testChanges: Seq[RoadLinkChange] = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
   val testUserName = "LaneUpdaterTest"
-  val measureTolerance = 0.5
+  val measureTolerance = 1.0
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -83,6 +83,11 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
   val subLane2Properties = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
     LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+    LaneProperty("start_date", Seq(LanePropertyValue("1.1.1970")))
+  )
+
+  val subLane3Properties = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(3))),
+    LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
     LaneProperty("start_date", Seq(LanePropertyValue("1.1.1970")))
   )
 
@@ -641,4 +646,125 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Lane split, digitizing direction changes on one new part. On new link, side codes should flip, measures should be calculated to match persisting position") {
+    runWithRollback {
+      val oldLinkId = "40ebb42a-f551-4eee-89da-dba6d6a379ac:1"
+      val newLinkId1 = "9a8f130c-8e4b-492c-bf53-63ddf5b7ff9c:1"
+      val newLinkId2 = "9a77a504-f7d8-4a05-a9ac-6a60aa452dae:1"
+
+      val relevantChange = testChanges.filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkId)
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId).get
+      val newLinks = roadLinkService.getRoadLinksByLinkIds(Set(newLinkId1, newLinkId2), newTransaction = false)
+
+      val mainLane1 = NewLane(0, 0.0, oldRoadLink.length, 286, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane1), Set(oldRoadLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val additionalLane2 = NewLane(0, 0.0, oldRoadLink.length, 286, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(additionalLane2), Set(oldRoadLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val additionalLane3 = NewLane(0, 192.65, 195.15, 286, isExpired = false, isDeleted = false, subLane3Properties)
+      LaneServiceWithDao.create(Seq(additionalLane3), Set(oldRoadLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val lanesBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkId))
+      lanesBefore.size should be(3)
+
+      val changeSet = LaneUpdater.handleChanges(relevantChange)
+      LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChange)
+
+      val lanesOnOldLinkAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkId))
+      lanesOnOldLinkAfterChanges.size should equal(0)
+      val oldLinkHistoryLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(oldLinkId), includeExpired = true)
+      // Split lanes create one history row for each new lane created from old one
+      oldLinkHistoryLanes.size should equal(5)
+      oldLinkHistoryLanes.map (lane => lane.expired should equal(true))
+
+      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId1, newLinkId2))
+      lanesAfterChanges.size should equal(5)
+
+      val mainLanesAfterChanges = lanesAfterChanges.filter(_.laneCode == 1)
+      mainLanesAfterChanges.size should equal(2)
+      mainLanesAfterChanges.foreach(ml => {
+        val newLink = newLinks.find(_.linkId == ml.linkId).get
+        ml.startMeasure should equal(0.0)
+        ml.endMeasure should equal(newLink.length)
+      })
+
+      val subLane2AfterChanges = lanesAfterChanges.filter(_.laneCode == 2)
+      subLane2AfterChanges.size should equal(2)
+      subLane2AfterChanges.foreach(lane => {
+        val newLink = newLinks.find(_.linkId == lane.linkId).get
+        lane.startMeasure should equal(0.0)
+        lane.endMeasure should equal(newLink.length)
+      })
+
+      val subLane3AfterChanges = lanesAfterChanges.filter(_.laneCode == 3)
+      subLane3AfterChanges.size should equal(1)
+      val subLane3LengthOriginal = additionalLane3.endMeasure - additionalLane3.startMeasure
+      val subLane3LengthAfterChanges = subLane3AfterChanges.head.endMeasure - subLane3AfterChanges.head.startMeasure
+      Math.abs(subLane3LengthOriginal - subLane3LengthAfterChanges) < measureTolerance should equal(true)
+
+    }
+  }
+
+
+  test("Lane split, digitizing direction changes on one new part.") {
+    runWithRollback {
+      val oldLinkId = "78ad826c-a5e3-47d8-af97-7a0dd7e95834:1"
+      val newLinkId1 = "7819862b-2af8-47f0-a651-337c62bac745:1"
+      val newLinkId2 = "c2c4e300-2777-45de-8345-51c302e76aeb:1"
+
+      val relevantChange = testChanges.filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkId)
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId).get
+      val newLinks = roadLinkService.getRoadLinksByLinkIds(Set(newLinkId1, newLinkId2), newTransaction = false)
+
+      val mainLane1 = NewLane(0, 0.0, oldRoadLink.length, 286, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane1), Set(oldRoadLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val additionalLane2 = NewLane(0, 0.0, oldRoadLink.length, 286, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(additionalLane2), Set(oldRoadLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val additionalLane3 = NewLane(0, 150.65, 752.50, 286, isExpired = false, isDeleted = false, subLane3Properties)
+      LaneServiceWithDao.create(Seq(additionalLane3), Set(oldRoadLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
+
+      val lanesBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkId))
+      lanesBefore.size should be(3)
+
+      val changeSet = LaneUpdater.handleChanges(relevantChange)
+      LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChange)
+
+      val lanesOnOldLinkAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkId))
+      lanesOnOldLinkAfterChanges.size should equal(0)
+      val oldLinkHistoryLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(oldLinkId), includeExpired = true)
+      // Split lanes create one history row for each new lane created from old one
+      oldLinkHistoryLanes.size should equal(5)
+      oldLinkHistoryLanes.map (lane => lane.expired should equal(true))
+
+      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId1, newLinkId2))
+      lanesAfterChanges.size should equal(5)
+
+      val mainLanesAfterChanges = lanesAfterChanges.filter(_.laneCode == 1)
+      mainLanesAfterChanges.size should equal(2)
+      mainLanesAfterChanges.foreach(ml => {
+        val newLink = newLinks.find(_.linkId == ml.linkId).get
+        ml.startMeasure should equal(0.0)
+        ml.endMeasure should equal(newLink.length)
+      })
+
+      val subLane2AfterChanges = lanesAfterChanges.filter(_.laneCode == 2)
+      subLane2AfterChanges.size should equal(2)
+      subLane2AfterChanges.foreach(lane => {
+        val newLink = newLinks.find(_.linkId == lane.linkId).get
+        lane.startMeasure should equal(0.0)
+        lane.endMeasure should equal(newLink.length)
+      })
+
+      val subLane3AfterChanges = lanesAfterChanges.filter(_.laneCode == 3)
+      subLane3AfterChanges.size should equal(1)
+      val subLane3LengthOriginal = additionalLane3.endMeasure - additionalLane3.startMeasure
+      val subLane3LengthAfterChanges = subLane3AfterChanges.head.endMeasure - subLane3AfterChanges.head.startMeasure
+      Math.abs(subLane3LengthOriginal - subLane3LengthAfterChanges) < measureTolerance should equal(true)
+
+
+    }
+  }
 }

@@ -429,10 +429,12 @@ object LaneUpdater {
     oldMainLanes.map(originalMainLane => {
       val replaceInfos = splitChange.replaceInfo
       val splitMainLanesToCreate = replaceInfos.map(replaceInfo => {
+        val newId = replaceInfo.newLinkId.getOrElse("")
+        val newRoadLinkLength = if (newId.nonEmpty) splitChange.newLinks.find(_.linkId == newId).get.linkLength else 0
         val newSideCode = if(replaceInfo.digitizationChange) switch(SideCode.apply(originalMainLane.sideCode)).value
         else originalMainLane.sideCode
         val splitLaneStartMeasure = 0.0
-        val splitLaneEndMeasure = LaneUtils.roundMeasure(replaceInfo.newToMValue.getOrElse(0.0))
+        val splitLaneEndMeasure = LaneUtils.roundMeasure(newRoadLinkLength)
         originalMainLane.copy(id = 0, linkId =replaceInfo.newLinkId.getOrElse(""), sideCode = newSideCode, startMeasure = splitLaneStartMeasure, endMeasure = splitLaneEndMeasure)
       })
       LaneSplit(splitMainLanesToCreate, originalMainLane)
