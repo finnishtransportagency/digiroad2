@@ -188,7 +188,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
   test("Replace. Given a Road Link that is replaced with a New Link; " +
     "when the New Link has grown outside of Old Link geometry from the end; " +
-    "then the Pavement Asset on New Link should not grow to New Link's length") {
+    "then the Pavement Asset on New Link should not grow") {
     val oldLinkID = "18ce7a01-0ddc-47a2-9df1-c8e1be193516:1"
     val newLinkID = "016200a1-5dd4-47cc-8f4f-38ab4934eef9:1"
 
