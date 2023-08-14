@@ -20,6 +20,7 @@ trait Digiroad2Properties {
   val viiteRestApiEndPoint: String
   val vkmUrl: String
   val vkmApiKey: String
+  val valluApiKey: String
   val valluServerSengindEnabled: Boolean
   val valluServerAddress: String
   val cacheHostname: String
@@ -40,7 +41,6 @@ trait Digiroad2Properties {
   val viiteApiKey: String
   val sesUsername: String
   val sesPassword: String
-  val valluApiKey: String
   val emailTo: String
   val emailHost: String
   val emailPort: String
@@ -243,6 +243,7 @@ object Digiroad2Properties {
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey
+  lazy val valluApikey: String = properties.valluApiKey
   lazy val valluServerSendingEnabled: Boolean = properties.valluServerSengindEnabled
   lazy val valluServerAddress: String = properties.valluServerAddress
   lazy val cacheHostname: String = properties.cacheHostname
@@ -263,7 +264,6 @@ object Digiroad2Properties {
   lazy val viiteApiKey: String = properties.viiteApiKey
   lazy val sesUsername: String = properties.sesUsername
   lazy val sesPassword: String = properties.sesPassword
-  lazy val valluApikey: String = properties.valluApiKey
   lazy val emailTo: String = properties.emailTo
   lazy val emailHost: String = properties.emailHost
   lazy val emailPort: String = properties.emailPort
