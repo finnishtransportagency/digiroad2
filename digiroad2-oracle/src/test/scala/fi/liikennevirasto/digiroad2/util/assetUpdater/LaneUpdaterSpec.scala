@@ -516,7 +516,9 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("changes come in multiple part, values same") {
+  test("Changes come in multiple part." +
+                "Old links is split into multiple part and one or more these part are merged into new link " +
+                "which other parts come from different old links with Replace change message, Only main lane") {
 
     val oldLink1 = "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1"
     val oldLink2 = "197f22f2-3427-4412-9d2a-3848a570c996:1"
@@ -554,10 +556,6 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.foreach(p => {
-        println(s"id: ${p.id}, value: ${p.laneCode} , linkId: ${p.linkId}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-
       sorted.size should be(4)
 
       sorted.filter(_.linkId == linkIdNew1).head.startMeasure should be(0)
@@ -569,7 +567,9 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("changes come in multiple part, additional lanes") {
+  test("Changes come in multiple part. " +
+                "Old links is split into multiple part and one or more these part are merged into new link " +
+                "which other parts come from different old links with Replace change message, Additional lanes") {
 
     val oldLink1 = "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1"
     val oldLink2 = "197f22f2-3427-4412-9d2a-3848a570c996:1"
