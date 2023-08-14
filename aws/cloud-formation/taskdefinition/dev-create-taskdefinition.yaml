@@ -123,9 +123,9 @@ Resources:
             - Name: vkmUrl
               Value: 'https://api.vaylapilvi.fi'
             - Name: vallu.server.sending_enabled
-              Value: 'true'
+              Value: 'false'
             - Name: vallu.server.address
-              Value: 'https://testioag.ely-keskus.fi/koontikartta/rest/stop/xml'
+              Value: 'https://api.testivaylapilvi.fi/koontikartta/pysakit/xml/'
             - Name: viite.importTimeStamp
               Value: '1510876800000'
             - Name: http.proxySet
@@ -142,8 +142,6 @@ Resources:
               Value: 'jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2'
             - Name: bonecp.username
               Value: 'digiroad2dbuser'
-            - Name: oag.username
-              Value: 'svc_clouddr'
             - Name: emailTo
               Value: 'info@digiroad.fi'
             - Name: emailHost
@@ -185,8 +183,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/vvhRest.password'
             - Name: kgv.apikey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/apikey/kgv.apikey'
-            - Name: oag.password
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/authentication.oag.basic.password'
+            - Name: vallu.apikey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/vallu.apikey'
             - Name: googlemapapi.client_id
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/googlemapapi.client_id'
             - Name: googlemapapi.crypto_key
