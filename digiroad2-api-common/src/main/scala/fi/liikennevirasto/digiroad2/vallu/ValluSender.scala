@@ -18,9 +18,6 @@ object ValluSender extends AssetPropertiesReader {
     .setSocketTimeout(60 * 1000)
     .setConnectTimeout(60 * 1000)
     .build()
-  
-  val httpClient = HttpClients.custom()
-    .setDefaultRequestConfig(config).build()
 
   def postToVallu(massTransitStop: EventBusMassTransitStop) {
     val payload = ValluStoreStopChangeMessage.create(massTransitStop)
@@ -30,11 +27,15 @@ object ValluSender extends AssetPropertiesReader {
   }
   
   private def postToVallu(payload: String) = {
+    // create new client when sending rather than use global variable.
+    // Scala object is singleton so it will reuse already created client.
+    // For Vallu message speed is not priority but that messages is jus sent.
+    val client = HttpClients.custom().setDefaultRequestConfig(config).build()
     val entity = new StringEntity(payload, ContentType.create("application/xml", "UTF-8"))
     val httpPost = new HttpPost(address)
     httpPost.addHeader("X-API-Key",Digiroad2Properties.valluApikey)
     httpPost.setEntity(entity)
-    val response = httpClient.execute(httpPost)
+    val response = client.execute(httpPost)
     try {
       logger.info(s"VALLU Got response (${response.getStatusLine.getStatusCode})")
       EntityUtils.consume(entity)
