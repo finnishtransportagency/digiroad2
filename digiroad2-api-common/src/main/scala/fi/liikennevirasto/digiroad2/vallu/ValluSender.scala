@@ -18,11 +18,9 @@ object ValluSender extends AssetPropertiesReader {
   val config = RequestConfig.custom()
     .setSocketTimeout(60 * 1000)
     .setConnectTimeout(60 * 1000)
-    .setCookieSpec(CookieSpecs.STANDARD)
     .build()
   
   val httpClient = HttpClients.custom()
-    .setRedirectStrategy(new LaxRedirectStrategy())
     .setDefaultRequestConfig(config).build()
 
   def postToVallu(massTransitStop: EventBusMassTransitStop) {
@@ -49,7 +47,7 @@ object ValluSender extends AssetPropertiesReader {
   def withLogging[A](payload: String)(thunk: String => Unit) {
     try {
       if (sendingEnabled) {
-        applicationLogger.info(s"VALLU Sending to vallu: $payload")
+        applicationLogger.info(s"VALLU Sending to vallu: ${payload.replaceAll("\n","")}")
         thunk(payload)
       } else {
         applicationLogger.info(s"VALLU Messaging is disabled, xml was $payload")
