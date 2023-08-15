@@ -275,6 +275,12 @@ object Digiroad2Context {
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
   }
+  private def clientBuilder(maxConnTotal: Int = 1000, maxConnPerRoute: Int = 1000) = {
+    HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
+      .setMaxConnTotal(maxConnTotal)
+      .setMaxConnPerRoute(maxConnPerRoute)
+      .build()
+  }
 
   lazy val assetPropertyService: AssetPropertyService = {
     new AssetPropertyService(eventbus, userProvider, DefaultDatabaseTransaction)
@@ -305,12 +311,10 @@ object Digiroad2Context {
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint,
-      HttpClientBuilder.create().setDefaultRequestConfig(
-        RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()
-      ).build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, clientBuilder(
+      10000,10000))
   }
-
+  
   lazy val linearAssetDao: PostGISLinearAssetDao = {
     new PostGISLinearAssetDao()
   }

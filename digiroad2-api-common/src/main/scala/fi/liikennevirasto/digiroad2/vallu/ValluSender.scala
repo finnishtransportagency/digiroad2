@@ -18,7 +18,6 @@ object ValluSender extends AssetPropertiesReader {
     .setSocketTimeout(60 * 1000)
     .setConnectTimeout(60 * 1000)
     .build()
-
   def postToVallu(massTransitStop: EventBusMassTransitStop) {
     val payload = ValluStoreStopChangeMessage.create(massTransitStop)
     withLogging(payload) {
