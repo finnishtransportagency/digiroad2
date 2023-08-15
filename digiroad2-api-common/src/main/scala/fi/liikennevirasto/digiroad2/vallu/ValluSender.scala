@@ -11,7 +11,7 @@ import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
 
 object ValluSender extends AssetPropertiesReader {
-  val applicationLogger = LoggerFactory.getLogger(getClass)
+  val logger = LoggerFactory.getLogger(getClass)
   val sendingEnabled = Digiroad2Properties.valluServerSendingEnabled
   val address = Digiroad2Properties.valluServerAddress
 
@@ -37,7 +37,7 @@ object ValluSender extends AssetPropertiesReader {
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
-      applicationLogger.info(s"VALLU Got response (${response.getStatusLine.getStatusCode})")
+      logger.info(s"VALLU Got response (${response.getStatusLine.getStatusCode})")
       EntityUtils.consume(entity)
     } finally {
       response.close()
@@ -46,19 +46,18 @@ object ValluSender extends AssetPropertiesReader {
 
   def withLogging[A](payload: String)(thunk: String => Unit) {
     try {
+      val payloadForLogging = payload.replaceAll("\n","")
       if (sendingEnabled) {
-        applicationLogger.info(s"VALLU Sending to vallu: ${payload.replaceAll("\n","")}")
+        logger.info(s"VALLU Sending to vallu: $payloadForLogging")
         thunk(payload)
       } else {
-        applicationLogger.info(s"VALLU Messaging is disabled, xml was $payload")
+        logger.info(s"VALLU Messaging is disabled, xml was $payloadForLogging")
       }
     } catch {
       case e: Exception => {
-
-        applicationLogger.error("VALLU Error occurred", e)
-        applicationLogger.error("=====Error in sending Message to Vallu, message below ======")
-        applicationLogger.error(payload)
-
+        logger.error("VALLU Error occurred", e)
+        logger.error("=====Error in sending Message to Vallu, message below ======")
+        logger.error(payload.replaceAll("\n",""))
       }
     }
   }
