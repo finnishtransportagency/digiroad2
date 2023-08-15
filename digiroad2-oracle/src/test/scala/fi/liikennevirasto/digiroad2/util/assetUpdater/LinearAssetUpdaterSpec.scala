@@ -1749,7 +1749,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
   }
   
   
-  test ("change come in multiple part, values same") {
+  test (  "Change come in multiple part. Old links is split into multiple part and one or more these part are merged into new link " +
+                    "which other parts come from different old links with Replace change message, values same") {
 
     val oldLink1 = "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1"
     val oldLink2 = "197f22f2-3427-4412-9d2a-3848a570c996:1"
