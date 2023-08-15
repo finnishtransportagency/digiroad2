@@ -135,6 +135,9 @@
       }else{
         new GenericConfirmPopup('Pysäkin vaikutussuunta on yksisuuntaisen tielinkin ajosuunnan vastainen. Pysäkkiä ei tallennettu.',
           {type: 'alert'});
+        selectedMassTransitStopModel.cancel();
+        selectedMassTransitStopModel.close();
+        eventbus.trigger('layer:cleared');
       }
     }
 
