@@ -327,7 +327,7 @@
       if(roadCollection){
         var roadLinkDirection = getRoadLinkDirection();
         var massTransitStopDirection = currentAsset.payload.validityDirection;
-        return isTerminalBusStop(currentAsset.payload.properties) || roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
+        return isTerminalBusStop(currentAsset.payload.properties) || isTram(currentAsset.payload.properties) || roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
       }
       return false;
     };
@@ -404,9 +404,9 @@
         backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
           if (errorObject !== undefined) {
             console.log(errorObject);
-            
+
           }
-          
+
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -423,7 +423,7 @@
           if (errorObject !== undefined) {
             console.log(errorObject);
           }
-          
+
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -587,6 +587,14 @@
 
       return _.some(properties, function (property) {
         return property.publicId === 'liitetty_terminaaliin' && !_.isEmpty(property.values);
+      });
+    }
+
+    function isTram(properties) {
+      return _.some(properties, function (property) {
+        return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function (value) {
+          return value.propertyValue == "1";
+        });
       });
     }
 

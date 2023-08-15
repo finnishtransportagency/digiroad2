@@ -142,11 +142,16 @@ object MassTransitStopOperations {
 
   def isValidBusStopDirections(properties: Seq[SimplePointAssetProperty], roadLink: Option[RoadLinkLike]) = {
     val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).getOrElse(throw new IllegalStateException("Road link no longer available"))
-
-    properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue)) match {
-      case Some(busDir) =>
-        !((roadLinkDirection != TrafficDirection.BothDirections) && (roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString))
-      case None => false
+    val stopTypes = properties.filter(prop => prop.publicId == "pysakin_tyyppi").flatMap(_.values).map(_.asInstanceOf[PropertyValue].propertyValue)
+    // a stop including tram type is always valid, otherwise check that the validity direction and traffic direction match
+    if (stopTypes.contains("1")) {
+      true
+    } else {
+      properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue)) match {
+        case Some(busDir) =>
+          !((roadLinkDirection != TrafficDirection.BothDirections) && (roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString))
+        case None => false
+      }
     }
   }
 
