@@ -1,12 +1,11 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import java.nio.charset.Charset
 import fi.liikennevirasto.digiroad2.EventBusMassTransitStop
 import fi.liikennevirasto.digiroad2.util.{AssetPropertiesReader, Digiroad2Properties}
-import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.http.impl.client.{HttpClients, LaxRedirectStrategy}
+import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
 
