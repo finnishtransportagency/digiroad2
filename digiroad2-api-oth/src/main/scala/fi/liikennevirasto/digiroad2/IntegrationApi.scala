@@ -69,9 +69,23 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       mapName.getOrElse(key) -> transformation(values)
     }
 
+    def extractPropertyOnlyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any), mapName: Option[String] = None): Any = {
+      val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
+        property.values.map { value =>
+          value.asInstanceOf[PropertyValue].propertyValue
+        }
+      }
+      transformation(values)
+    }
+
     def propertyValuesToIntList(values: Seq[String]): Seq[Int] = {
       values.map(_.toInt)
     }
+
+    def propertyValueToInt(values: Seq[String]): Option[Int] = {
+      values.map(_.toInt).headOption
+    }
+
 
     def propertyValuesToString(values: Seq[String]): String = {
       values.mkString
@@ -109,6 +123,72 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       "linkSource" -> Some(massTransitStop.linkSource.value)
     }
 
+    def extractRoadAddress(massTransitStop: PersistedMassTransitStop): Map[String, Any] = {
+      Map(
+        extractPropertyValueWithKey("tie", massTransitStop),
+        extractPropertyValueWithKey("osa", massTransitStop),
+        extractPropertyValueWithKey("aet", massTransitStop),
+        extractPropertyValueWithKey("ajr", massTransitStop),
+        extractPropertyValueWithKey("puoli", massTransitStop)
+      )
+    }
+
+    def extractPropertyValueWithKey(key: String, massTransitStop: PersistedMassTransitStop): (String, Any) = {
+      key -> extractPropertyOnlyValue(key, massTransitStop.propertyData, propertyValueToInt).asInstanceOf[Option[Int]].getOrElse("")
+    }
+
+    def properties(massTransitStop: PersistedMassTransitStop, isMassServicePoint: Boolean): Map[String, Any]  = {
+      Map(
+        extractModifier(massTransitStop),
+        latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
+        lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
+        extractBearing(massTransitStop),
+        if (isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractNationalId(massTransitStop),
+        extractFloating(massTransitStop),
+        if (isMassServicePoint) "link_id" -> None else extractLinkId(massTransitStop),
+        if (isMassServicePoint) "m_value" -> None else extractMvalue(massTransitStop),
+        extractLinkSource(massTransitStop),
+        extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
+        extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue(if (isMassServicePoint) "palvelun_nimi" else "nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString, if (isMassServicePoint) Option("nimi_suomeksi") else None),
+        extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("tietojen_yllapitaja", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("yllapitajan_tunnus", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("yllapitajan_koodi", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("matkustajatunnus", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("maastokoordinaatti_x", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("maastokoordinaatti_y", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("maastokoordinaatti_z", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("liikennointisuunta", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("vaikutussuunta", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("ensimmainen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("viimeinen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("aikataulu", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("katos", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("mainoskatos", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("penkki", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("sahkoinen_aikataulunaytto", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("valaistus", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("esteettomyys_liikuntarajoitteiselle", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("saattomahdollisuus_henkiloautolla", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("liityntapysakointipaikkojen_maara", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("liityntapysakoinnin_lisatiedot", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("pysakin_omistaja", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("palauteosoite", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
+        extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("tarkenne", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("palvelun_lisätieto", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString)
+      ) ++ extractRoadAddress(massTransitStop)
+    }
+
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
@@ -118,62 +198,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "type" -> "Feature",
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
-          "properties" -> Map(
-            extractModifier(massTransitStop),
-            latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
-            lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
-            extractBearing(massTransitStop),
-            if(isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractNationalId(massTransitStop),
-            extractFloating(massTransitStop),
-            if(isMassServicePoint) "link_id" -> None else extractLinkId(massTransitStop),
-            if(isMassServicePoint) "m_value" -> None else extractMvalue(massTransitStop),
-            extractLinkSource(massTransitStop),
-            extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
-            extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue(if(isMassServicePoint) "palvelun_nimi" else "nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString, if(isMassServicePoint) Option("nimi_suomeksi") else None),
-            extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("tietojen_yllapitaja", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("yllapitajan_tunnus", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("yllapitajan_koodi", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("matkustajatunnus", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_x", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_y", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_z", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liikennointisuunta", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("vaikutussuunta", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("ensimmainen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("viimeinen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("aikataulu", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("katos", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("mainoskatos", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("penkki", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("sahkoinen_aikataulunaytto", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("valaistus", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("esteettomyys_liikuntarajoitteiselle", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("saattomahdollisuus_henkiloautolla", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("liityntapysakointipaikkojen_maara", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liityntapysakoinnin_lisatiedot", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("pysakin_omistaja", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("palauteosoite", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
-            extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("tarkenne", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("palvelun_lisätieto", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString),
-            // Road address
-            extractPropertyValue("tie", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("osa", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("aet", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("ajr", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("puoli", massTransitStop.propertyData, propertyValuesToString)
-            
-          ))
+          "properties" -> properties(massTransitStop, isMassServicePoint)
+          )
       })
   }
 
