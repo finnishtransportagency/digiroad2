@@ -61,8 +61,8 @@ trait AbstractBusStopStrategy {
   def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
   def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {}
   /**
-    *
-    * @param asset
+    * enrich with additional data 
+    * @param persistedStop Mass Transit Stop
     * @param roadLinkOption  for default implementation provide road link when MassTransitStop need road address
     * @return
     */

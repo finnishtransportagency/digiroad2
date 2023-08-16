@@ -78,8 +78,8 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     }
   }
   /**
-    * 
-    * @param asset
+    *  enrich with additional data 
+    * @param asset Mass Transit Stop
     * @param roadLinkOption provide road link when MassTransitStop need road address
     * @return
     */
