@@ -69,7 +69,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       mapName.getOrElse(key) -> transformation(values)
     }
 
-    def extractPropertyOnlyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any), mapName: Option[String] = None): Any = {
+    def extractPropertyOnlyValue(key: String, properties: Seq[Property], transformation: Seq[String] => Any): Any = {
       val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
         property.values.map { value =>
           value.asInstanceOf[PropertyValue].propertyValue
