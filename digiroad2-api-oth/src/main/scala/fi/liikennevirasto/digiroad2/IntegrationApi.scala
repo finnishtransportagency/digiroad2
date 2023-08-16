@@ -165,7 +165,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("tarkenne", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("palvelun_lisätieto", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString)
+            extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString),
+            // Road address
+            extractPropertyValue("tie", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("osa", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("aet", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("ajr", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("puoli", massTransitStop.propertyData, propertyValuesToString)
+            
           ))
       })
   }

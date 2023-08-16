@@ -60,6 +60,12 @@ trait AbstractBusStopStrategy {
   def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop], saveOption: Option[Boolean]): Boolean = {false}
   def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
   def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {}
+  /**
+    *
+    * @param asset
+    * @param roadLinkOption  for default implementation provide road link when MassTransitStop need road address
+    * @return
+    */
   def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean)
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (false, None) }
   def create(newAsset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
@@ -441,9 +447,9 @@ trait MassTransitStopService extends PointAssetOperations {
 
     if(withEnrich)
       withDynSession{
-        assets.map{a =>
+        assets.map{ a =>
           val strategy = getStrategy(a)
-          strategy.enrichBusStop(a)._1
+          strategy.enrichBusStop(a,fetchRoadLink(a.linkId))._1
         }
       }
     else

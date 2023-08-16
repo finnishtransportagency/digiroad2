@@ -77,7 +77,12 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
       case _ => None
     }
   }
-
+  /**
+    * 
+    * @param asset
+    * @param roadLinkOption provide road link when MassTransitStop need road address
+    * @return
+    */
   override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
     def addRoadAddressProperties(oldProperties: Seq[Property]): Seq[Property] = {
       roadLinkOption match {
