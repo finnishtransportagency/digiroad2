@@ -53,6 +53,12 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
+  def calculateSideCodeUsingEndPointAddrs(addrMAtStart: Int, addrMAtEnd: Int): SideCode = {
+    if(addrMAtStart < addrMAtEnd) SideCode.TowardsDigitizing
+    else if (addrMAtStart > addrMAtEnd) SideCode.AgainstDigitizing
+    else SideCode.Unknown
+  }
+
   def getLinkIdsInRoadAddressRange(roadAddressRange: RoadAddressRange): Set[String] = {
     val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
     if (startAndEndLinkIdsForAllSegments.isEmpty) {

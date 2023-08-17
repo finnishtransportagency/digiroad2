@@ -42,17 +42,13 @@ trait ResolvingFrozenRoadLinks {
 
   lazy val username: String = "batch_process_temp_road_address"
 
+  lazy val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
+
   //Timestamp for the instant when Viite road links were frozen
   // 20.05.2023 16:29:59
   lazy val viiteTimestamp: Long = 1684589399000L
   
   val logger: Logger = LoggerFactory.getLogger(getClass)
-
-  def calculateSideCodeUsingEndPointAddrs(addrMAtStart: Int, addrMAtEnd: Int): SideCode = {
-    if(addrMAtStart < addrMAtEnd) SideCode.TowardsDigitizing
-    else if (addrMAtStart > addrMAtEnd) SideCode.AgainstDigitizing
-    else SideCode.Unknown
-  }
 
   // Compare temp address to digitizing direction start adjacent link
   def calculateTrackUsingFirstPoint(tempAddressToCalculate: RoadAddressTEMPwithPoint, resolvedAddresses: Seq[RoadAddressTEMPwithPoint], otherTempAddressesUnresolved: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
@@ -183,7 +179,7 @@ trait ResolvingFrozenRoadLinks {
             case (true, false) => adjacentLastFirst.head.roadAddress.startAddressM.toInt
             case _ => adjacentLastLast.head.roadAddress.endAddressM.toInt
           }
-          val sideCode = calculateSideCodeUsingEndPointAddrs(addrMAtFirstPoint, addrMAtLastPoint)
+          val sideCode = geometryTransform.calculateSideCodeUsingEndPointAddrs(addrMAtFirstPoint, addrMAtLastPoint)
           val address = (adjacentFirstLast ++ adjacentFirstFirst).head.roadAddress
           Some(RoadAddressTEMPwithPoint(firstPoint, lastPoint, RoadAddressTEMP(roadLinkToResolve.linkId, address.road, address.roadPart, Track.Unknown,
             addrMAtFirstPoint, addrMAtLastPoint, 0, GeometryUtils.geometryLength(roadLinkToResolve.geometry), roadLinkToResolve.geometry, Some(sideCode), municipalityCode = address.municipalityCode)))
@@ -277,7 +273,7 @@ trait ResolvingFrozenRoadLinks {
               val orderedAddress = vkmAddresses.sortBy(_.addrM)
               // If start and end point road address Track values are not equal, Track needs to be calculated later
               val track = if (orderedAddress.head.track == orderedAddress.last.track) orderedAddress.head.track else Track.Unknown
-              val tempRoadAddressSideCode = calculateSideCodeUsingEndPointAddrs(vkmAddressAtRoadLinkStart.get.addrM, vkmAddressAtRoadLinkEnd.get.addrM)
+              val tempRoadAddressSideCode = geometryTransform.calculateSideCodeUsingEndPointAddrs(vkmAddressAtRoadLinkStart.get.addrM, vkmAddressAtRoadLinkEnd.get.addrM)
               Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(roadLinkMissingAddress.linkId, orderedAddress.head.road,
                 orderedAddress.head.roadPart, track, orderedAddress.head.addrM, orderedAddress.last.addrM,
                 0, GeometryUtils.geometryLength(roadLinkMissingAddress.geometry), roadLinkMissingAddress.geometry, Some(tempRoadAddressSideCode), municipalityCode = Some(roadLinkMissingAddress.municipalityCode))))
