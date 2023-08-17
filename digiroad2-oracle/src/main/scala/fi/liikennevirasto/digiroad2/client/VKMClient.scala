@@ -5,6 +5,8 @@ import fi.liikennevirasto.digiroad2
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.service.RoadAddressForLink
+import fi.liikennevirasto.digiroad2.util.ResolvingFrozenRoadLinks.geometryTransform.calculateSideCodeUsingEndPointAddrs
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, Track, Vector3d}
 import org.apache.http.{HttpStatus, NameValuePair}
@@ -17,6 +19,7 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.{DefaultHttpClient, HttpClientBuilder}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.params.HttpParams
+import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
@@ -32,12 +35,14 @@ class VKMClient {
   case class VKMError(content: Map[String, Any], url: String)
   protected implicit val jsonFormats: Formats = DefaultFormats
   private def VkmRoad = "tie"
+  private def VkmRoadEnd = "tie_loppu"
   private def VkmRoadPart = "osa"
   private def VkmRoadPartEnd = "osa_loppu"
   private def VkmDistance = "etaisyys"
   private def VkmDistanceEnd = "etaisyys_loppu"
   private def VkmTrackCodes = "ajorata"
   private def VkmTrackCode = "ajorata"
+  private def VkmTrackCodeEnd = "ajorata_loppu"
   private def VkmLinkId = "link_id"
   private def VkmLinkIdEnd = "link_id_loppu"
   private def VkmKmtkId = "kmtk_id"
@@ -45,6 +50,9 @@ class VKMClient {
   private def VkmSearchRadius = "sade"
   private def VkmQueryIdentifier = "tunniste"
   private def VkmMunicipalityCode = "kuntakoodi"
+  private def VkmSituationDate = "tilannepvm"
+  private def VkmMValue = "m_arvo"
+  private def VkmMValueEnd = "m_arvo_loppu"
   private def NonPedestrianRoadNumbers = "1-62999"
   private def AllRoadNumbers = "1-99999"
   private def DefaultToleranceMeters = 20.0
@@ -136,6 +144,19 @@ class VKMClient {
     def verify(s: String, sslSession: SSLSession) = true
   }
 
+  def fetchRoadAddressForLinkOnSpecificDate(linkId: String, date: DateTime): RoadAddressForLink = {
+    val dateString = date.toString("dd.MM.yyyy")
+    val params = Map(
+      VkmKmtkId -> Some(linkId),
+      VkmSituationDate -> Some(dateString)
+    )
+
+    request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=2,6&" + urlParams(params)) match {
+      case Left(featureCollection) => mapLinearTransformFields(featureCollection.features.head)
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
+  }
+
   def fetchLinkIdsBetweenTwoRoadLinks(startLinkId: String, endLinkId: String, roadNumber: Long): Set[String] = {
     val params = Map(
       VkmLinkId -> Some(startLinkId),
@@ -205,7 +226,7 @@ class VKMClient {
       )
 
     request(vkmBaseUrl + "muunna?sade=500&" + urlParams(params)) match {
-      case Left(address) => mapFields(address.features.head)
+      case Left(address) => mapPointTransformFields(address.features.head)
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
@@ -315,7 +336,35 @@ class VKMClient {
     }
   }
 
-  private def mapFields(data: Feature) = {
+  private def mapLinearTransformFields(data: Feature):RoadAddressForLink = {
+    val linkId = data.properties.get(VkmLinkId).asInstanceOf[Option[String]]
+    val roadStart = validateAndConvertToInt(VkmRoad, data.properties)
+    val roadPartStart = validateAndConvertToInt(VkmRoadPart, data.properties)
+    val trackStart = validateAndConvertToInt(VkmTrackCode, data.properties)
+    val distanceStart = validateAndConvertToInt(VkmDistance, data.properties)
+    val roadEnd = validateAndConvertToInt(VkmRoadEnd, data.properties)
+    val roadPartEnd = validateAndConvertToInt(VkmRoadPartEnd, data.properties)
+    val trackEnd = validateAndConvertToInt(VkmTrackCodeEnd, data.properties)
+    val distanceEnd = validateAndConvertToInt(VkmDistanceEnd, data.properties)
+    val mValue = validateAndConvertToInt(VkmMValue, data.properties)
+    val mValueEnd = validateAndConvertToInt(VkmMValueEnd, data.properties)
+
+    val road = if(roadStart == roadEnd) roadStart
+    else throw new RoadAddressException("VKM Returned differing results for start and end road number on linkId: " + linkId.get)
+    val roadPart = if(roadPartStart == roadPartEnd) roadPartStart
+    else throw new RoadAddressException("VKM Returned differing results for start and end road part number on linkId: " + linkId.get)
+    val track = if(trackStart == trackEnd) Track.apply(trackStart)
+    else throw new RoadAddressException("VKM Returned differing results for start and end track code on linkId: " + linkId.get)
+    if (track.eq(Track.Unknown)) {
+      throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
+    }
+    val sideCode = calculateSideCodeUsingEndPointAddrs(distanceStart, distanceEnd)
+
+    RoadAddressForLink(id = 0, roadNumber = road, roadPartNumber = roadPart, track = track, startAddrMValue = distanceStart,
+      endAddrMValue = distanceEnd, linkId = linkId.get, startMValue = mValue, endMValue = mValueEnd, sideCode = sideCode, geom = Seq(), expired = false, createdBy = None, createdDate = None, modifiedDate = None)
+  }
+
+  private def mapPointTransformFields(data: Feature) = {
     val municipalityCode = data.properties.get(VkmMunicipalityCode).asInstanceOf[Option[String]]
     val road = validateAndConvertToInt(VkmRoad, data.properties)
     val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)

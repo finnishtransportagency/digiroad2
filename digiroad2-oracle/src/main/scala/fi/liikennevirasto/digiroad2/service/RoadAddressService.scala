@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
 import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
@@ -49,6 +50,7 @@ case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, 
 
 class RoadAddressService(viiteClient: SearchViiteClient ) {
   val roadAddressTempDAO = new RoadAddressTempDAO
+  val vkmClient = new VKMClient
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -148,6 +150,10 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     }
   }
 
+  def roadLinkWithRoadAddressFromSpecificDate(roadLink: RoadLink, dateTime: DateTime): RoadLink = {
+    val roadAddressForLink = vkmClient.fetchRoadAddressForLinkOnSpecificDate(roadLink.linkId, dateTime)
+    roadLink.copy(attributes = roadLink.attributes ++ roadAddressAttributes(roadAddressForLink))
+  }
   /**
     * Returns the given road links with road address attributes
     *
