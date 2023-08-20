@@ -22,7 +22,7 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 sealed case class Link(title:String,`type`: String,rel:String,href:String)
 sealed case class FeatureCollection(`type`: String, features: List[Feature], 
@@ -412,15 +412,17 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     }
 
     val limit = BATCH_SIZE
+    
+   val result2 = for (
+    f1 <-  Future{paginateAtomic(baseUrl = baseUrl, limit = limit, position = 0)};
+    f2 <-  Future{paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 2)};
+    f3 <-  Future{paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 3)}
+    ) yield f1 ++ f2 ++ f3
 
-    val fut1 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = 0))
-    val fut2 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 2))
-    val fut3 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 3))
-    val items1 = Await.result(fut1, atMost = Duration.Inf)
-    val items2 = Await.result(fut2, atMost = Duration.Inf)
-    val items3 = Await.result(fut3, atMost = Duration.Inf)
-    (items1 ++ items2 ++ items3).flatMap(_.features.par.map(feature=>
-      extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
+    result2.value.get match {
+      case Failure(exception) => throw exception
+      case Success(t) => t.flatMap(_.features.par.map(feature => extractor.extractFeature(feature, feature.geometry.coordinates, linkGeomSource).asInstanceOf[LinkType]).toList).toSeq
+    }
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
