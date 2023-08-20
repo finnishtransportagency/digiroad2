@@ -412,17 +412,19 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     }
 
     val limit = BATCH_SIZE
-    
-   val result2 = for (
-    f1 <-  Future{paginateAtomic(baseUrl = baseUrl, limit = limit, position = 0)};
-    f2 <-  Future{paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 2)};
-    f3 <-  Future{paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 3)}
+
+    val resultF = for (
+      f1 <- Future {paginateAtomic(baseUrl = baseUrl, limit = limit, position = 0)};
+      f2 <- Future {paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 2)};
+      f3 <- Future {paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 3)}
     ) yield f1 ++ f2 ++ f3
-    
-    result2.map { t => t.flatMap(_.features.par.map(feature => extractor.extractFeature(feature, feature.geometry.coordinates, linkGeomSource).asInstanceOf[LinkType]).toList).toSeq
-    } .recover { // does not work
+
+    val operations = resultF.map { t => t.flatMap(_.features.par.map(feature => extractor.extractFeature(feature, feature.geometry.coordinates, linkGeomSource).asInstanceOf[LinkType]).toList).toSeq}
+    try {
+      Await.result(operations, Duration.Inf)
+    } catch {
       case e: Exception => throw e
-    }.value.get.get
+    }
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
