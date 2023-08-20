@@ -14,10 +14,10 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.compat.Platform.EOL
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Random
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Random, Success}
 
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -77,7 +77,7 @@ object ApiUtils {
           redirectBasedOnS3ObjectExistence(workId, queryId, path, currentRetry)
         else {
           logger.info(s"API LOG $queryId: Maximum retries reached. Unable to respond to query.")
-          BadRequest("Maximum retries reached. Unable to get object.")
+          BadRequest(s"Request with id $queryId failed. Maximum retries reached.")
         }
     }
   }
@@ -108,17 +108,20 @@ object ApiUtils {
           else {
             Future {
               s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType)
+            }.onComplete {
+              case Failure(e) => logger.error(s"API LOG $queryId: failed to save S3");
             }
             redirectToUrl(path, queryId, Some(1))
           }
       }
     } catch {
       case _: TimeoutException =>
-        Future { // Complete query and save results to s3 in future
-          val finished = Await.result(ret, Duration.Inf)
-          val responseBody = formatResponse(finished, responseType, queryId)
-          s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
-        }
+          ret.onComplete {
+            case Failure(e) => logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}") ;
+            case Success(t) => 
+              val responseBody = formatResponse(t, responseType, queryId)
+              s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
+          }
         redirectToUrl(path, queryId, Some(1))
     }
   }
