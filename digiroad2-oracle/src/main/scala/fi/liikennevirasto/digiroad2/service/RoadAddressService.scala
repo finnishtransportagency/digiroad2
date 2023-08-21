@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils}
-import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, Track}
+import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, RoadAddressException, Track}
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -151,8 +151,14 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   }
 
   def roadLinkWithRoadAddressFromSpecificDate(roadLink: RoadLink, dateTime: DateTime): RoadLink = {
-    val roadAddressForLink = vkmClient.fetchRoadAddressForLinkOnSpecificDate(roadLink.linkId, dateTime)
-    roadLink.copy(attributes = roadLink.attributes ++ roadAddressAttributes(roadAddressForLink))
+    try {
+      val roadAddressForLink = vkmClient.fetchRoadAddressForLinkOnSpecificDate(roadLink.linkId, dateTime)
+      roadLink.copy(attributes = roadLink.attributes ++ roadAddressAttributes(roadAddressForLink))
+    } catch {
+      case roadAddressException: RoadAddressException =>
+        logger.error(s"Could not fetch road address for linkId: ${roadLink.linkId} on date ${dateTime.toString("dd.MM.yyyy")}")
+        roadLink
+    }
   }
   /**
     * Returns the given road links with road address attributes
