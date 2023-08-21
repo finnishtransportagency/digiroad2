@@ -2055,14 +2055,4 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-//  test("VKM client testailua") {
-//    val vkmClient = new VKMClient
-//
-//    val oldLinkId = "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1"
-//    val newLinkId = "753279ca-5a4d-4713-8609-0bd35d6a30fa:1"
-//    val changeDate = DateTime.parse("2022-10-01")
-//    val address = vkmClient.fetchRoadAddressForLinkOnSpecificDate(newLinkId, changeDate)
-//    println(address)
-//  }
-
 }
