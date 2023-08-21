@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
+import fi.liikennevirasto.digiroad2.util.LaneUtils.persistedLanesTwoDigitLaneCode
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
 import org.joda.time.DateTime
@@ -272,16 +272,28 @@ trait LaneOperations {
       laneChanges.sortBy{ laneChange =>
         val lane = laneChange.lane
         val defaultTime = DateTime.now()
+        val changeEventTime = laneChange.getChangeDateTime
 
-        val changeEventDateTime = laneChange.changeType match {
-          case LaneChangeType.Add => lane.createdDateTime
-          case LaneChangeType.Lengthened | LaneChangeType.Shortened | LaneChangeType.AttributesChanged | LaneChangeType.LaneCodeTransfer => lane.modifiedDateTime
-          case LaneChangeType.Divided => laneChange.oldLane.get.expiredDateTime
-          case LaneChangeType.Expired => lane.expiredDateTime
-        }
-
-        (changeEventDateTime.getOrElse(defaultTime).getMillis, lane.id, laneChange.historyEventOrderNumber)
+        (changeEventTime.getOrElse(defaultTime).getMillis, lane.id, laneChange.historyEventOrderNumber)
       }
+    }
+
+    def laneChangesWithAddress(laneChanges: Seq[LaneChange]): Seq[LaneChange] = {
+      laneChanges.filter(change => change.getChangeDateTime.nonEmpty && change.roadLink.nonEmpty).flatMap(laneChange => {
+        val roadLink = laneChange.roadLink.get
+        val dateTime = laneChange.getChangeDateTime.get
+        val roadLinkWithAddress = roadAddressService.roadLinkWithRoadAddressFromSpecificDate(roadLink, dateTime)
+        val possibleRoadNumber = roadLinkWithAddress.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
+        possibleRoadNumber match {
+          case None => None
+          case Some(rn) if isCarTrafficRoadAddress(rn) =>
+            val twoDigitLane = persistedLanesTwoDigitLaneCode(Seq(laneChange.lane), Seq(roadLinkWithAddress)).head
+            val twoDigitHistoryLane = if (laneChange.oldLane.nonEmpty) {
+              Some(persistedLanesTwoDigitLaneCode(Seq(laneChange.oldLane.get), Seq(roadLinkWithAddress)).head)
+            } else None
+            Some(laneChange.copy(lane = twoDigitLane, oldLane = twoDigitHistoryLane, roadLink = Some(roadLinkWithAddress)))
+        }
+      })
     }
 
     val (upToDateLanes, historyLanes) = withDynTransaction {
@@ -292,31 +304,15 @@ trait LaneOperations {
     val linkIds = (upToDateLanes.map(_.linkId) ++ historyLanes.map(_.linkId)).toSet
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds)
 
-    // Filter out walking and cycling road links for now
-    val roadLinksWithRoadAddressInfo = roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(roadLink => {
-      val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
-      roadNumber match {
-        case None => false
-        case Some(rn) => isCarTrafficRoadAddress(rn)
-      }
-    })
-
-    //TODO Use road address info from history lane's HistoryCreatedDate date provided by VKM when VKM includes side code field
-    val historyLanesWithRoadAddress = historyLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
-    val upToDateLanesWithRoadAddress = upToDateLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
-
-    val twoDigitUpToDateLanes = persistedLanesTwoDigitLaneCode(upToDateLanesWithRoadAddress, roadLinksWithRoadAddressInfo)
-    val twoDigitHistoryLanes = persistedHistoryLanesToTwoDigitLaneCode(historyLanesWithRoadAddress, roadLinksWithRoadAddressInfo)
-
     // Get LaneChanges referring to "up-to-date" lanes.
-    val upToDateLaneChanges = twoDigitUpToDateLanes.flatMap{ upToDate =>
-      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == upToDate.linkId)
-      val relevantHistory = twoDigitHistoryLanes.find(history => history.newId == upToDate.id)
+    val upToDateLaneChanges = upToDateLanes.flatMap{ upToDate =>
+      val roadLink = roadLinks.find(_.linkId == upToDate.linkId)
+      val relevantHistory = historyLanes.find(history => history.newId == upToDate.id)
 
       relevantHistory match {
         case Some(history) =>
 
-          if (twoDigitHistoryLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) >= 2)
+          if (historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) >= 2)
             Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Divided, roadLink, history.changeEventOrderNumber))
 
           else if (upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure)
@@ -332,7 +328,7 @@ trait LaneOperations {
           Some(LaneChange(upToDate, None, LaneChangeType.Add, roadLink, None))
 
         case _ =>
-          val historyRelatedLanes = twoDigitHistoryLanes.filter(_.oldId == upToDate.id)
+          val historyRelatedLanes = historyLanes.filter(_.oldId == upToDate.id)
 
           if(historyRelatedLanes.nonEmpty){
             val historyLane = historyRelatedLanes.maxBy(_.historyCreatedDate.getMillis)
@@ -352,14 +348,14 @@ trait LaneOperations {
     }
 
     // Get laneChanges for expired lanes
-    val expiredLanes = twoDigitHistoryLanes.filter(lane => lane.expired && lane.newId == 0).map{ history =>
-      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == history.linkId)
+    val expiredLanes = historyLanes.filter(lane => lane.expired && lane.newId == 0).map{ history =>
+      val roadLink = roadLinks.find(_.linkId == history.linkId)
       LaneChange(historyLaneToPersistedLane(history), None, LaneChangeType.Expired, roadLink, history.changeEventOrderNumber)
     }
 
     // Get laneChanges for old changes which do not reference an "up-to-date" lane. Changes are processed from latest to oldest.
-    val historyLaneChanges = twoDigitHistoryLanes.groupBy(_.oldId).flatMap{ case (_, lanes) =>
-      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == lanes.head.linkId)
+    val historyLaneChanges = historyLanes.groupBy(_.oldId).flatMap{ case (_, lanes) =>
+      val roadLink = roadLinks.find(_.linkId == lanes.head.linkId)
 
       val lanesSorted = lanes.sortBy(lane =>  lane.historyCreatedDate.getMillis)
       lanesSorted.foldLeft(Seq.empty[Option[LaneChange]], lanesSorted){ case (foldLeftParameters, lane) =>
@@ -370,10 +366,10 @@ trait LaneOperations {
 
         val laneChangeReturned = {
           if (relevantLanes.isEmpty) {
-            val newIdRelation = twoDigitHistoryLanes.find(_.newId == laneAsPersistedLane.id)
+            val newIdRelation = historyLanes.find(_.newId == laneAsPersistedLane.id)
 
             newIdRelation match {
-              case Some(relation) if twoDigitHistoryLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) >= 2 =>
+              case Some(relation) if historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) >= 2 =>
                 Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Divided, roadLink, relation.changeEventOrderNumber))
 
               case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure > relation.endMeasure - relation.startMeasure =>
@@ -409,14 +405,14 @@ trait LaneOperations {
 
     val relevantLanesChanged = (upToDateLaneChanges ++ expiredLanes ++ historyLaneChanges).filter(_.roadLink.isDefined)
     val sortedLanesChanged = sortChangesByEventTimeAndOrderNumber(relevantLanesChanged)
-
+    val sortedLaneChangesWithRoadAddressInfo = laneChangesWithAddress(sortedLanesChanged)
 
     token match {
       case Some(tk) =>
         val (start, end) = Decode.getPageAndRecordNumber(tk)
 
-        sortedLanesChanged.slice(start - 1, end)
-      case _ => sortedLanesChanged
+        sortedLaneChangesWithRoadAddressInfo.slice(start - 1, end)
+      case _ => sortedLaneChangesWithRoadAddressInfo
     }
 
   }

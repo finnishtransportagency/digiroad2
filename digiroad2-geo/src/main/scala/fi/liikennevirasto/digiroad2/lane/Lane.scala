@@ -16,7 +16,16 @@ trait Lane extends PolyLine{
   val geomModifiedDate: Option[DateTime]
   val laneAttributes: Seq[LaneProperty]
 }
-case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink], historyEventOrderNumber: Option[Int])
+case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink], historyEventOrderNumber: Option[Int]) {
+  def getChangeDateTime: Option[DateTime] = {
+    this.changeType match {
+      case LaneChangeType.Add | LaneChangeType.Lengthened | LaneChangeType.Shortened => lane.createdDateTime
+      case LaneChangeType.AttributesChanged | LaneChangeType.LaneCodeTransfer => lane.modifiedDateTime
+      case LaneChangeType.Divided => this.oldLane.get.expiredDateTime
+      case LaneChangeType.Expired => lane.expiredDateTime
+    }
+  }
+}
 case class ChangedSegment(startMeasure: Double, startAddrM: Int, endMeasure: Double, endAddrM: Int, segmentChangeType: LaneChangeType)
 
 case class LightLane ( value: Int, expired: Boolean,  sideCode: Int )
