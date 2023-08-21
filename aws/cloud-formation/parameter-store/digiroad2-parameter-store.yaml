@@ -43,13 +43,13 @@ Resources:
       Name: /prod/ses_password
       Type: String
       Value: PlaceHolderValue
-
-  OAGPasswordParameter:
+      
+  ValluApiKey:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /prod/authentication.oag.basic.password
+      Name: /prod/apikey/vallu.apikey
       Type: String
-      Value: PlaceHolderValue
+      Value: PlaceHolderValue 
 
   GoogleClientIdParameter:
     Type: AWS::SSM::Parameter
