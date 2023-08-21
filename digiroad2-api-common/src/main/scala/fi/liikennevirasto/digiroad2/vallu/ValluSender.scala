@@ -9,6 +9,8 @@ import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
 
+import java.nio.charset.Charset
+
 object ValluSender extends AssetPropertiesReader {
   val logger = LoggerFactory.getLogger(getClass)
   val sendingEnabled = Digiroad2Properties.valluServerSendingEnabled
@@ -37,6 +39,7 @@ object ValluSender extends AssetPropertiesReader {
     val response = client.execute(httpPost)
     try {
       logger.info(s"VALLU Got response (${response.getStatusLine.getStatusCode})")
+      logger.info(s"VALLU Response body was ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
       EntityUtils.consume(entity)
     } finally {
       response.close()
