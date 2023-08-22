@@ -111,7 +111,7 @@ object ApiUtils {
               s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType)
             }.onComplete {
               case Failure(e) => 
-                logger.error(s"API LOG $queryId: failed to save S3",e);
+                logger.error(s"API LOG $queryId: failed to save S3, stacktrace: ",e);
               case Success(t) => ""
                 
             }
