@@ -30,6 +30,7 @@ sealed case class FeatureCollection(`type`: String, features: List[Feature],
                                     nextPageLink:String="",previousPageLink:String="")
 sealed case class Feature(`type`: String, geometry: Geometry, properties: Map[String, Any])
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
+sealed case class NumberConversionFailed(msg:String)extends Exception(msg)
 
 trait KgvCollection {
   def value :String
@@ -181,7 +182,7 @@ class ExtractorBase {
   }
   
   protected def extractAttributes(attributesMap: Map[String, Any], lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
-    case class NumberConversionFailed(msg:String)extends Exception(msg)
+    
     def numberConversion(field:String): BigInt = {
       if (attributesMap(field) == null){
         null
@@ -419,11 +420,15 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
       f3 <- Future {paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 3)}
     ) yield f1 ++ f2 ++ f3
 
-    val operations = resultF.map { t => t.flatMap(_.features.par.map(feature => extractor.extractFeature(feature, feature.geometry.coordinates, linkGeomSource).asInstanceOf[LinkType]).toList).toSeq}
+    val operations = resultF.map { t => t.flatMap(_.features.par.map(feature => 
+      extractor.extractFeature(feature, feature.geometry.coordinates, linkGeomSource)
+        .asInstanceOf[LinkType]).toList).toSeq}
     try {
       Await.result(operations, Duration.Inf)
     } catch {
-      case e: Exception => throw e
+      case e: Throwable =>
+        logger.error(s"Failed to retrieve links by using pagination with message ${e.getMessage} and stacktrace: ",e);
+        throw e
     }
   }
   
