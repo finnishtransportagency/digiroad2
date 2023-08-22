@@ -30,7 +30,6 @@ sealed case class FeatureCollection(`type`: String, features: List[Feature],
                                     nextPageLink:String="",previousPageLink:String="")
 sealed case class Feature(`type`: String, geometry: Geometry, properties: Map[String, Any])
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
-sealed case class NumberConversionFailed(msg:String)extends Exception(msg)
 
 trait KgvCollection {
   def value :String
@@ -182,7 +181,7 @@ class ExtractorBase {
   }
   
   protected def extractAttributes(attributesMap: Map[String, Any], lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
-    
+    case class NumberConversionFailed(msg:String)extends Exception(msg)
     def numberConversion(field:String): BigInt = {
       if (attributesMap(field) == null){
         null
