@@ -87,7 +87,7 @@ _Muokkaustila._
 
 ### Kartan liikutus
 
-Karttaa liikutetaan hiirellä raahaamalla.
+Karttaa liikutetaan hiirellä raahaamalla. demomuutos
 
 ### Mittakaavataso
 
