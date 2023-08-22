@@ -68,8 +68,8 @@ object ApiUtils {
         try {
           newQuery(workId, queryId, path, f, params, responseType)
         } catch {
-          case e: Exception => 
-            logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
+          case e: Throwable =>
+            logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: ",e);
             InternalServerError(s"Request with id $queryId failed.")
         }
       case (Some(retry: String), false) =>
@@ -92,7 +92,7 @@ object ApiUtils {
 
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
     val ret = Future {
-      f(params) // In error situation this future does not get Promise.failed states.
+      f(params)
     }
     try {
       val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
@@ -110,7 +110,10 @@ object ApiUtils {
             Future {
               s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType)
             }.onComplete {
-              case Failure(e) => logger.error(s"API LOG $queryId: failed to save S3");
+              case Failure(e) => 
+                logger.error(s"API LOG $queryId: failed to save S3",e);
+              case Success(t) => ""
+                
             }
             redirectToUrl(path, queryId, Some(1))
           }
@@ -118,7 +121,7 @@ object ApiUtils {
     } catch {
       case _: TimeoutException =>
           ret.onComplete {
-            case Failure(e) => logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}") ;
+            case Failure(e) =>  logger.error(s"API LOG $queryId: error with message ${e.getMessage}, stacktrace: ",e);
             case Success(t) => 
               val responseBody = formatResponse(t, responseType, queryId)
               s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
