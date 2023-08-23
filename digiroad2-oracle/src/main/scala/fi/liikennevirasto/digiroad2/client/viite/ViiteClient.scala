@@ -3,9 +3,10 @@ package fi.liikennevirasto.digiroad2.client.viite
 import fi.liikennevirasto.digiroad2.client.ErrorMessageConverter
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.apache.http.HttpStatus
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpRequestBase}
 import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.slf4j.LoggerFactory
@@ -40,10 +41,15 @@ trait ViiteClientOperations {
     request.addHeader("X-API-Key", viiteApiKey)
   }
 
+  private def clientBuilder(): CloseableHttpClient = {
+    HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
+      .build()
+  }
+  
   protected def get[T](url: String): Either[T, ViiteError] = {
     val request = new HttpGet(url)
     addAuthorizationHeader(request)
-    val response = client.execute(request)
+    val response = clientBuilder().execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
       if (statusCode == HttpStatus.SC_NOT_FOUND) {
@@ -63,7 +69,7 @@ trait ViiteClientOperations {
     val request = new HttpPost(url)
     addAuthorizationHeader(request)
     request.setEntity(createJson(trEntity))
-    val response = client.execute(request)
+    val response = clientBuilder().execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
       if (statusCode == HttpStatus.SC_NOT_FOUND) {
