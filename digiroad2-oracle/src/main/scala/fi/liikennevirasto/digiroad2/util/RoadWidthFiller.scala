@@ -29,7 +29,7 @@ class RoadWidthFiller {
     withDynTransaction {
       val municipalities = Queries.getMunicipalities
       municipalities.foreach { municipality =>
-        println("Working on municipality " + municipality)
+        logger.info("Working on municipality " + municipality)
         fillRoadWidthsByMunicipality(municipality)
       }
     }
