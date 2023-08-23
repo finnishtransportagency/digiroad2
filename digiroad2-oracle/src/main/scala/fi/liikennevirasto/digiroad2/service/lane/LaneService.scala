@@ -434,7 +434,7 @@ trait LaneOperations {
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds)
 
     // Filter out walking and cycling road links for now
-    val roadLinksWithRoadAddressInfo = roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(roadLink => {
+    val roadLinksWithRoadAddressInfo = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(roadLink => {
       val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
       roadNumber match {
         case None => false

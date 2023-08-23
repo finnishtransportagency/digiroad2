@@ -38,7 +38,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   when(mockRoadLinkService.getRoadLinkByLinkId(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
-  
+
 
   val lanePropertiesValues1 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(1))),
                                 LaneProperty("lane_type", Seq(LanePropertyValue("1")))
@@ -74,10 +74,10 @@ class LaneTestSupporter extends FunSuite with Matchers {
   ))
 
   val roadlink2: RoadLink = RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map())
-  
-  when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
-  when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink2))).thenReturn(Seq(roadlink2))
-  when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1,roadlink2))).thenReturn(Seq(roadlink1,roadlink2))
+
+
+
+
   object PassThroughLaneService extends LaneOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
