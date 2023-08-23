@@ -22,7 +22,8 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform, JsonSerializer}
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.TimeUnit
@@ -275,8 +276,18 @@ object Digiroad2Context {
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
   }
-  private def clientBuilder(maxConnTotal: Int = 1000, maxConnPerRoute: Int = 1000) = {
-    HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
+  private def clientBuilder(maxConnTotal: Int = 1000,
+                            maxConnPerRoute: Int = 1000,
+                            timeout:Int = 60*1000
+                           ): CloseableHttpClient = {
+    HttpClientBuilder.create()
+      .setDefaultRequestConfig(
+        RequestConfig.custom()
+          .setCookieSpec(CookieSpecs.STANDARD)
+          .setSocketTimeout(timeout)
+          .setConnectTimeout(timeout) 
+          .build()
+      )
       .setMaxConnTotal(maxConnTotal)
       .setMaxConnPerRoute(maxConnPerRoute)
       .build()
