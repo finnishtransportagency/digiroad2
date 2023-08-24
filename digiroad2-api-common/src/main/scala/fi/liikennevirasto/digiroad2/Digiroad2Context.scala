@@ -20,7 +20,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform, JsonSerializer}
-import fi.liikennevirasto.digiroad2.vallu.ValluSender
+import fi.liikennevirasto.digiroad2.vallu.{ValluSender, ValluStoreStopChangeMessage}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
@@ -40,11 +40,15 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 
   def persistedAssetChanges(busStop: PersistedMassTransitStop,deleteEvent:Boolean = false) = {
     withDynSession {
-      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, newTransaction = false)
-      val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
-      ValluSender.postToVallu(massTransitStop)
-      if(!deleteEvent)
-        massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
+      val busStopTypes = ValluStoreStopChangeMessage.getPropertyValuesByPublicId("pysakin_tyyppi", busStop.propertyData).map(x => x.propertyValue.toLong)
+      val justTram = busStopTypes.size == 1 && busStopTypes.contains(1)
+      if (!justTram) {
+        val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, newTransaction = false)
+        val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
+        ValluSender.postToVallu(massTransitStop)
+        if (!deleteEvent)
+          massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
+      }
     }
   }
 }
