@@ -661,7 +661,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if (distance > movementLimit && !movementPermissionConfirmed)
     {
       requestingMovePermission = true;
-      if (ownedByELY() || ownedByHSL()){
+      if (ownedByHSL()){
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
       } else {
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
