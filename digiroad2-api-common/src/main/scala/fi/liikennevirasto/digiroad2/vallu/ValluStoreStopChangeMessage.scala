@@ -68,8 +68,13 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
 
   def getBusstopBlock(asset: {val propertyData: Seq[Property]}) = {
     val busStopTypes = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
-    busStopTypes.map { busStopType =>
-      <StopType>{busStopType}</StopType>
+    busStopTypes.map {
+      ///case t if t == 1 => <StopType name="TRAM_STOP">true</StopType> //is there tram
+      case t if t == 2 => <StopType name="LOCAL_BUS">true</StopType>
+      case t if t == 3 => <StopType name="EXPRESS_BUS">true</StopType>
+      case t if t == 4 => <StopType name="NON_STOP_EXPRESS_BUS">true</StopType>
+      case t if t == 5 => <StopType name="VIRTUAL_STOP">true</StopType>
+      case t if t == 6 => <StopType name="TERMINAL">true</StopType>
     }
   }
 
