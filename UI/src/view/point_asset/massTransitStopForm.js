@@ -3,6 +3,7 @@
   var poistaSelected = false;
   var authorizationPolicy;
   var pointAssetToSave = false;
+  var tramStopToSave = false;
 
   var rootElement = $("#feature-attributes");
 
@@ -124,6 +125,11 @@
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
           }
         });
+      } else if(tramStopToSave) {
+        new GenericConfirmPopup('Oletko varma, että haluat luoda pysäkin kävelyn ja pyöräilyn väylälle?', {
+          successCallback: function () {
+            saveStop();
+          }});
       } else if (pointAssetToSave) {
         saveStop();
       } else {
@@ -1085,6 +1091,10 @@
           updateViranomaisdataaValue();
 
           pointAssetToSave = true;
+        }
+
+        if (property.publicId === "pysakin_tyyppi" && _.some(property.values, function (value) {return value.propertyValue === 1;})) {
+          tramStopToSave = true;
         }
 
       });
