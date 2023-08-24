@@ -502,6 +502,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       updatedAsset.nationalId should be(oldAsset.nationalId)
 
+      verify(eventbus, times(2)).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+
       //check that no expiration message was sent
       verify(eventbus, never()).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
 
