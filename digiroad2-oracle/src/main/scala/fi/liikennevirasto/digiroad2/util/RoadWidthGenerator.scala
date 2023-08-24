@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
-class RoadWidthFiller {
+class RoadWidthGenerator {
 
   val dao = new PostGISLinearAssetDao()
   val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)

@@ -176,7 +176,7 @@ object DataFixture {
 
   lazy val redundantTrafficDirectionRemoval = new RedundantTrafficDirectionRemoval(roadLinkService)
 
-  lazy val roadWidthFiller = new RoadWidthFiller
+  lazy val roadWidthGenerator = new RoadWidthGenerator
 
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
@@ -524,7 +524,7 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-  
+
   private def verifyIsChanged(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
     val floatingReasonPublicId = "kellumisen_syy"
     val floatingReasonPropertyId = dataImporter.getPropertyTypeByPublicId(floatingReasonPublicId)
@@ -556,7 +556,7 @@ object DataFixture {
       }
     }
   }
-  
+
   def listingBusStopsWithSideCodeConflictWithRoadLinkDirection(): Unit = {
     println("\nCreate a listing of bus stops on one-way roads in Production that have side code against traffic direction of road link")
     println(DateTime.now())
@@ -756,7 +756,7 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-  
+
   private def isKIdentifier(username: Option[String]): Boolean = {
     val identifiers: Set[String] = Set("k", "lx", "a", "u")
     username.exists(user => identifiers.exists(identifier => user.toLowerCase.startsWith(identifier)))
@@ -2121,7 +2121,7 @@ object DataFixture {
       case Some("fill_lane_amounts_in_missing_road_links") =>
         fillLaneAmountsMissingInRoadLink()
       case Some("fill_roadWidth_in_road_links") =>
-        roadWidthFiller.fillRoadWidths()
+        roadWidthGenerator.fillRoadWidths()
       case Some("update_areas_on_asset") =>
         updateAreasOnAsset()
       case Some("update_information_source_on_existing_assets") =>

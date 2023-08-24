@@ -11,7 +11,7 @@ import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-class RoadWidthFillerSpec extends FunSuite with Matchers {
+class RoadWidthGeneratorSpec extends FunSuite with Matchers {
 
   val dao = new PostGISLinearAssetDao()
   val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -20,7 +20,7 @@ class RoadWidthFillerSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  object TestRoadWidthFiller extends RoadWidthFiller {
+  object TestRoadWidthGenerator extends RoadWidthGenerator {
     override val roadLinkService = mockRoadLinkService
   }
 
@@ -43,7 +43,7 @@ class RoadWidthFillerSpec extends FunSuite with Matchers {
   test("update correct widths to road links excluding pedestrian and state roads") {
 
     runWithRollback {
-      TestRoadWidthFiller.fillRoadWidthsByMunicipality(235)
+      TestRoadWidthGenerator.fillRoadWidthsByMunicipality(235)
       val roadWidths = roadWidthService.fetchExistingAssetsByLinksIds(RoadWidth.typeId, roadLinks, Seq(), false).sortBy(_.endMeasure)
       roadWidths.size should be(2)
       roadWidths.head.linkId should be(linkId1)
@@ -65,7 +65,7 @@ class RoadWidthFillerSpec extends FunSuite with Matchers {
       val newAsset2 = NewLinearAsset(linkId2, 5.0, 10.0, DynamicValue(DynamicAssetValue(List(DynamicProperty("suggest_box","checkbox",false,List()),
         DynamicProperty("width","integer",true,List(DynamicPropertyValue(800)))))), 1, 234567, None)
       roadWidthService.create(Seq(newAsset1, newAsset2), RoadWidth.typeId, "test")
-      TestRoadWidthFiller.fillRoadWidthsByMunicipality(235)
+      TestRoadWidthGenerator.fillRoadWidthsByMunicipality(235)
       val roadWidths = roadWidthService.fetchExistingAssetsByLinksIds(RoadWidth.typeId, roadLinks, Seq(), false).sortBy(_.endMeasure)
       roadWidths.size should be(3)
       roadWidths.head.linkId should be(linkId1)
