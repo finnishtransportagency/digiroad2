@@ -246,6 +246,23 @@
       });
     };
 
+    var wrongStopTypeOnWalkingCyclingLink = function () {
+      var isCarTrafficRoad = getRoadLink().isCarTrafficRoad();
+      var isOnlyTramStop = _.some(currentAsset.payload.properties, function (property) {
+        if (property.publicId == massTransitStopTypePublicId) {
+          return _.some(property.values, function (propertyValue) {
+            return (propertyValue.propertyValue == 1 && property.values.length == 1);
+          });
+        }
+        return false;
+      });
+      if(!isCarTrafficRoad) {
+        return !isOnlyTramStop;
+      } else {
+        return false;
+      }
+    };
+
     var requiredPropertiesMissing = function () {
       var isRequiredProperty = function (publicId) {
         var isTerminal = currentAsset.stopTypes && isTerminalType(_.head(currentAsset.stopTypes)) || currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties);
@@ -642,6 +659,7 @@
       place: place,
       hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops,
       pikavuoroIsAlone: pikavuoroIsAlone,
+      wrongStopTypeOnWalkingCyclingLink: wrongStopTypeOnWalkingCyclingLink,
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
       deleteMassTransitStop: deleteMassTransitStop,
