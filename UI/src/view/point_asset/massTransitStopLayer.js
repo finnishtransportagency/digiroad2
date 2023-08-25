@@ -203,7 +203,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var pointTool = new PointsCursorTool(eventListener, assetLayer, selectControl, roadCollection, {
     style : function(feature) {
       return massTransitStopLayerStyles.default.getStyle(feature, {zoomLevel: zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map))});
-    }
+    },
+    walkingCycling : false
   });
 
   roadLayer.setLayerSpecificStyleProvider('massTransitStop', function() {
@@ -473,7 +474,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var createNewAsset = function(coordinate, placement, stopTypes) {
 
     var default_asset_direction = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
-    var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), coordinate.x, coordinate.y);
+    var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForCarPedestrianCycling()), coordinate.x, coordinate.y);
     var lon, lat;
 
     if(nearestLine.end && nearestLine.start){
@@ -939,6 +940,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     });
     eventListener.listenTo(eventbus, 'massTransitStop-complementaryLinks:show', showWithComplementary);
     eventListener.listenTo(eventbus, 'massTransitStop-complementaryLinks:hide', hideComplementary);
+    eventListener.listenTo(eventbus, 'massTransitStop-walkingCyclingLinks:show', toggleWalkingCyclingLinks);
+    eventListener.listenTo(eventbus, 'massTransitStop-walkingCyclingLinks:hide', toggleWalkingCyclingLinks);
     eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
@@ -982,6 +985,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     roadAddressInfoPopup.start();
     hideClusterLayer();
     me.show(map);
+  };
+
+  var toggleWalkingCyclingLinks = function() {
+    pointTool.toggleWalkingCycling();
   };
 
   var showWithComplementary = function() {

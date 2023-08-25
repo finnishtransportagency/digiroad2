@@ -3,6 +3,7 @@
   var poistaSelected = false;
   var authorizationPolicy;
   var pointAssetToSave = false;
+  var tramStopToSave = false;
 
   var rootElement = $("#feature-attributes");
 
@@ -21,7 +22,29 @@
     return _.find(selectedMassTransitStopModel.getCurrentAsset().payload.properties, {'publicId' : public_id});
   }
 
-  var ValidationErrorLabel = function() {
+  var walkingCyclingErrorLabel = function() {
+    var element = $('<span class="validation-error">Vain raitiovaunupysäkki voidaan tallentaa kävelyn ja pyöräilyn väylälle</span>');
+    var updateVisibility = function() {
+      if(selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()) {
+        element.show();
+      }
+      else {
+        element.hide();
+      }
+    };
+
+    updateVisibility();
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      updateVisibility();
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
+  var missingInfoLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
     var updateVisibility = function() {
@@ -102,6 +125,11 @@
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
           }
         });
+      } else if(tramStopToSave) {
+        new GenericConfirmPopup('Oletko varma, että haluat luoda pysäkin kävelyn ja pyöräilyn väylälle?', {
+          successCallback: function () {
+            saveStop();
+          }});
       } else if (pointAssetToSave) {
         saveStop();
       } else {
@@ -144,7 +172,9 @@
     var updateStatus = function() {
       if(pointAssetToSave && !isValidServicePoint()){
         element.prop('disabled', true);
-      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
+      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() &&
+          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone() &&
+          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
         element.prop('disabled', false);
       } else if(poistaSelected) {
         element.prop('disabled', false);
@@ -236,7 +266,9 @@
 
         var buttons = function (busStopTypeSelected) {
           return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
-              .append(new ValidationErrorLabel().element)
+              .append(new walkingCyclingErrorLabel().element)
+              .append($('<br>'))
+              .append(new missingInfoLabel().element)
               .append(new SaveButton(busStopTypeSelected).element)
               .append(new CancelButton().element);
         };
@@ -1064,6 +1096,10 @@
           updateViranomaisdataaValue();
 
           pointAssetToSave = true;
+        }
+
+        if (property.publicId === "pysakin_tyyppi" && _.some(property.values, function (value) {return value.propertyValue === 1;})) {
+          tramStopToSave = true;
         }
 
       });
