@@ -169,9 +169,9 @@
     var updateStatus = function() {
       if(pointAssetToSave && !isValidServicePoint()){
         element.prop('disabled', true);
-      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing()
-          && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()
-          && !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
+      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() &&
+          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone() &&
+          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
         element.prop('disabled', false);
       } else if(poistaSelected) {
         element.prop('disabled', false);

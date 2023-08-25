@@ -194,6 +194,7 @@
 
     var open = function(asset) {
       currentAsset.id = asset.id;
+      currentAsset.linkId = asset.linkId;
       currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
@@ -247,19 +248,24 @@
     };
 
     var wrongStopTypeOnWalkingCyclingLink = function () {
-      var isCarTrafficRoad = getRoadLink().isCarTrafficRoad();
-      var isOnlyTramStop = _.some(currentAsset.payload.properties, function (property) {
-        if (property.publicId == massTransitStopTypePublicId) {
-          return _.some(property.values, function (propertyValue) {
-            return (propertyValue.propertyValue == 1 && property.values.length == 1);
-          });
-        }
+      var selectedRoadLink = getRoadLink();
+      if (_.isEmpty(selectedRoadLink)) {
         return false;
-      });
-      if(!isCarTrafficRoad) {
-        return !isOnlyTramStop;
       } else {
-        return false;
+        var isCarTrafficRoad = selectedRoadLink.isCarTrafficRoad();
+        var isOnlyTramStop = _.some(currentAsset.payload.properties, function (property) {
+          if (property.publicId == massTransitStopTypePublicId) {
+            return _.some(property.values, function (propertyValue) {
+              return (propertyValue.propertyValue == 1 && property.values.length == 1);
+            });
+          }
+          return false;
+        });
+        if (!isCarTrafficRoad) {
+          return !isOnlyTramStop;
+        } else {
+          return false;
+        }
       }
     };
 
@@ -478,7 +484,7 @@
 
     var get = function() {
       if (exists()) {
-          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForCarPedestrianCycling(), currentAsset.payload.lon, currentAsset.payload.lat);
           var linkId = nearestLine.linkId;
           if (!currentAsset.linkId)
               currentAsset.linkId = linkId;
