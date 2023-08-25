@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Stops xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Stop>
+        <StopId>300000</StopId>
+        <AdminStopId></AdminStopId>
+        <StopCode></StopCode>
+        <Names>
+            <Name lang="fi">test</Name>
+        </Names>
+        <Coordinate>
+            <xCoordinate>385749</xCoordinate>
+            <yCoordinate>6671908</yCoordinate>
+        </Coordinate>
+        <Bearing>145</Bearing>
+        <BearingDescription>Etelä</BearingDescription>
+        <StopAttribute>
+            <StopType name="LOCAL_BUS">true</StopType>
+            <StopType name="EXPRESS_BUS">false</StopType>
+        </StopAttribute>
+        <Equipment></Equipment>
+        <Reachability></Reachability>
+        <SpecialNeeds></SpecialNeeds>
+        <ModifiedTimestamp>2023-08-14T17:21:20</ModifiedTimestamp>
+        <ModifiedBy>silari</ModifiedBy>
+        <ValidFrom xsi:nil="true"/>
+        <ValidTo xsi:nil="true"/>
+        <AdministratorCode>Kunta</AdministratorCode>
+        <MunicipalityCode>91</MunicipalityCode>
+        <MunicipalityName>Helsinki</MunicipalityName>
+        <Comments></Comments>
+        <PlatformCode></PlatformCode>
+        <ConnectedToTerminal></ConnectedToTerminal>
+        <ContactEmails>
+            <Contact>pysakit@digiroad.fi</Contact>
+        </ContactEmails>
+        <ZoneId></ZoneId>
+    </Stop>
+</Stops>
