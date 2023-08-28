@@ -3,7 +3,6 @@
   var poistaSelected = false;
   var authorizationPolicy;
   var pointAssetToSave = false;
-  var tramStopToSave = false;
 
   var rootElement = $("#feature-attributes");
 
@@ -110,6 +109,15 @@
   }
 
   var SaveButton = function(busStopTypeSelected) {
+    function saveWithPossibleWalkingCyclingPopUp() {
+      if(selectedMassTransitStopModel.isWalkingCyclingLink()){
+        new GenericConfirmPopup('Oletko varma, että haluat luoda pysäkin kävelyn ja pyöräilyn väylälle?', {
+          successCallback: function () {
+            saveStop();
+          }});
+      } else saveStop();
+    }
+
     var deleteMessage = 'pysäkin';
 
     if (selectedMassTransitStopModel.isTerminalType(busStopTypeSelected))
@@ -125,34 +133,29 @@
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
           }
         });
-      } else if(tramStopToSave) {
-        new GenericConfirmPopup('Oletko varma, että haluat luoda pysäkin kävelyn ja pyöräilyn väylälle?', {
-          successCallback: function () {
-            saveStop();
-          }});
       } else if (pointAssetToSave) {
-        saveStop();
+        saveWithPossibleWalkingCyclingPopUp();
       } else {
         if(optionalSave()){
           if(saveNewBusStopStrategy()) {
             new GenericConfirmPopup('Koska tämä bussipysäkki on määritetty vihjeeksi se ei saa LIVI-tunnusta. Haluatko silti tallentaa sen OTH:ssa?', {
               successCallback: function () {
                 selectedMassTransitStopModel.setAdditionalProperty('liviIdSave', [{ propertyValue: 'false' }]);
-                saveStop();
+                saveWithPossibleWalkingCyclingPopUp();
               }});
           } else {
             new GenericConfirmPopup('Haluatko antaa LIVI-tunnuksen?', {
               successCallback: function () {
-                saveStop();
+                saveWithPossibleWalkingCyclingPopUp();
               },
               closeCallback: function () {
                 selectedMassTransitStopModel.setAdditionalProperty('liviIdSave', [{ propertyValue: 'false' }]);
-                saveStop();
+                saveWithPossibleWalkingCyclingPopUp();
               }
             });
           }
         } else {
-          saveStop();
+          saveWithPossibleWalkingCyclingPopUp();
         }
       }
     });
@@ -1096,10 +1099,6 @@
           updateViranomaisdataaValue();
 
           pointAssetToSave = true;
-        }
-
-        if (property.publicId === "pysakin_tyyppi" && _.some(property.values, function (value) {return value.propertyValue === 1;})) {
-          tramStopToSave = true;
         }
 
       });

@@ -148,6 +148,7 @@
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
       currentAsset.payload.linkId = position.linkId;
+      currentAsset.linkId = position.linkId;
       currentAsset.payload.validityDirection = position.validityDirection;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
@@ -247,12 +248,20 @@
       });
     };
 
+    var isWalkingCyclingLink = function () {
+      var selectedRoadLink = getRoadLink();
+      if (_.isEmpty(selectedRoadLink)) {
+        return false;
+      } else {
+        return selectedRoadLink.isPedestrianCyclingRoad();
+      }
+    };
+
     var wrongStopTypeOnWalkingCyclingLink = function () {
       var selectedRoadLink = getRoadLink();
       if (_.isEmpty(selectedRoadLink)) {
         return false;
       } else {
-        var isCarTrafficRoad = selectedRoadLink.isCarTrafficRoad();
         var isOnlyTramStop = _.some(currentAsset.payload.properties, function (property) {
           if (property.publicId == massTransitStopTypePublicId) {
             return _.some(property.values, function (propertyValue) {
@@ -261,7 +270,7 @@
           }
           return false;
         });
-        if (!isCarTrafficRoad) {
+        if (isWalkingCyclingLink()) {
           return !isOnlyTramStop;
         } else {
           return false;
@@ -674,6 +683,7 @@
       hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops,
       pikavuoroIsAlone: pikavuoroIsAlone,
       wrongStopTypeOnWalkingCyclingLink: wrongStopTypeOnWalkingCyclingLink,
+      isWalkingCyclingLink: isWalkingCyclingLink,
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
       deleteMassTransitStop: deleteMassTransitStop,
