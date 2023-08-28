@@ -37,7 +37,7 @@ class RoadWidthGenerator {
 
   def fillRoadWidthsByMunicipality(municipality: Int) = {
     val roadLinks = roadLinkService.getRoadLinksByMunicipality(municipality, false)
-    val nonStateRoads = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
+    val nonStateRoads = roadLinks.filter(_.administrativeClass != State)
     val roadLinksWithMTKClass = nonStateRoads.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClassWidth(road.attributes)))
 
     val roadWidths = roadWidthService.fetchExistingAssetsByLinksIds(RoadWidth.typeId, roadLinksWithMTKClass, Seq(), false)
