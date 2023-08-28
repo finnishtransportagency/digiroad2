@@ -148,6 +148,7 @@
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
       currentAsset.payload.linkId = position.linkId;
+      currentAsset.linkId = position.linkId;
       currentAsset.payload.validityDirection = position.validityDirection;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);

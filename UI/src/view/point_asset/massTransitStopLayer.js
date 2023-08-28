@@ -10,6 +10,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var selectedAsset;
   var movementPermissionConfirmed = false;
   var requestingMovePermission  = false;
+  var walkingCyclingLinks = false;
   var massTransitStopLayerStyles = PointAssetLayerStyles(roadLayer);
   var visibleAssets;
   var overrideMessageAllow = true;
@@ -158,6 +159,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var dragControl = defineOpenLayersDragControl();
 
+  function getCorrectRoadLinks() {
+    if(walkingCyclingLinks) {
+      return roadCollection.getRoadsForCarPedestrianCycling();
+    } else {
+      return roadCollection.getRoadsForPointAssets();
+    }
+  }
+
   function defineOpenLayersDragControl() {
 
     var dragControl = new ol.interaction.Translate({
@@ -167,7 +176,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     dragControl.set('name', 'translate_massTransitStop');
 
     var translateSelectedAsset = function(event) {
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(),event.coordinate[0], event.coordinate[1]);
+      var roadLinks = getCorrectRoadLinks();
+      var nearestLine = geometrycalculator.findNearestLine(roadLinks, event.coordinate[0], event.coordinate[1]);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: event.coordinate[0], y: event.coordinate[1]});
 
@@ -176,7 +186,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     };
 
     var translateEndedAsset = function(event){
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(),event.coordinate[0], event.coordinate[1]);
+      var roadLinks = getCorrectRoadLinks();
+      var nearestLine = geometrycalculator.findNearestLine(roadLinks, event.coordinate[0], event.coordinate[1]);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: event.coordinate[0], y: event.coordinate[1]});
 
@@ -474,7 +485,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var createNewAsset = function(coordinate, placement, stopTypes) {
 
     var default_asset_direction = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
-    var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForCarPedestrianCycling()), coordinate.x, coordinate.y);
+    var roadLinks = getCorrectRoadLinks();
+    var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadLinks), coordinate.x, coordinate.y);
     var lon, lat;
 
     if(nearestLine.end && nearestLine.start){
@@ -681,7 +693,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         },
         closeCallback: function(){
           //Moves the stop to the original position
-          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), originalCoordinates.lon, originalCoordinates.lat);
+          var roadLinks = getCorrectRoadLinks();
+          var nearestLine = geometrycalculator.findNearestLine(roadLinks, originalCoordinates.lon, originalCoordinates.lat);
           var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
           doMovement(event, angle, nearestLine, originalCoordinates);
           roadLayer.clearSelection();
@@ -732,7 +745,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
       selectedMassTransitStopModel.move({
         lon: event.coordinate[0],
-        lat: event.coordinate[1]
+        lat: event.coordinate[1],
+        roadLinkId: nearestLine.roadLinkId,
+        linkId: nearestLine.linkId
       });
     }
   };
@@ -988,6 +1003,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var toggleWalkingCyclingLinks = function() {
+    walkingCyclingLinks = !walkingCyclingLinks;
     pointTool.toggleWalkingCycling();
   };
 
