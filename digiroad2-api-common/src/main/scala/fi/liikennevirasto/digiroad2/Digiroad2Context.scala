@@ -20,9 +20,10 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform, JsonSerializer}
-import fi.liikennevirasto.digiroad2.vallu.ValluSender
+import fi.liikennevirasto.digiroad2.vallu.{ValluSender, ValluStoreStopChangeMessage}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.TimeUnit
@@ -40,11 +41,15 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 
   def persistedAssetChanges(busStop: PersistedMassTransitStop,deleteEvent:Boolean = false) = {
     withDynSession {
-      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, newTransaction = false)
-      val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
-      ValluSender.postToVallu(massTransitStop)
-      if(!deleteEvent)
-        massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
+      val busStopTypes = ValluStoreStopChangeMessage.getPropertyValuesByPublicId("pysakin_tyyppi", busStop.propertyData).map(x => x.propertyValue.toLong)
+      val justTram = busStopTypes.size == 1 && busStopTypes.contains(1)
+      if (!justTram) {
+        val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, newTransaction = false)
+        val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
+        ValluSender.postToVallu(massTransitStop)
+        if (!deleteEvent)
+          massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
+      }
     }
   }
 }
@@ -275,6 +280,22 @@ object Digiroad2Context {
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
   }
+  private def clientBuilder(maxConnTotal: Int = 1000,
+                            maxConnPerRoute: Int = 1000,
+                            timeout:Int = 60*1000
+                           ): CloseableHttpClient = {
+    HttpClientBuilder.create()
+      .setDefaultRequestConfig(
+        RequestConfig.custom()
+          .setCookieSpec(CookieSpecs.STANDARD)
+          .setSocketTimeout(timeout)
+          .setConnectTimeout(timeout) 
+          .build()
+      )
+      .setMaxConnTotal(maxConnTotal)
+      .setMaxConnPerRoute(maxConnPerRoute)
+      .build()
+  }
 
   lazy val assetPropertyService: AssetPropertyService = {
     new AssetPropertyService(eventbus, userProvider, DefaultDatabaseTransaction)
@@ -305,12 +326,10 @@ object Digiroad2Context {
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint,
-      HttpClientBuilder.create().setDefaultRequestConfig(
-        RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()
-      ).build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, clientBuilder(
+      10000,10000))
   }
-
+  
   lazy val linearAssetDao: PostGISLinearAssetDao = {
     new PostGISLinearAssetDao()
   }

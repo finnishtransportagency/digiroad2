@@ -925,6 +925,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'map:moved', handleMapMoved);
     eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
     eventListener.listenTo(eventbus, 'layer:selected', closeAsset);
+    eventListener.listenTo(eventbus, 'layer:cleared', roadLayer.clearSelection());
     eventListener.listenTo(eventbus, 'massTransitStopDeleted', function(asset){
       closeAsset();
       destroyAsset(asset);
