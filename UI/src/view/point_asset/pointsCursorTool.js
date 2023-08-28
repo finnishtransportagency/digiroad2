@@ -33,7 +33,7 @@
     };
 
     var toggleWalkingCycling = function () {
-      settings.walkingCycling = settings.walkingCycling !== true;
+      settings.walkingCycling = !settings.walkingCycling;
     };
 
     var updateByPosition = function (mousePoint) {
