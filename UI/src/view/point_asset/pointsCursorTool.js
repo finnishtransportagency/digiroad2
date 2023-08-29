@@ -32,15 +32,28 @@
       });
     };
 
-    var updateByPosition = function(mousePoint) {
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), mousePoint[0], mousePoint[1]);
-      var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: mousePoint[0], y:mousePoint[1] });
+    var toggleWalkingCycling = function () {
+      settings.walkingCycling = settings.walkingCycling !== true;
+    };
+
+    var updateByPosition = function (mousePoint) {
+      var nearestLine;
+      if (settings.walkingCycling === true) {
+        nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForCarPedestrianCycling(), mousePoint[0], mousePoint[1]);
+      } else {
+        nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), mousePoint[0], mousePoint[1]);
+      }
+      var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, {
+        x: mousePoint[0],
+        y: mousePoint[1]
+      });
       moveTo(projectionOnNearestLine.x, projectionOnNearestLine.y);
     };
 
     return {
       activate: activate,
-      deactivate: deactivate
+      deactivate: deactivate,
+      toggleWalkingCycling: toggleWalkingCycling
     };
   };
 })(this);
