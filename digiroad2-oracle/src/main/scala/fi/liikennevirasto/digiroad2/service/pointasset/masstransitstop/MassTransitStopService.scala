@@ -23,7 +23,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int]) extends FloatingAsset
 
-case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
+case class MassTransitStopWithProperties(id: Long, linkId: String = "", nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                                          validityDirection: Option[Int], bearing: Option[Int],
                                          validityPeriod: Option[String], floating: Boolean,
                                          propertyData: Seq[Property], municipalityName: Option[String] = None) extends FloatingAsset
@@ -584,7 +584,7 @@ trait MassTransitStopService extends PointAssetOperations {
   private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: String => Option[RoadLinkLike], getMunicipalityName: Int => Option[String] = _ => None)
                                                           (persistedStop: PersistedMassTransitStop): (MassTransitStopWithProperties, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
-    (MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+    (MassTransitStopWithProperties(id = persistedStop.id, linkId = persistedStop.linkId, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
       propertyData = persistedStop.propertyData, municipalityName = getMunicipalityName(persistedStop.municipalityCode)), floatingReason)
