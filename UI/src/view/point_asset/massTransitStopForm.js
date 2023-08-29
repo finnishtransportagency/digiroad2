@@ -976,10 +976,6 @@
             });
         });
 
-        if (isBusStopExpired && isTRMassTransitStop)  {
-          readOnly = true;
-        }
-
         if(authorizationPolicy.isActiveTrStopWithoutPermission(isBusStopExpired, isTRMassTransitStop))
           readOnly = true;
       }
