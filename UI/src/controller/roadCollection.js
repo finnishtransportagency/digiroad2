@@ -39,6 +39,11 @@
         linkTypes.PedestrianZone.value, linkTypes.CableFerry.value, linkTypes.Unknown.value], data.linkType);
     };
 
+    var isPedestrianCyclingRoad = function () {
+      return !_.isUndefined(data.linkType) && _.includes([linkTypes.CycleOrPedestrianPath.value,
+        linkTypes.PedestrianZone.value], data.linkType);
+    };
+
     var isCarPedestrianCyclingRoad = function() {
       return !_.isUndefined(data.linkType) && !_.includes([linkTypes.CableFerry.value, linkTypes.Unknown.value], data.linkType);
     };
@@ -61,6 +66,7 @@
       setLinkProperty: setLinkProperty,
       isSelected: isSelected,
       isCarTrafficRoad: isCarTrafficRoad,
+      isPedestrianCyclingRoad: isPedestrianCyclingRoad,
       isCarPedestrianCyclingRoad: isCarPedestrianCyclingRoad,
       select: select,
       unselect: unselect,
