@@ -182,7 +182,6 @@ aws cloudformation update-stack \
 ### JobDefinition päivitys
 ```
 aws batch register-job-definition \
---profile vaylaapp \
 --region eu-west-1 \
 --cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json \
 --profile xxxxx # Aseta profiili jos default ei ole oikea.
@@ -286,7 +285,6 @@ siihen docker digest jonka kehitystiimi on toimittanut.
 
 ```
 aws batch register-job-definition \
---profile vaylaapp \
 --region eu-west-1 \
 --cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json \
 --profile xxxxx # Aseta profiili, jos default ei ole oikea.
@@ -296,7 +294,6 @@ Sitten kun kehitystiimi ilmoittaa haluavansa palata normaaliin systeemiin muuta 
 
 ```
 aws batch register-job-definition \
---profile vaylaapp \
 --region eu-west-1 \
 --cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json \
 --profile xxxxx # Aseta profiili, jos default ei ole oikea.
