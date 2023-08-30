@@ -195,7 +195,6 @@
 
     var open = function(asset) {
       currentAsset.id = asset.id;
-      currentAsset.linkId = asset.linkId;
       currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
@@ -493,7 +492,7 @@
 
     var get = function() {
       if (exists()) {
-          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForCarPedestrianCycling(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), currentAsset.payload.lon, currentAsset.payload.lat);
           var linkId = nearestLine.linkId;
           if (!currentAsset.linkId)
               currentAsset.linkId = linkId;

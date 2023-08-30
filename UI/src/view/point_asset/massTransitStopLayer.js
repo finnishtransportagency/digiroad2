@@ -214,8 +214,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var pointTool = new PointsCursorTool(eventListener, assetLayer, selectControl, roadCollection, {
     style : function(feature) {
       return massTransitStopLayerStyles.default.getStyle(feature, {zoomLevel: zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map))});
-    },
-    walkingCycling : false
+    }
   });
 
   roadLayer.setLayerSpecificStyleProvider('massTransitStop', function() {
@@ -955,8 +954,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     });
     eventListener.listenTo(eventbus, 'massTransitStop-complementaryLinks:show', showWithComplementary);
     eventListener.listenTo(eventbus, 'massTransitStop-complementaryLinks:hide', hideComplementary);
-    eventListener.listenTo(eventbus, 'massTransitStop-walkingCyclingLinks:show', toggleWalkingCyclingLinks);
-    eventListener.listenTo(eventbus, 'massTransitStop-walkingCyclingLinks:hide', toggleWalkingCyclingLinks);
     eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);

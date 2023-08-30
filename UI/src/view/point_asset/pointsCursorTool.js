@@ -52,8 +52,7 @@
 
     return {
       activate: activate,
-      deactivate: deactivate,
-      toggleWalkingCycling: toggleWalkingCycling
+      deactivate: deactivate
     };
   };
 })(this);
