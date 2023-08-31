@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.{MassQuery, MassQueryParamsCoord, MassQueryResolve, RoadAddressBoundToAsset, VKMClient}
 import fi.liikennevirasto.digiroad2.client.viite.ViiteClientException
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
 import fi.liikennevirasto.digiroad2.{Point, RoadAddress, RoadAddressException, Track}
@@ -111,6 +111,12 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
     }
 
     (address, roadSide )
+  }
+
+
+
+  def resolveAddressAndLocationM(assets: Seq[MassQuery]): Seq[RoadAddressBoundToAsset] = {
+    vkmClient.resolveAddressAndLocations(assets.map(a=>MassQueryResolve(a.id,a.coord,a.heading,SideCode.apply(a.assetSideCode),a.road) ))
   }
 }
 

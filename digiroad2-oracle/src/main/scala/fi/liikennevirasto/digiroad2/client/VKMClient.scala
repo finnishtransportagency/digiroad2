@@ -6,7 +6,7 @@ import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util._
-import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, Track, Vector3d}
+import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, RoadAddressOpt, Track, Vector3d}
 import org.apache.http.{HttpStatus, NameValuePair}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -25,6 +25,16 @@ import org.slf4j.LoggerFactory
 import java.util.ArrayList
 
 case class MassQueryParams(identifier: String, point: Point, roadNumber: Option[Long], roadPartNumber: Option[Long])
+
+case class MassQueryParamsCoord(identifier: String, point: Point, roadNumber: Option[Int], roadPartNumber:  Option[Int],track: Option[Track] = None)
+case class DeterminateSide(identifier: String, points: Seq[Point], roadNumber: Int, roadPartNumber: Int,track: Option[Track] = None)
+case class MassQuery(id:Long,coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None)
+
+
+  case class MassQueryResolve(asset: Long, coord: Point, heading: Int, sideCode: SideCode, road: Option[Int] = None,
+                              roadPart: Option[Int] = None,
+                              includePedestrian: Option[Boolean] = Option(false))
+case class RoadAddressBoundToAsset(asset: Long, address: RoadAddress, side: RoadSide)
 case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
 case class PointWithIdentifier(identifier: String, point: Point)
 
@@ -172,17 +182,23 @@ class VKMClient {
     }
   }
 
-  def coordToAddressMassQuery(coords: Seq[MassQueryParams]): Map[String,RoadAddress] = {
+  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord]): Map[String, RoadAddress] = {
     val params = coords.map(coord => Map(
       VkmQueryIdentifier -> coord.identifier,
       VkmRoad -> coord.roadNumber,
       VkmRoadPart -> coord.roadPartNumber,
+      //VkmTrackCodes -> coord.track.map(_.value),
       "x" -> coord.point.x,
       "y" -> coord.point.y
+      //VkmSearchRadius -> coord.searchDistance //Default in new VKM is 100
     ))
     val jsonValue = Serialization.write(params)
     val url = vkmBaseUrl + "muunna/"
-    val response = postRequest(url, jsonValue)
+    val response = LogUtils.time(logger, s"TEST LOG Coordinate to RoadAddress, converting: ${coords.size}") {
+      postRequest(url, jsonValue)
+    }
+
+
 
     val result = response match {
       case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
@@ -274,25 +290,49 @@ class VKMClient {
       val roadAddress = coordToAddress(coord, road, roadPart, includePedestrian = includePedestrian)
       resolveAddressAndLocation(coord, heading, sideCode, Option(roadAddress.road), Option(roadAddress.roadPart))
     } else {
-      val degrees = sideCode match{
-        case SideCode.AgainstDigitizing => 90-heading+180
-        case _ => 90-heading
-      }
-      val rad = degrees * Math.PI/180.0
-      val stepVector = Vector3d(3*Math.cos(rad), 3*Math.sin(rad), 0.0)
-      val behind = coord - stepVector
-      val front = coord + stepVector
+      val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(coord, heading, sideCode)
       val addresses = coordsToAddresses(Seq(behind, coord, front), road, roadPart, includePedestrian = includePedestrian)
-      val mValues = addresses.map(ra => ra.addrM)
-      val (first, second, third) = (mValues(0), mValues(1), mValues(2))
-      if (first <= second && second <= third && first != third) {
-        (addresses(1), RoadSide.Right)
-      } else if (first >= second && second >= third && first != third) {
-        (addresses(1), RoadSide.Left)
-      } else {
-        (addresses(1), RoadSide.Unknown)
-      }
+      selectRoadAddress(addresses)
     }
+  }
+
+  def resolveAddressAndLocations(assets:Seq[MassQueryResolve]): Seq[RoadAddressBoundToAsset] = {
+    coordToAddressMassQuery(assets.map(a=> MassQueryParamsCoord(a.asset.toString,a.coord,a.road,a.roadPart)))
+      .map(a=>roadAddress(assets, a))
+      .toSeq.map(checkRoadSide)
+  }
+
+  private def checkRoadSide(a2: DeterminateSide): RoadAddressBoundToAsset = {
+    val addresses = coordsToAddresses(a2.points, Some(a2.roadNumber), Some(a2.roadPartNumber))
+    val selected = selectRoadAddress(addresses)
+    RoadAddressBoundToAsset(a2.identifier.asInstanceOf[BigInt].toLong, selected._1, selected._2)
+  }
+  private def roadAddress(assets: Seq[MassQueryResolve], a: (String, RoadAddress)) = {
+    val assets2 = assets.find(_.asset.toString == a._1).get
+    val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(assets2.coord, assets2.heading, assets2.sideCode)
+    DeterminateSide(assets2.asset.toString, Seq(behind, assets2.coord, front), a._2.road, a._2.roadPart)
+  }
+  private def selectRoadAddress(addresses: Seq[RoadAddress]): (RoadAddress, RoadSide) = {
+    val mValues = addresses.map(ra => ra.addrM)
+    val (first, second, third) = (mValues(0), mValues(1), mValues(2))
+    if (first <= second && second <= third && first != third) {
+      (addresses(1), RoadSide.Right)
+    } else if (first >= second && second >= third && first != third) {
+      (addresses(1), RoadSide.Left)
+    } else {
+      (addresses(1), RoadSide.Unknown)
+    }
+  }
+  private def calculatePointAfterAndBeforeRoadAddressPosition(coord: Point, heading: Int, sideCode: SideCode): (Point, Point) = {
+    val degrees = sideCode match {
+      case SideCode.AgainstDigitizing => 90 - heading + 180
+      case _ => 90 - heading
+    }
+    val rad = degrees * Math.PI / 180.0
+    val stepVector = Vector3d(3 * Math.cos(rad), 3 * Math.sin(rad), 0.0)
+    val behind = coord - stepVector
+    val front = coord + stepVector
+    (behind, front)
   }
 
   private def mapMassQueryFields(data: Feature): Option[Map[String, RoadAddress]] = {
@@ -368,6 +408,23 @@ class VKMClient {
     } catch {
       case e: NumberFormatException =>
         throw new RoadAddressException("Invalid value in response: %s, Int expected, got '%s'".format(fieldName, value.get))
+    }
+  }
+
+  private def validateAndConvertToIntOpt(fieldName: String, map: Map[String, Any]) = {
+    def value = map.get(fieldName).asInstanceOf[Option[BigInt]]
+
+    if (value.isEmpty) {
+      logger.error("Missing mandatory field in response: %s".format(
+          fieldName))
+      None
+    }
+    try {
+      value.get.toInt
+    } catch {
+      case e: NumberFormatException =>
+        logger.error("Invalid value in response: %s, Int expected, got '%s'".format(fieldName, value.get))
+        None
     }
   }
 
