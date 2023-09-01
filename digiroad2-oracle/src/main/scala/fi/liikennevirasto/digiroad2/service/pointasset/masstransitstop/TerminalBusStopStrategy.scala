@@ -15,6 +15,11 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   private val terminalChildrenPublicId = "liitetyt_pysakit"
   private val validityDirectionPublicId = "vaikutussuunta"
   private val ignoredProperties = Seq(terminalChildrenPublicId, validityDirectionPublicId)
+  
+  def isTerminal( properties: Seq[AbstractProperty]):Boolean ={
+    properties.exists(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId &&
+      p.values.exists(v => v.asInstanceOf[PropertyValue].propertyValue == BusStopType.Terminal.value.toString))
+  }
 
   override def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
     //If the stop have the property stop type with the terminal value
@@ -26,9 +31,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
           filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
       case _ => newProperties.toSeq
     }
-
-    properties.exists(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId &&
-      p.values.exists(v => v.asInstanceOf[PropertyValue].propertyValue == BusStopType.Terminal.value.toString))
+    isTerminal(properties)
   }
 
   override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None,terminalAdded:Boolean = false): (PersistedMassTransitStop, Boolean) = {
