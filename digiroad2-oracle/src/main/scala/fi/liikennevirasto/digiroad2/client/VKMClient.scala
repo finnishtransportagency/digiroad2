@@ -6,7 +6,7 @@ import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util._
-import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, RoadAddressOpt, Track, Vector3d}
+import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, Track, Vector3d}
 import org.apache.http.{HttpStatus, NameValuePair}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -14,29 +14,35 @@ import org.apache.http.client.entity.UrlEncodedFormEntity
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.{DefaultHttpClient, HttpClientBuilder}
+import org.apache.http.impl.client.{CloseableHttpClient, DefaultHttpClient, HttpClientBuilder}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.params.HttpParams
+import org.apache.http.util.EntityUtils
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.slf4j.LoggerFactory
 
+import java.nio.charset.Charset
 import java.util.ArrayList
 
 case class MassQueryParams(identifier: String, point: Point, roadNumber: Option[Long], roadPartNumber: Option[Long])
 
 case class MassQueryParamsCoord(identifier: String, point: Point, roadNumber: Option[Int], roadPartNumber:  Option[Int],track: Option[Track] = None)
 case class DeterminateSide(identifier: String, points: Seq[Point], roadNumber: Int, roadPartNumber: Int,track: Option[Track] = None)
-case class MassQuery(id:Long,coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None)
+case class MassQuery(id:Long,coord: Point, heading: Option[Int], mValue: Double, linkId: String, assetSideCode: Option[Int], municipalityCode: Option[Int] = None, road: Option[Int] = None)
 
 
-  case class MassQueryResolve(asset: Long, coord: Point, heading: Int, sideCode: SideCode, road: Option[Int] = None,
+  case class MassQueryResolve(asset: Long, coord: Point, heading: Option[Int], sideCode: SideCode, road: Option[Int] = None,
                               roadPart: Option[Int] = None,
                               includePedestrian: Option[Boolean] = Option(false))
 case class RoadAddressBoundToAsset(asset: Long, address: RoadAddress, side: RoadSide)
 case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
 case class PointWithIdentifier(identifier: String, point: Point)
+
+object VKMClient { // singleton client
+ lazy val client: CloseableHttpClient = ClientUtils.clientBuilder(10000,10000)
+}
 
 class VKMClient {
   case class VKMError(content: Map[String, Any], url: String)
@@ -81,13 +87,15 @@ class VKMClient {
     request.addHeader("X-API-Key", Digiroad2Properties.vkmApiKey)
     request.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"))
 
-    val client = HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom()
-      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+    val client = VKMClient.client
 
     val response = client.execute(request)
     try {
-      if (response.getStatusLine.getStatusCode >= HttpStatus.SC_BAD_REQUEST)
+      if (response.getStatusLine.getStatusCode >= HttpStatus.SC_BAD_REQUEST) {
+        logger.error(s"Error Response body was ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+      }
+      
       val aux = response.getEntity.getContent
       val content: FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
       val contentFiltered = content.copy(features = content.features.filterNot(_.properties.contains("virheet")))
@@ -182,31 +190,33 @@ class VKMClient {
     }
   }
 
-  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord]): Map[String, RoadAddress] = {
+  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord],searchDistance:Int = 500): Map[String, RoadAddress] = {
     val params = coords.map(coord => Map(
       VkmQueryIdentifier -> coord.identifier,
       VkmRoad -> coord.roadNumber,
       VkmRoadPart -> coord.roadPartNumber,
       //VkmTrackCodes -> coord.track.map(_.value),
       "x" -> coord.point.x,
-      "y" -> coord.point.y
-      //VkmSearchRadius -> coord.searchDistance //Default in new VKM is 100
+      "y" -> coord.point.y,
+      VkmSearchRadius -> searchDistance//Default in new VKM is 100
     ))
+    //LogUtils.time(logger, s"TEST LOG Coordinate to RoadAddress, converting: ${coords.size}") {
+      new Parallel().operation(params.grouped(1000).toList.par,3){
+        _.flatMap(baseRequest).toList
+      }.flatten.flatten.toMap
+    //}
+  }
+
+  private def baseRequest( params: Seq[Map[String, Any]]) = {
     val jsonValue = Serialization.write(params)
     val url = vkmBaseUrl + "muunna/"
-    val response = LogUtils.time(logger, s"TEST LOG Coordinate to RoadAddress, converting: ${coords.size}") {
-      postRequest(url, jsonValue)
-    }
-
-
-
+    val response = ClientUtils.retry(3, logger, commentForFailing = s"JSON payload for failing: $jsonValue") {postRequest(url, jsonValue)}
     val result = response match {
       case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
       case Right(error) => throw new RoadAddressException(error.toString)
     }
-    result.flatten.flatten.toMap
+    result
   }
-
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
@@ -290,24 +300,31 @@ class VKMClient {
       val roadAddress = coordToAddress(coord, road, roadPart, includePedestrian = includePedestrian)
       resolveAddressAndLocation(coord, heading, sideCode, Option(roadAddress.road), Option(roadAddress.roadPart))
     } else {
-      val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(coord, heading, sideCode)
+      val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(coord, Some(heading), sideCode)
       val addresses = coordsToAddresses(Seq(behind, coord, front), road, roadPart, includePedestrian = includePedestrian)
       selectRoadAddress(addresses)
     }
   }
 
-  def resolveAddressAndLocations(assets:Seq[MassQueryResolve]): Seq[RoadAddressBoundToAsset] = {
-    coordToAddressMassQuery(assets.map(a=> MassQueryParamsCoord(a.asset.toString,a.coord,a.road,a.roadPart)))
-      .map(a=>roadAddress(assets, a))
-      .toSeq.map(checkRoadSide)
+  def resolveAddressAndLocations(assets: Seq[MassQueryResolve]): Seq[RoadAddressBoundToAsset] = {
+    val roadAddress = LogUtils.time(logger, s"TEST LOG coordToAddressMassQuery") {coordToAddressMassQuery(assets.map(a => MassQueryParamsCoord(a.asset.toString, a.coord, a.road, a.roadPart)))
+      .map(convertToDeterminateSide(assets, _)).toSeq}
+    LogUtils.time(logger, s"TEST LOG checkRoadSide") {
+      new Parallel().operation(roadAddress.grouped(200).toList.par, 2) {
+        _.flatMap(a => a.map(checkRoadSide)).toList
+      }
+    }
   }
 
   private def checkRoadSide(a2: DeterminateSide): RoadAddressBoundToAsset = {
-    val addresses = coordsToAddresses(a2.points, Some(a2.roadNumber), Some(a2.roadPartNumber))
+    //LogUtils.time(logger, s"TEST LOG checkRoadSide") {
+    val addresses = coordToAddressMassQuery(a2.points.map(
+      a => MassQueryParamsCoord(s"${a2.identifier}:${a.x}:${a.y}", a, Some(a2.roadNumber), Some(a2.roadPartNumber),a2.track)),100).values.toSeq
     val selected = selectRoadAddress(addresses)
-    RoadAddressBoundToAsset(a2.identifier.asInstanceOf[BigInt].toLong, selected._1, selected._2)
+    RoadAddressBoundToAsset(a2.identifier.toLong, selected._1, selected._2) // string to long
+    //}
   }
-  private def roadAddress(assets: Seq[MassQueryResolve], a: (String, RoadAddress)) = {
+  private def convertToDeterminateSide(assets: Seq[MassQueryResolve], a: (String, RoadAddress)) = {
     val assets2 = assets.find(_.asset.toString == a._1).get
     val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(assets2.coord, assets2.heading, assets2.sideCode)
     DeterminateSide(assets2.asset.toString, Seq(behind, assets2.coord, front), a._2.road, a._2.roadPart)
@@ -323,10 +340,10 @@ class VKMClient {
       (addresses(1), RoadSide.Unknown)
     }
   }
-  private def calculatePointAfterAndBeforeRoadAddressPosition(coord: Point, heading: Int, sideCode: SideCode): (Point, Point) = {
+  private def calculatePointAfterAndBeforeRoadAddressPosition(coord: Point, heading: Option[Int], sideCode: SideCode): (Point, Point) = {
     val degrees = sideCode match {
-      case SideCode.AgainstDigitizing => 90 - heading + 180
-      case _ => 90 - heading
+      case SideCode.AgainstDigitizing => 90 - heading.get + 180
+      case _ => 90 - heading.get
     }
     val rad = degrees * Math.PI / 180.0
     val stepVector = Vector3d(3 * Math.cos(rad), 3 * Math.sin(rad), 0.0)
@@ -350,7 +367,7 @@ class VKMClient {
     }
     catch {
       case rae: RoadAddressException =>
-        logger.error("Error mapping to VKM data to road address: " + rae.getMessage)
+        //logger.error("Error mapping to VKM data to road address: " + rae.getMessage)
         None
     }
   }

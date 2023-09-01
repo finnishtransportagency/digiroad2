@@ -116,7 +116,22 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
 
 
   def resolveAddressAndLocationM(assets: Seq[MassQuery]): Seq[RoadAddressBoundToAsset] = {
-    vkmClient.resolveAddressAndLocations(assets.map(a=>MassQueryResolve(a.id,a.coord,a.heading,SideCode.apply(a.assetSideCode),a.road) ))
+    //val roadAddress = roadAddressService.getAllByLinkIds(assets.map(_.linkId))
+
+  /*  assets.map(a=> { // TODO check viability of this
+      val address = roadAddress.filter(_.linkId == a.linkId).sortBy(_.startAddrMValue)
+      val aPosition = a.mValue
+      
+      address.find(a=> {
+        val startAddrM = a.startAddrMValue
+        val endAddrM = a.endAddrMValue
+        aPosition<=endAddrM && startAddrM>=aPosition
+      }
+      )
+      //RoadAddressBoundToAsset()
+    })*/
+    
+    vkmClient.resolveAddressAndLocations(assets.map(a=>MassQueryResolve(a.id,a.coord,a.heading,SideCode.apply(a.assetSideCode.get),a.road) ))
   }
 }
 

@@ -51,6 +51,13 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
   def isPaved : Boolean = surfaceType == SurfaceType.Paved.value
   def isNotPaved : Boolean = surfaceType == SurfaceType.None.value
 
+  def extractRoadNumber(roadLink: RoadLinkLike) = {
+    roadLink.attributes.find(_._1 == "ROADNUMBER") match {
+      case Some((key, value)) => Try(value.toString.toInt).toOption
+      case _ => None
+    }
+  }
+
   def extractMTKClass(attributes: Map[String, Any]): MTKClassWidth = {
     Try(attributes("MTKCLASS").asInstanceOf[BigInt])
       .map(_.toInt)
