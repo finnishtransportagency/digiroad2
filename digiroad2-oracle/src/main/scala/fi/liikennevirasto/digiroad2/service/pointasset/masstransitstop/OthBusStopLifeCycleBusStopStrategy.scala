@@ -65,8 +65,8 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, null)
   }
 
-  override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
-    val enrichPersistedStop = { super.enrichBusStop(persistedStop, roadLinkOption)._1 }
+  override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None, terminalAdded:Boolean = false): (PersistedMassTransitStop, Boolean) = {
+    val enrichPersistedStop = { super.enrichBusStop(persistedStop, roadLinkOption,terminalAdded)._1 }
     if(enrichPersistedStop.id !=0 ){
       (enrichPersistedStop,true)
     }else{

@@ -5,14 +5,14 @@ import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
-import fi.liikennevirasto.digiroad2.client.MassQuery
+import fi.liikennevirasto.digiroad2.client.{MassQuery, RoadAddressBoundToAsset}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils, RoadSide}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils, Parallel, RoadSide}
 import org.joda.time.{DateTime, LocalDate}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -67,7 +67,7 @@ trait AbstractBusStopStrategy {
     * @param roadLinkOption  for default implementation provide road link when MassTransitStop need road address
     * @return
     */
-  def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean)
+  def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None,terminalAdded:Boolean = false): (PersistedMassTransitStop, Boolean)
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (false, None) }
   def create(newAsset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
 
@@ -79,7 +79,7 @@ trait AbstractBusStopStrategy {
   def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo]
   def pickRoadLink(optRoadLink: Option[RoadLink], optHistoric: Option[RoadLink]): RoadLink = {optRoadLink.getOrElse(throw new NoSuchElementException)}
 
-  def extractRoadAddress(address: RoadAddress, roadSide: RoadSide) = {
+  def extractRoadAddress(address: RoadAddress, roadSide: RoadSide): Seq[Property] = {
     val roadNumberPublicId = "tie" // Tienumero
     val roadPartNumberPublicId = "osa" // Tieosanumero
     val startMeasurePublicId = "aet" // Etaisyys
@@ -93,6 +93,22 @@ trait AbstractBusStopStrategy {
       Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.track.value.toString, Some(address.track.value.toString)))),
       Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(roadSide.value.toString, Some(roadSide.value.toString))))
     )
+  }
+
+  def extractTerminal(terminalId: Long, terminalAssetOption: Option[PersistedMassTransitStop]): (Property, Property) = {
+    val displayValue = terminalAssetOption.map { terminalAsset =>
+      val name = MassTransitStopOperations.extractStopName(terminalAsset.propertyData)
+      s"${terminalAsset.nationalId} $name"
+    }
+    val newProperty = Property(0, "liitetty_terminaaliin", PropertyTypes.ReadOnlyText, values = Seq(PropertyValue(terminalId.toString, displayValue)))
+
+    val terminalNationalId = terminalAssetOption.map(_.nationalId.toString) match {
+      case Some(extId) => Seq(PropertyValue(extId))
+      case _ => Seq()
+    }
+
+    val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalNationalId)
+    (newProperty, newPropertyExtId)
   }
 
   protected def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
@@ -462,51 +478,72 @@ trait MassTransitStopService extends PointAssetOperations {
   def getByMunicipality(municipalityCode: Int, withEnrich: Boolean): Seq[PersistedAsset] = {
     logger.info("request start")
     LogUtils.time(logger, s"TEST LOG getByMunicipality tooks") {
-      val assets = LogUtils.time(logger, s"TEST LOG getByMunicipality from DB") {super.getByMunicipality(withMunicipality(municipalityCode) _)}
-      logger.info(s"assets count: ${assets.size}")
       withDynSession{
-        val enreched = LogUtils.time(logger, s"TEST LOG addRoadAdress ") {addRoadAddress(assets)}
-        val withTerminals = enreched.map(_.terminalId)
-       // val terminalAssetOption = massTransitStopDao.fetchPointAssets(massTransitStopDao.withIds(terminalId))
-        
+        val assets = LogUtils.time(logger, s"TEST LOG getByMunicipality from DB") {super.getByMunicipalityTransOption(withMunicipality(municipalityCode) _,false)}
+        logger.info(s"assets count: ${assets.size}")
+        val roadAddressAdded = LogUtils.time(logger, s"TEST LOG addRoadAddress ") {addRoadAddress(assets)}
+
+        val terminalAssets =  LogUtils.time(logger, s"TEST LOG got terminalAssets") {
+          val withTerminals = roadAddressAdded.map(_.terminalId).filter(_.isDefined).map(_.get)
+            massTransitStopDao.fetchPointAssets(massTransitStopDao.withIds(withTerminals))
+        }
+        val terminalAdded = roadAddressAdded.map(addTerminal(terminalAssets, _))
         if (withEnrich) {
-          logger.info(s"enreched count: ${enreched.size}")
+          logger.info(s"enreched count: ${terminalAdded.size}")
           logger.info("start Enrich")
           LogUtils.time(logger, s"TEST LOG enrich by strategy") {
-            enreched.map { a =>
-              val strategy = getStrategy(a)
-              strategy.enrichBusStop(a)._1
+            new Parallel().
+              operation(terminalAdded.grouped(1000).toList.par, 5) {
+              _.flatMap(encrichStops).toList
             }
           }
-        } else enreched
+        } else terminalAdded
       }
   }
   }
 
+  private def encrichStops(terminalAdded: Seq[PersistedMassTransitStop]) = {
+    terminalAdded.map{ a =>getStrategy(a).enrichBusStop(a, terminalAdded = true)._1}
+  }
+  private def addTerminal(terminalAssets: Seq[PersistedMassTransitStop], a: PersistedMassTransitStop): PersistedMassTransitStop = {
+    a.terminalId match {
+      case Some(terminalId) =>
+        val relevantTerminal = terminalAssets.find(_.id == terminalId)
+        val (newProperty: Property, newPropertyExtId: Property) = getStrategy(a).extractTerminal(terminalId, relevantTerminal)
+        a.copy(propertyData = a.propertyData ++ Seq(newProperty, newPropertyExtId))
+      case None => a
+    }
+  }
   private def addRoadAddress(assets: Seq[PersistedMassTransitStop]): Seq[PersistedMassTransitStop] = {
+
+    def mapToQuery(links: Seq[RoadLink], a: PersistedMassTransitStop): Option[MassQuery] = {
+      links.find(_.linkId == a.linkId) match {
+        case Some(x) => Some(MassQuery(a.id, Point(a.lon, a.lat), a.bearing, a.mValue, a.linkId, a.validityDirection, road = x.extractRoadNumber(x)))
+        case None => None
+      }
+    }
+
+    def mapAssetToRoadAddress(roadAddress: Seq[RoadAddressBoundToAsset], a: PersistedMassTransitStop): PersistedMassTransitStop = {
+      roadAddress.find(_.asset == a.id) match {
+        case Some(found) => a.copy(propertyData = a.propertyData ++ getStrategy(a).extractRoadAddress(found.address, found.side))
+        case None => a
+      }
+    }
+
     val links = LogUtils.time(logger, s"TEST LOG fetch roadlink") {
       fetchRoadLinks(assets.map(_.linkId).toSet)
     }
-
+    
     val query = LogUtils.time(logger, s"TEST LOG create mass query") {
-      assets.map(a => {
-        val link = links.find(_.linkId == a.linkId)
-        if (link.isDefined) {
-          Some(MassQuery(a.id, Point(a.lon, a.lat), a.bearing, a.mValue, a.linkId, a.validityDirection, road = link.get.extractRoadNumber(link.get)))
-        } else None
-      }).filter(_.isDefined).map(_.get)
+      assets.map(mapToQuery(links,_)).filter(_.isDefined).map(_.get)
     }
     val roadAddress = LogUtils.time(logger, s"TEST LOG conversion tooks") {
       geometryTransform.resolveAddressAndLocationM(query)
     }
     logger.info(s"roadAddress count :${roadAddress.size}")
+    
     LogUtils.time(logger, s"TEST LOG map road address to assets") {
-      assets.map(a => {
-        val address = roadAddress.find(_.asset == a.id)
-        if (address.isDefined)
-          a.copy(propertyData = a.propertyData ++ getStrategy(a).extractRoadAddress(address.get.address, address.get.side))
-        else a
-      })
+      assets.map(mapAssetToRoadAddress(roadAddress,_))
     }
   }
   def getFloatingAssetsWithReason(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[Map[String, Long]]]] = {
