@@ -32,17 +32,16 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   }
 
   override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None,terminalAdded:Boolean = false): (PersistedMassTransitStop, Boolean) = {
-    val childFilters =  massTransitStopDao.fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, Some(asset.id))
-      .filter(a =>  a.terminalId.isEmpty || a.terminalId.contains(asset.id))
-      .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
-      .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.ServicePoint))
-    val newProperty = Property(0, terminalChildrenPublicId, PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
-      val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
-      PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = a.terminalId.contains(asset.id))
-    })
-    (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), false)
+    if(!terminalAdded) {
+      val childFilters = massTransitStopDao.fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, Some(asset.id))
+        .filter(a => a.terminalId.isEmpty || a.terminalId.contains(asset.id))
+        .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
+        .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.ServicePoint))
+      val newProperty: Property = super.extractTerminalChilds(asset, childFilters)
+      (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), false)
+    } else (asset,false)
   }
-
+  
   override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
     massTransitStopDao.countTerminalChildBusStops(persistedAsset.id) match {
       case 0 => (true, Some(FloatingReason.TerminalChildless))
