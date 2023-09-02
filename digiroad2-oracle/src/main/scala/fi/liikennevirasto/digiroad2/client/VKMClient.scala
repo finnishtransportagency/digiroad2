@@ -26,22 +26,17 @@ import org.slf4j.LoggerFactory
 import java.nio.charset.Charset
 import java.util.ArrayList
 
-case class MassQueryParams(identifier: String, point: Point, roadNumber: Option[Long], roadPartNumber: Option[Long])
 
-case class MassQueryParamsCoord(identifier: String, point: Point, roadNumber: Option[Int], roadPartNumber:  Option[Int],track: Option[Track] = None)
-case class DeterminateSide(identifier: String, points: Seq[Point], roadNumber: Int, roadPartNumber: Int,track: Option[Track] = None)
-case class MassQuery(id:Long,coord: Point, heading: Option[Int], mValue: Double, linkId: String, assetSideCode: Option[Int], municipalityCode: Option[Int] = None, road: Option[Int] = None)
-
-
-  case class MassQueryResolve(asset: Long, coord: Point, heading: Option[Int], sideCode: SideCode, road: Option[Int] = None,
-                              roadPart: Option[Int] = None,
-                              includePedestrian: Option[Boolean] = Option(false))
+case class MassQueryParamsCoord(identifier: String, point: Point, roadNumber: Option[Int], roadPartNumber: Option[Int], track: Option[Track] = None)
+case class DeterminateSide(identifier: String, points: Seq[Point], roadNumber: Int, roadPartNumber: Int, track: Option[Track] = None)
+case class PointAssetForConversion(id: Long, coord: Point, heading: Option[Int], mValue: Double, linkId: String, sideCode: Option[Int], municipalityCode: Option[Int] = None, road: Option[Int] = None)
+case class MassQueryResolve(asset: Long, coord: Point, heading: Option[Int], sideCode: SideCode, road: Option[Int] = None, roadPart: Option[Int] = None, includePedestrian: Option[Boolean] = Option(false))
 case class RoadAddressBoundToAsset(asset: Long, address: RoadAddress, side: RoadSide)
 case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
 case class PointWithIdentifier(identifier: String, point: Point)
 
 object VKMClient { // singleton client
- lazy val client: CloseableHttpClient = ClientUtils.clientBuilder(10000,10000)
+ lazy val client: CloseableHttpClient = ClientUtils.clientBuilder()
 }
 
 class VKMClient {
