@@ -490,7 +490,7 @@ trait MassTransitStopService extends PointAssetOperations {
     LogUtils.time(logger, s"TEST LOG getByMunicipality tooks") {
       withDynSession {
         val assets = LogUtils.time(logger, s"TEST LOG getByMunicipality from DB") {
-          super.getByMunicipalityTransOption(withMunicipality(municipalityCode), false)
+          super.getByMunicipality(withMunicipality(municipalityCode), false)
         }
         logger.info(s"assets count: ${assets.size}")
         val roadAddressAdded = LogUtils.time(logger, s"TEST LOG addRoadAddress ") {

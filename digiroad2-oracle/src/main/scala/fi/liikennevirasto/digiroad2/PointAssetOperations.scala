@@ -262,7 +262,7 @@ trait  PointAssetOperations{
     }
   }
 
-  protected def getByMunicipalityTransOption(withFilter: String => String, newTransaction: Boolean = true): Seq[PersistedAsset] = {
+  protected def getByMunicipality(withFilter: String => String, newTransaction: Boolean = true): Seq[PersistedAsset] = {
     if (newTransaction)
       withDynTransaction {
         fetchPointAssets(withFilter).toList
