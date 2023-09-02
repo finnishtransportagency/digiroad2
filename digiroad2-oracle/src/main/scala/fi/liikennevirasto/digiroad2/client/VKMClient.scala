@@ -423,23 +423,6 @@ class VKMClient {
     }
   }
 
-  private def validateAndConvertToIntOpt(fieldName: String, map: Map[String, Any]) = {
-    def value = map.get(fieldName).asInstanceOf[Option[BigInt]]
-
-    if (value.isEmpty) {
-      logger.error("Missing mandatory field in response: %s".format(
-          fieldName))
-      None
-    }
-    try {
-      value.get.toInt
-    } catch {
-      case e: NumberFormatException =>
-        logger.error("Invalid value in response: %s, Int expected, got '%s'".format(fieldName, value.get))
-        None
-    }
-  }
-
   private def convertToDouble(value: Option[Any]): Option[Double] = {
     value.map {
       case x: Object =>

@@ -280,9 +280,9 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def getNormalAndComplementaryById(id: Long, roadLink: RoadLink): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[RoadLink] = Some(roadLink)
+    val roadLinks: Option[RoadLinkLike] = Some(roadLink)
 
-    def findRoadlink(linkId: String): Option[RoadLink] =
+    def findRoadlink(linkId: String): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)
 
     withDynSession {
@@ -709,7 +709,7 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.deleteNumberPropertyValue(assetId, "kellumisen_syy")
   }
 
-  private def fetchRoadLink(linkId: String): Option[RoadLink] = {
+  private def fetchRoadLink(linkId: String): Option[RoadLinkLike] = {
     roadLinkService.getRoadLinkAndComplementaryByLinkId(linkId, newTransaction = false)
   }
   private def fetchRoadLinks(linkIds: Set[String]): Seq[RoadLink] = {
