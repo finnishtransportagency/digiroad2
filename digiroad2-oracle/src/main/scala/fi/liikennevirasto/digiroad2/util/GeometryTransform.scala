@@ -121,14 +121,19 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
       assets.map(mapRoadAddressToAsset(roadAddress, _)).filter(_.isDefined).map(_.get)
     }
     val allReadyMapped = foundFromViite.map(_.asset)
-    val stillMissing = assets.filterNot(a => allReadyMapped.contains(a.id)).filter(_.road.isDefined)
+    val stillMissing = assets.filterNot(a => allReadyMapped.contains(a.id))
     logger.info(s"still missing road address: ${stillMissing.size}")
-    val foundFromVKM = vkmClient.resolveAddressAndLocations(stillMissing.map(a => MassQueryResolve(a.id, a.coord, a.heading, SideCode.apply(a.sideCode.get), a.road)))
+    val foundFromVKM = vkmClient.resolveAddressAndLocations(stillMissing.filter(_.road.isDefined).map(a => MassQueryResolve(a.id, a.coord, a.heading, SideCode.apply(a.sideCode.get), a.road)))
     foundFromVKM ++ foundFromViite
   }
   private def mapRoadAddressToAsset(roadAddress: Seq[RoadAddressForLink], asset: PointAssetForConversion): Option[RoadAddressBoundToAsset] = {
-    // copy pasted from Viite code base Search API
-    roadAddress.find(ra => ra.linkId == asset.linkId && (ra.startMValue >= asset.mValue || ra.startMValue < asset.mValue && asset.mValue < ra.endMValue)) match {
+    // copy pasted from Viite code base Search API get by LRM
+    // will return the road addresses with the start and end measure in between mValue or start measure equal or greater than mValue
+    def selectRoadAddress(ra: RoadAddressForLink,asset: PointAssetForConversion) = {
+      val isBetween =  ra.startMValue < asset.mValue && asset.mValue < ra.endMValue
+      ra.linkId == asset.linkId && (ra.startMValue >= asset.mValue || isBetween)
+    }
+    roadAddress.find(selectRoadAddress(_,asset)) match {
       case Some(selected) =>
         val (roadAddress, side) = determinateRoadSide(asset.mValue, asset.sideCode.get, asset.municipalityCode, Some(selected))
         Some(RoadAddressBoundToAsset(asset.id, roadAddress, side))
