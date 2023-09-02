@@ -568,7 +568,7 @@ trait MassTransitStopService extends PointAssetOperations {
       assets.map(mapToQuery(links, _)).filter(_.isDefined).map(_.get)
     }
     LogUtils.time(logger, s"TEST LOG conversion and mapping tooks") {
-      val roadAddress = geometryTransform.resolveAddressAndLocationM(query)
+      val roadAddress = geometryTransform.resolveMultipleAddressAndLocations(query)
       assets.map(mapAssetToRoadAddress(roadAddress, _))
     }
   }

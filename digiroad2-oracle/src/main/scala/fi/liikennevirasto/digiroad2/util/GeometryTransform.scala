@@ -115,7 +115,7 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
 
     (address, roadSide)
   }
-  def resolveAddressAndLocationM(assets: Seq[PointAssetForConversion]): Seq[RoadAddressBoundToAsset] = {
+  def resolveMultipleAddressAndLocations(assets: Seq[PointAssetForConversion]): Seq[RoadAddressBoundToAsset] = {
     val roadAddress = roadAddressService.getAllByLinkIds(assets.map(_.linkId))
     val foundFromViite = LogUtils.time(logger, s"Map viite road address to assets") {
       assets.map(mapRoadAddressToAsset(roadAddress, _)).filter(_.isDefined).map(_.get)
@@ -129,8 +129,8 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   private def mapRoadAddressToAsset(roadAddress: Seq[RoadAddressForLink], asset: PointAssetForConversion): Option[RoadAddressBoundToAsset] = {
     // copy pasted from Viite code base Search API get by LRM
     // will return the road addresses with the start and end measure in between mValue or start measure equal or greater than mValue
-    def selectRoadAddress(ra: RoadAddressForLink,asset: PointAssetForConversion) = {
-      val isBetween =  ra.startMValue < asset.mValue && asset.mValue < ra.endMValue
+    def selectRoadAddress(ra: RoadAddressForLink, asset: PointAssetForConversion): Boolean = {
+      val isBetween = ra.startMValue < asset.mValue && asset.mValue < ra.endMValue
       ra.linkId == asset.linkId && (ra.startMValue >= asset.mValue || isBetween)
     }
     roadAddress.find(selectRoadAddress(_,asset)) match {

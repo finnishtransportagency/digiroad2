@@ -111,8 +111,10 @@ class VKMClient {
       .setCookieSpec(CookieSpecs.STANDARD).build()).build()
     val response = client.execute(request)
     try {
-      if (response.getStatusLine.getStatusCode >= 400)
+      if (response.getStatusLine.getStatusCode >= 400) {
+        logger.error(s"Error Response body was ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+      }
       val aux = response.getEntity.getContent
       val content:FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
       val (errorFeatures, okFeatures) = content.features.partition(_.properties.contains("virheet"))
@@ -317,10 +319,10 @@ class VKMClient {
     val selected = determinateRoadSide(addresses)
     RoadAddressBoundToAsset(asset.identifier.toLong, selected._1, selected._2)
   }
-  private def convertToDeterminateSide(assets: Seq[MassQueryResolve], a: (String, RoadAddress)) = {
-    val assets2 = assets.find(_.asset.toString == a._1).get
+  private def convertToDeterminateSide(assets: Seq[MassQueryResolve], assetAndRoadAddress: (String, RoadAddress)) = {
+    val assets2 = assets.find(_.asset.toString == assetAndRoadAddress._1).get
     val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(assets2.coord, assets2.heading, assets2.sideCode)
-    DeterminateSide(assets2.asset.toString, Seq(behind, assets2.coord, front), a._2.road, a._2.roadPart)
+    DeterminateSide(assets2.asset.toString, Seq(behind, assets2.coord, front), assetAndRoadAddress._2.road, assetAndRoadAddress._2.roadPart)
   }
   private def determinateRoadSide(addresses: Seq[RoadAddress]): (RoadAddress, RoadSide) = {
     val mValues = addresses.map(ra => ra.addrM)
