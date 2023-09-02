@@ -59,6 +59,8 @@ class VKMClient {
   private def NonPedestrianRoadNumbers = "1-62999"
   private def AllRoadNumbers = "1-99999"
   private def DefaultToleranceMeters = 20.0
+  
+  private def VkmMaxBatchSize =1000
 
   private val logger = LoggerFactory.getLogger(getClass)
   private def vkmBaseUrl = Digiroad2Properties.vkmUrl + "/viitekehysmuunnin/"
@@ -185,7 +187,7 @@ class VKMClient {
     }
   }
 
-  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord],searchDistance:Int = 500): Map[String, RoadAddress] = {
+  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord], searchDistance:Int = 500): Map[String, RoadAddress] = {
     val params = coords.map(coord => Map(
       VkmQueryIdentifier -> coord.identifier,
       VkmRoad -> coord.roadNumber,
@@ -195,11 +197,9 @@ class VKMClient {
       "y" -> coord.point.y,
       VkmSearchRadius -> searchDistance//Default in new VKM is 100
     ))
-    //LogUtils.time(logger, s"TEST LOG Coordinate to RoadAddress, converting: ${coords.size}") {
-      new Parallel().operation(params.grouped(1000).toList.par,3){
+      new Parallel().operation(params.grouped(VkmMaxBatchSize).toList.par,3){
         _.flatMap(baseRequest).toList
       }.flatten.flatten.toMap
-    //}
   }
 
   private def baseRequest( params: Seq[Map[String, Any]]) = {
@@ -297,34 +297,32 @@ class VKMClient {
     } else {
       val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(coord, Some(heading), sideCode)
       val addresses = coordsToAddresses(Seq(behind, coord, front), road, roadPart, includePedestrian = includePedestrian)
-      selectRoadAddress(addresses)
+      determinateRoadSide(addresses)
     }
   }
 
   def resolveAddressAndLocations(assets: Seq[MassQueryResolve]): Seq[RoadAddressBoundToAsset] = {
-    val roadAddress = LogUtils.time(logger, s"TEST LOG coordToAddressMassQuery") {coordToAddressMassQuery(assets.map(a => MassQueryParamsCoord(a.asset.toString, a.coord, a.road, a.roadPart)))
-      .map(convertToDeterminateSide(assets, _)).toSeq}
+    val roadAddress = LogUtils.time(logger, s"TEST LOG coordToAddressMassQuery") {
+      coordToAddressMassQuery(assets.map(a => MassQueryParamsCoord(a.asset.toString, a.coord, a.road, a.roadPart)))
+      .map(convertToDeterminateSide(assets, _)).toSeq
+    }
     LogUtils.time(logger, s"TEST LOG checkRoadSide") {
-      new Parallel().operation(roadAddress.grouped(200).toList.par, 2) {
-        _.flatMap(a => a.map(checkRoadSide)).toList
-      }
+        roadAddress.map(checkRoadSide)
     }
   }
 
-  private def checkRoadSide(a2: DeterminateSide): RoadAddressBoundToAsset = {
-    //LogUtils.time(logger, s"TEST LOG checkRoadSide") {
-    val addresses = coordToAddressMassQuery(a2.points.map(
-      a => MassQueryParamsCoord(s"${a2.identifier}:${a.x}:${a.y}", a, Some(a2.roadNumber), Some(a2.roadPartNumber),a2.track)),100).values.toSeq
-    val selected = selectRoadAddress(addresses)
-    RoadAddressBoundToAsset(a2.identifier.toLong, selected._1, selected._2) // string to long
-    //}
+  private def checkRoadSide(asset: DeterminateSide): RoadAddressBoundToAsset = {
+    val addresses = coordToAddressMassQuery(asset.points.map(
+      a => MassQueryParamsCoord(s"${asset.identifier}:${a.x}:${a.y}", a, Some(asset.roadNumber), Some(asset.roadPartNumber),asset.track)),100).values.toSeq
+    val selected = determinateRoadSide(addresses)
+    RoadAddressBoundToAsset(asset.identifier.toLong, selected._1, selected._2)
   }
   private def convertToDeterminateSide(assets: Seq[MassQueryResolve], a: (String, RoadAddress)) = {
     val assets2 = assets.find(_.asset.toString == a._1).get
     val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(assets2.coord, assets2.heading, assets2.sideCode)
     DeterminateSide(assets2.asset.toString, Seq(behind, assets2.coord, front), a._2.road, a._2.roadPart)
   }
-  private def selectRoadAddress(addresses: Seq[RoadAddress]): (RoadAddress, RoadSide) = {
+  private def determinateRoadSide(addresses: Seq[RoadAddress]): (RoadAddress, RoadSide) = {
     val mValues = addresses.map(ra => ra.addrM)
     val (first, second, third) = (mValues(0), mValues(1), mValues(2))
     if (first <= second && second <= third && first != third) {
@@ -362,7 +360,7 @@ class VKMClient {
     }
     catch {
       case rae: RoadAddressException =>
-        //logger.error("Error mapping to VKM data to road address: " + rae.getMessage)
+        logger.error("Error mapping to VKM data to road address: " + rae.getMessage)
         None
     }
   }
