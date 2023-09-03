@@ -207,7 +207,7 @@ class VKMClient {
   private def baseRequest( params: Seq[Map[String, Any]]) = {
     val jsonValue = Serialization.write(params)
     val url = vkmBaseUrl + "muunna/"
-    val response = ClientUtils.retry(3, logger, commentForFailing = s"JSON payload for failing: $jsonValue") {postRequest(url, jsonValue)}
+    val response = ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $jsonValue") {postRequest(url, jsonValue)}
     val result = response match {
       case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
       case Right(error) => throw new RoadAddressException(error.toString)
