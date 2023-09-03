@@ -2,12 +2,11 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
-import org.joda.time.format.DateTimeFormat
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 
 object OthBusStopLifeCycleBusStopStrategy{
@@ -31,7 +30,7 @@ object OthBusStopLifeCycleBusStopStrategy{
 
 class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 {
-  lazy val logger = LoggerFactory.getLogger(getClass)
+  override lazy val logger: Logger = LoggerFactory.getLogger(getClass)
 
   val toLiviId = "OTHJ%d"
   val MaxMovementDistanceMeters = 50
@@ -65,8 +64,8 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, null)
   }
 
-  override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None, terminalAdded:Boolean = false): (PersistedMassTransitStop, Boolean) = {
-    val enrichPersistedStop = { super.enrichBusStop(persistedStop, roadLinkOption,terminalAdded)._1 }
+  override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
+    val enrichPersistedStop = { super.enrichBusStop(persistedStop, roadLinkOption)._1 }
     if(enrichPersistedStop.id !=0 ){
       (enrichPersistedStop,true)
     }else{
