@@ -105,10 +105,12 @@ class VKMClient {
   }
 
   private def request(url: String): Either[FeatureCollection, VKMError] = {
+    ClientUtils.retry(5, logger, commentForFailing = s"Failing url: $url") {requestBase(url)}
+  }
+  private def requestBase(url: String): Either[FeatureCollection, VKMError] = {
     val request = new HttpGet(url)
     request.addHeader("X-API-Key", Digiroad2Properties.vkmApiKey)
-    val client = HttpClientBuilder.create() .setDefaultRequestConfig(RequestConfig.custom()
-      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+    val client = VKMClient.client
     val response = client.execute(request)
     try {
       if (response.getStatusLine.getStatusCode >= 400) {
