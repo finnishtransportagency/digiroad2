@@ -15,8 +15,8 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   private val terminalChildrenPublicId = "liitetyt_pysakit"
   private val validityDirectionPublicId = "vaikutussuunta"
   private val ignoredProperties = Seq(terminalChildrenPublicId, validityDirectionPublicId)
-  
-  def isTerminal( properties: Seq[AbstractProperty]):Boolean ={
+
+  def isTerminal(properties: Seq[AbstractProperty]): Boolean = {
     properties.exists(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId &&
       p.values.exists(v => v.asInstanceOf[PropertyValue].propertyValue == BusStopType.Terminal.value.toString))
   }
@@ -55,7 +55,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     val selectTerminalsIds = selectTerminals.map(_.id)
     persistedStops.filterNot(a => selectTerminalsIds.contains(a.id)) ++ selectTerminals.map(addChild(persistedStops, _))
   }
-  
+
   private def addChild(potentialChild: Seq[PersistedMassTransitStop], terminal: PersistedMassTransitStop): PersistedMassTransitStop = {
     val childFilters = potentialChild.filter(a => a.terminalId.contains(terminal.id))
       .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))

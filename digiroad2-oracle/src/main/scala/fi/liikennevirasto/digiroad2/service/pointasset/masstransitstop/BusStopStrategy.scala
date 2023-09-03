@@ -123,17 +123,17 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     }
   }
 
-  override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] ={
-     val roadAddressAdded = addRoadAddress(persistedStops,links)
+  override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
+    val roadAddressAdded = addRoadAddress(persistedStops, links)
     addTerminals(roadAddressAdded)
   }
 
   private def addRoadAddress(assets: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
     def mapToQuery(links: Seq[RoadLink], stop: PersistedMassTransitStop): Option[PointAssetForConversion] = {
       links.find(_.linkId == stop.linkId) match {
-        case Some(link) => 
+        case Some(link) =>
           val road = extractRoadNumber(link)
-          Some(PointAssetForConversion(stop.id, Point(stop.lon, stop.lat), stop.bearing, stop.mValue, stop.linkId, stop.validityDirection, road = road ))
+          Some(PointAssetForConversion(stop.id, Point(stop.lon, stop.lat), stop.bearing, stop.mValue, stop.linkId, stop.validityDirection, road = road))
         case None => None
       }
     }
