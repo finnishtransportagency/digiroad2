@@ -124,9 +124,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   }
 
   override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] ={
-    val roadAddressAdded = LogUtils.time(logger, s"TEST LOG addRoadAddress ") {
-      addRoadAddress(persistedStops,links)
-    }
+     val roadAddressAdded = addRoadAddress(persistedStops,links)
     addTerminals(roadAddressAdded)
   }
 
@@ -147,13 +145,9 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
       }
     }
 
-    val query = LogUtils.time(logger, s"TEST LOG create mass query") {
-      assets.map(mapToQuery(links, _)).filter(_.isDefined).map(_.get)
-    }
-    LogUtils.time(logger, s"TEST LOG conversion and mapping tooks") {
-      val roadAddress = geometryTransform.resolveMultipleAddressAndLocations(query)
-      assets.map(mapAssetToRoadAddress(roadAddress, _))
-    }
+    val query = assets.map(mapToQuery(links, _)).filter(_.isDefined).map(_.get)
+    val roadAddress = geometryTransform.resolveMultipleAddressAndLocations(query)
+    assets.map(mapAssetToRoadAddress(roadAddress, _))
   }
 
   private def extractRoadNumber(link: RoadLinkLike) = {

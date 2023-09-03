@@ -117,9 +117,7 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
   def resolveMultipleAddressAndLocations(assets: Seq[PointAssetForConversion]): Seq[RoadAddressBoundToAsset] = {
     val roadAddress = roadAddressService.getAllByLinkIds(assets.map(_.linkId))
-    val foundFromViite = LogUtils.time(logger, s"Map viite road address to assets") {
-      assets.map(mapRoadAddressToAsset(roadAddress, _)).filter(_.isDefined).map(_.get)
-    }
+    val foundFromViite = assets.map(mapRoadAddressToAsset(roadAddress, _)).filter(_.isDefined).map(_.get)
     val allReadyMapped = foundFromViite.map(_.asset)
     val stillMissing = assets.filterNot(a => allReadyMapped.contains(a.id))
     logger.info(s"still missing road address: ${stillMissing.size}")
