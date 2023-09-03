@@ -31,10 +31,11 @@ object ClientUtils {
     }
   }
 
-  def clientBuilder(maxConnTotal: Int = 1000,
-                            maxConnPerRoute: Int = 1000,
-                            timeout: Int = 60 * 1000
-                           ): CloseableHttpClient = {
+  def clientBuilder(
+                     maxConnTotal: Int = 1000,
+                     maxConnPerRoute: Int = 1000,
+                     timeout: Int = 60 * 1000
+                   ): CloseableHttpClient = {
     HttpClientBuilder.create()
       .setDefaultRequestConfig(
         RequestConfig.custom()
