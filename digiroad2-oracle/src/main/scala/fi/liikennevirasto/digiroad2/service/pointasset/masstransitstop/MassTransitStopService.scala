@@ -69,7 +69,7 @@ trait AbstractBusStopStrategy {
     */
   def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean)
   /**
-    * enrich with additional data, use only when fetching data
+    * enrich with additional data, use only when fetching data, override always with your own implementation or pass through Seq of [[PersistedMassTransitStop]]
     *
     * @param persistedStops   Mass Transit Stops, use already fetched bus stop.
     * @param links            All needed links             
@@ -462,14 +462,8 @@ trait MassTransitStopService extends PointAssetOperations {
         val links = LogUtils.time(logger, s"TEST LOG fetch roadlink") {
           fetchRoadLinks(assets.map(_.linkId).toSet)
         }
-        
-        logger.info(s"assets count: ${assets.size}")
 
-        if (withEnrich) {
-          LogUtils.time(logger, s"TEST LOG enrich by strategy") {
-            enrichBusStops(assets,links)
-          }
-        } else assets
+        if (withEnrich) enrichBusStops(assets,links) else assets
       }
     }
   }
@@ -622,8 +616,13 @@ trait MassTransitStopService extends PointAssetOperations {
     (Seq(terminalBusStopStrategy, othBusStopLifeCycleBusStopStrategy, terminatedBusStopStrategy), defaultBusStopStrategy)
   }
 
-  private def getEnrichers():   Seq[(Seq[PersistedMassTransitStop], Seq[RoadLink]) => Seq[PersistedMassTransitStop]] = {
-    Seq(defaultBusStopStrategy.enrichBusStopsOperation,terminalBusStopStrategy.enrichBusStopsOperation, othBusStopLifeCycleBusStopStrategy.enrichBusStopsOperation, terminatedBusStopStrategy.enrichBusStopsOperation)
+  private def getEnrichers():   Seq[(Seq[PersistedMassTransitStop], Seq[RoadLink])=> Seq[PersistedMassTransitStop]] = {
+    Seq(
+      defaultBusStopStrategy.enrichBusStopsOperation,
+      terminalBusStopStrategy.enrichBusStopsOperation,
+      othBusStopLifeCycleBusStopStrategy.enrichBusStopsOperation,
+      terminatedBusStopStrategy.enrichBusStopsOperation
+    )
   }
   /**
     *  Enrich all bus stop by using [[AbstractBusStopStrategy.enrichBusStopsOperation]]
@@ -633,7 +632,7 @@ trait MassTransitStopService extends PointAssetOperations {
     */
   
   private def enrichBusStops(assets:Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
-    getEnrichers().foldLeft(assets)((enriched,enricher)=>enricher(enriched,links))
+     getEnrichers().foldLeft(assets) { case (enriched, enricher) => enricher(enriched,links)}
   }
 
   private def getStrategy(asset: PersistedMassTransitStop): AbstractBusStopStrategy ={

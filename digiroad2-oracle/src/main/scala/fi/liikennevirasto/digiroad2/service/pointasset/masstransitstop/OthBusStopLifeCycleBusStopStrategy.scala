@@ -73,6 +73,10 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     }
     
   }
+
+  override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
+    persistedStops
+  }
   
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     super.publishSaveEvent(publishInfo)

@@ -123,7 +123,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     }
   }
 
-  def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] ={
+  override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] ={
     val roadAddressAdded = LogUtils.time(logger, s"TEST LOG addRoadAddress ") {
       addRoadAddress(persistedStops,links)
     }
