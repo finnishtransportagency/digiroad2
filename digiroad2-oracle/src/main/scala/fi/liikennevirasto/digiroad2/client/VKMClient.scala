@@ -204,11 +204,24 @@ class VKMClient {
       VkmSearchRadius -> searchDistance//Default in new VKM is 100
     ))
       new Parallel().operation(params.grouped(VkmMaxBatchSize).toList.par,3){
-        _.flatMap(baseRequest).toList
-      }.flatten.flatten.toMap
+        _.flatMap(validateRange).toList
+      }.toMap
+  }
+  
+  private def validateRange(params: Seq[Map[String, Any]]): Map[String, RoadAddress] ={
+   val response = baseRequest(params)
+    response.filter(_.isDefined).flatMap(_.get).groupBy(_._1)
+      .map(a => {
+        val id = a._1
+        val address = a._2.map(_._2)
+        if (address.size >= 2) {
+          logger.info(s"Search distance was too big to identify single response, identifier was $id and result: ${address.mkString(",")}")
+        }
+        (id, address.head)
+      })
   }
 
-  private def baseRequest(params: Seq[Map[String, Any]]) = {
+  private def baseRequest(params: Seq[Map[String, Any]]): List[Option[Map[String, RoadAddress]]] = {
     val jsonValue = Serialization.write(params)
     val url = vkmBaseUrl + "muunna/"
     val response = ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $jsonValue") {postRequest(url, jsonValue)}
