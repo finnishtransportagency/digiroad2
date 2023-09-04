@@ -196,7 +196,7 @@ class VKMClient {
       VkmQueryIdentifier -> coord.identifier,
       VkmRoad -> coord.roadNumber,
       VkmRoadPart -> coord.roadPartNumber,
-      //VkmTrackCodes -> coord.track.map(_.value),
+      VkmTrackCodes -> coord.track.map(_.value),
       "x" -> coord.point.x,
       "y" -> coord.point.y,
       VkmSearchRadius -> searchDistance//Default in new VKM is 100
@@ -228,7 +228,7 @@ class VKMClient {
             "y" -> Option(coord.y),
             VkmSearchRadius -> searchDistance //Default in new VKM is 100
       )
-
+    //TODO this is wrong way to select values, there can be two more value dependent on how many track road has.  
     request(vkmBaseUrl + "muunna?sade=500&" + urlParams(params)) match {
       case Left(address) => mapFields(address.features.head)
       case Right(error) => throw new RoadAddressException(error.toString)
@@ -314,10 +314,9 @@ class VKMClient {
         roadAddress.map(checkRoadSide)
     }
   }
-
+  
   private def checkRoadSide(asset: DeterminateSide): RoadAddressBoundToAsset = {
-    val addresses = coordToAddressMassQuery(asset.points.map(
-      a => MassQueryParamsCoord(s"${asset.identifier}:${a.x}:${a.y}", a, Some(asset.roadNumber), Some(asset.roadPartNumber),asset.track)),100).values.toSeq
+    val addresses = coordsToAddresses(asset.points, Some(asset.roadNumber), Some(asset.roadPartNumber))
     val selected = determinateRoadSide(addresses)
     RoadAddressBoundToAsset(asset.identifier.toLong, selected._1, selected._2)
   }
@@ -326,6 +325,7 @@ class VKMClient {
     val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(assets2.coord, assets2.heading, assets2.sideCode)
     DeterminateSide(assets2.asset.toString, Seq(behind, assets2.coord, front), assetAndRoadAddress._2.road, assetAndRoadAddress._2.roadPart)
   }
+  
   private def determinateRoadSide(addresses: Seq[RoadAddress]): (RoadAddress, RoadSide) = {
     val mValues = addresses.map(ra => ra.addrM)
     val (first, second, third) = (mValues(0), mValues(1), mValues(2))
