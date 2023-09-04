@@ -203,10 +203,10 @@ class VKMClient {
     ))
       new Parallel().operation(params.grouped(VkmMaxBatchSize).toList.par,3){
         _.flatMap(baseRequest).toList
-      }.flatten.flatten.toMap
+      }.toMap
   }
 
-  private def baseRequest( params: Seq[Map[String, Any]]) = {
+  private def baseRequest(params: Seq[Map[String, Any]]): Map[String, RoadAddress] = {
     val jsonValue = Serialization.write(params)
     val url = vkmBaseUrl + "muunna/"
     val response = ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $jsonValue") {postRequest(url, jsonValue)}
@@ -214,7 +214,11 @@ class VKMClient {
       case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
       case Right(error) => throw new RoadAddressException(error.toString)
     }
-    result
+    result.filter(_.isDefined)
+      .flatMap(_.get)
+      .groupBy(_._1)
+      /* simulate same effect as in GET*/
+      .map(a => (a._1, a._2.sortBy(_._2.track.value).head._2)) 
   }
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
@@ -228,7 +232,7 @@ class VKMClient {
             "y" -> Option(coord.y),
             VkmSearchRadius -> searchDistance //Default in new VKM is 100
       )
-    //TODO this is wrong way to select values, there can be two more value dependent on how many track road has.  
+    //TODO this is wrong way to select values, there can be two or more value dependent on how many track road has.  
     request(vkmBaseUrl + "muunna?sade=500&" + urlParams(params)) match {
       case Left(address) => mapFields(address.features.head)
       case Right(error) => throw new RoadAddressException(error.toString)
@@ -314,12 +318,30 @@ class VKMClient {
         roadAddress.map(checkRoadSide)
     }
   }
-  
+  /**
+    *  assume that point seq is ordered
+    * @param asset
+    * @return
+    */
   private def checkRoadSide(asset: DeterminateSide): RoadAddressBoundToAsset = {
-    val addresses = coordsToAddresses(asset.points, Some(asset.roadNumber), Some(asset.roadPartNumber))
-    val selected = determinateRoadSide(addresses)
+    val errorMessage = "Did not get needed Road address for the determinateRoadSide method"
+    
+    val params = Seq(
+      MassQueryParamsCoord(s"${asset.identifier}:behind", asset.points(0), Some(asset.roadNumber), Some(asset.roadPartNumber), asset.track),
+      MassQueryParamsCoord(s"${asset.identifier}:correct", asset.points(1), Some(asset.roadNumber), Some(asset.roadPartNumber), asset.track),
+      MassQueryParamsCoord(s"${asset.identifier}:front", asset.points(2), Some(asset.roadNumber), Some(asset.roadPartNumber), asset.track)
+    )
+
+    val addresses = coordToAddressMassQuery(params).toSeq
+
+    val behind = addresses.find(_._1.split(":")(1) == "behind").getOrElse(throw new RoadAddressException(errorMessage))._2
+    val correct = addresses.find(_._1.split(":")(1) == "correct").getOrElse(throw new RoadAddressException(errorMessage))._2
+    val front = addresses.find(_._1.split(":")(1) == "front").getOrElse(throw new RoadAddressException(errorMessage))._2
+    
+    val selected = determinateRoadSide(Seq(behind, correct, front))
     RoadAddressBoundToAsset(asset.identifier.toLong, selected._1, selected._2)
   }
+  
   private def convertToDeterminateSide(assets: Seq[MassQueryResolve], assetAndRoadAddress: (String, RoadAddress)) = {
     val assets2 = assets.find(_.asset.toString == assetAndRoadAddress._1).get
     val (behind: Point, front: Point) = calculatePointAfterAndBeforeRoadAddressPosition(assets2.coord, assets2.heading, assets2.sideCode)
