@@ -215,6 +215,7 @@ class VKMClient {
         val id = a._1
         val address = a._2.map(_._2)
         if (address.size >= 2) {
+          // TODO fix this logic same time you fix GET method.
           logger.info(s"Search distance was too big to identify single response, identifier was $id and result: ${address.mkString(",")}")
         }
         (id, address.head)
