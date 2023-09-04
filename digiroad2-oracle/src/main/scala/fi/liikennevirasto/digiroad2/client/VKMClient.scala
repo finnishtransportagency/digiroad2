@@ -105,6 +105,8 @@ class VKMClient {
   }
 
   private def request(url: String): Either[FeatureCollection, VKMError] = {
+    logger.info(s"URL we are using : $url")
+    
     ClientUtils.retry(5, logger, commentForFailing = s"Failing url: $url") {requestBase(url)}
   }
   private def requestBase(url: String): Either[FeatureCollection, VKMError] = {
@@ -191,7 +193,7 @@ class VKMClient {
     }
   }
 
-  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord], searchDistance:Int = 500): Map[String, RoadAddress] = {
+  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord], searchDistance: Option[Double] = None): Map[String, RoadAddress] = {
     val params = coords.map(coord => Map(
       VkmQueryIdentifier -> coord.identifier,
       VkmRoad -> coord.roadNumber,
@@ -203,10 +205,10 @@ class VKMClient {
     ))
       new Parallel().operation(params.grouped(VkmMaxBatchSize).toList.par,3){
         _.flatMap(baseRequest).toList
-      }.toMap
+      }.flatten.flatten.toMap
   }
 
-  private def baseRequest(params: Seq[Map[String, Any]]): Map[String, RoadAddress] = {
+  private def baseRequest(params: Seq[Map[String, Any]]) = {
     val jsonValue = Serialization.write(params)
     val url = vkmBaseUrl + "muunna/"
     val response = ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $jsonValue") {postRequest(url, jsonValue)}
@@ -214,11 +216,7 @@ class VKMClient {
       case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
       case Right(error) => throw new RoadAddressException(error.toString)
     }
-    result.filter(_.isDefined)
-      .flatMap(_.get)
-      .groupBy(_._1)
-      /* simulate same effect as in GET*/
-      .map(a => (a._1, a._2.sortBy(_._2.track.value).head._2)) 
+    result
   }
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
@@ -331,8 +329,8 @@ class VKMClient {
       MassQueryParamsCoord(s"${asset.identifier}:correct", asset.points(1), Some(asset.roadNumber), Some(asset.roadPartNumber), asset.track),
       MassQueryParamsCoord(s"${asset.identifier}:front", asset.points(2), Some(asset.roadNumber), Some(asset.roadPartNumber), asset.track)
     )
-
-    val addresses = coordToAddressMassQuery(params).toSeq
+    
+    val addresses = coordToAddressMassQuery(params, searchDistance = Some(7.0)).toSeq
 
     val behind = addresses.find(_._1.split(":")(1) == "behind").getOrElse(throw new RoadAddressException(errorMessage))._2
     val correct = addresses.find(_._1.split(":")(1) == "correct").getOrElse(throw new RoadAddressException(errorMessage))._2
