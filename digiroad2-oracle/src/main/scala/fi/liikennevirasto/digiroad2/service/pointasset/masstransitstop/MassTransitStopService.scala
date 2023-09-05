@@ -453,7 +453,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def getByMunicipality(municipalityCode: Int, withEnrich: Boolean): Seq[PersistedAsset] = {
       withDynSession {
-        val assets = LogUtils.time(logger, s"Getting Bus Stop by Municipality from municipality ${municipalityCode}") {
+        val assets = LogUtils.time(logger, s"Getting Bus Stop by municipality code from municipality ${municipalityCode}") {
           super.getByMunicipality(withMunicipality(municipalityCode), false)
         }
         val links = fetchRoadLinks(assets.map(_.linkId).toSet)
