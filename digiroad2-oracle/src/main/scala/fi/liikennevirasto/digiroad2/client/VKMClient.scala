@@ -204,7 +204,7 @@ class VKMClient {
       VkmTrackCodes -> coord.track.map(_.value),
       "x" -> coord.point.x,
       "y" -> coord.point.y,
-      VkmSearchRadius -> searchDistance//
+      VkmSearchRadius -> searchDistance
     ))
       new Parallel().operation(params.grouped(VkmMaxBatchSize).toList.par,3){
         _.flatMap(validateRange).toList
