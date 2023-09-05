@@ -105,8 +105,6 @@ class VKMClient {
   }
 
   private def request(url: String): Either[FeatureCollection, VKMError] = {
-    logger.info(s"URL we are using : $url")
-    
     ClientUtils.retry(5, logger, commentForFailing = s"Failing url: $url") {requestBase(url)}
   }
   private def requestBase(url: String): Either[FeatureCollection, VKMError] = {
@@ -244,9 +242,14 @@ class VKMClient {
             "y" -> Option(coord.y),
             VkmSearchRadius -> searchDistance //Default in new VKM is 100
       )
-    //TODO this is wrong way to select values, there can be two or more value dependent on how many track road has.  
-    request(vkmBaseUrl + "muunna?sade=500&" + urlParams(params)) match {
-      case Left(address) => mapFields(address.features.head)
+    val parameterString = "muunna?sade=500&" + urlParams(params)
+    
+    request(vkmBaseUrl + parameterString) match {
+      case Left(address) => 
+        if (address.features.length >= 2)
+          logger.info(s"Search distance was too big to identify single response, request parameters: $parameterString and result: ${address.features.map(mapFields).mkString(",")}")
+        //TODO this is wrong way to select values, there can be two or more value dependent on how many track road has.  
+        mapFields(address.features.head)
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
