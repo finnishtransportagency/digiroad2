@@ -347,7 +347,7 @@ class VKMClient {
       MassQueryParamsCoord(s"${asset.identifier}:front", asset.points(2), Some(asset.roadNumber), Some(asset.roadPartNumber), asset.track)
     )
     
-    val addresses = coordToAddressMassQuery(params, searchDistance = Some(7.0)).toSeq
+    val addresses = coordToAddressMassQuery(params, searchDistance = Some(5.0)).toSeq
 
     val behind = addresses.find(_._1.split(":")(1) == "behind").getOrElse(throw new RoadAddressException(errorMessage))._2
     val correct = addresses.find(_._1.split(":")(1) == "correct").getOrElse(throw new RoadAddressException(errorMessage))._2
