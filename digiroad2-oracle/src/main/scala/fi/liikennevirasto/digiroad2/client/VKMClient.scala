@@ -190,7 +190,12 @@ class VKMClient {
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
-
+  /**
+    * 
+    * @param coords
+    * @param searchDistance Default in new VKM is 100
+    * @return
+    */
   def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord], searchDistance: Option[Double] = None): Map[String, RoadAddress] = {
     val params = coords.map(coord => Map(
       VkmQueryIdentifier -> coord.identifier,
@@ -199,7 +204,7 @@ class VKMClient {
       VkmTrackCodes -> coord.track.map(_.value),
       "x" -> coord.point.x,
       "y" -> coord.point.y,
-      VkmSearchRadius -> searchDistance//Default in new VKM is 100
+      VkmSearchRadius -> searchDistance
     ))
       new Parallel().operation(params.grouped(VkmMaxBatchSize).toList.par,3){
         _.flatMap(validateRange).toList
@@ -347,8 +352,13 @@ class VKMClient {
       MassQueryParamsCoord(s"${asset.identifier}:front", asset.points(2), Some(asset.roadNumber), Some(asset.roadPartNumber), asset.track)
     )
     
-    val addresses = coordToAddressMassQuery(params, searchDistance = Some(5.0)).toSeq
-
+    val addresses = {
+     val response =  coordToAddressMassQuery(params, searchDistance = Some(5.0)).toSeq
+      if (response.size != 3) 
+        coordToAddressMassQuery(params, searchDistance = Some(100)).toSeq // widen search back to initial values
+      else response
+    }
+    
     val behind = addresses.find(_._1.split(":")(1) == "behind").getOrElse(throw new RoadAddressException(errorMessage))._2
     val correct = addresses.find(_._1.split(":")(1) == "correct").getOrElse(throw new RoadAddressException(errorMessage))._2
     val front = addresses.find(_._1.split(":")(1) == "front").getOrElse(throw new RoadAddressException(errorMessage))._2
