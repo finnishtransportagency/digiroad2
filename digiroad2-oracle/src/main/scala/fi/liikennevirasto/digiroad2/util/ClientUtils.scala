@@ -1,6 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.slf4j.Logger
+
 import scala.annotation.tailrec
 
 object ClientUtils {
@@ -26,5 +29,23 @@ object ClientUtils {
         else throw e
       
     }
+  }
+
+  def clientBuilder(
+                     maxConnTotal: Int = 1000,
+                     maxConnPerRoute: Int = 1000,
+                     timeout: Int = 60 * 1000
+                   ): CloseableHttpClient = {
+    HttpClientBuilder.create()
+      .setDefaultRequestConfig(
+        RequestConfig.custom()
+          .setCookieSpec(CookieSpecs.STANDARD)
+          .setSocketTimeout(timeout)
+          .setConnectTimeout(timeout)
+          .build()
+      )
+      .setMaxConnTotal(maxConnTotal)
+      .setMaxConnPerRoute(maxConnPerRoute)
+      .build()
   }
 }
