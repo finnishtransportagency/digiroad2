@@ -194,6 +194,23 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  override def getPersistedAssetsByLinkId(linkId: String): Seq[PersistedAsset] = {
+    val filter = s"where a.asset_type_id = $typeId and lrm.link_Id = '$linkId'"
+    fetchPointAssets(withFilter(filter)).map { asset =>
+      val strategy = getStrategy(asset)
+      val (enrichedStop, _) = strategy.enrichBusStop(asset)
+      enrichedStop
+    }
+  }
+
+  def getPersistedAssetsByLinkId(linkId: String, newTransaction: Boolean = true): Seq[PersistedAsset] = {
+    if (newTransaction)
+      withDynSession {
+        getPersistedAssetsByLinkId(linkId)
+    }
+    else getPersistedAssetsByLinkId(linkId)
+  }
+
   override def update(id: Long, updatedAsset: NewMassTransitStop, roadLink: RoadLink, username: String): Long = {
     throw new NotImplementedError("Use updateExisting instead. Mass transit is legacy.")
   }
@@ -714,6 +731,12 @@ trait MassTransitStopService extends PointAssetOperations {
   def getLatestModifiedAsset(assets: Seq[PersistedMassTransitStop]): PersistedMassTransitStop = {
     assets.maxBy(asset => asset.modified.modificationTime.getOrElse(asset.created.modificationTime.get).getMillis)
   }
+
+  def getBusStopPropertyValue(pointAssetAttributes: List[AssetProperty]): BusStopType = {
+    val busStopType = pointAssetAttributes.find(prop => prop.columnName == "pysakin_tyyppi").map(_.value).get.asInstanceOf[List[PropertyValue]].head
+    BusStopType.apply(busStopType.propertyValue.toInt)
+  }
+
 }
 
 class MassTransitStopException(string: String) extends RuntimeException {
