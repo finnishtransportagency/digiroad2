@@ -627,6 +627,9 @@ class MassTransitStopDao {
   def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
   }
+  def withIds(ids: Seq[Long])(query: String): String = {
+    query + s" where a.id in (${ids.mkString(",")})"
+  }
 
   def withTerminalId(terminalId: Long)(query: String): String = {
     query + s" where terminal_asset_id = $terminalId and (a.valid_to is null or a.valid_to > current_timestamp)"
