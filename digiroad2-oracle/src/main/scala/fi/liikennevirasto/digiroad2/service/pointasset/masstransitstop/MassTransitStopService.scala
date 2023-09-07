@@ -204,8 +204,9 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   def getPersistedAssetsByLinkId(linkId: String, newTransaction: Boolean = true): Seq[PersistedAsset] = {
-    if (newTransaction) withDynSession {
-      getPersistedAssetsByLinkId(linkId)
+    if (newTransaction)
+      withDynSession {
+        getPersistedAssetsByLinkId(linkId)
     }
     else getPersistedAssetsByLinkId(linkId)
   }
