@@ -1,12 +1,11 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
-import java.util.NoSuchElementException
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
-import fi.liikennevirasto.digiroad2.asset.{Property, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries, ServicePoint}
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -24,7 +23,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int]) extends FloatingAsset
 
-case class MassTransitStopWithProperties(id: Long, linkId: String = "", nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
+case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                                          validityDirection: Option[Int], bearing: Option[Int],
                                          validityPeriod: Option[String], floating: Boolean,
                                          propertyData: Seq[Property], municipalityName: Option[String] = None) extends FloatingAsset
@@ -56,11 +55,27 @@ trait AbstractBusStopStrategy {
   val roadLinkService: RoadLinkService
   val massTransitStopDao: MassTransitStopDao
 
+  lazy val logger = LoggerFactory.getLogger(getClass)
+
   def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop]): Boolean = {false}
   def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop], saveOption: Option[Boolean]): Boolean = {false}
   def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
   def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {}
+  /**
+    * enrich with additional data 
+    * @param persistedStop Mass Transit Stop
+    * @param roadLinkOption  for default implementation provide road link when MassTransitStop need road address
+    * @return
+    */
   def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean)
+  /**
+    * enrich with additional data, use only when fetching data, override always with your own implementation or pass through Seq of [[PersistedMassTransitStop]]
+    *
+    * @param persistedStops   Mass Transit Stops, use already fetched bus stop.
+    * @param links            All needed links             
+    * @return list of enriched
+    */
+  def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop]
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (false, None) }
   def create(newAsset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
 
@@ -437,19 +452,18 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   def getByMunicipality(municipalityCode: Int, withEnrich: Boolean): Seq[PersistedAsset] = {
-    val assets = super.getByMunicipality(withMunicipality(municipalityCode) _)
-
-    if(withEnrich)
-      withDynSession{
-        assets.map{a =>
-          val strategy = getStrategy(a)
-          strategy.enrichBusStop(a)._1
+      withDynSession {
+        val assets = LogUtils.time(logger, s"Getting Bus Stop by municipality code from municipality ${municipalityCode}") {
+          super.getByMunicipality(withMunicipality(municipalityCode), false)
         }
+        val links = fetchRoadLinks(assets.map(_.linkId).toSet)
+        if (withEnrich) 
+          LogUtils.time(logger, s"Bus Stop enrichment") {
+          enrichBusStops(assets,links)} 
+        else assets
       }
-    else
-      assets
   }
-
+  
   def getFloatingAssetsWithReason(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[Map[String, Long]]]] = {
 
     val result = getFloatingPointAssets(includedMunicipalities, isOperator)
@@ -570,7 +584,7 @@ trait MassTransitStopService extends PointAssetOperations {
   private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: String => Option[RoadLinkLike], getMunicipalityName: Int => Option[String] = _ => None)
                                                           (persistedStop: PersistedMassTransitStop): (MassTransitStopWithProperties, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
-    (MassTransitStopWithProperties(id = persistedStop.id, linkId = persistedStop.linkId, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+    (MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
       propertyData = persistedStop.propertyData, municipalityName = getMunicipalityName(persistedStop.municipalityCode)), floatingReason)
@@ -590,9 +604,31 @@ trait MassTransitStopService extends PointAssetOperations {
   private def fetchRoadLink(linkId: String): Option[RoadLinkLike] = {
     roadLinkService.getRoadLinkAndComplementaryByLinkId(linkId, newTransaction = false)
   }
-
+  private def fetchRoadLinks(linkIds: Set[String]): Seq[RoadLink] = {
+    roadLinkService.getRoadLinksAndComplementariesByLinkIds(linkIds, newTransaction = false)
+  }
+//TODO move these into busStopStrategy controller or similar central managements class
   private def getStrategies(): (Seq[AbstractBusStopStrategy], AbstractBusStopStrategy) ={
     (Seq(terminalBusStopStrategy, othBusStopLifeCycleBusStopStrategy, terminatedBusStopStrategy), defaultBusStopStrategy)
+  }
+
+  private def getEnrichers():   Seq[(Seq[PersistedMassTransitStop], Seq[RoadLink])=> Seq[PersistedMassTransitStop]] = {
+    Seq(
+      defaultBusStopStrategy.enrichBusStopsOperation,
+      terminalBusStopStrategy.enrichBusStopsOperation,
+      othBusStopLifeCycleBusStopStrategy.enrichBusStopsOperation,
+      terminatedBusStopStrategy.enrichBusStopsOperation
+    )
+  }
+  /**
+    *  Enrich all bus stop by using [[AbstractBusStopStrategy.enrichBusStopsOperation]]
+    * @param assets all needed bus stop 
+    * @param links all needed raod link
+    * @return enriched assets
+    */
+  
+  private def enrichBusStops(assets:Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
+     getEnrichers().foldLeft(assets) { case (enriched, enricher) => enricher(enriched,links)}
   }
 
   private def getStrategy(asset: PersistedMassTransitStop): AbstractBusStopStrategy ={

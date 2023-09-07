@@ -2,12 +2,11 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
-import org.joda.time.format.DateTimeFormat
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 
 object OthBusStopLifeCycleBusStopStrategy{
@@ -31,7 +30,7 @@ object OthBusStopLifeCycleBusStopStrategy{
 
 class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 {
-  lazy val logger = LoggerFactory.getLogger(getClass)
+  override lazy val logger: Logger = LoggerFactory.getLogger(getClass)
 
   val toLiviId = "OTHJ%d"
   val MaxMovementDistanceMeters = 50
@@ -73,6 +72,10 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
       (enrichPersistedStop,false)
     }
     
+  }
+
+  override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
+    persistedStops
   }
   
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
@@ -133,23 +136,12 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
       map(property => SimplePointAssetProperty(property.publicId, property.values)) ++ properties).
       filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
 
-    //If it all ready has liviId
+    //If asset already has liviId
     if (was(asset)) {
       val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
-      if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
-        //Expires the current asset and creates a new one in OTH with new liviId
-        val position = optionalPosition.get
-        massTransitStopDao.expireMassTransitStop(username, asset.id)
-        super.publishExpiringEvent(PublishInfo(Option(asset)))
-        create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
-          mergedProperties), username, Point(position.lon, position.lat), roadLink)
-
-      }else{
-        //Updates the asset in OTH
-        update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
+      update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
           username)
-      }
-    }else{
+    } else {
       //Updates the asset in OTH with new liviId
       update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, toLiviId.format(asset.nationalId),
         username)

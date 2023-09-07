@@ -674,11 +674,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if (distance > movementLimit && !movementPermissionConfirmed)
     {
       requestingMovePermission = true;
-      if (ownedByELY() || ownedByHSL()){
-        popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
-      } else {
-        popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
-      }
+      popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
 
       if(isTerminalChild())
           popupMessageToShow += ' <br><br> *Pysäkin viittaus terminaaliin häviää siirron yhteydessä. Luo yhteys uudelleen tarvittaessa. ' ;
@@ -941,6 +937,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'map:moved', handleMapMoved);
     eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
     eventListener.listenTo(eventbus, 'layer:selected', closeAsset);
+    eventListener.listenTo(eventbus, 'layer:cleared', roadLayer.clearSelection());
     eventListener.listenTo(eventbus, 'massTransitStopDeleted', function(asset){
       closeAsset();
       destroyAsset(asset);
@@ -954,8 +951,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     });
     eventListener.listenTo(eventbus, 'massTransitStop-complementaryLinks:show', showWithComplementary);
     eventListener.listenTo(eventbus, 'massTransitStop-complementaryLinks:hide', hideComplementary);
-    eventListener.listenTo(eventbus, 'massTransitStop-walkingCyclingLinks:show', toggleWalkingCyclingLinks);
-    eventListener.listenTo(eventbus, 'massTransitStop-walkingCyclingLinks:hide', toggleWalkingCyclingLinks);
     eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);

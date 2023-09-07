@@ -21,29 +21,7 @@
     return _.find(selectedMassTransitStopModel.getCurrentAsset().payload.properties, {'publicId' : public_id});
   }
 
-  var walkingCyclingErrorLabel = function() {
-    var element = $('<span class="validation-error">Vain raitiovaunupysäkki voidaan tallentaa kävelyn ja pyöräilyn väylälle</span>');
-    var updateVisibility = function() {
-      if(selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()) {
-        element.show();
-      }
-      else {
-        element.hide();
-      }
-    };
-
-    updateVisibility();
-
-    eventbus.on('asset:moved assetPropertyValue:changed', function() {
-      updateVisibility();
-    }, this);
-
-    return {
-      element: element
-    };
-  };
-
-  var missingInfoLabel = function() {
+  var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
     var updateVisibility = function() {
@@ -166,15 +144,16 @@
       }else{
         new GenericConfirmPopup('Pysäkin vaikutussuunta on yksisuuntaisen tielinkin ajosuunnan vastainen. Pysäkkiä ei tallennettu.',
           {type: 'alert'});
+        selectedMassTransitStopModel.cancel();
+        selectedMassTransitStopModel.close();
+        eventbus.trigger('layer:cleared');
       }
     }
 
     var updateStatus = function() {
       if(pointAssetToSave && !isValidServicePoint()){
         element.prop('disabled', true);
-      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() &&
-          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone() &&
-          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
+      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
         element.prop('disabled', false);
       } else if(poistaSelected) {
         element.prop('disabled', false);
@@ -266,9 +245,7 @@
 
         var buttons = function (busStopTypeSelected) {
           return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
-              .append(new walkingCyclingErrorLabel().element)
-              .append($('<br>'))
-              .append(new missingInfoLabel().element)
+              .append(new ValidationErrorLabel().element)
               .append(new SaveButton(busStopTypeSelected).element)
               .append(new CancelButton().element);
         };
@@ -972,10 +949,6 @@
               return value.propertyValue !== "";
             });
         });
-
-        if (isBusStopExpired && isTRMassTransitStop)  {
-          readOnly = true;
-        }
 
         if(authorizationPolicy.isActiveTrStopWithoutPermission(isBusStopExpired, isTRMassTransitStop))
           readOnly = true;

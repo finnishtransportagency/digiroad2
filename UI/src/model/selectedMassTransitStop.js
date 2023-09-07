@@ -195,7 +195,6 @@
 
     var open = function(asset) {
       currentAsset.id = asset.id;
-      currentAsset.linkId = asset.linkId;
       currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
@@ -359,7 +358,7 @@
       if(roadCollection){
         var roadLinkDirection = getRoadLinkDirection();
         var massTransitStopDirection = currentAsset.payload.validityDirection;
-        return isTerminalBusStop(currentAsset.payload.properties) || roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
+        return isTerminalBusStop(currentAsset.payload.properties) || isTram(currentAsset.payload.properties) || roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
       }
       return false;
     };
@@ -436,9 +435,9 @@
         backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
           if (errorObject !== undefined) {
             console.log(errorObject);
-            
+
           }
-          
+
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -455,7 +454,7 @@
           if (errorObject !== undefined) {
             console.log(errorObject);
           }
-          
+
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -493,7 +492,7 @@
 
     var get = function() {
       if (exists()) {
-          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForCarPedestrianCycling(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), currentAsset.payload.lon, currentAsset.payload.lat);
           var linkId = nearestLine.linkId;
           if (!currentAsset.linkId)
               currentAsset.linkId = linkId;
@@ -619,6 +618,14 @@
 
       return _.some(properties, function (property) {
         return property.publicId === 'liitetty_terminaaliin' && !_.isEmpty(property.values);
+      });
+    }
+
+    function isTram(properties) {
+      return _.some(properties, function (property) {
+        return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function (value) {
+          return value.propertyValue == "1";
+        });
       });
     }
 
