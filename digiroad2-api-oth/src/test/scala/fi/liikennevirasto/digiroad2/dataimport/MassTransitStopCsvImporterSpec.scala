@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.Digiroad2Context.{userProvider}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkClient, RoadLinkFetched}
