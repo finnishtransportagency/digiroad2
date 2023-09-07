@@ -111,11 +111,6 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value).get
   }
 
-  def getBusStopPropertyValue(pointAssetAttributes: ParsedProperties): BusStopType = {
-    val busStopType = pointAssetAttributes.find(prop => prop.columnName == "pysakin_tyyppi").map(_.value).get.asInstanceOf[List[PropertyValue]].head
-    BusStopType.apply(busStopType.propertyValue.toInt)
-  }
-
   def getPropertyValueOption(pointAssetAttributes: ParsedProperties, propertyName: String): Option[Any] = {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value)
   }

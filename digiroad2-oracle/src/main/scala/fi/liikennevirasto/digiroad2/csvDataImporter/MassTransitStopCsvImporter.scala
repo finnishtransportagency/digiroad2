@@ -387,6 +387,11 @@ class Creator(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkS
     List(AssetProperty("vaikutussuunta", TrafficDirection.toSideCode(direction).value))
   }
 
+  def getBusStopPropertyValue(pointAssetAttributes: ParsedProperties): BusStopType = {
+    val busStopType = pointAssetAttributes.find(prop => prop.columnName == "pysakin_tyyppi").map(_.value).get.asInstanceOf[List[PropertyValue]].head
+    BusStopType.apply(busStopType.propertyValue.toInt)
+  }
+
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     println("Creating busStop")
     val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
