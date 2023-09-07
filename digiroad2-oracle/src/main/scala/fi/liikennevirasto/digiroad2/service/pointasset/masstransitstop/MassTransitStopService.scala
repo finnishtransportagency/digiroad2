@@ -731,6 +731,12 @@ trait MassTransitStopService extends PointAssetOperations {
   def getLatestModifiedAsset(assets: Seq[PersistedMassTransitStop]): PersistedMassTransitStop = {
     assets.maxBy(asset => asset.modified.modificationTime.getOrElse(asset.created.modificationTime.get).getMillis)
   }
+
+  def getBusStopPropertyValue(pointAssetAttributes: List[AssetProperty]): BusStopType = {
+    val busStopType = pointAssetAttributes.find(prop => prop.columnName == "pysakin_tyyppi").map(_.value).get.asInstanceOf[List[PropertyValue]].head
+    BusStopType.apply(busStopType.propertyValue.toInt)
+  }
+
 }
 
 class MassTransitStopException(string: String) extends RuntimeException {
