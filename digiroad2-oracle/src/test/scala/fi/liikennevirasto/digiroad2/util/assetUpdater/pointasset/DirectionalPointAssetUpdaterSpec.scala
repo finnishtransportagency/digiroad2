@@ -295,12 +295,12 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       sqlu"""UPDATE ASSET
           SET CREATED_DATE = to_timestamp('2021-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z'),
               MODIFIED_BY = 'testModifier', MODIFIED_DATE = to_timestamp('2022-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
-          WHERE id in (${dtsId}, ${tlId})
+          WHERE id in (${dtsId}, ${tlId}, ${tsId})
       """.execute
     } else {
       sqlu"""UPDATE ASSET
           SET CREATED_DATE = to_timestamp('2021-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
-          WHERE id in (${dtsId}, ${tlId})
+          WHERE id in (${dtsId}, ${tlId}, ${tsId})
       """.execute
     }
 
@@ -334,10 +334,10 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       newAsset2.modifiedBy.get should be("testModifier")
       newAsset2.modifiedAt.get.toString() should be("2022-05-10T10:52:28.783+03:00")
 
-      val asset3 = trafficLightService.getPersistedAssetsByIds(ids).head
+      val asset3 = trafficSignService.getPersistedAssetsByIds(ids).head
       val corrected3 = updater.correctPersistedAsset(asset3, change)
-      val newId3 = trafficLightService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
-      val newAsset3 = trafficLightService.getPersistedAssetsByIds(Set(newId3)).head
+      val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
+      val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
       newAsset3.createdBy.get should be("testCreator")
       newAsset3.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
       newAsset3.modifiedBy.get should be("testModifier")
@@ -370,10 +370,10 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       newAsset2.modifiedBy.get should be("testModifier")
       newAsset2.modifiedAt.get.toString() should be("2022-05-10T10:52:28.783+03:00")
 
-      val asset3 = trafficLightService.getPersistedAssetsByIds(ids).head
+      val asset3 = trafficSignService.getPersistedAssetsByIds(ids).head
       val corrected3 = updater.correctPersistedAsset(asset3, change)
-      val newId3 = trafficLightService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
-      val newAsset3 = trafficLightService.getPersistedAssetsByIds(Set(newId3)).head
+      val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
+      val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
       newAsset3.createdBy.get should be("testCreator")
       newAsset3.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
       newAsset3.modifiedBy.get should be("testModifier")
@@ -406,10 +406,10 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       newAsset2.modifiedBy should be(None)
       newAsset2.modifiedAt should be(None)
 
-      val asset3 = trafficLightService.getPersistedAssetsByIds(ids).head
+      val asset3 = trafficSignService.getPersistedAssetsByIds(ids).head
       val corrected3 = updater.correctPersistedAsset(asset3, change)
-      val newId3 = trafficLightService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
-      val newAsset3 = trafficLightService.getPersistedAssetsByIds(Set(newId3)).head
+      val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
+      val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
       newAsset3.createdBy.get should be("testCreator")
       newAsset3.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
       newAsset3.modifiedBy should be(None)
