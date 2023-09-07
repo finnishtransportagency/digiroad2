@@ -483,6 +483,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val yCoord = 2
       val municipalityCode = Map("MUNICIPALITYCODE" -> BigInt(837))
       val pedestrianRoadLink = Seq(RoadLink(linkId2, Seq(Point(2, 2), Point(4, 4), Point(6, 6)), 6, Municipality, 1, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, municipalityCode))
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(Seq[RoadLink]())
 
       val assetFields = Map("koordinaatti x" -> xCoord, "koordinaatti y" -> yCoord, "pysäkin tyyppi" -> "2", "tietojen ylläpitäjä" -> "1")
       val csv = massTransitStopImporterCreate.csvRead(assetFields)
@@ -490,8 +491,8 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val result = massTransitStopCsvOperation.creator.processing(csv, testUser, Set())
       result.malformedRows.isEmpty should be(true)
       result.incompleteRows.isEmpty should be(true)
-      result.excludedRows.isEmpty should be(true)
-      result.notImportedData.isEmpty should be(false)
+      result.notImportedData.isEmpty should be (true)
+      result.excludedRows.isEmpty should be(false)
 
       val createdAssets = testMassTransitStopService.getPersistedAssetsByLinkId(linkId2, false)
       createdAssets.isEmpty should be(true)
