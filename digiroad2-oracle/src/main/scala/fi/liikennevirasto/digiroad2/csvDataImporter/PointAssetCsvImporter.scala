@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.BusStopType
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 
@@ -108,6 +109,11 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   def getPropertyValue(pointAssetAttributes: ParsedProperties, propertyName: String): Any = {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value).get
+  }
+
+  def getBusStopPropertyValue(pointAssetAttributes: ParsedProperties): BusStopType = {
+    val busStopType = pointAssetAttributes.find(prop => prop.columnName == "pysakin_tyyppi").map(_.value).get.asInstanceOf[List[PropertyValue]].head
+    BusStopType.apply(busStopType.propertyValue.toInt)
   }
 
   def getPropertyValueOption(pointAssetAttributes: ParsedProperties, propertyName: String): Option[Any] = {
