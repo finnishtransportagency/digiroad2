@@ -261,7 +261,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   }
 
   def getNearestRoadLink(lon: Double, lat: Double, user: User, roadTypeLimitations: Set[AdministrativeClass], stopType: BusStopType): Seq[RoadLink] = {
-    val isCarStop = if (stopType == BusStopType.Tram) false else true
+    val isCarStop = if (stopType != BusStopType.Tram) true else false
     val closestRoadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon, lat), isCarStop).
       filterNot(road => roadTypeLimitations.contains(road.administrativeClass))
     if(closestRoadLinks.nonEmpty)
