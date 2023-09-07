@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.Digiroad2Context.{roadLinkService, userProvider}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.{userProvider}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkClient, RoadLinkFetched}
@@ -38,6 +38,19 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   val roadLinkFetcheds = Seq(RoadLinkFetched(linkId1, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(linkId2, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
+
+  val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
+    override def eventbus: DigiroadEventBus = new DummyEventBus
+
+    override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+
+    override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val municipalityDao: MunicipalityDao = new MunicipalityDao
+    override val roadLinkService: RoadLinkService = mockRoadLinkService
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
 
   when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
   when(mockRoadLinkService.enrichFetchedRoadLinks(any[Seq[RoadLinkFetched]], any[Boolean])).thenReturn(roadLink)
@@ -434,27 +447,15 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     }
 
   test("Given a pedestrian path; When a tramp stop is imported on it; Then the process should succeed") {
-    val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
-      override def eventbus: DigiroadEventBus = new DummyEventBus
-
-      override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-      override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-
-      override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-      override val municipalityDao: MunicipalityDao = new MunicipalityDao
-      override val roadLinkService: RoadLinkService = mockRoadLinkService
-      override val geometryTransform: GeometryTransform = mockGeometryTransform
-    }
     val (mockMassTransitStopService, mockRoadLinkClient) = mockWithMassTransitStops(Seq((1l, Municipality), (2l, State)))
     val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkClient, mockRoadLinkService, mockEventBus, testMassTransitStopService)
 
     runWithRollback {
-      val linkId = "91141bb4-1b19-44d8-94bd-b41d976b2bfc:1"
-      val xCoord = 328817.306862873
-      val yCoord = 6821601.50813708
-      val pedestrianRoadLink = roadLinkService.getRoadLinkByLinkId(linkId).get
-      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(Seq(pedestrianRoadLink))
+      val xCoord = 4
+      val yCoord = 4
+      val municipalityCode = Map("MUNICIPALITYCODE" -> BigInt(837))
+      val pedestrianRoadLink = Seq(RoadLink(linkId2, Seq(Point(2, 2), Point(4, 4), Point(6, 6)), 6, Municipality, 1, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, municipalityCode))
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(pedestrianRoadLink)
 
       val assetFields = Map("koordinaatti x" -> xCoord, "koordinaatti y" -> yCoord, "pysäkin tyyppi" -> "1", "tietojen ylläpitäjä" -> "1")
       val csv = massTransitStopImporterCreate.csvRead(assetFields)
@@ -465,7 +466,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       result.excludedRows.isEmpty should be(true)
       result.notImportedData.isEmpty should be(true)
 
-      val createdAsset = testMassTransitStopService.getPersistedAssetsByLinkId(linkId, false).head
+      val createdAsset = testMassTransitStopService.getPersistedAssetsByLinkId(linkId2, false).head
       createdAsset.stopTypes.head should be(1)
       (createdAsset.lon - xCoord < 0.001) should be(true)
       (createdAsset.lat - yCoord < 0.001) should be(true)
@@ -474,25 +475,14 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   }
 
   test("Given a pedestrian path; When a bus stop is imported on it; Then the process should fail") {
-    val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
-      override def eventbus: DigiroadEventBus = new DummyEventBus
-
-      override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-      override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-
-      override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-      override val municipalityDao: MunicipalityDao = new MunicipalityDao
-      override val roadLinkService: RoadLinkService = mockRoadLinkService
-      override val geometryTransform: GeometryTransform = mockGeometryTransform
-    }
     val (mockMassTransitStopService, mockRoadLinkClient) = mockWithMassTransitStops(Seq((1l, Municipality), (2l, State)))
     val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkClient, mockRoadLinkService, mockEventBus, testMassTransitStopService)
 
     runWithRollback {
-      val linkId = "91141bb4-1b19-44d8-94bd-b41d976b2bfc:1"
-      val xCoord = 328817.306862873
-      val yCoord = 6821601.50813708
+      val xCoord = 2
+      val yCoord = 2
+      val municipalityCode = Map("MUNICIPALITYCODE" -> BigInt(837))
+      val pedestrianRoadLink = Seq(RoadLink(linkId2, Seq(Point(2, 2), Point(4, 4), Point(6, 6)), 6, Municipality, 1, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, municipalityCode))
 
       val assetFields = Map("koordinaatti x" -> xCoord, "koordinaatti y" -> yCoord, "pysäkin tyyppi" -> "2", "tietojen ylläpitäjä" -> "1")
       val csv = massTransitStopImporterCreate.csvRead(assetFields)
@@ -503,7 +493,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       result.excludedRows.isEmpty should be(true)
       result.notImportedData.isEmpty should be(false)
 
-      val createdAssets = testMassTransitStopService.getPersistedAssetsByLinkId(linkId, false)
+      val createdAssets = testMassTransitStopService.getPersistedAssetsByLinkId(linkId2, false)
       createdAssets.isEmpty should be(true)
 
     }
