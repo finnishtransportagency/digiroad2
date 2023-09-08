@@ -481,8 +481,6 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     runWithRollback {
       val xCoord = 2
       val yCoord = 2
-      val municipalityCode = Map("MUNICIPALITYCODE" -> BigInt(837))
-      val pedestrianRoadLink = Seq(RoadLink(linkId2, Seq(Point(2, 2), Point(4, 4), Point(6, 6)), 6, Municipality, 1, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, municipalityCode))
       when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(Seq[RoadLink]())
 
       val assetFields = Map("koordinaatti x" -> xCoord, "koordinaatti y" -> yCoord, "pysäkin tyyppi" -> "2", "tietojen ylläpitäjä" -> "1")
