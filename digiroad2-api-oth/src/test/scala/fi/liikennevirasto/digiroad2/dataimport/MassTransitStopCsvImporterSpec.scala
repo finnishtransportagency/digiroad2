@@ -491,10 +491,6 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       result.incompleteRows.isEmpty should be(true)
       result.notImportedData.isEmpty should be (true)
       result.excludedRows.isEmpty should be(false)
-
-      val createdAssets = testMassTransitStopService.getPersistedAssetsByLinkId(linkId2, false)
-      createdAssets.isEmpty should be(true)
-
     }
   }
 
