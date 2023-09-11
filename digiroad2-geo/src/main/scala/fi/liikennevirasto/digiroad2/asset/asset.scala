@@ -833,7 +833,16 @@ case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[Str
 }
 
 case class DynamicPropertyValue(value: Any) {
-  def toJson = JString(value.toString)
+  def toJson = {
+    val valueObject = if (value.isInstanceOf[Map[String, Any]]) {
+      val valueToMap = value.asInstanceOf[Map[String, Any]]
+      Try(JObject(ValidityPeriodValue.toMap(ValidityPeriodValue.fromMap(valueToMap)).map(v => JField(v._1, JInt(v._2.toString.toInt))).toList))
+        .getOrElse(JObject(valueToMap.map(v => JField(v._1, JString(v._2.toString))).toList))
+    } else {
+      JString(value.toString)
+    }
+    JObject(JField("value", valueObject))
+  }
 }
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue]) extends AbstractProperty
