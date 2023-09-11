@@ -263,7 +263,7 @@ object SpeedLimitFiller extends AssetFiller {
   }
 
   override def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId:Int, changedSet: Option[ChangeSet] = None,
-                   geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+                   geometryChanged: Boolean = true,generateUnknowns: Boolean = false): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations = getOperations(geometryChanged)
     // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
     val changeSet = changedSet match {
@@ -286,6 +286,26 @@ object SpeedLimitFiller extends AssetFiller {
       }
       val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
       (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
+    }
+  }
+
+   def generateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None,
+                            geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
+    val changeSet = changedSet match {
+      case Some(change) => change
+      case None => ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+        valueAdjustments = Seq.empty[ValueAdjustment])
+    }
+
+    roadLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingSegments, changeSet) = acc
+      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, existingSegments)
+      (existingSegments ++ generatedSpeedLimits,changeSet) 
     }
   }
 

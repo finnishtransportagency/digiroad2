@@ -35,14 +35,28 @@ class AssetFiller {
       adjustAssets,
       droppedSegmentWrongDirection,
       adjustSegmentSideCodes,
+      //generateTwoSidedNonExistingLinearAssets(typeId),
+      //generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+      //generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
+      updateValues
+    )
+
+    val generateUnknowns: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       generateTwoSidedNonExistingLinearAssets(typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      updateValues
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
     )
 
     if(geometryChanged) fillOperations
     else adjustmentAndNonExistingOperations
+  }
+
+  def getGenerateUnknowns(typeId: Int): Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
+   Seq(
+      generateTwoSidedNonExistingLinearAssets(typeId),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
+   )
   }
 
   private def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLink): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
@@ -542,8 +556,10 @@ class AssetFiller {
   }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
-                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations = getOperations(typeId, geometryChanged)
+                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true,generateUnknowns: Boolean = false): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    
+    //TODO split to two different method 
+    val operations = if (generateUnknowns) getGenerateUnknowns(typeId) else getOperations(typeId, geometryChanged)
 
     val changeSet = changedSet match {
       case Some(change) => change

@@ -19,6 +19,7 @@ import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDi
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
 import org.joda.time.DateTime
+import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
 
 import java.security.InvalidParameterException
@@ -142,8 +143,8 @@ trait LaneOperations {
         }
     }.toSeq
   }
-
-   def getLanesByRoadLinks(roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLane] = {
+  
+   def getLanesByRoadLinks(roadLinks: Seq[RoadLink], adjust: Boolean = false): Seq[PieceWiseLane] = {
     val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
     if(adjust){
       val lanesMapped = lanes.groupBy(_.linkId)
@@ -156,7 +157,27 @@ trait LaneOperations {
     }
     else laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)
   }
+  /**
+    * Make sure operations are small and fast
+    *
+    * @param linksIds
+    * @param typeId asset type
+    */
+  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int): Unit = {
+    withDynTransaction {
+      try {
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
+        val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
+        val groupedAssets = lanes.groupBy(_.linkId)
+        adjustLanes(roadLinks, groupedAssets, geometryChanged = false)
+      } catch {
+        case e: PSQLException => logger.error(s"Database error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+        case e: Throwable => logger.error(s"Unknown error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+      }
 
+    }
+  }
+  
   def adjustLanes(roadLinks: Seq[RoadLink], lanes: Map[String, Seq[PersistedLane]], geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLane] = {
     val (filledTopology, adjustmentsChangeSet) = laneFiller.fillTopology(roadLinks, lanes, None, geometryChanged)
 

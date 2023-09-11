@@ -3,15 +3,15 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao, Queries}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{getAssetUpdater}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.getAssetUpdater
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
+import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
 
 object LinearAssetTypes {
@@ -37,6 +37,8 @@ object LinearAssetTypes {
 }
 
 case class ChangedLinearAsset(linearAsset: PieceWiseLinearAsset, link: RoadLink)
+
+case class AssetUpdate(linksIds: Set[String], typeId: Int)
 case class Measures(startMeasure: Double, endMeasure: Double)
 
 trait LinearAssetOperations {
@@ -160,7 +162,7 @@ trait LinearAssetOperations {
     */
   def getByMunicipality(typeId: Int, municipality: Int, roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(municipality)
-    val linearAssets = getByRoadLinks(typeId, roadLinks, adjust = false, roadLinkFilter = roadLinkFilter)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, generateUnknownBoolean = false, roadLinkFilter = roadLinkFilter)
     linearAssets.map(asset => {
       val roadLink = roadLinks.find(_.linkId == asset.linkId).get
       val (startMeasure, endMeasure, geometry) = GeometryUtils.useRoadLinkMeasuresIfCloseEnough(asset.startMeasure, asset.endMeasure, roadLink)
@@ -236,24 +238,42 @@ trait LinearAssetOperations {
     existingAssets
   }
 
-  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean = false,
+  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], generateUnknownBoolean: Boolean = true, showHistory: Boolean = false,
                                roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
 
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
     val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
-    if (adjust){
+    if (generateUnknownBoolean){
       val groupedAssets = linearAssets.groupBy(_.linkId)
       val adjustedAssets = withDynTransaction {
         LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId){
-          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          generateUnknown(roadLinks, groupedAssets, typeId)
         }
       }
       adjustedAssets
     }
     else linearAssets
   }
-
-
+  /**
+    * Make sure operations are small and fast
+    * @param linksIds
+    * @param typeId asset type
+    */
+  def adjustLinearAssetsAction(linksIds:Set[String],typeId:Int): Unit = {
+    withDynTransaction {
+      try {
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
+        val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
+        val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+        val groupedAssets = linearAssets.groupBy(_.linkId)
+        adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+      } catch {
+        case e:PSQLException => logger.error(s"Database error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}",e)
+        case e:Throwable => logger.error(s"Unknown error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}",e)
+      }
+    }
+  }
+  
   def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
                          typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
     val assetUpdater = getAssetUpdater(typeId)
@@ -269,6 +289,11 @@ trait LinearAssetOperations {
         val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty).groupBy(_.linkId)
         adjustLinearAssets(roadLinks, linearAssetsToAdjust, typeId, None, geometryChanged, counter + 1)
     }
+  }
+  def generateUnknown(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
+                      typeId: Int, changeSet: Option[ChangeSet] = None): Seq[PieceWiseLinearAsset] = {
+    val (filledTopology, _) = assetFiller.fillTopology(roadLinks, linearAssets, typeId, changeSet,generateUnknowns = true)
+    filledTopology
   }
 
   /**
@@ -431,6 +456,7 @@ trait LinearAssetOperations {
 
       val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink),fromUpdate = true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
+      eventBus.publish("linearAssetUpdater",AssetUpdate(Set(roadLink.linkId),linearAsset.typeId))
       Seq(existingId, createdId).flatten
     }
   }
@@ -468,6 +494,7 @@ trait LinearAssetOperations {
         (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate = true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)),
           valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate = true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)))
 
+      eventBus.publish("linearAssetUpdater",AssetUpdate(Set(roadLink.linkId),existing.typeId))
       Seq(newId1, newId2).flatten
     }
   }
