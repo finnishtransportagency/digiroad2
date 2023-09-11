@@ -1242,7 +1242,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case _ => Seq()
     }
   }
-
+  //TODO changes done
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1270,7 +1270,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     try {
       val createdIds = usedService.create(newLinearAssets, typeId, user.username)
-      updatedNumericalIds ++ createdIds
+      val ids = updatedNumericalIds ++ createdIds
+      val assets = usedService.getPersistedAssetsByIds(ids)
+      eventBus.publish("linearAssetUpdater",AssetUpdate(assets.map(_.linkId),assets.head.typeId))
+      ids
     } catch {
       case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
     }
@@ -1316,7 +1319,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRights(existingAssets, Seq(), user, typeId)
     usedService.expire(ids.toSeq, user.username)
   }
-
+  //TODO changes done
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1329,6 +1332,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       validateUserAccess(user, Some(typeId)))
   }
 
+  //TODO changes done
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1548,7 +1552,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         getLinearAssetService(typeId).getInaccurateRecords(typeId, municipalityCode, Set(Municipality))
     }
   }
-
+//TODO changes done
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val optionalValue = (parsedBody \ "value").extractOpt[SpeedLimitValue]
@@ -1558,11 +1562,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(values) =>
         val updatedIds = speedLimitService.updateValues(ids, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
         val createdIds = speedLimitService.create(newLimits, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).toSet
-        speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
+        val spedlimits = speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
+        eventBus.publish("linearAssetUpdater:speedLimit",AssetUpdate(spedlimits.map(_.linkId).toSet,SpeedLimitAsset.typeId))
+        spedlimits
       case _ => BadRequest("Speed limit value not provided")
     }
   }
-
+  //TODO changes done
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
     speedLimitService.splitSpeedLimit(params("speedLimitId").toLong,
@@ -1572,7 +1578,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       user.username,
       validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _)
   }
-
+  //TODO changes done
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
     speedLimitService.separateSpeedLimit(params("speedLimitId").toLong,
@@ -1581,7 +1587,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       user.username,
       validateUserAccess(user, Some(SpeedLimitAsset.typeId)))
   }
-
+  //TODO changes done
   post("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val newLimit = NewLimit((parsedBody \ "linkId").extract[String],
@@ -1754,7 +1760,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
-
+//TODO changes ?
   put("/manoeuvres") {
     val user = userProvider.getCurrentUser()
     val manoeuvreUpdates: Map[Long, ManoeuvreUpdates] = parsedBody
@@ -2383,7 +2389,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
-
+//TODO changes done
   post("/lanes") {
     val user = userProvider.getCurrentUser()
 
@@ -2394,9 +2400,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     if (missingStartDates(incomingLanes.toSet)) halt(BadRequest("Missing required 'start_date' on one or more lanes"))
 
     validateUserRightsForLanes(linkIds, user)
-    laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username, sideCodesForLinks)
+    val ids = laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username, sideCodesForLinks)
+    val assets = laneService.getPersistedLanesByIds(ids)
+    eventBus.publish("linearAssetUpdater:lane",AssetUpdate(assets.map(_.linkId).toSet,0))
+    ids
   }
-
+  //TODO changes ? done
   post("/lanesByRoadAddress") {
     val user = userProvider.getCurrentUser()
 
@@ -2407,7 +2416,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     validateUserRightsForRoadAddress(laneRoadAddressInfo, user)
     try {
-      laneService.processLanesByRoadAddress(incomingLanes, laneRoadAddressInfo, user.username)
+      val ids = laneService.processLanesByRoadAddress(incomingLanes, laneRoadAddressInfo, user.username)
+      val assets = laneService.getPersistedLanesByIds(ids)
+      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(assets.map(_.linkId).toSet, 0))
+      ids
     } catch {
       case e: InvalidParameterException => halt(BadRequest(e.getMessage))
     }

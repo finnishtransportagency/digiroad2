@@ -202,6 +202,33 @@ class LaneWorkListInsertItem(laneWorkListService: LaneWorkListService) extends A
   }
 }
 
+class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
+  val logger = LoggerFactory.getLogger(getClass)
+  def receive = {
+    case a: AssetUpdate =>
+      linearAssetService.adjustLinearAssetsAction(a.linksIds,a.typeId)
+    case _ => logger.info("AssetUpdater: Received unknown message")
+  }
+}
+
+class SpeedLimitUpdaterAdjust(speedLimitService: SpeedLimitService) extends Actor {
+  val logger = LoggerFactory.getLogger(getClass)
+  def receive = {
+    case a: AssetUpdate =>
+      speedLimitService.adjustLinearAssetsAction(a.linksIds,a.typeId)
+    case _ => logger.info("SpeedLimitUpdater: Received unknown message")
+  }
+}
+
+class LaneUpdaterAdjust(laneService: LaneService) extends Actor {
+  val logger = LoggerFactory.getLogger(getClass)
+  def receive = {
+    case a: AssetUpdate =>
+      laneService.adjustLinearAssetsAction(a.linksIds,a.typeId)
+    case _ => logger.info("SpeedLimitUpdater: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -276,6 +303,15 @@ object Digiroad2Context {
 
   val pedestrianCrossingVerifier = system.actorOf(Props(classOf[PedestrianCrossingValidation], pedestrianCrossingValidator), name = "pedestrianCrossingValidator")
   eventbus.subscribe(pedestrianCrossingVerifier, "pedestrianCrossing:Validator")
+
+  val assetUpdater = system.actorOf(Props(classOf[AssetUpdater], linearAssetService), name = "linearAssetUpdater")
+  eventbus.subscribe(assetUpdater, "linearAssetUpdater")
+
+  val speedLimitUpdaterAdjust = system.actorOf(Props(classOf[SpeedLimitUpdaterAdjust], speedLimitService), name = "linearAssetUpdaterSpeedLimit")
+  eventbus.subscribe(speedLimitUpdaterAdjust, "linearAssetUpdater:speedLimit")
+
+  val laneUpdaterAdjust = system.actorOf(Props(classOf[LaneUpdaterAdjust], laneService), name = "linearAssetUpdaterLane")
+  eventbus.subscribe(laneUpdaterAdjust, "linearAssetUpdater:lane")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
