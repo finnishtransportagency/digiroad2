@@ -25,7 +25,7 @@ case class ProhibitionsRow(id: Long, linkId: String, sideCode: Int, prohibitionI
                            additionalInfo: String, linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int], isSuggested: Boolean = false)
 
 case class AssetLastModification(id: Long, linkId: String, modifiedBy: Option[String], modifiedDate: Option[DateTime])
-case class AssetLink(id: Long, linkId: String)
+case class AssetLink(id: Long, linkId: String, assetTypeId: Int)
 
 
 class PostGISLinearAssetDao() {
@@ -217,7 +217,9 @@ class PostGISLinearAssetDao() {
     }
   }
 
-  def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[String], includeExpired: Boolean = false): Seq[AssetLink] = {
+  def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[String], includeFloating: Boolean = false
+                           ,includeExpired: Boolean = false): Seq[AssetLink] = {
+    val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
@@ -226,7 +228,7 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join #$idTableName i on i.id = pos.link_id
-          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = '0' #$filterExpired""".as[AssetLink](getAssetLink).list
+          where a.asset_type_id in (#${assetTypeId.mkString(",")}) #$filterFloating #$filterExpired""".as[AssetLink](getAssetLink).list
     }
   }
 
@@ -234,8 +236,9 @@ class PostGISLinearAssetDao() {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val linkId = r.nextString()
+      val assetTypeId = r.nextInt()
 
-      AssetLink(id, linkId)
+      AssetLink(id, linkId, assetTypeId)
     }
   }
 

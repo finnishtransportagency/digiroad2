@@ -265,6 +265,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
    roadLinkDAO.fetchExpiredRoadLink(linkId).headOption
   }
 
+  def getAllExpiredRoadLinks(): Seq[RoadLink] = {
+    val fetchedExpiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+    enrichFetchedRoadLinks(fetchedExpiredLinks)
+  }
+
   /**
     * This method returns road links that have been changed within a specified time period.
     *
@@ -1292,6 +1297,14 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getChangeInfoByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
     roadLinkClient.roadLinkChangeInfo.fetchByDates(since, until)
+  }
+
+  //TODO Delete roadLink from kgv_roadLink, delete overwritten values, link_type and functional_class
+  def deleteRoadLinksAndPropertiesByLinkIds(expiredLinkIds: Set[String]) = {
+    expiredLinkIds.foreach(linkId => {
+      RoadLinkOverrideDAO.IncompleteLinks
+    })
+
   }
 
 }
