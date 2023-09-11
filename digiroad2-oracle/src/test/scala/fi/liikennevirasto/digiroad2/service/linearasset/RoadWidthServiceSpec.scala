@@ -37,12 +37,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-  val initChangeSet: ChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-                                           expiredAssetIds = Set.empty[Long],
-                                           adjustedMValues = Seq.empty[MValueAdjustment],
-                                           adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                           adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-                                           valueAdjustments = Seq.empty[ValueAdjustment])
+  val initChangeSet: ChangeSet = LinearAssetFiller.emptyChangeSet
 
   val randomLinkId1: String = LinkIdGenerator.generateRandom()
   val randomLinkId2: String = LinkIdGenerator.generateRandom()
@@ -148,115 +143,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       filteredCreatedAssets.head.timeStamp should be (timeStamp)
     }
   }
-
-  test("Should not created road width asset when exists an asset created by UI (same linkid)") {
-
-    val municipalityCode = 235
-    val roadLinks = createRoadLinks(municipalityCode)
-    val service = createService()
-
-    val assets = Seq(PersistedLinearAsset(1, randomLinkId1, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    runWithRollback {
-      val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (newAssets, changeSet) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks , changeInfo, _ => Seq(), initChangeSet )
-      changeSet.expiredAssetIds should have size 0
-      newAssets.filter(_.linkId == randomLinkId1) should have size 0
-      newAssets.filter(_.linkId == randomLinkId2) should have size 1
-      newAssets.filter(_.linkId == randomLinkId2).head.value should be(Some(NumericValue(650)))
-    }
-  }
-
-  test("Should not create any new asset (MTKClass not valid)") {
-
-    val municipalityCode = 235
-    val newLinkId1 = randomLinkId1
-    val newLinkId2 = randomLinkId2
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> 120)
-    val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> 2)
-
-    runWithRollback {
-      val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
-      val newRoadLink1 = RoadLink(newLinkId1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass,
-        functionalClass, trafficDirection, linkType, None, None, attributes1)
-      val newRoadLink2 = newRoadLink1.copy(linkId = newLinkId2, attributes = attributes2)
-      val roadLinks = List(newRoadLink1, newRoadLink2)
-      val service = createService()
-
-      val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (newAsset, changeSet) = service.getRoadWidthAssetChanges(Seq(), Seq(), roadLinks, changeInfo, _ => Seq(), initChangeSet)
-      changeSet.expiredAssetIds should have size 0
-      newAsset should have size 0
-    }
-  }
-
-  test("Should not create new road width if the road doesn't have MTKClass attribute") {
-
-    val newLinkId2 = randomLinkId2
-    val newLinkId1 = randomLinkId1
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-
-    val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-    val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-
-    runWithRollback {
-      val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
-      val newRoadLink1 = RoadLink(newLinkId1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass,
-        functionalClass, trafficDirection, linkType, None, None, attributes1)
-      val newRoadLink2 = newRoadLink1.copy(linkId = newLinkId2, attributes = attributes2)
-      val roadLinks = List(newRoadLink1, newRoadLink2)
-      val service = createService()
-
-      val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (newAsset, changeSet) = service.getRoadWidthAssetChanges(Seq(), Seq(), roadLinks, changeInfo, _ => Seq(), initChangeSet)
-      changeSet.expiredAssetIds should have size 0
-      newAsset should have size 0
-    }
-  }
-
-  test("Only update road width assets auto generated ") {
-    val municipalityCode = 235
-    val roadLinks = createRoadLinks(municipalityCode)
-    val service = createService()
-
-    val assets = Seq(PersistedLinearAsset(1, randomLinkId1, 1, Some(NumericValue(4000)), 0, 20,  Some(AutoGeneratedUsername.mtkClassDefault), None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface, None, None, None),
-      PersistedLinearAsset(2, randomLinkId2, 1, Some(NumericValue(2000)), 0, 20, None, None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    runWithRollback {
-      val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (newAsset, changeSet) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo, _ => Seq(), initChangeSet)
-      changeSet.expiredAssetIds should have size 1
-      changeSet.expiredAssetIds should be(Set(1))
-      newAsset.forall(_.timeStamp == 11L) should be(true)
-      newAsset.forall(_.value.isDefined) should be(true)
-      newAsset should have size 1
-      newAsset.head.linkId should be(randomLinkId1)
-      newAsset.head.value should be(Some(NumericValue(1100)))
-    }
-  }
-
-  test("Do not updated asset created or expired by the user") {
-    val municipalityCode = 235
-    val roadLinks = createRoadLinks(municipalityCode)
-    val service = createService()
-
-    val assets = Seq(PersistedLinearAsset(1, randomLinkId1, 1, Some(NumericValue(4000)), 0, 20,  Some("test"), None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val expiredAssets = Seq(AssetLastModification(2, randomLinkId2, Some("test2"), None))
-
-    runWithRollback {
-      val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (newAsset, changeSet) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo, _ => expiredAssets, initChangeSet)
-      changeSet.expiredAssetIds should have size 0
-      newAsset should have size 0
-    }
-  }
-
+  
   ignore("Create linear asset on a road link that has changed previously"){
     val oldLinkId1 = randomLinkId1
     val linkId1 = randomLinkId2
@@ -342,23 +229,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       assetsCreated.length should be (2)
       assetsCreated.foreach{asset =>
         asset.informationSource should be (Some(MunicipalityMaintenainer))
-      }
-    }
-  }
-
-  test("check if roadWidth created because of changes has informationSource as MmlNls") {
-    val municipalityCode = 235
-    val roadLinks = createRoadLinks(municipalityCode)
-    val service = createService()
-
-    val assets = Seq(PersistedLinearAsset(1, randomLinkId1, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    runWithRollback {
-      val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (newAssets, changeSet) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo, _ => Seq(), initChangeSet)
-      changeSet.expiredAssetIds should have size 0
-      newAssets.foreach { asset =>
-        asset.informationSource should be(Some(MmlNls))
-
       }
     }
   }

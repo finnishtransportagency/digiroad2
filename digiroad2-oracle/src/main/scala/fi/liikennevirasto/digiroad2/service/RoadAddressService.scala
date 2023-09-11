@@ -4,6 +4,7 @@ package fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
+import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -47,7 +48,7 @@ case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, 
 }
 
 class RoadAddressService(viiteClient: SearchViiteClient ) {
-
+  val roadAddressTempDAO = new RoadAddressTempDAO
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -135,6 +136,19 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
       }
     } else Seq()
   }
+  
+  def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = {
+    withDynTransaction {
+      val tempAddresses = roadAddressTempDAO.getByLinkIds(linkIds)
+      tempAddresses.map(temp => {
+        val sideCode = temp.sideCode.getOrElse(SideCode.Unknown)
+        RoadAddressForLink(id = 0, roadNumber = temp.road, roadPartNumber = temp.roadPart, track = temp.track,
+          startAddrMValue = temp.startAddressM, endAddrMValue = temp.endAddressM,
+          linkId = temp.linkId, startMValue = temp.startMValue, endMValue = temp.endMValue, sideCode = sideCode, geom = temp.geom, expired = false,
+          createdBy = None, createdDate = None, modifiedDate = None)
+      })
+    }
+  }
 
   /**
     * Returns the given road links with road address attributes
@@ -144,10 +158,14 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     */
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink], logComment: String = ""): Seq[RoadLink] = {
     try {
-      
-      val roadAddressLinks = getAllByLinkIds(roadLinks.map(_.linkId))
-      val addressData = groupRoadAddress(roadAddressLinks).map(a => (a.linkId, a)).toMap
-      logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links. ${logComment}")
+      val linkIds = roadLinks.map(_.linkId)
+      val viiteRoadAddressesForLinks = getAllByLinkIds(linkIds)
+      val viiteAddressData = groupRoadAddress(viiteRoadAddressesForLinks).map(a => (a.linkId, a)).toMap
+      val linkIdsMissingAddress = linkIds.diff(viiteAddressData.keys.toSeq).toSet
+      val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
+      val addressData = viiteAddressData ++ tempAddressData
+      logger.info(s"Fetched ${viiteAddressData.values.size} road address of ${roadLinks.size} road links. ${logComment}")
+      logger.info(s"Fetched ${tempAddressData.values.size} temp road address of ${linkIdsMissingAddress.size} road links. ${logComment}")
       roadLinks.map(rl =>
         if (addressData.contains(rl.linkId))
           rl.copy(attributes = rl.attributes ++ roadAddressAttributes(addressData(rl.linkId)))
@@ -166,14 +184,18 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
       case e: Exception =>
         logger.error(s"Unknown error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
         logger.info(s"Failed to retrieve road address information, return links without it. ${logComment}")
-        roadLinks  
+        roadLinks
     }
   }
 
 
   def massLimitationWithRoadAddress(massLimitationAsset: Seq[Seq[MassLimitationAsset]]): Seq[Seq[MassLimitationAsset]] = {
     try {
-      val addressData = groupRoadAddress(getAllByLinkIds(massLimitationAsset.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
+      val linkIds = massLimitationAsset.flatMap(_.map(_.linkId))
+      val viiteAddressData = groupRoadAddress(getAllByLinkIds(linkIds)).map(a => (a.linkId, a)).toMap
+      val linkIdsMissingAddress = linkIds.diff(viiteAddressData.keys.toSeq).toSet
+      val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
+      val addressData = viiteAddressData ++ tempAddressData
       massLimitationAsset.map(
         _.map(pwa =>
           if (addressData.contains(pwa.linkId))
@@ -199,7 +221,11 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     */
   def linearAssetWithRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] = {
     try {
-      val addressData = groupRoadAddress(getAllByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
+      val linkIds = pieceWiseLinearAssets.flatMap(_.map(_.linkId))
+      val viiteAddressData = groupRoadAddress(getAllByLinkIds(linkIds)).map(a => (a.linkId, a)).toMap
+      val linkIdsMissingAddress = linkIds.diff(viiteAddressData.keys.toSeq).toSet
+      val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
+      val addressData = viiteAddressData ++ tempAddressData
       pieceWiseLinearAssets.map(
         _.map(pwa =>
           if (addressData.contains(pwa.linkId))
@@ -226,7 +252,11 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     */
   def laneWithRoadAddress(pieceWiseLanes: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
     try {
-      val addressData = groupRoadAddress(getAllByLinkIds(pieceWiseLanes.map(_.linkId))).map(a => (a.linkId, a)).toMap
+      val linkIds = pieceWiseLanes.map(_.linkId)
+      val viiteAddressData = groupRoadAddress(getAllByLinkIds(linkIds)).map(a => (a.linkId, a)).toMap
+      val linkIdsMissingAddress = linkIds.diff(viiteAddressData.keys.toSeq).toSet
+      val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
+      val addressData = viiteAddressData ++ tempAddressData
       pieceWiseLanes.map( pwl =>
           if (addressData.contains(pwl.linkId))
             pwl.copy(attributes = pwl.attributes ++ roadAddressAttributes(addressData(pwl.linkId)))

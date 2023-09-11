@@ -5,12 +5,15 @@ import software.amazon.awssdk.core.exception.SdkClientException
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.{GetObjectRequest, HeadObjectRequest, PutObjectRequest}
+import software.amazon.awssdk.services.s3.model.{GetObjectRequest, HeadObjectRequest, ListObjectsV2Request, PutObjectRequest, S3Object}
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import scala.annotation.tailrec
+import scala.collection.JavaConverters._
+import scala.io.Source.fromInputStream
 
 class AwsService {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -20,6 +23,7 @@ class AwsService {
 
     def saveFileToS3(s3Bucket: String, id: String, body: String, responseType: String): Unit = {
       val contentType = responseType match {
+        case "csv" => "text/csv"
         case _ => "application/json"
       }
       try {
@@ -74,9 +78,29 @@ class AwsService {
       }
     }
 
-    def getObjectFromS3(s3bucket: String, key: String) = {
+    def getObjectFromS3(s3bucket: String, key: String): String = {
       val getObjectRequest = GetObjectRequest.builder().bucket(s3bucket).key(key).build()
-      s3.getObject(getObjectRequest)
+      val s3Object = s3.getObject(getObjectRequest)
+      fromInputStream(s3Object).mkString
+    }
+
+    def listObjects(s3bucket: String): List[S3Object] = {
+      listBucketObjects(s3bucket).toList
+    }
+
+    @tailrec
+    def listBucketObjects(s3Bucket: String, results: Seq[S3Object] = Seq(), continuationToken: Option[String] = None): Seq[S3Object] = {
+      val listObjectsRequest = ListObjectsV2Request.builder().bucket(s3Bucket)
+      if (continuationToken.isDefined) listObjectsRequest.continuationToken(continuationToken.get)
+
+      val result = s3.listObjectsV2(listObjectsRequest.build())
+      val objects = results ++ result.contents().asScala
+
+      if (result.isTruncated) {
+        listBucketObjects(s3Bucket, objects, Some(result.nextContinuationToken()))
+      } else {
+        objects
+      }
     }
   }
 }
