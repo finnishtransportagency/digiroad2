@@ -13,10 +13,12 @@ import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
-import org.scalactic.Tolerance
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.mockito.MockitoSugar.mock
 import org.scalatest.{FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 import scala.io.Source
 
@@ -236,11 +238,11 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       // Main lane towards digitizing
       val mainLane11 = NewLane(0, 0.0, 432.23526228, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
-      LaneServiceWithDao.create(Seq(mainLane11), Set(oldLinkID), SideCode.TowardsDigitizing.value, testUserName)
+      val mainLane11ID = LaneServiceWithDao.create(Seq(mainLane11), Set(oldLinkID), SideCode.TowardsDigitizing.value, testUserName).head
 
       // Main lane against digitizing
       val mainLane21 = NewLane(0, 0.0, 432.23526228, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
-      LaneServiceWithDao.create(Seq(mainLane21), Set(oldLinkID), SideCode.AgainstDigitizing.value, testUserName)
+      val mainLane21ID = LaneServiceWithDao.create(Seq(mainLane21), Set(oldLinkID), SideCode.AgainstDigitizing.value, testUserName).head
 
       // Cut additional lane towards digitizing
       val subLane12 = NewLane(0, 85.0, 215.0, 49, isExpired = false, isDeleted = false, subLane2PropertiesA)
@@ -254,6 +256,12 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val existingLanes = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkID))
       existingLanes.size should equal (4)
 
+      sqlu"""UPDATE LANE
+          SET CREATED_BY = 'testCreator', CREATED_DATE = to_timestamp('2021-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z'),
+              MODIFIED_BY = 'testModifier', MODIFIED_DATE = to_timestamp('2022-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
+          WHERE id in (${mainLane11ID}, ${mainLane21ID}, ${sublane12ID}, ${sublane22ID})
+      """.execute
+
       // Apply Changes
       val changeSet = LaneUpdater.handleChanges(relevantChange)
       LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChange)
@@ -264,6 +272,13 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       lanesAfterChanges.size should equal (7)
       lanesAfterChanges.count(_.linkId == newLinkID1) should equal (4)
       lanesAfterChanges.count(_.linkId == newLinkID2) should equal (3)
+
+      // Verify that original creation and modification data is preserved
+      lanesAfterChanges.forall(_.createdBy.get == "testCreator") should be(true)
+      lanesAfterChanges.forall(_.createdDateTime.get.toString() == "2021-05-10T10:52:28.783+03:00") should be(true)
+      lanesAfterChanges.forall(_.modifiedBy.get == "testModifier") should be(true)
+      lanesAfterChanges.forall(_.modifiedDateTime.get.toString() == "2022-05-10T10:52:28.783+03:00") should be(true)
+
       val (mainLanesAfterChanges, additionalLanesAfterChanges) = lanesAfterChanges.partition(_.laneCode == MainLane.oneDigitLaneCode)
 
       // Verify main lane changes
@@ -431,17 +446,22 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       // Create test main lanes for all old links
       oldLinks.foreach(oldLink => {
         // Give different start dates to test inheriting latest date for merged main lane
-        val propertiesToUse = oldLink.linkId match {
-          case linkId if linkId == oldLinkId1 => mainLaneLanePropertiesA
-          case linkId if linkId == oldLinkId2 => mainLaneLanePropertiesB
-          case linkId if linkId == oldLinkId3 => mainLaneLanePropertiesC
-          case linkId if linkId == oldLinkId4 => mainLaneLanePropertiesD
+        val (propertiesToUse, dateStringToUse) = oldLink.linkId match {
+          case linkId if linkId == oldLinkId1 => (mainLaneLanePropertiesA, "2017-05-10T10:52:28.783Z")
+          case linkId if linkId == oldLinkId2 => (mainLaneLanePropertiesB, "2020-05-10T10:52:28.783Z")
+          case linkId if linkId == oldLinkId3 => (mainLaneLanePropertiesC, "2021-05-10T10:52:28.783Z")
+          case linkId if linkId == oldLinkId4 => (mainLaneLanePropertiesD, "2018-05-10T10:52:28.783Z")
         }
         val oldLinkLengthRounded = LaneUtils.roundMeasure(oldLink.linkLength)
         val mainLane11 = NewLane(0, 0.0, oldLinkLengthRounded, 49, isExpired = false, isDeleted = false, propertiesToUse)
-        LaneServiceWithDao.create(Seq(mainLane11), Set(oldLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
+        val mainLane11ID = LaneServiceWithDao.create(Seq(mainLane11), Set(oldLink.linkId), SideCode.TowardsDigitizing.value, testUserName).head
         val mainLane21 = NewLane(0, 0.0, oldLinkLengthRounded, 49, isExpired = false, isDeleted = false, propertiesToUse)
-        LaneServiceWithDao.create(Seq(mainLane21), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
+        val mainLane21ID = LaneServiceWithDao.create(Seq(mainLane21), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName).head
+        sqlu"""UPDATE LANE
+          SET CREATED_BY = 'testCreator', CREATED_DATE = to_timestamp(${dateStringToUse}, 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z'),
+              MODIFIED_BY = 'testModifier', MODIFIED_DATE = to_timestamp(${dateStringToUse}, 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
+          WHERE id in (${mainLane11ID}, ${mainLane21ID})
+      """.execute
       })
 
       // Cut additional lane against digitizing
@@ -468,11 +488,15 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId)).sortBy(lane => (lane.laneCode, lane.sideCode))
       val (mainLanesAfterChanges, additionalLanesAfterChanges) = lanesAfterChanges.partition(_.laneCode == LaneNumber.MainLane.oneDigitLaneCode)
 
-      // Validate main lane changes. New road link should have 2 main lanes fused together from the original main lanes
+      // Validate main lane changes. New road link should have 2 main lanes fused together from the original main lanes, retaining the latest creation and modification data
       mainLanesAfterChanges.size should equal(2)
       mainLanesAfterChanges.foreach(mainLane => {
         mainLane.startMeasure should equal(0.0)
         mainLane.endMeasure should equal(newRoadLinkLength)
+        mainLane.createdBy.get should be("testCreator")
+        mainLane.createdDateTime.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+        mainLane.modifiedBy.get should be("testModifier")
+        mainLane.modifiedDateTime.get.toString() should be("2021-05-10T10:52:28.783+03:00")
         val startDate = LaneServiceWithDao.getPropertyValue(mainLane, "start_date")
         // Main lanes on original links had different start dates, latest one should be inherited
         startDate.get.value should equal("16.8.2015")

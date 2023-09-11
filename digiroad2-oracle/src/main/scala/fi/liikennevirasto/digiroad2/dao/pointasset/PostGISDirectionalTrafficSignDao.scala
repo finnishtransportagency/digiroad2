@@ -171,13 +171,17 @@ object PostGISDirectionalTrafficSignDao {
 
   def create(sign: IncomingDirectionalTrafficSign, mValue: Double,  municipality: Int, username: String,
              createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime],
-             externalIdFromUpdate: Option[String]): Long = {
+             externalIdFromUpdate: Option[String], fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None,
+             modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
+
+    val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
+    val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
 
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
        insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $username, current_timestamp);
+        values ($id, $externalIdFromUpdate, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $modifiedBy, $modifiedAt);
         insert into lrm_position(id, start_measure, link_id, side_code, modified_date)
         values ($lrmPositionId, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp);
        insert into asset_link(asset_id, position_id)
@@ -190,9 +194,9 @@ object PostGISDirectionalTrafficSignDao {
     id
   }
 
-  def update(id: Long, sign: IncomingDirectionalTrafficSign, mValue: Double, municipality: Int, username: String) = {
+  def update(id: Long, sign: IncomingDirectionalTrafficSign, mValue: Double, municipality: Int, username: String, fromPointAssetUpdater: Boolean = false) = {
     sqlu""" update asset set municipality_code = $municipality, bearing=${sign.bearing} where id = $id """.execute
-    updateAssetModified(id, username).execute
+    if (!fromPointAssetUpdater) updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
     deleteTextProperty(id, getTextPropertyId).execute
 
