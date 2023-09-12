@@ -35,16 +35,7 @@ class AssetFiller {
       adjustAssets,
       droppedSegmentWrongDirection,
       adjustSegmentSideCodes,
-      //generateTwoSidedNonExistingLinearAssets(typeId),
-      //generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      //generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
       updateValues
-    )
-
-    val generateUnknowns: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      generateTwoSidedNonExistingLinearAssets(typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
     )
 
     if(geometryChanged) fillOperations
@@ -52,11 +43,11 @@ class AssetFiller {
   }
 
   def getGenerateUnknowns(typeId: Int): Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
-   Seq(
+    Seq(
       generateTwoSidedNonExistingLinearAssets(typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
-   )
+    )
   }
 
   private def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLink): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
@@ -557,8 +548,6 @@ class AssetFiller {
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                    changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    
-    //TODO split to two different method 
     val operations = getOperations(typeId, geometryChanged)
 
     val changeSet = changedSet match {
