@@ -292,24 +292,6 @@ object SpeedLimitFiller extends AssetFiller {
     }
   }
 
-   override def generateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-     val changeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-       expiredAssetIds = Set.empty[Long],
-       adjustedMValues = Seq.empty[MValueAdjustment],
-       adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-       valueAdjustments = Seq.empty[ValueAdjustment])
-
-     roadLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
-       val (existingAssets, changeSet) = acc
-       val assetsOnRoadLink = speedLimits.getOrElse(roadLink.linkId, Nil)
-       val (adjustedAssets, assetAdjustments) = getGenerateUnknowns(typeId).foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-         operation(roadLink, currentSegments, currentAdjustments)
-       }
-       (existingAssets ++ adjustedAssets, assetAdjustments)
-     }
-  }
-
   /**
     * For debugging; print speed limit relevant data
     * @param speedLimit speedlimit to print
