@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdate
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
@@ -1119,10 +1120,13 @@ trait LaneOperations {
       val laneIdsToBeExpired = actionsLanes.lanesToDelete.map(_.id)
       val existingLanesToBeExpired = allExistingLanes.filter(existingLane => laneIdsToBeExpired.contains(existingLane.id))
 
-      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
+      val ids= create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
       deleteMultipleLanes(existingLanesToBeExpired, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(getPersistedLanesByIds(ids.toSet).map(_.linkId).toSet, 0))
+      ids
+      
     }
   }
 
@@ -1170,7 +1174,9 @@ trait LaneOperations {
       }
 
       // Create lanes
-      allLanesToCreate.map(createWithoutTransaction(_, username))
+      val ids = allLanesToCreate.map(createWithoutTransaction(_, username))
+      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(getPersistedLanesByIds(ids).map(_.linkId).toSet, 0))
+      ids
     }
   }
 

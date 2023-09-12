@@ -36,7 +36,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       val groupedAssets = linearAssets.groupBy(_.linkId)
       val adjustedAssets = withDynTransaction {
         LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
-          generateUnknown(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          generateUnknown(roadLinks, groupedAssets, typeId)
         }
       }
       adjustedAssets

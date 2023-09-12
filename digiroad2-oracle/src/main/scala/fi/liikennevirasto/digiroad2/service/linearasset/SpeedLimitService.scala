@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.util.LogUtils
-import fi.liikennevirasto.digiroad2.util.assetUpdater.{AssetUpdate, SpeedLimitUpdater}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.{ SpeedLimitUpdater}
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 
@@ -432,6 +432,21 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       createdIds
     }
   }
+
+
+  /**
+    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
+   def createOrUpdateSpeedLimit(newLimits: Seq[NewLimit], values: SpeedLimitValue, username: String, ids: Seq[Long], 
+                                municipalityValidationForUpdate: (Int, AdministrativeClass) => Unit,
+                                municipalityValidationForCreate: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+     val updatedIds = updateValues(ids, values, username, municipalityValidationForUpdate).toSet
+     val createdIds = create(newLimits, values, username, municipalityValidationForCreate).toSet
+     val ids2 = updatedIds ++ createdIds
+     eventBus.publish("linearAssetUpdater:speedLimit", AssetUpdate(getSpeedLimitAssetsByIds(ids2).map(_.linkId).toSet, SpeedLimitAsset.typeId))
+     ids
+  }
+  
 
   def createWithoutTransaction(newLimits: Seq[NewLimit], value: SpeedLimitValue, username: String, sideCode: SideCode): Seq[Long] = {
     newLimits.flatMap { limit =>

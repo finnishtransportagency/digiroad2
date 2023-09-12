@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.getAssetUpdater
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
@@ -439,6 +440,18 @@ trait LinearAssetOperations {
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, timeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
+  }
+
+  /**
+    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  def createOrUpdate(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String,valueOption: Option[Value], existingAssetIds: Set[Long]): Seq[Long] = {
+    val createIds =  create(newLinearAssets,typeId,username)
+    val updateIds = valueOption.map(update(existingAssetIds.toSeq, _, username)).getOrElse(Nil)
+    val ids = createIds ++ updateIds
+    val assets = getPersistedAssetsByIds(typeId, ids.toSet)
+    eventBus.publish("linearAssetUpdater", AssetUpdate(assets.map(_.linkId).toSet, typeId))
+    ids
   }
 
   /**
