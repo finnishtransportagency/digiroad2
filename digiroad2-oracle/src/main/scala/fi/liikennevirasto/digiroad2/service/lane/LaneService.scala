@@ -144,20 +144,10 @@ trait LaneOperations {
         }
     }.toSeq
   }
-  
-   def getLanesByRoadLinks(roadLinks: Seq[RoadLink], adjust: Boolean = false): Seq[PieceWiseLane] = {
+
+  def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
     val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
-     laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)
-   /* if(adjust){
-      val lanesMapped = lanes.groupBy(_.linkId)
-      val filledTopology = withDynTransaction{
-        LogUtils.time(logger, "Check for and adjust possible lane adjustments on " + roadLinks.size + " roadLinks"){
-          adjustLanes(roadLinks, lanesMapped, geometryChanged = false)
-        }
-      }
-      filledTopology
-    }
-    else laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)*/
+    laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)
   }
   /**
     * Make sure operations are small and fast
@@ -710,7 +700,7 @@ trait LaneOperations {
     val roadLinksInRange = roadLinkService.getRoadLinksByLinkIds(linkIds)
     val roadLinksFiltered = roadLinksInRange.filter(_.functionalClass != WalkingAndCyclingPath.value)
     val roadLinksGrouped = roadLinksFiltered.groupBy(_.linkId).mapValues(_.head)
-    val lanes = getLanesByRoadLinks(roadLinksFiltered, adjust = false)
+    val lanes = getLanesByRoadLinks(roadLinksFiltered)
     val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(roadLink => {
       val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
       roadNumber match {
