@@ -38,7 +38,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       }.filterNot(_.expired)
     val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
 
-    if(generateUnknownBoolean) generateUnknown(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
+    if(generateUnknownBoolean) generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
   }
 
   def getPavedRoadAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],

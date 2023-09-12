@@ -227,10 +227,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
         adjustSpeedLimitsAndGenerateUnknowns(roadLinks, speedLimitsToAdjust, None, geometryChanged, counter + 1)
     }
   }
-  def generateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
-                                           changeSet: Option[ChangeSet] = None): Seq[PieceWiseLinearAsset] = {
-    val (filledTopology, changedSet) = SpeedLimitFiller.generateUnknowns(roadLinks, speedLimits, SpeedLimitAsset.typeId, changeSet)
-    filledTopology
+  def generateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]]): Seq[PieceWiseLinearAsset] = {
+     SpeedLimitFiller.generateUnknowns(roadLinks, speedLimits, SpeedLimitAsset.typeId)._1
   }
 
   /**

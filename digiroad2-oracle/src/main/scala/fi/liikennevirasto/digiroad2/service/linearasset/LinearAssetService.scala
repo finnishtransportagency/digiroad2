@@ -244,7 +244,7 @@ trait LinearAssetOperations {
 
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
     val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
-    if (generateUnknownBoolean) generateUnknown(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
+    if (generateUnknownBoolean) generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
   }
   /**
     * Make sure operations are small and fast
@@ -286,8 +286,7 @@ trait LinearAssetOperations {
         adjustLinearAssets(roadLinks, linearAssetsToAdjust, typeId, None, geometryChanged, counter + 1)
     }
   }
-  def generateUnknown(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
-                      typeId: Int): Seq[PieceWiseLinearAsset] = {
+  def generateUnknowns(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int): Seq[PieceWiseLinearAsset] = {
      assetFiller.generateUnknowns(roadLinks, linearAssets, typeId)._1
   }
 
