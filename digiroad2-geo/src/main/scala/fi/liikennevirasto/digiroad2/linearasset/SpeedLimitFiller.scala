@@ -304,7 +304,8 @@ object SpeedLimitFiller extends AssetFiller {
 
     roadLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
-      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, existingSegments)
+      val segments = speedLimits.getOrElse(roadLink.linkId, Nil)
+      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, segments)
       (existingSegments ++ generatedSpeedLimits,changeSet) 
     }
   }
