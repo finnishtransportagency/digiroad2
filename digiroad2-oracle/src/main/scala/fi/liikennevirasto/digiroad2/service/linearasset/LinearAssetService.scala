@@ -287,9 +287,8 @@ trait LinearAssetOperations {
     }
   }
   def generateUnknown(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
-                      typeId: Int, changeSet: Option[ChangeSet] = None): Seq[PieceWiseLinearAsset] = {
-    val (filledTopology, _) = assetFiller.fillTopology(roadLinks, linearAssets, typeId, changeSet,generateUnknowns = true)
-    filledTopology
+                      typeId: Int): Seq[PieceWiseLinearAsset] = {
+     assetFiller.generateUnknowns(roadLinks, linearAssets, typeId)._1
   }
 
   /**

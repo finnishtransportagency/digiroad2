@@ -556,10 +556,10 @@ class AssetFiller {
   }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
-                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true,generateUnknowns: Boolean = false): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     
     //TODO split to two different method 
-    val operations = if (generateUnknowns) getGenerateUnknowns(typeId) else getOperations(typeId, geometryChanged)
+    val operations = getOperations(typeId, geometryChanged)
 
     val changeSet = changedSet match {
       case Some(change) => change
@@ -582,6 +582,26 @@ class AssetFiller {
     }
   }
 
+  def generateUnknowns(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val changeSet = ChangeSet(
+      droppedAssetIds = Set.empty[Long],
+      expiredAssetIds = Set.empty[Long],
+      adjustedMValues = Seq.empty[MValueAdjustment],
+      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+      valueAdjustments = Seq.empty[ValueAdjustment])
+
+    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingAssets, changeSet) = acc
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
+
+      val (adjustedAssets, assetAdjustments) = getGenerateUnknowns(typeId).foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
+      (existingAssets ++ adjustedAssets, assetAdjustments)
+    }
+  }
+  
   private def calculateNewMValuesAndSideCode(asset: PieceWiseLinearAsset, projection: Projection, roadLinkLength: Double) = {
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
