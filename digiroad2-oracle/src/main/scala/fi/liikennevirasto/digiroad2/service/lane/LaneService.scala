@@ -147,7 +147,8 @@ trait LaneOperations {
   
    def getLanesByRoadLinks(roadLinks: Seq[RoadLink], adjust: Boolean = false): Seq[PieceWiseLane] = {
     val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
-    if(adjust){
+     laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)
+   /* if(adjust){
       val lanesMapped = lanes.groupBy(_.linkId)
       val filledTopology = withDynTransaction{
         LogUtils.time(logger, "Check for and adjust possible lane adjustments on " + roadLinks.size + " roadLinks"){
@@ -156,7 +157,7 @@ trait LaneOperations {
       }
       filledTopology
     }
-    else laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)
+    else laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)*/
   }
   /**
     * Make sure operations are small and fast
@@ -169,8 +170,7 @@ trait LaneOperations {
       try {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
         val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
-        val groupedAssets = lanes.groupBy(_.linkId)
-        adjustLanes(roadLinks, groupedAssets, geometryChanged = false)
+        LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks"){adjustLanes(roadLinks, lanes.groupBy(_.linkId), geometryChanged = false)}
       } catch {
         case e: PSQLException => logger.error(s"Database error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
         case e: Throwable => logger.error(s"Unknown error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
