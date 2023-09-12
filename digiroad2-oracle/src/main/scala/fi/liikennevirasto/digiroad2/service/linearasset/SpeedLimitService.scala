@@ -185,14 +185,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       val roadLinksFiltered = roadLinks.filter(roadLinkFilter)
       val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinksFiltered, showHistory)
       val speedLimits = speedLimitLinks.groupBy(_.linkId)
-
-      if (generateUnknownBoolean) {
-        val filledTopology = LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + SpeedLimitAsset.typeId) {
-          generateUnknowns(roadLinksFiltered, speedLimits)
-        }
-        filledTopology
-      }
-      else speedLimitLinks
+      if (generateUnknownBoolean) generateUnknowns(roadLinksFiltered, speedLimits) else speedLimitLinks
     }
   }
 
@@ -208,7 +201,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
         val existingAssets = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks)
         val groupedAssets = existingAssets.groupBy(_.linkId)
-        adjustSpeedLimitsAndGenerateUnknowns(roadLinks, groupedAssets, geometryChanged = false)
+        LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: ${SpeedLimitAsset.typeId}") {
+          adjustSpeedLimitsAndGenerateUnknowns(roadLinks, groupedAssets, geometryChanged = false)
+        }
       } catch {
         case e: PSQLException => logger.error(s"Database error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
         case e: Throwable => logger.error(s"Unknown error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)

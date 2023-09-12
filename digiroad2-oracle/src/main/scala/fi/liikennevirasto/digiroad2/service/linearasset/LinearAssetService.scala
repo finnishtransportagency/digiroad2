@@ -244,16 +244,7 @@ trait LinearAssetOperations {
 
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
     val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
-    if (generateUnknownBoolean){
-      val groupedAssets = linearAssets.groupBy(_.linkId)
-      val adjustedAssets = withDynTransaction {
-        LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId){
-          generateUnknown(roadLinks, groupedAssets, typeId)
-        }
-      }
-      adjustedAssets
-    }
-    else linearAssets
+    if (generateUnknownBoolean) generateUnknown(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
   }
   /**
     * Make sure operations are small and fast
@@ -267,7 +258,11 @@ trait LinearAssetOperations {
         val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
         val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
         val groupedAssets = linearAssets.groupBy(_.linkId)
-        adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+
+        LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
+          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+        }
+        
       } catch {
         case e:PSQLException => logger.error(s"Database error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}",e)
         case e:Throwable => logger.error(s"Unknown error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}",e)
