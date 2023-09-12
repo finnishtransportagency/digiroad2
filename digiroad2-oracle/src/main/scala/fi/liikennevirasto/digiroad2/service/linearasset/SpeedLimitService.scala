@@ -437,14 +437,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-   def createOrUpdateSpeedLimit(newLimits: Seq[NewLimit], values: SpeedLimitValue, username: String, ids: Seq[Long], 
+   def createOrUpdateSpeedLimit(newLimits: Seq[NewLimit], values: SpeedLimitValue, username: String, updateIds: Seq[Long],
                                 municipalityValidationForUpdate: (Int, AdministrativeClass) => Unit,
                                 municipalityValidationForCreate: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-     val updatedIds = updateValues(ids, values, username, municipalityValidationForUpdate).toSet
-     val createdIds = create(newLimits, values, username, municipalityValidationForCreate).toSet
-     val ids2 = updatedIds ++ createdIds
-     eventBus.publish("linearAssetUpdater:speedLimit", AssetUpdate(getSpeedLimitAssetsByIds(ids2).map(_.linkId).toSet, SpeedLimitAsset.typeId))
-     ids
+     val ids = updateValues(updateIds, values, username, municipalityValidationForUpdate) ++ create(newLimits, values, username, municipalityValidationForCreate)
+     eventBus.publish("linearAssetUpdater:speedLimit", AssetUpdate(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId))
+     ids.distinct
   }
   
 

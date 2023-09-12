@@ -446,12 +446,9 @@ trait LinearAssetOperations {
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
   def createOrUpdate(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String,valueOption: Option[Value], existingAssetIds: Set[Long]): Seq[Long] = {
-    val createIds =  create(newLinearAssets,typeId,username)
-    val updateIds = valueOption.map(update(existingAssetIds.toSeq, _, username)).getOrElse(Nil)
-    val ids = createIds ++ updateIds
-    val assets = getPersistedAssetsByIds(typeId, ids.toSet)
-    eventBus.publish("linearAssetUpdater", AssetUpdate(assets.map(_.linkId).toSet, typeId))
-    ids
+    val ids = create(newLinearAssets,typeId,username) ++ valueOption.map(update(existingAssetIds.toSeq, _, username)).getOrElse(Nil)
+    eventBus.publish("linearAssetUpdater", AssetUpdate(getPersistedAssetsByIds(typeId, ids.toSet).map(_.linkId).toSet, typeId))
+    ids.distinct
   }
 
   /**
