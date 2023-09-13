@@ -1,8 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.Digiroad2Context.{cyclingAndWalkingService, damagedByThawService, dynamicLinearAssetService, eventbus, hazmatTransportProhibitionService, linearAxleWeightLimitService, linearBogieWeightLimitService, linearHeightLimitService, linearLengthLimitService, linearTotalWeightLimitService, linearTrailerTruckWeightLimitService, linearWidthLimitService, maintenanceRoadService, massTransitLaneService, numberOfLanesService, parkingProhibitionService, pavedRoadService, prohibitionService, roadLinkService, roadWidthService, roadWorkService, textValueLinearAssetService}
-import fi.liikennevirasto.digiroad2.asset.{AxleWeightLimit, BogieWeightLimit, CareClass, CarryingCapacity, CyclingAndWalking, DamagedByThaw, EuropeanRoads, ExitNumbers, HazmatTransportProhibition, LengthLimit, LitRoad, MaintenanceRoadAsset, MassTransitLane, NumberOfLanes, ParkingProhibition, PavedRoad, Prohibition, RoadWidth, RoadWorksAsset, TotalWeightLimit, TrailerTruckWeightLimit, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo}
+import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
@@ -25,7 +24,6 @@ import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform
 import fi.liikennevirasto.digiroad2.vallu.{ValluSender, ValluStoreStopChangeMessage}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.TimeUnit
