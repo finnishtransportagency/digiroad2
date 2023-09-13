@@ -78,7 +78,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     new MassTransitStopServiceWithDynTransaction(eventBus, roadLinkService, roadAddressService)
   }
 
-  private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
+  private val isValidTypeEnumeration = Set(1, 2, 5, 99)
   private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
   private val stopAdministratorValueMappings = Set(1, 2, 3, 99).map(_.toString)
 

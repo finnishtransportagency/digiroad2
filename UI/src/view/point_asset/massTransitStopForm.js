@@ -71,9 +71,6 @@
       if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.hasMixedVirtualAndRealStops()) {
         element.text('Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkityyppeihin');
         element.show();
-      } else if(selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && selectedMassTransitStopModel.pikavuoroIsAlone()){
-        element.text('Pikavuoro tulee valita yhdessä toisen pysäkkityypin kanssa');
-        element.show();
       } else {
         element.hide();
       }
@@ -176,7 +173,7 @@
       if(pointAssetToSave && !isValidServicePoint()){
         element.prop('disabled', true);
       } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() &&
-          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone() &&
+          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
           !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
         element.prop('disabled', false);
       } else if(poistaSelected) {
