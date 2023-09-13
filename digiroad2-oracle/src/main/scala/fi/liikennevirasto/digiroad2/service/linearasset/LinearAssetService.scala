@@ -437,7 +437,7 @@ trait LinearAssetOperations {
   }
 
   /**
-    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    * Saves or update linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
   def createOrUpdate(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String,valueOption: Option[Value], existingAssetIds: Set[Long]): Seq[Long] = {
     val ids = create(newLinearAssets,typeId,username) ++ valueOption.map(update(existingAssetIds.toSeq, _, username)).getOrElse(Nil)

@@ -428,7 +428,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
 
   /**
-    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    * Saves new linear assets from UI. Used by Digiroad2Api /speedlimits POST endpoint.
     */
    def createOrUpdateSpeedLimit(newLimits: Seq[NewLimit], values: SpeedLimitValue, username: String, updateIds: Seq[Long],
                                 municipalityValidationForUpdate: (Int, AdministrativeClass) => Unit,
