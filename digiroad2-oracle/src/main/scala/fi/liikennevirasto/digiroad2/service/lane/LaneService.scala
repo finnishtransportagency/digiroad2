@@ -159,8 +159,7 @@ trait LaneOperations {
     withDynTransaction {
       try {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
-        val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
-        
+        val lanes = fetchAllLanesByLinkIds(roadLinks.map(_.linkId).distinct,newTransaction = false).filterNot(_.expired)
         LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks"){
           adjustLanes(roadLinks, lanes.groupBy(_.linkId), geometryChanged = false)
         }
