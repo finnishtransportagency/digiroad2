@@ -1116,7 +1116,7 @@ trait LaneOperations {
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
       deleteMultipleLanes(existingLanesToBeExpired, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
-      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(getPersistedLanesByIds(ids.toSet,newTransaction = false).map(_.linkId).toSet, 0))
+      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(linkIds, 0))
       ids
       
     }
