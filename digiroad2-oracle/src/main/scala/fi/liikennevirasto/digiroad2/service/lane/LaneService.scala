@@ -160,7 +160,10 @@ trait LaneOperations {
       try {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
         val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
-        LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks"){adjustLanes(roadLinks, lanes.groupBy(_.linkId), geometryChanged = false)}
+        
+        LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks"){
+          adjustLanes(roadLinks, lanes.groupBy(_.linkId), geometryChanged = false)
+        }
       } catch {
         case e: PSQLException => logger.error(s"Database error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
         case e: Throwable => logger.error(s"Unknown error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
@@ -1114,7 +1117,7 @@ trait LaneOperations {
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
       deleteMultipleLanes(existingLanesToBeExpired, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
-      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(getPersistedLanesByIds(ids.toSet).map(_.linkId).toSet, 0))
+      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(getPersistedLanesByIds(ids.toSet,newTransaction = false).map(_.linkId).toSet, 0))
       ids
       
     }
