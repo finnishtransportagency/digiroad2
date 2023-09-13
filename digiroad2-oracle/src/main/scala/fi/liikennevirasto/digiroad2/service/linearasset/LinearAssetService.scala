@@ -247,7 +247,8 @@ trait LinearAssetOperations {
     if (generateUnknownBoolean) generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
   }
   /**
-    * Make sure operations are small and fast
+    * Make sure operations are small and fast.
+    * Do not try to use methods which also use event bus, publishing will not work
     * @param linksIds
     * @param typeId asset type
     */
@@ -255,7 +256,7 @@ trait LinearAssetOperations {
     withDynTransaction {
       try {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
-        val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
+        val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq(),newTransaction = false)
         val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
         val groupedAssets = linearAssets.groupBy(_.linkId)
 

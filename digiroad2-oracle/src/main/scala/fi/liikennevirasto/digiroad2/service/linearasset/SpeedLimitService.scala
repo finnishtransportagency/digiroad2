@@ -191,7 +191,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
   /**
     * Make sure operations are small and fast
-    *
+    * Do not try to use methods which also use event bus, publishing will not work
     * @param linksIds
     * @param typeId asset type
     */
@@ -371,7 +371,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
   private def isSeparableValidation(speedLimit: PieceWiseLinearAsset): PieceWiseLinearAsset = {
     val separable = speedLimit.sideCode == SideCode.BothDirections && speedLimit.trafficDirection == TrafficDirection.BothDirections
-    if (!separable) throw new IllegalArgumentException
+    if (!separable) throw new IllegalArgumentException("You cannot divide speed limit")
     speedLimit
   }
 

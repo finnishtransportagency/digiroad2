@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
+import org.postgresql.util.PSQLException
 
 class ProhibitionCreationException(val response: Set[String]) extends RuntimeException {}
 
@@ -77,6 +78,31 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     else linearAssets
   }
 
+  /**
+    * Make sure operations are small and fast
+    * Do not try to use methods which also use event bus, publishing will not work
+    * @param linksIds
+    * @param typeId asset type
+    */
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int): Unit = {
+    withDynTransaction {
+      try {
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
+        val existingAssets = dao.fetchProhibitionsByLinkIds(typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
+        val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+        val groupedAssets = linearAssets.groupBy(_.linkId)
+
+        LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
+          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+        }
+
+      } catch {
+        case e: PSQLException => logger.error(s"Database error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+        case e: Throwable => logger.error(s"Unknown error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+      }
+    }
+  }
+  
   override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids

@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.{cyclingAndWalkingService, damagedByThawService, dynamicLinearAssetService, eventbus, hazmatTransportProhibitionService, linearAxleWeightLimitService, linearBogieWeightLimitService, linearHeightLimitService, linearLengthLimitService, linearTotalWeightLimitService, linearTrailerTruckWeightLimitService, linearWidthLimitService, maintenanceRoadService, massTransitLaneService, numberOfLanesService, parkingProhibitionService, pavedRoadService, prohibitionService, roadLinkService, roadWidthService, roadWorkService, textValueLinearAssetService}
+import fi.liikennevirasto.digiroad2.asset.{AxleWeightLimit, BogieWeightLimit, CareClass, CarryingCapacity, CyclingAndWalking, DamagedByThaw, EuropeanRoads, ExitNumbers, HazmatTransportProhibition, LengthLimit, LitRoad, MaintenanceRoadAsset, MassTransitLane, NumberOfLanes, ParkingProhibition, PavedRoad, Prohibition, RoadWidth, RoadWorksAsset, TotalWeightLimit, TrailerTruckWeightLimit, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
@@ -206,7 +208,36 @@ class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   val logger = LoggerFactory.getLogger(getClass)
   def receive = {
     case a: AssetUpdate =>
-      linearAssetService.adjustLinearAssetsAction(a.linksIds,a.typeId)
+      lazy val eventbus = new DummyEventBus
+      lazy val roadLinkService: RoadLinkService = {
+        new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), eventbus, new JsonSerializer)
+      }
+      def getLinearAssetService(typeId: Int): LinearAssetOperations = {
+        typeId match {
+          case MaintenanceRoadAsset.typeId => new MaintenanceService(roadLinkService, eventbus)
+          case PavedRoad.typeId => new PavedRoadService(roadLinkService, eventbus)
+          case RoadWidth.typeId => new RoadWidthService(roadLinkService, eventbus)
+          case Prohibition.typeId => new ProhibitionService(roadLinkService, eventbus)
+          case HazmatTransportProhibition.typeId => new HazmatTransportProhibitionService(roadLinkService, eventbus)
+          case EuropeanRoads.typeId | ExitNumbers.typeId => new TextValueLinearAssetService(roadLinkService, eventbus)
+          case CareClass.typeId | CarryingCapacity.typeId | LitRoad.typeId => new DynamicLinearAssetService(roadLinkService, eventbus)
+          case HeightLimitInfo.typeId => new LinearHeightLimitService(roadLinkService, eventbus)
+          case LengthLimit.typeId => new LinearLengthLimitService(roadLinkService, eventbus)
+          case WidthLimitInfo.typeId => new LinearWidthLimitService(roadLinkService, eventbus)
+          case TotalWeightLimit.typeId => new LinearTotalWeightLimitService(roadLinkService, eventbus)
+          case TrailerTruckWeightLimit.typeId => new LinearTrailerTruckWeightLimitService(roadLinkService, eventbus)
+          case AxleWeightLimit.typeId => new LinearAxleWeightLimitService(roadLinkService, eventbus)
+          case BogieWeightLimit.typeId => new LinearBogieWeightLimitService(roadLinkService, eventbus)
+          case MassTransitLane.typeId => new MassTransitLaneService(roadLinkService, eventbus)
+          case NumberOfLanes.typeId => new NumberOfLanesService(roadLinkService, eventbus)
+          case DamagedByThaw.typeId =>  new DamagedByThawService(roadLinkService, eventbus)
+          case RoadWorksAsset.typeId => new RoadWorkService(roadLinkService, eventbus)
+          case ParkingProhibition.typeId => new ParkingProhibitionService(roadLinkService, eventbus)
+          case CyclingAndWalking.typeId => new CyclingAndWalkingService(roadLinkService, eventbus)
+          case _ => linearAssetService
+        }
+      }
+      getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId)
     case _ => logger.info("AssetUpdater: Received unknown message")
   }
 }
