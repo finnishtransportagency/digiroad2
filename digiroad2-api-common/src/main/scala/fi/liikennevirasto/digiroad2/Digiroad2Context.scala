@@ -204,7 +204,7 @@ class LaneWorkListInsertItem(laneWorkListService: LaneWorkListService) extends A
 
 class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   val logger = LoggerFactory.getLogger(getClass)
-  def receive = {
+  def receive: Receive = {
     case a: AssetUpdate =>
       lazy val eventbus = new DummyEventBus
       lazy val roadLinkService: RoadLinkService = {
