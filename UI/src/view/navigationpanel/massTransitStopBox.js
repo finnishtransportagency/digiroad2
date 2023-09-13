@@ -111,6 +111,9 @@
         '<div class="check-box-container">' +
         '<input id="complementaryLinkCheckBox" type="checkbox" checked/> <lable>Näytä täydentävä geometria</lable>' +
         '</div>' +
+        '<div class="check-box-container">' +
+        '<input id="walkingCyclingCheckbox" type="checkbox" unchecked/> <lable>Salli raitiovaunupysäkin luonti kävelyn ja pyöräilyn väylälle</lable>' +
+        '</div>' +
         '</div>'
       ].join('');
     };

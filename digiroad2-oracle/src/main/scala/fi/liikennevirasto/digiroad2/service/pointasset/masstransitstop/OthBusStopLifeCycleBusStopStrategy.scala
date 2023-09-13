@@ -136,23 +136,12 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
       map(property => SimplePointAssetProperty(property.publicId, property.values)) ++ properties).
       filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
 
-    //If it all ready has liviId
+    //If asset already has liviId
     if (was(asset)) {
       val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
-      if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
-        //Expires the current asset and creates a new one in OTH with new liviId
-        val position = optionalPosition.get
-        massTransitStopDao.expireMassTransitStop(username, asset.id)
-        super.publishExpiringEvent(PublishInfo(Option(asset)))
-        create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
-          mergedProperties), username, Point(position.lon, position.lat), roadLink)
-
-      }else{
-        //Updates the asset in OTH
-        update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
+      update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
           username)
-      }
-    }else{
+    } else {
       //Updates the asset in OTH with new liviId
       update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, toLiviId.format(asset.nationalId),
         username)
