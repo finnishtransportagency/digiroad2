@@ -39,7 +39,7 @@ object LinearAssetTypes {
 
 case class ChangedLinearAsset(linearAsset: PieceWiseLinearAsset, link: RoadLink)
 
-case class AssetUpdate(linksIds: Set[String], typeId: Int)
+case class AssetUpdate(linksIds: Set[String], typeId: Int,roadLinkUpdate:Boolean = false)
 case class Measures(startMeasure: Double, endMeasure: Double)
 
 trait LinearAssetOperations {
