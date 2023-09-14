@@ -1579,10 +1579,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val c = (parsedBody \ "value").extract[SpeedLimitValue]
 
-    speedLimitService.create(Seq(newLimit),
+    speedLimitService.createOrUpdateSpeedLimit(Seq(newLimit),
       (parsedBody \ "value").extract[SpeedLimitValue],
       user.username,
-      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).headOption match {
+      Seq.empty[Long],
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _,
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _
+    ).headOption match {
       case Some(id) => speedLimitService.getSpeedLimitById(id)
       case _ => BadRequest("Speed limit creation failed")
     }

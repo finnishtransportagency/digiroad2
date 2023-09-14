@@ -141,11 +141,12 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     * @param linksIds
     * @param typeId asset type
     */
-  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int): Unit = {
-    withDynTransaction {
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
+    if (newTransaction) withDynTransaction {action()} else action()
+    def action():Unit = {
       try {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
-        val existingAssets =  dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
+        val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
         val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
         val groupedAssets = linearAssets.groupBy(_.linkId)
 

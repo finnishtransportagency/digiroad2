@@ -48,10 +48,11 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     * @param linksIds
     * @param typeId asset type
     */
-  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int): Unit = {
-    withDynTransaction {
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
+    if (newTransaction) withDynTransaction {action()} else action()
+    def action():Unit = {
       try {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
         val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
         val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
         val groupedAssets = linearAssets.groupBy(_.linkId)
@@ -199,7 +200,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       val createdIdOption = createdValue.map(
         createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp,
           Some(roadLink), informationSource = Some(MunicipalityMaintenainer.value)))
-
+      adjustLinearAssetsAction(Set(roadLink.linkId),linearAsset.typeId,newTransaction = false)
       newIdsToReturn ++ Seq(createdIdOption).flatten
     }
   }

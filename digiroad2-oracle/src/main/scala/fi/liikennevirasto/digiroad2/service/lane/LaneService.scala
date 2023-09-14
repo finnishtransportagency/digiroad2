@@ -155,21 +155,22 @@ trait LaneOperations {
     * @param linksIds
     * @param typeId asset type
     */
-  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int): Unit = {
-    withDynTransaction {
+  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, transaction: Boolean = true): Unit = {
+   if (transaction)  withDynTransaction {action} else action
+
+    def action: Any = {
       try {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
-        val lanes = fetchAllLanesByLinkIds(roadLinks.map(_.linkId).distinct,newTransaction = false).filterNot(_.expired)
-        LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks"){
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = transaction)
+        val lanes = fetchAllLanesByLinkIds(roadLinks.map(_.linkId).distinct, newTransaction = transaction).filterNot(_.expired)
+        LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks") {
           adjustLanes(roadLinks, lanes.groupBy(_.linkId), geometryChanged = false)
         }
       } catch {
         case e: PSQLException => logger.error(s"Database error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
         case e: Throwable => logger.error(s"Unknown error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
       }
-
     }
-  }
+   }
   
   def adjustLanes(roadLinks: Seq[RoadLink], lanes: Map[String, Seq[PersistedLane]], geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLane] = {
     val (filledTopology, adjustmentsChangeSet) = laneFiller.fillTopology(roadLinks, lanes, None, geometryChanged)
@@ -1116,6 +1117,9 @@ trait LaneOperations {
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
       deleteMultipleLanes(existingLanesToBeExpired, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+
+      adjustLinearAssetsAction(linkIds, 0)
+      
       eventBus.publish("linearAssetUpdater:lane", AssetUpdate(linkIds, 0))
       ids
       
@@ -1167,7 +1171,8 @@ trait LaneOperations {
 
       // Create lanes
       val ids = allLanesToCreate.map(createWithoutTransaction(_, username))
-      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(getPersistedLanesByIds(ids).map(_.linkId).toSet, 0))
+      adjustLinearAssetsAction(getPersistedLanesByIds(ids).map(_.linkId).toSet, 0)
+      //eventBus.publish("linearAssetUpdater:lane", AssetUpdate(getPersistedLanesByIds(ids).map(_.linkId).toSet, 0))
       ids
     }
   }

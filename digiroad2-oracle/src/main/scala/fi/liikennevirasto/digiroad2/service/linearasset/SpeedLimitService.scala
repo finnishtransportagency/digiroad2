@@ -195,10 +195,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     * @param linksIds
     * @param typeId asset type
     */
-  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int): Unit = {
-    withDynTransaction {
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
+    if (newTransaction)  withDynTransaction {action()} else action()
+    def action():Unit = {
       try {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
         val existingAssets = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks)
         val groupedAssets = existingAssets.groupBy(_.linkId)
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: ${SpeedLimitAsset.typeId}") {
@@ -334,7 +335,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
               persisted.linkSource, roadLink.administrativeClass, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
 
           }
-          eventBus.publish("linearAssetUpdater:speedLimit",AssetUpdate(speedLimits.map(_.linkId).toSet,speedLimit.typeId))
+          adjustLinearAssetsAction(speedLimits.map(_.linkId).toSet,speedLimit.typeId,newTransaction = true)
           speedLimits.filter(asset => asset.id == idUpdated || asset.id == newId)
         case _ => Seq()
       }
@@ -393,7 +394,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
        speedLimitDao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization, None, createdDate = speedLimit.createdDateTime, modifiedBy = Some(username), modifiedAt = Some(DateTime.now()),  linkSource = speedLimit.linkSource).get)
     }
     val assets = getSpeedLimitAssetsByIds(Set(newId1, newId2))
-    eventBus.publish("linearAssetUpdater:speedLimit",AssetUpdate(Set(speedLimit.linkId),speedLimit.typeId))
+    adjustLinearAssetsAction(Set(speedLimit.linkId),speedLimit.typeId,newTransaction = true)
+    
     Seq(assets.find(_.id == newId1).get, assets.find(_.id == newId2).get)
   }
 
@@ -421,7 +423,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
         speedLimitDao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, createTimeStamp(), municipalityValidation)
       }
       eventbus.publish("speedLimits:purgeUnknownLimits", (newLimits.map(_.linkId).toSet, Seq()))
-      eventBus.publish("linearAssetUpdater:speedLimit",AssetUpdate(newLimits.map(_.linkId).toSet,SpeedLimitAsset.typeId))
+      
       createdIds
     }
   }
@@ -434,7 +436,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
                                 municipalityValidationForUpdate: (Int, AdministrativeClass) => Unit,
                                 municipalityValidationForCreate: (Int, AdministrativeClass) => Unit): Seq[Long] = {
      val ids = updateValues(updateIds, values, username, municipalityValidationForUpdate) ++ create(newLimits, values, username, municipalityValidationForCreate)
-     eventBus.publish("linearAssetUpdater:speedLimit", AssetUpdate(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId))
+     adjustLinearAssetsAction(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId,newTransaction = true)
+     
+     //eventBus.publish("linearAssetUpdater:speedLimit", AssetUpdate(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId))
      ids.distinct
   }
   

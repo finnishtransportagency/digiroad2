@@ -252,21 +252,22 @@ trait LinearAssetOperations {
     * @param linksIds
     * @param typeId asset type
     */
-  def adjustLinearAssetsAction(linksIds:Set[String],typeId:Int): Unit = {
-    withDynTransaction {
+  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
+    if (newTransaction) withDynTransaction {action()} else action()
+    def action():Unit = {
       try {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
-        val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq(),newTransaction = false)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
+        val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq(), newTransaction = newTransaction)
         val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
         val groupedAssets = linearAssets.groupBy(_.linkId)
 
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
           adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
         }
-        
+
       } catch {
-        case e:PSQLException => logger.error(s"Database error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}",e)
-        case e:Throwable => logger.error(s"Unknown error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}",e)
+        case e: PSQLException => logger.error(s"Database error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+        case e: Throwable => logger.error(s"Unknown error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
       }
     }
   }
@@ -441,7 +442,7 @@ trait LinearAssetOperations {
     */
   def createOrUpdate(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String,valueOption: Option[Value], existingAssetIds: Set[Long]): Seq[Long] = {
     val ids = create(newLinearAssets,typeId,username) ++ valueOption.map(update(existingAssetIds.toSeq, _, username)).getOrElse(Nil)
-    eventBus.publish("linearAssetUpdater", AssetUpdate(getPersistedAssetsByIds(typeId, ids.toSet).map(_.linkId).toSet, typeId))
+    adjustLinearAssetsAction(getPersistedAssetsByIds(typeId, ids.toSet).map(_.linkId).toSet, typeId,newTransaction = true)
     ids.distinct
   }
 
@@ -460,7 +461,7 @@ trait LinearAssetOperations {
 
       val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink),fromUpdate = true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
-      eventBus.publish("linearAssetUpdater",AssetUpdate(Set(roadLink.linkId),linearAsset.typeId))
+      adjustLinearAssetsAction(Set(roadLink.linkId),linearAsset.typeId,newTransaction = false)
       Seq(existingId, createdId).flatten
     }
   }
@@ -497,8 +498,7 @@ trait LinearAssetOperations {
       val (newId1, newId2) =
         (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate = true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)),
           valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate = true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)))
-
-      eventBus.publish("linearAssetUpdater",AssetUpdate(Set(roadLink.linkId),existing.typeId))
+      adjustLinearAssetsAction(Set(roadLink.linkId),existing.typeId,newTransaction = false)
       Seq(newId1, newId2).flatten
     }
   }
