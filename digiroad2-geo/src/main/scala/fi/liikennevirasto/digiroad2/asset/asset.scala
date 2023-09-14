@@ -928,6 +928,17 @@ object AssetTypeInfo {
                     ParkingProhibition, CyclingAndWalking, Lanes,
                     UnknownAssetTypeId)
 
+  /**
+    * assets which use side code
+    */
+  val updateSideCodes: Seq[AssetTypeInfo] = Seq(
+    SpeedLimitAsset,WinterSpeedLimit,
+    TotalWeightLimit,TrailerTruckWeightLimit,AxleWeightLimit,
+    BogieWeightLimit,HeightLimit,LengthLimit,WidthLimit,RoadWorksAsset,ParkingProhibition,
+    NumberOfLanes,
+    HazmatTransportProhibition,Prohibition,CyclingAndWalking
+  )
+
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
   }
