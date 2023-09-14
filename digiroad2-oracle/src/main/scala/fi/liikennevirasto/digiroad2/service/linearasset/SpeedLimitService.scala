@@ -318,8 +318,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     */
   def splitSpeedLimit(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[PieceWiseLinearAsset] = {
    val speedLimits =  withDynTransaction {
-      logger.info(s"splitSpeedLimit: $id")
-      
       getPersistedSpeedLimitById(id, newTransaction = false) match {
         case Some(speedLimit) =>
           val roadLink = roadLinkService.fetchRoadlinkAndComplementary(speedLimit.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
@@ -384,8 +382,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     * Saves speed limit values when speed limit is separated to two sides in UI. Used by Digiroad2Api /speedlimits/:speedLimitId/separate POST endpoint.
     */
   def separateSpeedLimit(id: Long, valueTowardsDigitization: SpeedLimitValue, valueAgainstDigitization: SpeedLimitValue, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[PieceWiseLinearAsset] = {
-   logger.info("separateSpeedLimit: "+ id)
-   
     val speedLimit = getPersistedSpeedLimitById(id)
       .map(toPieceWiseLinearAsset(_))
       .map(isSeparableValidation)
@@ -441,8 +437,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
    def createOrUpdateSpeedLimit(newLimits: Seq[NewLimit], values: SpeedLimitValue, username: String, updateIds: Seq[Long],
                                 municipalityValidationForUpdate: (Int, AdministrativeClass) => Unit,
                                 municipalityValidationForCreate: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-     logger.info(s"createOrUpdateSpeedLimit new asset: ${newLimits.map(_.linkId)}")
-     logger.info(s"createOrUpdateSpeedLimit new update: ${updateIds.mkString(",")}")
      val ids = updateValues(updateIds, values, username, municipalityValidationForUpdate) ++ create(newLimits, values, username, municipalityValidationForCreate)
      adjustLinearAssetsAction(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId,newTransaction = true)
      ids.distinct
