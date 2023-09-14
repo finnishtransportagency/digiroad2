@@ -445,8 +445,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
      logger.info(s"createOrUpdateSpeedLimit new update: ${updateIds.mkString(",")}")
      val ids = updateValues(updateIds, values, username, municipalityValidationForUpdate) ++ create(newLimits, values, username, municipalityValidationForCreate)
      adjustLinearAssetsAction(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId,newTransaction = true)
-     
-     //eventBus.publish("linearAssetUpdater:speedLimit", AssetUpdate(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId))
      ids.distinct
   }
   
