@@ -43,8 +43,9 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     * @param typeId asset type
     */
   override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
-    if (newTransaction) withDynTransaction {action()} else action()
-    def action():Unit = {
+    if (newTransaction) withDynTransaction {action(false)} else action(newTransaction)
+
+    def action(newTransaction: Boolean): Unit = {
       try {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
         val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, roadLinks.map(_.linkId))

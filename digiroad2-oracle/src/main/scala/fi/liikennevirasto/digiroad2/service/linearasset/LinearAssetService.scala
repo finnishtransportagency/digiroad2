@@ -253,8 +253,8 @@ trait LinearAssetOperations {
     * @param typeId asset type
     */
   def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
-    if (newTransaction) withDynTransaction {action()} else action()
-    def action():Unit = {
+    if (newTransaction) withDynTransaction {action(false)} else action(newTransaction)
+    def action(newTransaction: Boolean): Unit = {
       try {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
         val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq(), newTransaction = newTransaction)

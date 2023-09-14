@@ -235,7 +235,7 @@ class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
           case _ => linearAssetService
         }
       }
-      getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId)
+      getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId,newTransaction = true)
     case _ => logger.info("AssetUpdater: Received unknown message")
   }
 }
@@ -244,7 +244,7 @@ class SpeedLimitUpdaterAdjust(speedLimitService: SpeedLimitService) extends Acto
   val logger = LoggerFactory.getLogger(getClass)
   def receive = {
     case a: AssetUpdate =>
-      speedLimitService.adjustLinearAssetsAction(a.linksIds,a.typeId)
+      speedLimitService.adjustLinearAssetsAction(a.linksIds,a.typeId,newTransaction = true)
     case _ => logger.info("SpeedLimitUpdater: Received unknown message")
   }
 }
