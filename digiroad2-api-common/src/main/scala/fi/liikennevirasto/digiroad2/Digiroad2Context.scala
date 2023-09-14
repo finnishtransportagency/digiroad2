@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
-import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.linearasset.{SpeedLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -232,20 +232,13 @@ class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
           case RoadWorksAsset.typeId => new RoadWorkService(roadLinkService, eventbus)
           case ParkingProhibition.typeId => new ParkingProhibitionService(roadLinkService, eventbus)
           case CyclingAndWalking.typeId => new CyclingAndWalkingService(roadLinkService, eventbus)
+          case SpeedLimitAsset.typeId => new SpeedLimitService(eventbus,roadLinkService)
           case _ => linearAssetService
         }
       }
-      getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId,newTransaction = true)
+      if (a.roadLinkUpdate) getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId, adjustSideCode = true)
+      else getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId)
     case _ => logger.info("AssetUpdater: Received unknown message")
-  }
-}
-
-class SpeedLimitUpdaterAdjust(speedLimitService: SpeedLimitService) extends Actor {
-  val logger = LoggerFactory.getLogger(getClass)
-  def receive = {
-    case a: AssetUpdate =>
-      speedLimitService.adjustLinearAssetsAction(a.linksIds,a.typeId,newTransaction = true)
-    case _ => logger.info("SpeedLimitUpdater: Received unknown message")
   }
 }
 
@@ -335,9 +328,6 @@ object Digiroad2Context {
 
   val assetUpdater = system.actorOf(Props(classOf[AssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(assetUpdater, "linearAssetUpdater")
-
-  val speedLimitUpdaterAdjust = system.actorOf(Props(classOf[SpeedLimitUpdaterAdjust], speedLimitService), name = "linearAssetUpdaterSpeedLimit")
-  eventbus.subscribe(speedLimitUpdaterAdjust, "linearAssetUpdater:speedLimit")
 
   val laneUpdaterAdjust = system.actorOf(Props(classOf[LaneUpdaterAdjust], laneService), name = "linearAssetUpdaterLane")
   eventbus.subscribe(laneUpdaterAdjust, "linearAssetUpdater:lane")

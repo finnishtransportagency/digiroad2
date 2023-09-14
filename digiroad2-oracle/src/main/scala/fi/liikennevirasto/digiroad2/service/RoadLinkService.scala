@@ -14,7 +14,6 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, RoadLin
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdate
-import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.generateProperties
 import fi.liikennevirasto.digiroad2.util._
@@ -676,18 +675,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
   
   def updateSideCodes(roadLinks:Seq[RoadLinkLike] ): Unit = {
-    val assetTypes = Seq(
-      MaintenanceRoadAsset.typeId, PavedRoad.typeId, RoadWidth.typeId, Prohibition.typeId,
-      HazmatTransportProhibition.typeId, EuropeanRoads.typeId , ExitNumbers.typeId, CareClass.typeId ,
-      CarryingCapacity.typeId , LitRoad.typeId, HeightLimitInfo.typeId, LengthLimit.typeId,    WidthLimitInfo.typeId,
-      TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId, 
-      MassTransitLane.typeId, NumberOfLanes.typeId, DamagedByThaw.typeId, RoadWorksAsset.typeId, 
-      ParkingProhibition.typeId, CyclingAndWalking.typeId)
-    assetTypes.foreach(a=> {
-      eventbus.publish("linearAssetUpdater",AssetUpdate(roadLinks.map(_.linkId).toSet,a))
+    AssetTypeInfo.updateSideCodes.foreach(a=> {
+      eventbus.publish("linearAssetUpdater",AssetUpdate(roadLinks.map(_.linkId).toSet,a.typeId))
     })
-    eventbus.publish("linearAssetUpdater:speedLimit",AssetUpdate(roadLinks.map(_.linkId).toSet,0))
-    //eventBus.publish("linearAssetUpdater:lane", AssetUpdate(linkIds, 0))
   }
 
 
