@@ -1,17 +1,19 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
+
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 class AssetFiller {
   val AllowedTolerance = 2.0
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
   private val MaxAllowedMValueError = 0.1
-
+  val logger = LoggerFactory.getLogger(getClass)
 
   def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
 
@@ -42,6 +44,13 @@ class AssetFiller {
     else adjustmentAndNonExistingOperations
   }
 
+  def getUpdateSideCodes: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
+    Seq(
+      droppedSegmentWrongDirection,
+      adjustSegmentSideCodes
+    )
+  }
+  
   def getGenerateUnknowns(typeId: Int): Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     Seq(
       generateTwoSidedNonExistingLinearAssets(typeId),
@@ -547,9 +556,8 @@ class AssetFiller {
   }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
-                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations = getOperations(typeId, geometryChanged)
-
+                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true,adjustSideCode:Boolean = false ): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val operations = if (adjustSideCode) getUpdateSideCodes else  getOperations(typeId, geometryChanged)
     val changeSet = changedSet match {
       case Some(change) => change
       case None => ChangeSet( droppedAssetIds = Set.empty[Long],

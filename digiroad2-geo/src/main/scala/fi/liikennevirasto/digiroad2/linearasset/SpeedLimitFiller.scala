@@ -267,8 +267,8 @@ object SpeedLimitFiller extends AssetFiller {
   }
 
   override def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId:Int, changedSet: Option[ChangeSet] = None,
-                   geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations = getOperations(geometryChanged)
+                   geometryChanged: Boolean = true,adjustSideCode:Boolean = false): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val operations = if(adjustSideCode) getUpdateSideCodes else  getOperations(typeId, geometryChanged)
     // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
     val changeSet = changedSet match {
       case Some(change) => change

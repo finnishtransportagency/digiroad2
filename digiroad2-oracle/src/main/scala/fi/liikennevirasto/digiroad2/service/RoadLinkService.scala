@@ -676,7 +676,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   
   def updateSideCodes(roadLinks:Seq[RoadLinkLike] ): Unit = {
     AssetTypeInfo.updateSideCodes.foreach(a=> {
-      eventbus.publish("linearAssetUpdater",AssetUpdate(roadLinks.map(_.linkId).toSet,a.typeId))
+      eventbus.publish("linearAssetUpdater",AssetUpdate(roadLinks.map(_.linkId).toSet,a.typeId,roadLinkUpdate = true))
     })
   }
 
