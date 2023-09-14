@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, MassTransitStopDao, Munic
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{BusStopType, MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import fi.liikennevirasto.digiroad2.util.LaneUtils.roadAddressService
@@ -260,8 +260,9 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
   }
 
-  def getNearestRoadLink(lon: Double, lat: Double, user: User, roadTypeLimitations: Set[AdministrativeClass]): Seq[RoadLink] = {
-    val closestRoadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon, lat)).
+  def getNearestRoadLink(lon: Double, lat: Double, user: User, roadTypeLimitations: Set[AdministrativeClass], stopType: BusStopType): Seq[RoadLink] = {
+    val isCarStop = if (stopType != BusStopType.Tram) true else false
+    val closestRoadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon, lat), isCarStop).
       filterNot(road => roadTypeLimitations.contains(road.administrativeClass))
     if(closestRoadLinks.nonEmpty)
       Seq(closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry)))
@@ -390,7 +391,8 @@ class Creator(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkS
     println("Creating busStop")
     val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
     val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
-    val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations)
+    val stopType = massTransitStopService.getBusStopPropertyValue(properties)
+    val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations, stopType)
 
     if(roadLink.isEmpty)
       List(ExcludedRow(affectedRows = "RoadLink no longer available", csvRow = rowToString(row)))
@@ -430,8 +432,8 @@ class PositionUpdater (roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: 
     val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
     val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
     val nationalId = getPropertyValue(properties, "national_id").toString.toInt
-
-    val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations)
+    val stopType = massTransitStopService.getBusStopPropertyValue(properties)
+    val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations, stopType)
 
     if (roadLink.isEmpty)
       List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))
