@@ -271,6 +271,14 @@ trait LinearAssetOperations {
       }
     }
   }
+
+  def adjustAssets(ids: Seq[Long]): Seq[Long] = {
+    withDynTransaction {
+      val linearAsset = dao.fetchLinearAssetsByIds(ids.toSet, LinearAssetTypes.numericValuePropertyId)
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
+  }
   
   def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
                          typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1,adjustSideCode: Boolean = false): Seq[PieceWiseLinearAsset] = {
@@ -464,11 +472,7 @@ trait LinearAssetOperations {
       
       Seq(existingId, createdId).flatten
     }
-    withDynTransaction {
-      val linearAsset =  dao.fetchLinearAssetsByIds(ids.toSet,LinearAssetTypes.numericValuePropertyId)
-      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
-    }
-    ids
+    adjustAssets(ids)
   }
 
 
@@ -506,13 +510,8 @@ trait LinearAssetOperations {
       Seq(newId1, newId2).flatten
     }
 
-    withDynTransaction {
-      val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId)
-      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
-    }
-    ids
+    adjustAssets(ids)
   }
-
   def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids

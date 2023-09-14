@@ -161,12 +161,15 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         Some(roadLink), informationSource = Some(MunicipalityMaintenainer.value)))
       newIdsToReturn ++ Seq(createdIdOption).flatten
     }
+    adjustAssets(0,ids)
+  }
+
+
+  private def adjustAssets(id:Long,ids: Seq[Long]) = {
     withDynTransaction {
       val linearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(ids.toSet)
       adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
     }
     ids
   }
-
-
 }
