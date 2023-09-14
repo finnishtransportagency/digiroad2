@@ -171,9 +171,8 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
   }
   override def adjustAssets( ids: Seq[Long]): Seq[Long] = {
     withDynTransaction {
-      val assetTypeId = assetDao.getAssetTypeId(ids)
-      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
-      val linearAsset = dao.fetchAssetsWithTextualValuesByIds(ids.toSet, LinearAssetTypes.getValuePropertyId(assetTypeById(id)))
+      val assetTypeById = assetDao.getAssetTypeId(ids).foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
+      val linearAsset = dao.fetchAssetsWithTextualValuesByIds(ids.toSet, LinearAssetTypes.getValuePropertyId(assetTypeById(ids.head)))
       adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
     }
     ids

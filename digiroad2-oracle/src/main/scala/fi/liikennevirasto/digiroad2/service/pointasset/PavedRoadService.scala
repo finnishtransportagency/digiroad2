@@ -204,11 +204,4 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
     adjustAssets(ids)
   }
-  override def adjustAssets(ids: Seq[Long]): Seq[Long] = {
-    withDynTransaction {
-      val linearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(ids.toSet)
-      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
-    }
-    ids
-  }
 }

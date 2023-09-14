@@ -196,8 +196,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   override def adjustAssets(ids: Seq[Long]): Seq[Long] = {
     withDynTransaction {
-      val assetTypeId = assetDao.getAssetTypeId(ids)
-      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
+      val assetTypeById = assetDao.getAssetTypeId(ids).foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
       val linearAsset = dao.fetchProhibitionsByIds(assetTypeById(ids.head), ids.toSet)
       adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
     }
