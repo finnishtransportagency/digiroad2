@@ -252,7 +252,7 @@ trait LinearAssetOperations {
     * @param linksIds
     * @param typeId asset type
     */
-  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
+  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean,adjustSideCode: Boolean = false): Unit = {
     if (newTransaction) withDynTransaction {action(false)} else action(newTransaction)
     def action(newTransaction: Boolean): Unit = {
       try {
@@ -262,7 +262,7 @@ trait LinearAssetOperations {
         val groupedAssets = linearAssets.groupBy(_.linkId)
 
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
-          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false,adjustSideCode=adjustSideCode)
         }
 
       } catch {
@@ -273,9 +273,9 @@ trait LinearAssetOperations {
   }
   
   def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
-                         typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
+                         typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1,adjustSideCode: Boolean = false): Seq[PieceWiseLinearAsset] = {
     val assetUpdater = getAssetUpdater(typeId)
-    val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, changeSet, geometryChanged)
+    val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, changeSet, geometryChanged,adjustSideCode)
     val adjustmentsChangeSet = assetUpdater.cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
     adjustmentsChangeSet.isEmpty match {
       case true => filledTopology
@@ -285,7 +285,7 @@ trait LinearAssetOperations {
       case false if counter <= 3 =>
         assetUpdater.updateChangeSet(adjustmentsChangeSet)
         val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty).groupBy(_.linkId)
-        adjustLinearAssets(roadLinks, linearAssetsToAdjust, typeId, None, geometryChanged, counter + 1)
+        adjustLinearAssets(roadLinks, linearAssetsToAdjust, typeId, None, geometryChanged, counter + 1,adjustSideCode)
     }
   }
   def generateUnknowns(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int): Seq[PieceWiseLinearAsset] = {
@@ -450,7 +450,7 @@ trait LinearAssetOperations {
     * Saves linear asset when linear asset is split to two parts in UI (scissors icon). Used by Digiroad2Api /linearassets/:id POST endpoint.
     */
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+   val ids = withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
@@ -461,9 +461,14 @@ trait LinearAssetOperations {
 
       val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink),fromUpdate = true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
-      adjustLinearAssetsAction(Set(roadLink.linkId),linearAsset.typeId,newTransaction = false)
+      
       Seq(existingId, createdId).flatten
     }
+    withDynTransaction {
+      val linearAsset =  dao.fetchLinearAssetsByIds(ids.toSet,LinearAssetTypes.numericValuePropertyId)
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
   }
 
 
@@ -488,7 +493,7 @@ trait LinearAssetOperations {
     * Saves linear assets when linear asset is separated to two sides in UI. Used by Digiroad2Api /linearassets/:id/separate POST endpoint.
     */
   def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+   val ids = withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
@@ -498,9 +503,14 @@ trait LinearAssetOperations {
       val (newId1, newId2) =
         (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate = true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)),
           valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate = true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)))
-      adjustLinearAssetsAction(Set(roadLink.linkId),existing.typeId,newTransaction = false)
       Seq(newId1, newId2).flatten
     }
+
+    withDynTransaction {
+      val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId)
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
   }
 
   def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {

@@ -74,7 +74,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     * @param linksIds
     * @param typeId asset type
     */
-  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean,adjustSideCode: Boolean = false): Unit = {
     if (newTransaction) withDynTransaction {action(false)} else action(newTransaction)
     def action(newTransaction: Boolean): Unit = {
       try {
@@ -84,7 +84,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         val groupedAssets = linearAssets.groupBy(_.linkId)
 
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
-          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false,adjustSideCode=adjustSideCode)
         }
 
       } catch {
@@ -155,7 +155,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+    val ids = withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id))
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
 
@@ -169,13 +169,20 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
       val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink)))
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink)))
-      adjustLinearAssetsAction(Set(roadLink.linkId),linearAsset.typeId,newTransaction = false)
       Seq(existingId, createdId).flatten
     }
+
+    withDynTransaction {
+      val assetTypeId = assetDao.getAssetTypeId(Seq(id))
+      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
+      val linearAsset = dao.fetchProhibitionsByIds(assetTypeById(ids.head),ids.toSet)
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
   }
 
   override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+   val ids = withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id))
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
 
@@ -191,6 +198,13 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       adjustLinearAssetsAction(Set(roadLink.linkId),existing.typeId,newTransaction = false)
       Seq(newId1, newId2).flatten
     }
+    withDynTransaction {
+      val assetTypeId = assetDao.getAssetTypeId(Seq(id))
+      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
+      val linearAsset = dao.fetchProhibitionsByIds(assetTypeById(ids.head), ids.toSet)
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
   }
 
   override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[ChangedLinearAsset] = {

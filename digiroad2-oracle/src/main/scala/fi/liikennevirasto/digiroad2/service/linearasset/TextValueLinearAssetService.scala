@@ -131,7 +131,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
     * Saves linear asset when linear asset is split to two parts in UI (scissors icon). Used by Digiroad2Api /linearassets/:id POST endpoint.
     */
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+    val ids =  withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id))
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
@@ -147,10 +147,18 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       Seq(existingId, createdId).flatten
     }
+    
+    withDynTransaction {
+      val assetTypeId = assetDao.getAssetTypeId(Seq(id))
+      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
+      val linearAsset = dao.fetchAssetsWithTextualValuesByIds(ids.toSet, LinearAssetTypes.getValuePropertyId(assetTypeById(id)))
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
   }
 
   override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+ val ids= withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id))
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
@@ -163,8 +171,9 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       val(newId1, newId2) =
         (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)),
           valueAgainstDigitization.map( createWithoutTransaction(existing.typeId, existing.linkId, _,  SideCode.AgainstDigitizing.value,  Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)))
-      adjustLinearAssetsAction(Set(roadLink.linkId),existing.typeId,newTransaction = false)
+      
       Seq(newId1, newId2).flatten
     }
+    adjustLinearAssetsAction(Set(roadLink.linkId),existing.typeId,newTransaction = true)
   }
 }

@@ -42,18 +42,18 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     * @param linksIds
     * @param typeId asset type
     */
-  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean): Unit = {
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean, adjustSideCode: Boolean = false): Unit = {
     if (newTransaction) withDynTransaction {action(false)} else action(newTransaction)
 
     def action(newTransaction: Boolean): Unit = {
       try {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = false)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
         val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, roadLinks.map(_.linkId))
         val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
         val groupedAssets = linearAssets.groupBy(_.linkId)
 
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
-          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false,adjustSideCode=adjustSideCode)
         }
 
       } catch {
@@ -144,7 +144,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+   val ids = withDynTransaction {
       val linearAsset = enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))).head
       val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linearAsset.linkId).
         getOrElse(throw new IllegalStateException("Road link no longer available"))
@@ -159,9 +159,13 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
       val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp,
         Some(roadLink), informationSource = Some(MunicipalityMaintenainer.value)))
-      adjustLinearAssetsAction(Set(roadLink.linkId),linearAsset.typeId,newTransaction = false)
       newIdsToReturn ++ Seq(createdIdOption).flatten
     }
+    withDynTransaction {
+      val linearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(ids.toSet)
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
   }
 
 

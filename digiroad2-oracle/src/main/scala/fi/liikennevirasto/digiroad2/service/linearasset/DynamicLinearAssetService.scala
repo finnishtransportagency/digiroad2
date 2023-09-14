@@ -174,7 +174,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   }
 
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+  val ids = withDynTransaction {
       val linearAsset = enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))).head
       val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(linearAsset.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
@@ -184,13 +184,17 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
 
       val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink),fromUpdate = true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
-      adjustLinearAssetsAction(Set(roadLink.linkId),linearAsset.typeId,newTransaction = false)
       Seq(existingId, createdId).flatten
     }
+    withDynTransaction {
+      val linearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(ids.toSet)
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
   }
 
   override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+    val ids =  withDynTransaction {
       val existing = enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))).head
       val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
@@ -200,9 +204,14 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       val(newId1, newId2) =
         (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)),
           valueAgainstDigitization.map( createWithoutTransaction(existing.typeId, existing.linkId, _,  SideCode.AgainstDigitizing.value,  Measures(existing.startMeasure, existing.endMeasure), username, existing.timeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = existing.createdBy, createdDateTimeFromUpdate = existing.createdDateTime)))
-      adjustLinearAssetsAction(Set(roadLink.linkId),existing.typeId,newTransaction = false)
+      
       Seq(newId1, newId2).flatten
     }
+    withDynTransaction {
+      val linearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(ids.toSet)
+      adjustLinearAssetsAction(linearAsset.map(_.linkId).toSet, linearAsset.head.typeId, newTransaction = false)
+    }
+    ids
   }
 
   def validateRequiredProperties(typeId: Int, properties: Seq[DynamicProperty]): Unit = {
