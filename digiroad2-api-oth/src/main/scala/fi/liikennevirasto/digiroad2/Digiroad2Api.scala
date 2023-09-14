@@ -1545,9 +1545,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
       case Some(values) =>
-        speedLimitService.createOrUpdateSpeedLimit(newLimits, values, user.username,ids,
+      val ids = speedLimitService.createOrUpdateSpeedLimit(newLimits, values, user.username,ids,
           validateUserAccess(user, Some(SpeedLimitAsset.typeId)),
           validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _)
+        speedLimitService.getSpeedLimitAssetsByIds(ids)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
