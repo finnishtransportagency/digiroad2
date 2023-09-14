@@ -242,15 +242,6 @@ class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 }
 
-class LaneUpdaterAdjust(laneService: LaneService) extends Actor {
-  val logger = LoggerFactory.getLogger(getClass)
-  def receive = {
-    case a: AssetUpdate =>
-      laneService.adjustLinearAssetsAction(a.linksIds,a.typeId)
-    case _ => logger.info("SpeedLimitUpdater: Received unknown message")
-  }
-}
-
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -328,9 +319,6 @@ object Digiroad2Context {
 
   val assetUpdater = system.actorOf(Props(classOf[AssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(assetUpdater, "linearAssetUpdater")
-
-  val laneUpdaterAdjust = system.actorOf(Props(classOf[LaneUpdaterAdjust], laneService), name = "linearAssetUpdaterLane")
-  eventbus.subscribe(laneUpdaterAdjust, "linearAssetUpdater:lane")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
