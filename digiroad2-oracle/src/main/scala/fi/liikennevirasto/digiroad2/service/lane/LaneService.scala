@@ -155,13 +155,13 @@ trait LaneOperations {
     * @param linksIds
     * @param typeId asset type
     */
-  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, transaction: Boolean = true): Unit = {
-   if (transaction)  withDynTransaction {action} else action
+  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean = true): Unit = {
+   if (newTransaction)  withDynTransaction {action(false)} else action(newTransaction)
 
-    def action: Any = {
+    def action(newTransaction:Boolean): Any = {
       try {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = transaction)
-        val lanes = fetchAllLanesByLinkIds(roadLinks.map(_.linkId).distinct, newTransaction = transaction).filterNot(_.expired)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
+        val lanes = fetchAllLanesByLinkIds(roadLinks.map(_.linkId).distinct, newTransaction = newTransaction).filterNot(_.expired)
         LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks") {
           adjustLanes(roadLinks, lanes.groupBy(_.linkId), geometryChanged = false)
         }
@@ -1107,28 +1107,26 @@ trait LaneOperations {
 
   def processNewLanes(newLanes: Set[NewLane], linkIds: Set[String],
                       sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]): Seq[Long] = {
-    withDynTransaction {
+    val ids = withDynTransaction {
       val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
       val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode, allExistingLanes, sideCodesForLinks)
       val laneIdsToBeExpired = actionsLanes.lanesToDelete.map(_.id)
       val existingLanesToBeExpired = allExistingLanes.filter(existingLane => laneIdsToBeExpired.contains(existingLane.id))
 
-      val ids= create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
-      update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
-      deleteMultipleLanes(existingLanesToBeExpired, username) ++
-      createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
-
-      adjustLinearAssetsAction(linkIds, 0)
-      
-      eventBus.publish("linearAssetUpdater:lane", AssetUpdate(linkIds, 0))
-      ids
-      
+        create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++ 
+        update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
+        deleteMultipleLanes(existingLanesToBeExpired, username) ++
+        createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
     }
+    withDynTransaction {
+      adjustLinearAssetsAction(getPersistedLanesByIds(ids.toSet, false).map(_.linkId).toSet, 0, false)
+    }
+    ids
   }
 
   def processLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                 username: String): Set[Long] = {
-    withDynTransaction {
+   val ids = withDynTransaction {
       val linksWithAddresses = LaneUtils.getRoadAddressToProcess(laneRoadAddressInfo)
       //Get only the lanes to create
       val lanesToInsert = newLanes.filter(_.id == 0)
@@ -1168,13 +1166,14 @@ trait LaneOperations {
           }
         }
       }
-
       // Create lanes
-      val ids = allLanesToCreate.map(createWithoutTransaction(_, username))
-      adjustLinearAssetsAction(getPersistedLanesByIds(ids).map(_.linkId).toSet, 0)
-      //eventBus.publish("linearAssetUpdater:lane", AssetUpdate(getPersistedLanesByIds(ids).map(_.linkId).toSet, 0))
-      ids
+      allLanesToCreate.map(createWithoutTransaction(_, username))
     }
+    withDynTransaction {
+      adjustLinearAssetsAction(getPersistedLanesByIds(ids,false).map(_.linkId).toSet, 0,false)
+    }
+    
+    ids
   }
 
   def separateNewLanesInActions(newLanes: Set[NewLane], linkIds: Set[String], sideCode: Int,
