@@ -12,7 +12,6 @@ class AssetFiller {
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
   private val MaxAllowedMValueError = 0.1
-  
 
   def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
 
