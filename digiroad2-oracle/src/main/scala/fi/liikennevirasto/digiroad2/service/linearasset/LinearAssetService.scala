@@ -252,7 +252,7 @@ trait LinearAssetOperations {
     * @param linksIds
     * @param typeId asset type
     */
-  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean,adjustSideCode: Boolean = false): Unit = {
+  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean = true,adjustSideCode: Boolean = false): Unit = {
     if (newTransaction) withDynTransaction {action(false)} else action(newTransaction)
     def action(newTransaction: Boolean): Unit = {
       try {
@@ -450,7 +450,7 @@ trait LinearAssetOperations {
     */
   def createOrUpdate(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String,valueOption: Option[Value], existingAssetIds: Set[Long]): Seq[Long] = {
     val ids = create(newLinearAssets,typeId,username) ++ valueOption.map(update(existingAssetIds.toSeq, _, username)).getOrElse(Nil)
-    adjustLinearAssetsAction(getPersistedAssetsByIds(typeId, ids.toSet).map(_.linkId).toSet, typeId,newTransaction = true)
+    adjustLinearAssetsAction(getPersistedAssetsByIds(typeId, ids.toSet).map(_.linkId).toSet, typeId)
     ids.distinct
   }
 

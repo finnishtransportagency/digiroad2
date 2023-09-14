@@ -74,7 +74,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     * @param linksIds
     * @param typeId asset type
     */
-  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean,adjustSideCode: Boolean = false): Unit = {
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean = true,adjustSideCode: Boolean = false): Unit = {
     if (newTransaction) withDynTransaction {action(false)} else action(newTransaction)
     def action(newTransaction: Boolean): Unit = {
       try {

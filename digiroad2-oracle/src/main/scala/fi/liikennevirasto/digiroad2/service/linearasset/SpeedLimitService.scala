@@ -195,7 +195,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     * @param linksIds
     * @param typeId asset type
     */
-  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean,adjustSideCode: Boolean = false): Unit = {
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean = true,adjustSideCode: Boolean = false): Unit = {
     if (newTransaction)  withDynTransaction {action(false)} else action(newTransaction)
     def action( newTransaction: Boolean):Unit = {
       try {
@@ -340,7 +340,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
         case _ => Seq()
       }
     }
-    adjustLinearAssetsAction(speedLimits.map(_.linkId).toSet,speedLimits.head.typeId,newTransaction = true)
+    adjustLinearAssetsAction(speedLimits.map(_.linkId).toSet,speedLimits.head.typeId)
     speedLimits
   }
 
@@ -396,7 +396,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
        speedLimitDao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization, None, createdDate = speedLimit.createdDateTime, modifiedBy = Some(username), modifiedAt = Some(DateTime.now()),  linkSource = speedLimit.linkSource).get)
     }
     val assets = getSpeedLimitAssetsByIds(Set(newId1, newId2))
-    adjustLinearAssetsAction(Set(speedLimit.linkId),speedLimit.typeId,newTransaction = true)
+    adjustLinearAssetsAction(Set(speedLimit.linkId),speedLimit.typeId)
     
     Seq(assets.find(_.id == newId1).get, assets.find(_.id == newId2).get)
   }
@@ -438,7 +438,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
                                 municipalityValidationForUpdate: (Int, AdministrativeClass) => Unit,
                                 municipalityValidationForCreate: (Int, AdministrativeClass) => Unit): Seq[Long] = {
      val ids = updateValues(updateIds, values, username, municipalityValidationForUpdate) ++ create(newLimits, values, username, municipalityValidationForCreate)
-     adjustLinearAssetsAction(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId,newTransaction = true)
+     adjustLinearAssetsAction(getSpeedLimitAssetsByIds(ids.toSet).map(_.linkId).toSet, SpeedLimitAsset.typeId)
      ids.distinct
   }
   
