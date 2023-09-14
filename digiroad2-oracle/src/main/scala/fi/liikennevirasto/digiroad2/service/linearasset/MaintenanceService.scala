@@ -211,7 +211,6 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp, Some(roadLink), fromUpdate= true,  createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       adjustLinearAssetsAction(Set(roadLink.linkId),linearAsset.typeId,newTransaction = false)
       Seq(existingId, createdId).flatten
-      
     }
   }
 }
