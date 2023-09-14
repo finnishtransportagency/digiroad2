@@ -1548,7 +1548,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val idsSavedOrUpdated = speedLimitService.createOrUpdateSpeedLimit(newLimits, values, user.username,ids,
           validateUserAccess(user, Some(SpeedLimitAsset.typeId)),
           validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _)
-        speedLimitService.getSpeedLimitAssetsByIds(idsSavedOrUpdated)
+        speedLimitService.getSpeedLimitAssetsByIds(idsSavedOrUpdated.toSet)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
