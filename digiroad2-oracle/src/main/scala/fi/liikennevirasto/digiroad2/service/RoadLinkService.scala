@@ -10,9 +10,10 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
+import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdate
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.generateProperties
 import fi.liikennevirasto.digiroad2.util._
@@ -672,6 +673,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       }
     }
   }
+  
+  def updateSideCodes(roadLinks:Seq[RoadLinkLike] ): Unit = {
+    AssetTypeInfo.updateSideCodes.foreach(a=> {
+      eventbus.publish("linearAssetUpdater",AssetUpdate(roadLinks.map(_.linkId).toSet,a.typeId,roadLinkUpdate = true))
+    })
+  }
 
 
   protected def setLinkProperty(propertyName: String, linkProperty: LinkProperties, username: Option[String],
@@ -681,14 +688,16 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     (optionalExistingValue, RoadLinkOverrideDAO.getMasterDataValue(propertyName, roadLinkFetched)) match {
       case (Some(existingValue), _) =>
         eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+        updateSideCodes(Seq(roadLinkFetched))
         RoadLinkOverrideDAO.update(propertyName, linkProperty, roadLinkFetched, username, existingValue, checkMMLId(roadLinkFetched))
       case (None, None) =>
         eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+        updateSideCodes(Seq(roadLinkFetched))
         insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
-
       case (None, Some(masterDataValue)) =>
         if (masterDataValue != RoadLinkOverrideDAO.getValue(propertyName, linkProperty)) { // only save if it overrides master data value
           eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+          updateSideCodes(Seq(roadLinkFetched))
           insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
         }
     }
