@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, same}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -194,8 +194,8 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), "")))
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, LinearAssetTypes.ProhibitionAssetTypeId)))
-
-      val createdId = ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i, _) => Unit)
+     
+      val createdId = ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i, _) => Unit,adjust = false)
       val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId(1))).head
       val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId.head)).head
 

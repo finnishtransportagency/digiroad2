@@ -150,7 +150,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
     adjustAssets(ids)
   }
 
-  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit,adjust:Boolean = true): Seq[Long] = {
  val ids= withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id))
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
@@ -167,7 +167,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       
       Seq(newId1, newId2).flatten
     }
-    adjustAssets(ids)
+    if (adjust) adjustAssets(ids)else ids
   }
   override def adjustAssets( ids: Seq[Long]): Seq[Long] = {
     withDynTransaction {

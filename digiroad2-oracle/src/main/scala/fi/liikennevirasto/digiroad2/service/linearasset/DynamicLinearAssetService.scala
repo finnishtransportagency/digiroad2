@@ -189,7 +189,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     adjustAssets(ids)
   }
 
-  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, adjust:Boolean = true): Seq[Long] = {
     val ids =  withDynTransaction {
       val existing = enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))).head
       val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
@@ -203,7 +203,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       
       Seq(newId1, newId2).flatten
     }
-    adjustAssets(ids)
+    if (adjust) adjustAssets(ids)else ids
   }
 
   override def adjustAssets(ids: Seq[Long]): Seq[Long] = {

@@ -175,7 +175,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     adjustAssets(ids)
   }
 
-  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+  override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit,adjust:Boolean = true): Seq[Long] = {
    val ids = withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id))
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
@@ -192,7 +192,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       adjustLinearAssetsAction(Set(roadLink.linkId),existing.typeId,newTransaction = false)
       Seq(newId1, newId2).flatten
     }
-    adjustAssets(ids)
+    if (adjust) adjustAssets(ids)else ids
   }
 
   override def adjustAssets(ids: Seq[Long]): Seq[Long] = {
