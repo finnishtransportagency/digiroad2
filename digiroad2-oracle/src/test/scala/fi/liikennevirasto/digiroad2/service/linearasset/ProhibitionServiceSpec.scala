@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.{any, same}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
