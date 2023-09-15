@@ -7,13 +7,13 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.fillTopology
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{adjustSideCodes, fillTopology}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.util.LogUtils
-import fi.liikennevirasto.digiroad2.util.assetUpdater.{ SpeedLimitUpdater}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.SpeedLimitUpdater
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 
@@ -203,7 +203,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
         val existingAssets = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks)
         val groupedAssets = existingAssets.groupBy(_.linkId)
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: ${SpeedLimitAsset.typeId}") {
-          adjustSpeedLimitsAndGenerateUnknowns(roadLinks, groupedAssets, geometryChanged = false,adjustSideCode=adjustSideCode)
+          if (adjustSideCode) adjustSpeedLimitsSideCode(roadLinks, groupedAssets)
+          else adjustSpeedLimitsAndGenerateUnknowns(roadLinks, groupedAssets, geometryChanged = false)
         }
       } catch {
         case e: PSQLException => logger.error(s"Database error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
@@ -213,8 +214,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def adjustSpeedLimitsAndGenerateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
-                        changeSet:Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1,adjustSideCode: Boolean = false): Seq[PieceWiseLinearAsset] = {
-    val (filledTopology, changedSet) = fillTopology(roadLinks, speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged,adjustSideCode)
+                        changeSet:Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
+    val (filledTopology, changedSet) = fillTopology(roadLinks, speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
     val cleanedChangeSet = speedLimitUpdater.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
 
     cleanedChangeSet.isEmpty match {
@@ -225,7 +226,24 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       case false if counter <= 3 =>
         speedLimitUpdater.updateChangeSet(cleanedChangeSet)
         val speedLimitsToAdjust = filledTopology.filterNot(speedLimit => speedLimit.id <= 0 && speedLimit.value.isEmpty).groupBy(_.linkId)
-        adjustSpeedLimitsAndGenerateUnknowns(roadLinks, speedLimitsToAdjust, None, geometryChanged, counter + 1,adjustSideCode)
+        adjustSpeedLimitsAndGenerateUnknowns(roadLinks, speedLimitsToAdjust, None, geometryChanged, counter + 1)
+    }
+  }
+
+  def adjustSpeedLimitsSideCode(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
+                                           changeSet: Option[ChangeSet] = None, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
+    val (filledTopology, changedSet) = adjustSideCodes(roadLinks, speedLimits, SpeedLimitAsset.typeId, changeSet)
+    val cleanedChangeSet = speedLimitUpdater.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
+
+    cleanedChangeSet.isEmpty match {
+      case true => filledTopology
+      case false if counter > 3 =>
+        speedLimitUpdater.updateChangeSet(cleanedChangeSet)
+        filledTopology
+      case false if counter <= 3 =>
+        speedLimitUpdater.updateChangeSet(cleanedChangeSet)
+        val speedLimitsToAdjust = filledTopology.filterNot(speedLimit => speedLimit.id <= 0 && speedLimit.value.isEmpty).groupBy(_.linkId)
+        adjustSpeedLimitsSideCode(roadLinks, speedLimitsToAdjust, None, counter + 1)
     }
   }
   def generateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]]): Seq[PieceWiseLinearAsset] = {

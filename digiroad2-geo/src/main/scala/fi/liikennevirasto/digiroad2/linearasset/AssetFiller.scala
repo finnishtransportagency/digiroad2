@@ -554,8 +554,8 @@ class AssetFiller {
   }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
-                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true,adjustSideCode:Boolean = false ): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations = if (adjustSideCode) getUpdateSideCodes else  getOperations(typeId, geometryChanged)
+                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val operations = getOperations(typeId, geometryChanged)
     val changeSet = changedSet match {
       case Some(change) => change
       case None => ChangeSet( droppedAssetIds = Set.empty[Long],
@@ -571,6 +571,28 @@ class AssetFiller {
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
       val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
+      (existingAssets ++ adjustedAssets, assetAdjustments)
+    }
+  }
+
+  def adjustSideCodes(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val changeSet = changedSet match {
+      case Some(change) => change
+      case None => ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+        valueAdjustments = Seq.empty[ValueAdjustment])
+    }
+
+    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingAssets, changeSet) = acc
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
+
+      val (adjustedAssets, assetAdjustments) = getUpdateSideCodes.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
       (existingAssets ++ adjustedAssets, assetAdjustments)

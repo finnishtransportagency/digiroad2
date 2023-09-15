@@ -53,7 +53,8 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         val groupedAssets = linearAssets.groupBy(_.linkId)
 
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
-          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false,adjustSideCode=adjustSideCode)
+          if (adjustSideCode) adjustLinearAssetsSideCode(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          else adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
         }
 
       } catch {

@@ -267,8 +267,8 @@ object SpeedLimitFiller extends AssetFiller {
   }
 
   override def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId:Int, changedSet: Option[ChangeSet] = None,
-                   geometryChanged: Boolean = true,adjustSideCode:Boolean = false): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations = if(adjustSideCode) getUpdateSideCodes else  getOperations(typeId, geometryChanged)
+                   geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val operations = getOperations(typeId, geometryChanged)
     // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
     val changeSet = changedSet match {
       case Some(change) => change
@@ -291,6 +291,31 @@ object SpeedLimitFiller extends AssetFiller {
       (existingSegments ++ adjustedSegments, segmentAdjustments)
     }
   }
+
+  override def adjustSideCodes(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
+    val changeSet = changedSet match {
+      case Some(change) => change
+      case None => ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+        valueAdjustments = Seq.empty[ValueAdjustment])
+    }
+
+    roadLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingSegments, changeSet) = acc
+      val segments = speedLimits.getOrElse(roadLink.linkId, Nil)
+      val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
+
+      val (adjustedSegments, segmentAdjustments) = getUpdateSideCodes.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
+      (existingSegments ++ adjustedSegments, segmentAdjustments)
+    }
+  }
+
 
   /**
     * For debugging; print speed limit relevant data

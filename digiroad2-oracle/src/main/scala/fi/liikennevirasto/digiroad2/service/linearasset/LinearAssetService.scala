@@ -262,7 +262,8 @@ trait LinearAssetOperations {
         val groupedAssets = linearAssets.groupBy(_.linkId)
 
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
-          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false,adjustSideCode=adjustSideCode)
+          if (adjustSideCode) adjustLinearAssetsSideCode(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          else adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
         }
 
       } catch {
@@ -281,9 +282,9 @@ trait LinearAssetOperations {
   }
   
   def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
-                         typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1,adjustSideCode: Boolean = false): Seq[PieceWiseLinearAsset] = {
+                         typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
     val assetUpdater = getAssetUpdater(typeId)
-    val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, changeSet, geometryChanged,adjustSideCode)
+    val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, changeSet, geometryChanged)
     val adjustmentsChangeSet = assetUpdater.cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
     adjustmentsChangeSet.isEmpty match {
       case true => filledTopology
@@ -293,7 +294,23 @@ trait LinearAssetOperations {
       case false if counter <= 3 =>
         assetUpdater.updateChangeSet(adjustmentsChangeSet)
         val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty).groupBy(_.linkId)
-        adjustLinearAssets(roadLinks, linearAssetsToAdjust, typeId, None, geometryChanged, counter + 1,adjustSideCode)
+        adjustLinearAssets(roadLinks, linearAssetsToAdjust, typeId, None, geometryChanged, counter + 1)
+    }
+  }
+  def adjustLinearAssetsSideCode(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
+                         typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
+    val assetUpdater = getAssetUpdater(typeId)
+    val (filledTopology, changedSet) = assetFiller.adjustSideCodes(roadLinks, linearAssets, typeId, changeSet)
+    val adjustmentsChangeSet = assetUpdater.cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
+    adjustmentsChangeSet.isEmpty match {
+      case true => filledTopology
+      case false if counter > 3 =>
+        assetUpdater.updateChangeSet(adjustmentsChangeSet)
+        filledTopology
+      case false if counter <= 3 =>
+        assetUpdater.updateChangeSet(adjustmentsChangeSet)
+        val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty).groupBy(_.linkId)
+        adjustLinearAssets(roadLinks, linearAssetsToAdjust, typeId, None, geometryChanged, counter + 1)
     }
   }
   def generateUnknowns(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int): Seq[PieceWiseLinearAsset] = {
