@@ -6,10 +6,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import java.sql.PreparedStatement
 
-/**
-  * Remember to add check for size of list, golden rule more than 1000 in array some improvement can be found
-  * otherwise use normal id in () query. Till remember measure with or without massQuery.
-  */
 object MassQuery {
   val logger = LoggerFactory.getLogger(getClass)
   
