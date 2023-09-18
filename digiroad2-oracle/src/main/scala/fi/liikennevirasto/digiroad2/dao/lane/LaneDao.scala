@@ -153,6 +153,8 @@ class LaneDao(){
   }
 
   def fetchAllLanesByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedLane] = {
+    if (linkIds.isEmpty) return Seq.empty[PersistedLane]
+   
     val filterExpired = s" (l.valid_to > current_timestamp OR l.valid_to IS NULL ) "
     val laneCodeClause = s" l.lane_code in (${laneCodeFilter.mkString(",")})"
 
@@ -198,11 +200,16 @@ class LaneDao(){
     * laneService.split and laneService.separate.
     */
   def fetchLanesByIds(ids: Set[Long] ): Seq[PersistedLane] = {
-
-    MassQuery.withIds(ids) { idTableName =>
-      val filter = s" JOIN $idTableName i ON i.id = l.id "
-
-      getLanesFilterQuery( withFilter(filter))
+    if (ids.isEmpty) return Seq.empty[PersistedLane]
+    
+    if (ids.size > 1000) {
+      MassQuery.withIds(ids) { idTableName =>
+        val filter = s" JOIN $idTableName i ON i.id = l.id "
+        getLanesFilterQuery(withFilter(filter))
+      }
+    } else {
+      val filter = s" where l.id in (${ids.mkString(",")}) "
+      getLanesFilterQuery(withFilter(filter))
     }
   }
 
