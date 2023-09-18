@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
+import fi.liikennevirasto.digiroad2.postgis.MassQuery.logger
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdate
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
@@ -1108,18 +1109,34 @@ trait LaneOperations {
   def processNewLanes(newLanes: Set[NewLane], linkIds: Set[String],
                       sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]): Seq[Long] = {
     val ids = withDynTransaction {
-      val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
-      val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode, allExistingLanes, sideCodesForLinks)
-      val laneIdsToBeExpired = actionsLanes.lanesToDelete.map(_.id)
-      val existingLanesToBeExpired = allExistingLanes.filter(existingLane => laneIdsToBeExpired.contains(existingLane.id))
+      LogUtils.time(logger, s"TEST LOG Whole updating or saving operation") {
+        val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
+        val actionsLanes = LogUtils.time(logger, s"TEST LOG Separate NewLanes In Actions") {
+          separateNewLanesInActions(newLanes, linkIds, sideCode, allExistingLanes, sideCodesForLinks)
+        }
+        val laneIdsToBeExpired = actionsLanes.lanesToDelete.map(_.id)
+        val existingLanesToBeExpired = allExistingLanes.filter(existingLane => laneIdsToBeExpired.contains(existingLane.id))
 
-        create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++ 
-        update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
-        deleteMultipleLanes(existingLanesToBeExpired, username) ++
-        createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+        val createV = LogUtils.time(logger, s"TEST LOG Lane creation") {
+          create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks)
+        }
+        val updateV = LogUtils.time(logger, s"TEST LOG Lane updating") {
+          update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes)
+        }
+        val deleting = LogUtils.time(logger, s"TEST LOG Lane deleting") {
+          deleteMultipleLanes(existingLanesToBeExpired, username)
+        }
+        val createMultiple = LogUtils.time(logger, s"TEST LOG Lane create multiple lanes on link") {
+          createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+        }
+
+        createV ++ updateV ++ deleting ++ createMultiple
+      }
     }
     withDynTransaction {
-      adjustLinearAssetsAction(getPersistedLanesByIds(ids.toSet, false).map(_.linkId).toSet, 0, false)
+      LogUtils.time(logger, s"TEST LOG Whole adjustment operation") {
+        adjustLinearAssetsAction(getPersistedLanesByIds(ids.toSet, false).map(_.linkId).toSet, 0, false)
+      }
     }
     ids
   }
