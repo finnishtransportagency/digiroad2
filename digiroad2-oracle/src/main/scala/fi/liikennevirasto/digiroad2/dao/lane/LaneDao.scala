@@ -8,9 +8,9 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.postgis.MassQuery.logger
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
@@ -27,6 +27,7 @@ case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
 
 
 class LaneDao(){
+  val logger = LoggerFactory.getLogger(getClass)
 
   implicit val getLightLane = new GetResult[LightLane] {
     def apply(r: PositionedResult) = {
