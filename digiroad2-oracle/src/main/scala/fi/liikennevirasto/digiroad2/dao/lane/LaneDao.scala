@@ -143,7 +143,6 @@ class LaneDao(){
   }
 
   def getLanesFilterQuery( queryFilter: String => String ): Seq[PersistedLane] = {
-    println(queryFilter(query()))
     val lanes = StaticQuery.queryNA[LaneRow](queryFilter(query()))(getLaneAsset).iterator.toSeq
 
     convertLaneRowToPersistedLane(lanes)
