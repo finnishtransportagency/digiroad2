@@ -162,10 +162,20 @@ class LaneDao(){
       case (false, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
       case _ => " ORDER BY l.lane_code ASC"
     }
-
-    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
-      val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
-
+    
+    if (linkIds.size > 1000) {
+      MassQuery.withStringIds(linkIds.toSet) { idTableName =>
+        val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
+        getLanesFilterQuery(withFilter(filter))
+      }
+    }else {
+      val linkIdFilter = s"pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")})"
+      val filter = (includeExpired, laneCodeFilter.nonEmpty) match {
+        case (false, true) => s" WHERE $filterExpired AND $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
+        case (_, true) => s" WHERE $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
+        case (false, _) => s" WHERE $filterExpired and $linkIdFilter ORDER BY l.lane_code ASC"
+        case _ => s"WHERE pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")}) ORDER BY l.lane_code ASC"
+      }
       getLanesFilterQuery(withFilter(filter))
     }
   }
