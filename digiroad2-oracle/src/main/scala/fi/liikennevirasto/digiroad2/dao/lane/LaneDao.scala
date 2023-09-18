@@ -8,7 +8,8 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.postgis.MassQuery.logger
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -171,14 +172,16 @@ class LaneDao(){
         getLanesFilterQuery(withFilter(filter))
       }
     }else {
-      val linkIdFilter = s"pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")})"
-      val filter = (includeExpired, laneCodeFilter.nonEmpty) match {
-        case (false, true) => s" WHERE $filterExpired AND $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
-        case (_, true) => s" WHERE $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
-        case (false, _) => s" WHERE $filterExpired and $linkIdFilter ORDER BY l.lane_code ASC"
-        case _ => s"WHERE pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")}) ORDER BY l.lane_code ASC"
+      LogUtils.time(logger, s"TEST LOG fetch lane by linkIds, count: ${linkIds.size}"){
+        val linkIdFilter = s"pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")})"
+        val filter = (includeExpired, laneCodeFilter.nonEmpty) match {
+          case (false, true) => s" WHERE $filterExpired AND $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
+          case (_, true) => s" WHERE $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
+          case (false, _) => s" WHERE $filterExpired and $linkIdFilter ORDER BY l.lane_code ASC"
+          case _ => s"WHERE pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")}) ORDER BY l.lane_code ASC"
+        }
+        getLanesFilterQuery(withFilter(filter))
       }
-      getLanesFilterQuery(withFilter(filter))
     }
   }
 
@@ -208,8 +211,12 @@ class LaneDao(){
         getLanesFilterQuery(withFilter(filter))
       }
     } else {
-      val filter = s" where l.id in (${ids.mkString(",")}) "
-      getLanesFilterQuery(withFilter(filter))
+
+      LogUtils.time(logger, s"TEST LOG fetch lane by ids, count: ${ids.size}"){
+        val filter = s" where l.id in (${ids.mkString(",")}) "
+        getLanesFilterQuery(withFilter(filter))
+      }
+      
     }
   }
 
