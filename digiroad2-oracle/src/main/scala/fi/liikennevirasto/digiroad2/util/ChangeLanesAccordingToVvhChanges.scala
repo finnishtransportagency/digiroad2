@@ -143,7 +143,7 @@ object ChangeLanesAccordingToVvhChanges {
     }
     if (changeSet.adjustedVVHChanges.nonEmpty)
       logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
-    LogUtils.time(logger, s"Adjusting m values") {
+    LogUtils.time(logger, s"Adjusting by vvh change") {
       treatChangeSetData(changeSet.adjustedVVHChanges)
     }
   }
