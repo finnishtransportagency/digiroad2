@@ -74,7 +74,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
 
-    val filledTopology = oneWayAssetFiller.fillTopology(topology, linearAssets, 110, Some(changeSet), geometryChanged = false)._1
+    val filledTopology = oneWayAssetFiller.generateUnknowns(topology, linearAssets, 110)._1
 
     filledTopology should have size 2
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))
