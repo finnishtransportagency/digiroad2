@@ -113,7 +113,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map(
       linkId1 -> assets)
 
-    val (filledTopology, changeSet) = assetFiller.fillTopology(topology.map(assetFiller.toRoadLinkForFillTopology), linearAssets, 110)
+    val (filledTopology, changeSet) = assetFiller.generateUnknowns(topology.map(assetFiller.toRoadLinkForFillTopology), linearAssets, 110)
     filledTopology should have size 2
 
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing))
