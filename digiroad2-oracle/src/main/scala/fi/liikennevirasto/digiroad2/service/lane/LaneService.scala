@@ -214,19 +214,25 @@ trait LaneOperations {
     // Expire lanes which have been marked to be expired
     if (changeSet.expiredLaneIds.nonEmpty) {
       logger.info("Expiring ids: " + changeSet.expiredLaneIds.mkString(", "))
-      expireLanes(changeSet.expiredLaneIds)
+      LogUtils.time(logger, s"Expiring lanes") {
+        expireLanes(changeSet.expiredLaneIds)
+      }
     }
 
     // Save fillTopology sideCode adjustments
     if (changeSet.adjustedSideCodes.nonEmpty) {
       logger.info("Saving SideCode adjustments for lane Ids: " + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
+      LogUtils.time(logger, s"Adjusting side code") {
       saveSideCodeAdjustments(changeSet.adjustedSideCodes)
+      }
     }
 
     // Save fillTopology m-value adjustments
     if (changeSet.adjustedMValues.nonEmpty) {
       logger.info("Saving M-Value adjustments for lane Ids: " + changeSet.adjustedMValues.map(a => "" + a.laneId).mkString(", "))
+      LogUtils.time(logger, s"Adjusting m values") {
       saveMValueAdjustment(changeSet.adjustedMValues)
+      }
     }
   }
 
