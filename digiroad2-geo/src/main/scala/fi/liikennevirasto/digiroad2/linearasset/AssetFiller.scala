@@ -33,39 +33,6 @@ class AssetFiller {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-
-  def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
-
-    val fillOperations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
-      capToGeometry,
-      expireOverlappingSegments,
-      combine,
-      fuse,
-      dropShortSegments,
-      adjustAssets,
-      droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
-      updateValues
-    )
-
-    val adjustmentAndNonExistingOperations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      combine,
-      fuse,
-      dropShortSegments,
-      adjustAssets,
-      droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
-      generateTwoSidedNonExistingLinearAssets(typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      updateValues
-    )
-
-    if(geometryChanged) fillOperations
-    else adjustmentAndNonExistingOperations
-  }
-
   def getUpdateSideCodes: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     Seq(
       droppedSegmentWrongDirection,
@@ -866,10 +833,7 @@ class AssetFiller {
       clean
     )
     
-    val changeSet = changedSet match {
-      case Some(change) => change
-      case None => LinearAssetFiller.emptyChangeSet
-    }
+    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
@@ -901,10 +865,7 @@ class AssetFiller {
       debugLogging("fillHoles"),
       clean
     )
-    val changeSet = changedSet match {
-      case Some(change) => change
-      case None => LinearAssetFiller.emptyChangeSet
-    }
+    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
     
     // if links does not have any asset filter it away 
     topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
@@ -927,10 +888,7 @@ class AssetFiller {
   }
 
   def adjustSideCodes(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val changeSet = changedSet match {
-      case Some(change) => change
-      case None => LinearAssetFiller.emptyChangeSet
-    }
+    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
