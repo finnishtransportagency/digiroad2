@@ -805,7 +805,7 @@ class AssetFiller {
     val (geometrySegments, geometryAdjustments) = fillBySideCode(assets, roadLink, changeSet)
     (geometrySegments, geometryAdjustments)
   }
-
+// TODO remove geometryChanged: Boolean = true flag
   def fillTopology(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                    changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     

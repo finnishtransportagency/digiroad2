@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object SpeedLimitFiller extends AssetFiller {
   
-  override def getOperations(typeId:Int, geometryChanged: Boolean): Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
+   def getOperations(geometryChanged: Boolean): Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     val fillOperations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       debugLogging("start running fillTopology state now"),
       expireSegmentsOutsideGeometry,
@@ -103,7 +103,7 @@ object SpeedLimitFiller extends AssetFiller {
 
   override def fillTopology(roadLinks: Seq[RoadLinkForFillTopology], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId:Int, changedSet: Option[ChangeSet] = None,
                             geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations = getOperations(0,geometryChanged)
+    val operations = getOperations(geometryChanged)
     // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
 
