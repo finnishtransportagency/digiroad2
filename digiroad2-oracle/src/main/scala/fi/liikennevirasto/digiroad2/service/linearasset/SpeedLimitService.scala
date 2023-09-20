@@ -252,9 +252,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds))
   }
   
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean,
-                              roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
-
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], generateUnknownBoolean: Boolean = true, showHistory: Boolean,
                                         roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     withDynTransaction {
@@ -309,7 +306,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   def adjustSpeedLimitsSideCode(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
                                            changeSet: Option[ChangeSet] = None, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
     val (filledTopology, changedSet) = adjustSideCodes(roadLinks.map(toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId, changeSet)
-    val cleanedChangeSet = speedLimitUpdater.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
+    val cleanedChangeSet = LinearAssetFiller.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
 
     cleanedChangeSet.isEmpty match {
       case true => filledTopology
@@ -323,7 +320,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
   }
   def generateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]]): Seq[PieceWiseLinearAsset] = {
-     SpeedLimitFiller.generateUnknowns(roadLinks, speedLimits, SpeedLimitAsset.typeId)._1
+     SpeedLimitFiller.generateUnknowns(roadLinks.map(assetFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)._1
   }
 
   /**

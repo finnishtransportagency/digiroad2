@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, Road
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
-import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdate
+import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdateActor
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
@@ -675,7 +675,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   
   def updateSideCodes(roadLinks:Seq[RoadLinkLike] ): Unit = {
     AssetTypeInfo.updateSideCodes.foreach(a=> {
-      eventbus.publish("linearAssetUpdater",AssetUpdate(roadLinks.map(_.linkId).toSet,a.typeId,roadLinkUpdate = true))
+      eventbus.publish("linearAssetUpdater",AssetUpdateActor(roadLinks.map(_.linkId).toSet,a.typeId,roadLinkUpdate = true))
     })
   }
 
