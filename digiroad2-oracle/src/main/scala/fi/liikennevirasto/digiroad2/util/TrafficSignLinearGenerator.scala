@@ -931,7 +931,7 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
     }
     val assetLength = trafficSignToLinear.endMeasure - trafficSignToLinear.startMeasure
     if (assetLength <= 0.0) {
-      logger.error(s"generated erroneous linear asset of length ${assetLength} on road link ${trafficSignToLinear.roadLink.linkId}")
+      logger.error(s"generated erroneous linear asset of length ${assetLength} from traffic sign ${sign.id} on road link ${trafficSignToLinear.roadLink.linkId}")
     }
     trafficSignToLinear
   }
