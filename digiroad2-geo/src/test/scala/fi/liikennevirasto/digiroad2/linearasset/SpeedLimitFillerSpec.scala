@@ -590,7 +590,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), State))
     val speedLimits = Map.empty[String, Seq[PieceWiseLinearAsset]]
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.generateUnknowns(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(None))

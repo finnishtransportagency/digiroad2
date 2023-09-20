@@ -47,6 +47,13 @@ object LinearAssetFiller {
     adjustedMValues = Seq.empty[MValueAdjustment],
     adjustedSideCodes = Seq.empty[SideCodeAdjustment],
     valueAdjustments = Seq.empty[ValueAdjustment])
+
+   def useOrEmpty(changedSet: Option[ChangeSet]): ChangeSet = {
+    changedSet match {
+      case Some(change) => change
+      case None => LinearAssetFiller.emptyChangeSet
+    }
+  }
   def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (a, z) => {
     a.copy(
       droppedAssetIds = a.droppedAssetIds ++ z.droppedAssetIds,

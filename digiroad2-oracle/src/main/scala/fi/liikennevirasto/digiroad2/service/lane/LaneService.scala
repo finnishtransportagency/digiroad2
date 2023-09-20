@@ -10,12 +10,15 @@ import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
+import fi.liikennevirasto.digiroad2.postgis.MassQuery.logger
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
 import org.joda.time.DateTime
+import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
 
 import java.security.InvalidParameterException
@@ -140,20 +143,33 @@ trait LaneOperations {
     }.toSeq
   }
 
-   def getLanesByRoadLinks(roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLane] = {
+  def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
     val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
-    if(adjust){
-      val lanesMapped = lanes.groupBy(_.linkId)
-      val filledTopology = withDynTransaction{
-        LogUtils.time(logger, "Check for and adjust possible lane adjustments on " + roadLinks.size + " roadLinks"){
-          adjustLanes(roadLinks, lanesMapped, geometryChanged = false)
-        }
-      }
-      filledTopology
-    }
-    else laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)
+    laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)
   }
+  /**
+    * Make sure operations are small and fast
+    *
+    * @param linksIds
+    * @param typeId asset type
+    */
+  def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean = true): Unit = {
+   if (newTransaction)  withDynTransaction {action(false)} else action(newTransaction)
 
+    def action(newTransaction:Boolean): Any = {
+      try {
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
+        val lanes = fetchAllLanesByLinkIds(roadLinks.map(_.linkId).distinct, newTransaction = newTransaction).filterNot(_.expired)
+        LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks") {
+          adjustLanes(roadLinks, lanes.groupBy(_.linkId), geometryChanged = false)
+        }
+      } catch {
+        case e: PSQLException => logger.error(s"Database error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+        case e: Throwable => logger.error(s"Unknown error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+      }
+    }
+   }
+  
   def adjustLanes(roadLinks: Seq[RoadLink], lanes: Map[String, Seq[PersistedLane]], geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLane] = {
     val (filledTopology, adjustmentsChangeSet) = laneFiller.fillTopology(roadLinks, lanes, None, geometryChanged)
 
@@ -197,19 +213,25 @@ trait LaneOperations {
     // Expire lanes which have been marked to be expired
     if (changeSet.expiredLaneIds.nonEmpty) {
       logger.info("Expiring ids: " + changeSet.expiredLaneIds.mkString(", "))
-      expireLanes(changeSet.expiredLaneIds)
+      LogUtils.time(logger, s"Expiring lanes") {
+        expireLanes(changeSet.expiredLaneIds)
+      }
     }
 
     // Save fillTopology sideCode adjustments
     if (changeSet.adjustedSideCodes.nonEmpty) {
       logger.info("Saving SideCode adjustments for lane Ids: " + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
+      LogUtils.time(logger, s"Adjusting side code") {
       saveSideCodeAdjustments(changeSet.adjustedSideCodes)
+      }
     }
 
     // Save fillTopology m-value adjustments
     if (changeSet.adjustedMValues.nonEmpty) {
       logger.info("Saving M-Value adjustments for lane Ids: " + changeSet.adjustedMValues.map(a => "" + a.laneId).mkString(", "))
+      LogUtils.time(logger, s"Adjusting m values") {
       saveMValueAdjustment(changeSet.adjustedMValues)
+      }
     }
   }
 
@@ -547,7 +569,7 @@ trait LaneOperations {
     val roadLinksInRange = roadLinkService.getRoadLinksByLinkIds(linkIds)
     val roadLinksFiltered = roadLinksInRange.filter(_.functionalClass != WalkingAndCyclingPath.value)
     val roadLinksGrouped = roadLinksFiltered.groupBy(_.linkId).mapValues(_.head)
-    val lanes = getLanesByRoadLinks(roadLinksFiltered, adjust = false)
+    val lanes = getLanesByRoadLinks(roadLinksFiltered)
     val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(roadLink => {
       val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
       roadNumber match {
@@ -951,22 +973,42 @@ trait LaneOperations {
 
   def processNewLanes(newLanes: Set[NewLane], linkIds: Set[String],
                       sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]): Seq[Long] = {
-    withDynTransaction {
-      val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
-      val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode, allExistingLanes, sideCodesForLinks)
-      val laneIdsToBeExpired = actionsLanes.lanesToDelete.map(_.id)
-      val existingLanesToBeExpired = allExistingLanes.filter(existingLane => laneIdsToBeExpired.contains(existingLane.id))
+    val ids = withDynTransaction {
+      LogUtils.time(logger, s"TEST LOG Whole updating or saving operation") {
+        val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
+        val actionsLanes = LogUtils.time(logger, s"TEST LOG Separate NewLanes In Actions") {
+          separateNewLanesInActions(newLanes, linkIds, sideCode, allExistingLanes, sideCodesForLinks)
+        }
+        val laneIdsToBeExpired = actionsLanes.lanesToDelete.map(_.id)
+        val existingLanesToBeExpired = allExistingLanes.filter(existingLane => laneIdsToBeExpired.contains(existingLane.id))
 
-      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
-      update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
-      deleteMultipleLanes(existingLanesToBeExpired, username) ++
-      createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+        val createV = LogUtils.time(logger, s"TEST LOG Lane creation") {
+          create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks)
+        }
+        val updateV = LogUtils.time(logger, s"TEST LOG Lane updating") {
+          update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes)
+        }
+        val deleting = LogUtils.time(logger, s"TEST LOG Lane deleting") {
+          deleteMultipleLanes(existingLanesToBeExpired, username)
+        }
+        val createMultiple = LogUtils.time(logger, s"TEST LOG Lane create multiple lanes on link") {
+          createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+        }
+
+        createV ++ updateV ++ deleting ++ createMultiple
+      }
     }
+    withDynTransaction {
+      LogUtils.time(logger, s"TEST LOG Whole adjustment operation") {
+        adjustLinearAssetsAction(getPersistedLanesByIds(ids.toSet, false).map(_.linkId).toSet, 0, false)
+      }
+    }
+    ids
   }
 
   def processLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                 username: String): Set[Long] = {
-    withDynTransaction {
+   val ids = withDynTransaction {
       val linksWithAddresses = LaneUtils.getRoadAddressToProcess(laneRoadAddressInfo)
       //Get only the lanes to create
       val lanesToInsert = newLanes.filter(_.id == 0)
@@ -1006,10 +1048,14 @@ trait LaneOperations {
           }
         }
       }
-
       // Create lanes
       allLanesToCreate.map(createWithoutTransaction(_, username))
     }
+    withDynTransaction {
+      adjustLinearAssetsAction(getPersistedLanesByIds(ids,false).map(_.linkId).toSet, 0,false)
+    }
+    
+    ids
   }
 
   def separateNewLanesInActions(newLanes: Set[NewLane], linkIds: Set[String], sideCode: Int,

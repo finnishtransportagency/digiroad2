@@ -979,6 +979,7 @@ val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
       
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(newRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(any[String])).thenReturn(Some(roadLinkFetched))
       when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(List(newRoadLink))
 

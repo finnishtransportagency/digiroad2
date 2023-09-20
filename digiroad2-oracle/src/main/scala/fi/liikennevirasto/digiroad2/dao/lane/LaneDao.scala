@@ -8,8 +8,9 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
@@ -26,6 +27,7 @@ case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
 
 
 class LaneDao(){
+  val logger = LoggerFactory.getLogger(getClass)
 
   implicit val getLightLane = new GetResult[LightLane] {
     def apply(r: PositionedResult) = {
@@ -153,6 +155,8 @@ class LaneDao(){
   }
 
   def fetchAllLanesByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedLane] = {
+    if (linkIds.isEmpty) return Seq.empty[PersistedLane]
+   
     val filterExpired = s" (l.valid_to > current_timestamp OR l.valid_to IS NULL ) "
     val laneCodeClause = s" l.lane_code in (${laneCodeFilter.mkString(",")})"
 
@@ -162,11 +166,23 @@ class LaneDao(){
       case (false, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
       case _ => " ORDER BY l.lane_code ASC"
     }
-
-    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
-      val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
-
-      getLanesFilterQuery(withFilter(filter))
+    
+    if (linkIds.size > 1000) {
+      MassQuery.withStringIds(linkIds.toSet) { idTableName =>
+        val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
+        getLanesFilterQuery(withFilter(filter))
+      }
+    }else {
+      LogUtils.time(logger, s"TEST LOG fetch lane by linkIds, count: ${linkIds.size}"){
+        val linkIdFilter = s"pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")})"
+        val filter = (includeExpired, laneCodeFilter.nonEmpty) match {
+          case (false, true) => s" WHERE $filterExpired AND $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
+          case (_, true) => s" WHERE $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
+          case (false, _) => s" WHERE $filterExpired and $linkIdFilter ORDER BY l.lane_code ASC"
+          case _ => s"WHERE pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")}) ORDER BY l.lane_code ASC"
+        }
+        getLanesFilterQuery(withFilter(filter))
+      }
     }
   }
 
@@ -188,11 +204,20 @@ class LaneDao(){
     * laneService.split and laneService.separate.
     */
   def fetchLanesByIds(ids: Set[Long] ): Seq[PersistedLane] = {
+    if (ids.isEmpty) return Seq.empty[PersistedLane]
+    
+    if (ids.size > 1000) {
+      MassQuery.withIds(ids) { idTableName =>
+        val filter = s" JOIN $idTableName i ON i.id = l.id "
+        getLanesFilterQuery(withFilter(filter))
+      }
+    } else {
 
-    MassQuery.withIds(ids) { idTableName =>
-      val filter = s" JOIN $idTableName i ON i.id = l.id "
-
-      getLanesFilterQuery( withFilter(filter))
+      LogUtils.time(logger, s"TEST LOG fetch lane by ids, count: ${ids.size}"){
+        val filter = s" where l.id in (${ids.mkString(",")}) "
+        getLanesFilterQuery(withFilter(filter))
+      }
+      
     }
   }
 

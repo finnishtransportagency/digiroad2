@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
@@ -15,7 +16,7 @@ import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
-import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.linearasset.{SpeedLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -23,7 +24,6 @@ import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform
 import fi.liikennevirasto.digiroad2.vallu.{ValluSender, ValluStoreStopChangeMessage}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.TimeUnit
@@ -202,6 +202,46 @@ class LaneWorkListInsertItem(laneWorkListService: LaneWorkListService) extends A
   }
 }
 
+class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
+  val logger = LoggerFactory.getLogger(getClass)
+  def receive: Receive = {
+    case a: AssetUpdateActor =>
+      lazy val eventbus = new DummyEventBus
+      lazy val roadLinkService: RoadLinkService = {
+        new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), eventbus, new JsonSerializer)
+      }
+      def getLinearAssetService(typeId: Int): LinearAssetOperations = {
+        typeId match {
+          case MaintenanceRoadAsset.typeId => new MaintenanceService(roadLinkService, eventbus)
+          case PavedRoad.typeId => new PavedRoadService(roadLinkService, eventbus)
+          case RoadWidth.typeId => new RoadWidthService(roadLinkService, eventbus)
+          case Prohibition.typeId => new ProhibitionService(roadLinkService, eventbus)
+          case HazmatTransportProhibition.typeId => new HazmatTransportProhibitionService(roadLinkService, eventbus)
+          case EuropeanRoads.typeId | ExitNumbers.typeId => new TextValueLinearAssetService(roadLinkService, eventbus)
+          case CareClass.typeId | CarryingCapacity.typeId | LitRoad.typeId => new DynamicLinearAssetService(roadLinkService, eventbus)
+          case HeightLimitInfo.typeId => new LinearHeightLimitService(roadLinkService, eventbus)
+          case LengthLimit.typeId => new LinearLengthLimitService(roadLinkService, eventbus)
+          case WidthLimitInfo.typeId => new LinearWidthLimitService(roadLinkService, eventbus)
+          case TotalWeightLimit.typeId => new LinearTotalWeightLimitService(roadLinkService, eventbus)
+          case TrailerTruckWeightLimit.typeId => new LinearTrailerTruckWeightLimitService(roadLinkService, eventbus)
+          case AxleWeightLimit.typeId => new LinearAxleWeightLimitService(roadLinkService, eventbus)
+          case BogieWeightLimit.typeId => new LinearBogieWeightLimitService(roadLinkService, eventbus)
+          case MassTransitLane.typeId => new MassTransitLaneService(roadLinkService, eventbus)
+          case NumberOfLanes.typeId => new NumberOfLanesService(roadLinkService, eventbus)
+          case DamagedByThaw.typeId =>  new DamagedByThawService(roadLinkService, eventbus)
+          case RoadWorksAsset.typeId => new RoadWorkService(roadLinkService, eventbus)
+          case ParkingProhibition.typeId => new ParkingProhibitionService(roadLinkService, eventbus)
+          case CyclingAndWalking.typeId => new CyclingAndWalkingService(roadLinkService, eventbus)
+          case SpeedLimitAsset.typeId => new SpeedLimitService(eventbus,roadLinkService)
+          case _ => linearAssetService
+        }
+      }
+      if (a.roadLinkUpdate) getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId, adjustSideCode = true)
+      else getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId)
+    case _ => logger.info("AssetUpdater: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -276,6 +316,9 @@ object Digiroad2Context {
 
   val pedestrianCrossingVerifier = system.actorOf(Props(classOf[PedestrianCrossingValidation], pedestrianCrossingValidator), name = "pedestrianCrossingValidator")
   eventbus.subscribe(pedestrianCrossingVerifier, "pedestrianCrossing:Validator")
+
+  val assetUpdater = system.actorOf(Props(classOf[AssetUpdater], linearAssetService), name = "linearAssetUpdater")
+  eventbus.subscribe(assetUpdater, "linearAssetUpdater")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
