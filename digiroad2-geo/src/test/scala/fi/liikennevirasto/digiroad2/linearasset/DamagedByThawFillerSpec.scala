@@ -52,16 +52,16 @@ class DamagedByThawFillerSpec extends FunSuite with Matchers {
   test("ongoing period is not updated") {
     val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(ongoingPeriod)) ++ checkedCheckbox))
     val linearAssets = Map(linkId -> damagedByThawFiller.toLinearAsset(Seq(PersistedLinearAsset(1l, linkId, 2, Some(assetValue),
-      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.head))
-    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
+      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.map(damagedByThawFiller.toRoadLinkForFillTopology).head))
+    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology.map(damagedByThawFiller.toRoadLinkForFillTopology), linearAssets, DamagedByThaw.typeId)
     getChangeSetValue(changeSet) should be (empty)
   }
 
   test("past period is updated") {
     val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(pastPeriod)) ++ checkedCheckbox))
     val linearAssets = Map(linkId -> damagedByThawFiller.toLinearAsset(Seq(PersistedLinearAsset(1l, linkId, 2, Some(assetValue),
-      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.head))
-    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
+      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.map(damagedByThawFiller.toRoadLinkForFillTopology).head))
+    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology.map(damagedByThawFiller.toRoadLinkForFillTopology), linearAssets, DamagedByThaw.typeId)
     val adjustedValue = DatePeriodValue.fromMap(getChangeSetValue(changeSet).head.head.value.asInstanceOf[Map[String, String]])
     adjustedValue.startDate should be(
       DateParser.dateToString(
@@ -78,24 +78,24 @@ class DamagedByThawFillerSpec extends FunSuite with Matchers {
   test("future period is not updated") {
     val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(futurePeriod)) ++ checkedCheckbox))
     val linearAssets = Map(linkId -> damagedByThawFiller.toLinearAsset(Seq(PersistedLinearAsset(1l, linkId, 2, Some(assetValue),
-      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.head))
-    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
+      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.map(damagedByThawFiller.toRoadLinkForFillTopology).head))
+    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology.map(damagedByThawFiller.toRoadLinkForFillTopology), linearAssets, DamagedByThaw.typeId)
     getChangeSetValue(changeSet) should be (empty)
   }
 
   test("past period is not updated without checkbox") {
     val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(pastPeriod)) ++ unCheckedCheckbox))
     val linearAssets = Map(linkId -> damagedByThawFiller.toLinearAsset(Seq(PersistedLinearAsset(1l, linkId, 2, Some(assetValue),
-      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.head))
-    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
+      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.map(damagedByThawFiller.toRoadLinkForFillTopology).head))
+    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology.map(damagedByThawFiller.toRoadLinkForFillTopology), linearAssets, DamagedByThaw.typeId)
     getChangeSetValue(changeSet) should be (empty)
   }
 
   test("in case of past period and future period, only one is updated") {
     val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(pastPeriod, futurePeriod)) ++ checkedCheckbox))
     val linearAssets = Map(linkId -> damagedByThawFiller.toLinearAsset(Seq(PersistedLinearAsset(1l, linkId, 2, Some(assetValue),
-      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.head))
-    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
+      0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.map(damagedByThawFiller.toRoadLinkForFillTopology).head))
+    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology.map(damagedByThawFiller.toRoadLinkForFillTopology), linearAssets, DamagedByThaw.typeId)
     val adjustedValues = getChangeSetValue(changeSet).head.map(_.value.asInstanceOf[Map[String, String]]).map(DatePeriodValue.fromMap)
     adjustedValues.contains(futurePeriod) should be (true)
     adjustedValues.contains(pastPeriod) should be (false)

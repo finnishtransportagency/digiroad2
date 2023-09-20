@@ -245,7 +245,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       afterUpdate.createdBy should equal(beforeUpdate.createdBy)
       afterUpdate.createdAt should equal(beforeUpdate.createdAt)
       afterUpdate.modifiedBy should equal(Some("test"))
-      afterUpdate.modifiedAt.isDefined should equal(false)
+      afterUpdate.modifiedAt.isDefined should equal(true)
     }
   }
 
@@ -265,7 +265,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       updatedAsset.createdBy should equal (oldAsset.createdBy)
       updatedAsset.createdAt should equal (oldAsset.createdAt)
       updatedAsset.modifiedBy should equal (Some("test"))
-      updatedAsset.modifiedAt.isDefined should equal(false)
+      updatedAsset.modifiedAt.isDefined should equal(true)
     }
   }
 

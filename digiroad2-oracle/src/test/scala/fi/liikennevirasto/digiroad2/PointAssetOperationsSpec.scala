@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
 import fi.liikennevirasto.digiroad2.util.LinkIdGenerator
+import org.joda.time.DateTime
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 

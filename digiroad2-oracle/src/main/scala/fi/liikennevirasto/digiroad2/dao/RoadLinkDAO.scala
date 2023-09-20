@@ -6,6 +6,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.linearasset.LinkId
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
@@ -306,15 +307,30 @@ class RoadLinkDAO {
   def fetchExpiredRoadLinks(): Seq[RoadLinkFetched] = {
     getExpiredRoadLinks()
   }
+  def fetchExpiredRoadLink(linkId: String): Seq[RoadLinkFetched] = {
+    fetchExpiredByLinkIds(Set(linkId))
+  }
+
+  def fetchExpiredByLinkIds(linkIds: Set[String]): Seq[RoadLinkFetched] = {
+    getExpiredByMultipleValues(linkIds, withLinkIdFilter)
+  }
   
   /**
     * Calls db operation to fetch roadlinks with given filter.
     */
   private def getByMultipleValues[T, A](values: Set[A],
                                         filter: Set[A] => String): Seq[T] = {
-    if (values.nonEmpty) {
-      getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
-    } else Seq.empty[T]
+    if (values.nonEmpty) getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
+    else Seq.empty[T]
+  }
+
+  /**
+    * Calls db operation to fetch expired road links with given filter.
+    */
+  private def getExpiredByMultipleValues[T, A](values: Set[A],
+                                        filter: Set[A] => String): Seq[T] = {
+    if (values.nonEmpty) getExpiredLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
+    else Seq.empty[T]
   }
 
   protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
@@ -341,6 +357,16 @@ class RoadLinkDAO {
                  surfacetype, geometrylength
           from kgv_roadlink
           where expired_date is not null
+          """.as[RoadLinkFetched].list
+  }
+
+  protected def getExpiredLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
+    sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
+                 roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
+                 verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
+                 surfacetype, geometrylength
+          from kgv_roadlink
+          where expired_date is not null and #$filter
           """.as[RoadLinkFetched].list
   }
 

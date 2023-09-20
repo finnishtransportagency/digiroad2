@@ -281,14 +281,22 @@ class LaneDao(){
   }
 
 
-  def createLane ( newIncomeLane: PersistedLane, username: String): Long = {
+  def createLane (newIncomeLane: PersistedLane, createdBy: String): Long = {
 
     val laneId = Sequences.nextPrimaryKeySeqValue
     val lanePositionId = Sequences.nextPrimaryKeySeqValue
 
+    val createdDate = newIncomeLane.createdDateTime.getOrElse(DateTime.now()).toString()
+    val modifiedBy = newIncomeLane.modifiedBy.getOrElse(null)
+    val modifiedDate = newIncomeLane.modifiedDateTime match {
+      case Some(datetime) => datetime.toString()
+      case None => null
+    }
+
     sqlu"""
-        INSERT  INTO LANE (id, lane_code, created_date, created_by, municipality_code)
-          VALUES ($laneId, ${newIncomeLane.laneCode}, current_timestamp, $username, ${newIncomeLane.municipalityCode} );
+        INSERT  INTO LANE (id, lane_code, created_date, created_by, modified_date, modified_by, municipality_code)
+          VALUES ($laneId, ${newIncomeLane.laneCode}, to_timestamp($createdDate, 'YYYY-MM-DD"T"HH24:MI:SS.FF3'), $createdBy,
+                  to_timestamp($modifiedDate, 'YYYY-MM-DD"T"HH24:MI:SS.FF3'), $modifiedBy, ${newIncomeLane.municipalityCode} );
          INSERT INTO LANE_POSITION (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
           VALUES ( $lanePositionId, ${newIncomeLane.sideCode}, ${newIncomeLane.startMeasure}, ${newIncomeLane.endMeasure},
                    ${newIncomeLane.linkId}, ${newIncomeLane.timeStamp});
@@ -466,6 +474,15 @@ class LaneDao(){
           SET SIDE_CODE = ${lane.sideCode}, START_MEASURE = ${lane.startMeasure}, END_MEASURE = ${lane.endMeasure}, LINK_ID = ${lane.linkId}
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = ${lane.id})
      """.execute
+  }
+
+  def updateLanePositionAndModifiedDate(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: Int, username: String ): Unit = {
+    sqlu"""UPDATE LANE_POSITION
+          SET start_measure = $startMeasure, end_measure = $endMeasure, side_code = $sideCode, link_id = $linkId, modified_date = current_timestamp
+          WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $laneId)
+     """.execute
+
+    updateLaneModifiedFields(laneId, username)
   }
 
   def updateLaneAttributes(laneId: Long, props: LaneProperty, username: String ): Unit = {

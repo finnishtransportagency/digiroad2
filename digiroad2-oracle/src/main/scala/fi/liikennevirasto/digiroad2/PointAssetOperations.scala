@@ -13,6 +13,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.client.RoadLinkInfo
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
@@ -67,6 +68,12 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val timeStamp: Long
   val linkSource: LinkGeomSource
   val propertyData: Seq[Property]
+
+  def getValidityDirection: Option[Int] = None
+  def getBearing: Option[Int] = None
+  def getProperty(property: String) : Option[PropertyValue] =
+    this.propertyData.find(_.publicId == property).getOrElse(throw new NoSuchElementException("Property not found"))
+      .values.map(_.asInstanceOf[PropertyValue]).headOption
 }
 
 trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
@@ -92,6 +99,10 @@ trait LightGeometry {
   val lon: Double
   val lat: Double
 }
+
+case class AssetUpdate(assetId: Long, lon: Double, lat: Double, linkId: String, mValue: Double,
+                       validityDirection: Option[Int], bearing: Option[Int], timeStamp: Long,
+                       floating: Boolean, floatingReason: Option[FloatingReason] = None)
 
 trait  PointAssetOperations{
   type IncomingAsset <: IncomingPointAsset
@@ -121,6 +132,8 @@ trait  PointAssetOperations{
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
   def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
   def createTimeStamp(offsetHours:Int=5): Long = LinearAssetUtils.createTimeStamp(offsetHours)
+  def createOperation(asset: PersistedAsset, adjustment: AssetUpdate): PersistedAsset = {throw new UnsupportedOperationException()}
+  def adjustmentOperation(asset: PersistedAsset, adjustment: AssetUpdate, link: RoadLinkInfo): Long = {throw new UnsupportedOperationException()}
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds,asyncMode=false)
     getByBoundingBox(user, bounds, roadLinks)
@@ -326,13 +339,13 @@ trait  PointAssetOperations{
   }
 
   def getPersistedAssetsByLinkIdWithoutTransaction(linkId: String): Seq[PersistedAsset] = {
-    val filter = s"where a.asset_type_id = $typeId and lp.link_Id = '$linkId'"
+    val filter = s"where a.asset_type_id = $typeId and pos.link_Id = '$linkId'"
     fetchPointAssets(withFilter(filter))
   }
 
   def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[String]): Seq[PersistedAsset] = {
     MassQuery.withStringIds(linkIds) { idTableName =>
-      val filter = s"join $idTableName i on i.id = lp.link_id where a.asset_type_id = $typeId"
+      val filter = s"join $idTableName i on i.id = pos.link_id where a.asset_type_id = $typeId"
       fetchPointAssets(withFilter(filter))
     }
   }
@@ -418,6 +431,10 @@ trait  PointAssetOperations{
     val bottomRight = Point(position.x + meters, position.y + meters)
     val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
     withFilter(s"Where a.asset_type_id = $typeId and $boundingBoxFilter")(query)
+  }
+
+  def floatingUpdate(assetId: Long, floating: Boolean, floatingReason: Option[FloatingReason]): Unit = {
+    updateFloating(assetId, floating, floatingReason)
   }
 
   protected def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]): Unit = sqlu"""update asset set floating = $floating where id = $id""".execute

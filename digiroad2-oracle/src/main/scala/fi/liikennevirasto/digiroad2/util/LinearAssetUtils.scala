@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{LinearAsset, PersistedLinearAsset, PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import org.joda.time.{DateTime, DateTimeZone}
 
