@@ -5,8 +5,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object SpeedLimitFiller extends AssetFiller {
-  
-   def getOperations(geometryChanged: Boolean): Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
+
+  def getOperations(geometryChanged: Boolean): Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     val fillOperations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       debugLogging("start running fillTopology state now"),
       expireSegmentsOutsideGeometry,
@@ -27,6 +27,12 @@ object SpeedLimitFiller extends AssetFiller {
       debugLogging("dropShortSegments"),
       fillHoles,
       debugLogging("fillHoles"),
+      generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
+      debugLogging("generateTwoSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, SpeedLimitAsset.typeId),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
       clean,
       debugLogging("clean")
     )
@@ -39,6 +45,12 @@ object SpeedLimitFiller extends AssetFiller {
       adjustSegmentSideCodes,
       dropShortSegments,
       fillHoles,
+      generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
+      debugLogging("generateTwoSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, SpeedLimitAsset.typeId),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
       clean)
 
     if(geometryChanged) fillOperations
@@ -52,8 +64,10 @@ object SpeedLimitFiller extends AssetFiller {
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
       debugLogging("generateOneSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, SpeedLimitAsset.typeId),
-      debugLogging("generateOneSidedNonExistingLinearAssets"))
+      debugLogging("generateOneSidedNonExistingLinearAssets")
+    )
   }
+
 
   override protected def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val onlyLimitOnLink = assets.length == 1 && assets.head.sideCode != SideCode.BothDirections
@@ -118,7 +132,7 @@ object SpeedLimitFiller extends AssetFiller {
       (existingSegments ++ adjustedSegments, segmentAdjustments)
     }
   }
-  
+
   override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                                            changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
@@ -161,7 +175,6 @@ object SpeedLimitFiller extends AssetFiller {
       (existingAssets ++ adjustedAssets, noDuplicate)
     }
   }
-
   override def adjustSideCodes(roadLinks: Seq[RoadLinkForFillTopology], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
@@ -177,7 +190,6 @@ object SpeedLimitFiller extends AssetFiller {
       (existingSegments ++ adjustedSegments, segmentAdjustments)
     }
   }
-
 
   /**
     * For debugging; print speed limit relevant data
