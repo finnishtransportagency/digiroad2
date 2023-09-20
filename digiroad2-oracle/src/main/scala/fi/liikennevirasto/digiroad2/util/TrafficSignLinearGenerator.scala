@@ -1074,7 +1074,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
       val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(direction))
       val getAdjacents = roadLinkService.getAdjacent(actualRoadLink.linkId, Seq(pointOfInterest._1.getOrElse(pointOfInterest._2.get)), false)
       if (getAdjacents.size > 1)
-        if(pointOfInterest._1.nonEmpty) Some(0) else Some(length)
+        if(pointOfInterest._1.nonEmpty && mainSign.linkId == actualRoadLink.linkId) Some(0) else Some(length)
       else
         None
     }
