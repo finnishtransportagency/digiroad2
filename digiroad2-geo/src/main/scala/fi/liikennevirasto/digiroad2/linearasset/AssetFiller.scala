@@ -822,12 +822,6 @@ class AssetFiller {
       debugLogging("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
       debugLogging("adjustSegmentSideCodes"),
-      generateTwoSidedNonExistingLinearAssets(typeId),
-      debugLogging("generateTwoSidedNonExistingLinearAssets"),
-      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      debugLogging("generateOneSidedNonExistingLinearAssets"),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      debugLogging("generateOneSidedNonExistingLinearAssets"),
       updateValues,
       debugLogging("updateValues"),
       clean
