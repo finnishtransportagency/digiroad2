@@ -149,6 +149,7 @@
       currentAsset.payload.roadLinkId = position.roadLinkId;
       currentAsset.payload.linkId = position.linkId;
       currentAsset.payload.validityDirection = position.validityDirection;
+      currentAsset.payload.municipalityCode = position.municipalityCode;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
       eventbus.trigger('asset:moved', position);
