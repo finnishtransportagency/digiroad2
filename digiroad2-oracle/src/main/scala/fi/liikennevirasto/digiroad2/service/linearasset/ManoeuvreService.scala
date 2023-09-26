@@ -44,19 +44,19 @@ object ElementTypes {
 }
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
-class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
-  override val logger = LoggerFactory.getLogger(getClass)
-  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def municipalityDao: MunicipalityDao = new MunicipalityDao
-  override def eventBus: DigiroadEventBus = eventBusImpl
-  override def polygonTools: PolygonTools = new PolygonTools()
-  override def assetDao: PostGISAssetDao = new PostGISAssetDao
+class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+  val logger = LoggerFactory.getLogger(getClass)
+  def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  def municipalityDao: MunicipalityDao = new MunicipalityDao
+  def eventBus: DigiroadEventBus = eventBusImpl
+  def polygonTools: PolygonTools = new PolygonTools()
+  def assetDao: PostGISAssetDao = new PostGISAssetDao
 
-  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+  def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   
   def dao: ManoeuvreDao = new ManoeuvreDao()
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
