@@ -4,7 +4,7 @@ import java.security.InvalidParameterException
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Manoeuvres, SideCode}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.{ManoeuvreDao, ManoeuvreUpdateLinks, PersistedManoeuvreRow}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
@@ -195,6 +195,20 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     getByRoadLinks(roadLinks, dao.getByRoadLinks)
   }
 
+  def fetchExistingAssetsByLinksIdsString(linksIds: Set[String], newTransaction: Boolean = true): Seq[PersistedManoeuvreRow] = {
+    val existingAssets = if (newTransaction) 
+      withDynTransaction {
+        dao.fetchManoeuvresByLinkIdsNoGrouping(linksIds.toSeq)
+      } 
+    else dao.fetchManoeuvresByLinkIdsNoGrouping(linksIds.toSeq)
+    existingAssets
+  }
+
+  def updateManouvreLinkVersion(update:ManoeuvreUpdateLinks, newTransaction: Boolean = true): Unit = {
+    if (newTransaction) withDynTransaction {dao.updateManoeuvreLinkIds(update)}
+    else dao.updateManoeuvreLinkIds(update)
+  }
+  
   private def getByRoadLinks(roadLinks: Seq[RoadLink], getDaoManoeuvres: Seq[String] => Seq[Manoeuvre]): Seq[Manoeuvre] = {
     val manoeuvres =
       withDynTransaction {
