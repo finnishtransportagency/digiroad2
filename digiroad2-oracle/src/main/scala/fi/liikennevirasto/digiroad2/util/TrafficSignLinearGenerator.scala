@@ -712,6 +712,29 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
     if(value.nonEmpty) Some(Prohibitions(value)) else None
   }
 
+  override def createSegmentPieces(actualRoadLink: RoadLink, allRoadLinks: Seq[RoadLink], sign: PersistedTrafficSign, signs: Seq[PersistedTrafficSign], pointOfInterest: (Option[Point], Option[Point], Option[Int]), result: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
+    if (debbuger) println("createSegmentPieces")
+    createValue(Seq(sign)) match {
+      case Some(value) =>
+        val pairSign = getPairSign(actualRoadLink, sign, signs.filter(_.linkId == actualRoadLink.linkId), pointOfInterest._3.get)
+        val generatedSegmentPieces = generateSegmentPieces(actualRoadLink, sign, value, pairSign, pointOfInterest._3.get)
+
+        (if (pairSign.isEmpty) {
+          val allAdjacentLinks = roadLinkService.getAdjacent(actualRoadLink.linkId, Seq(pointOfInterest._1.getOrElse(pointOfInterest._2.get)), false)
+          val adjRoadLinksOfSameName = getAdjacents(pointOfInterest, allRoadLinks.filterNot(_.linkId == actualRoadLink.linkId))
+          val roadContinuesWithoutIntersection = adjRoadLinksOfSameName.nonEmpty && allAdjacentLinks.size == 1
+          if (roadContinuesWithoutIntersection) {
+            adjRoadLinksOfSameName.flatMap { case (newRoadLink, (nextFirst, nextLast, nextDirection)) =>
+              createSegmentPieces(newRoadLink, allRoadLinks.filterNot(_.linkId == newRoadLink.linkId), sign, signs, (nextFirst, nextLast, nextDirection), generatedSegmentPieces +: result)
+            }
+          } else
+            generatedSegmentPieces +: result
+        } else
+          generatedSegmentPieces +: result).toSet
+      case _ => Set()
+    }
+  }
+
   def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
     if (debbuger) println("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
