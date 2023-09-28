@@ -106,7 +106,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val resultB2 = result.find(_.roadLink.linkId == linkIdB2)
     resultB2 should not be None
     resultB2.get.startMeasure should be (0)
-    resultB2.get.endMeasure should be (GeometryUtils.geometryLength(Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0))))
+    resultB2.get.endMeasure should be ("%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0)))).toDouble)
     resultB2.get.sideCode should be (SideCode.BothDirections)
   }
 
@@ -242,6 +242,18 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     resultB1.endMeasure should be(10)
     resultB1.sideCode should be(SideCode.TowardsDigitizing)
     resultB1.value.asInstanceOf[Prohibitions].prohibitions.head.typeId should be(2)
+  }
+
+  test("zero length prohibition is discarded") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+    val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
+    val trafficSign = PersistedTrafficSign(1, linkIdB1, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+
+    val allRoadLinks = Seq(roadLinkNameB1)
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(0.0, 0.0, 0.0)), false)).thenReturn(Nil)
+
+    val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign), Seq())
+    result should be(Set.empty)
   }
 
   val relationSignProhibition : Map[ProhibitionsAndRestrictionsType, Seq[ProhibitionClass]] = Map(

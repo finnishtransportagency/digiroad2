@@ -154,7 +154,12 @@ trait TrafficSignLinearGenerator {
       baseProcess(trafficSigns, roadLinks, roadLink, (startPointOfInterest, lastPointOfInterest, None), Seq())
     }.distinct
 
-    val groupedAssets = (newSegments ++ existingSegments).groupBy(_.roadLink)
+    val (validNewSegments, invalidNewSegments) = newSegments.partition(segment => segment.endMeasure > segment.startMeasure)
+
+    invalidNewSegments.foreach(segment => logger.error(s"discarded an invalid linear asset of length ${segment.endMeasure - segment.startMeasure} " +
+      s"from traffic sign ${segment.signId} on road link ${segment.roadLink.linkId}"))
+
+    val groupedAssets = (validNewSegments ++ existingSegments).groupBy(_.roadLink)
     val assets = fillTopology(roadLinks, groupedAssets)
 
     convertRoadSegments(assets, findStartEndRoadLinkOnChain(roadLinks)).toSet
@@ -313,7 +318,7 @@ trait TrafficSignLinearGenerator {
           val (starMeasure, endMeasure) = if (SideCode.apply(direction) == TowardsDigitizing)
             (0.toDouble, pair.mValue)
           else {
-            val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
+            val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
             (pair.mValue, length)
           }
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), starMeasure, endMeasure, Set(sign.id))
@@ -323,7 +328,7 @@ trait TrafficSignLinearGenerator {
           val (starMeasure, endMeasure) = if (SideCode.apply(direction) == AgainstDigitizing)
             (0L.toDouble, sign.mValue)
           else {
-            val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
+            val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
             (sign.mValue, length)
           }
 
@@ -331,7 +336,7 @@ trait TrafficSignLinearGenerator {
         }
         else {
 
-          val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
+          val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, length, Set(sign.id))
         }
     }
@@ -920,7 +925,7 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
 
   def generateSegmentPiece(currentRoadLink: RoadLink, sign: PersistedTrafficSign, value: Value, endDistance: Option[Double], direction: Int): TrafficSignToLinear = {
     if (debbuger) println("generateSegmentPiece")
-    val trafficSignToLinear = endDistance match {
+    endDistance match {
       case Some(mValue) =>
         if (currentRoadLink.linkId == sign.linkId) {
           val orderedMValue = Seq(sign.mValue, mValue).sorted
@@ -930,8 +935,8 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
           val (starMeasure, endMeasure) = if (SideCode.apply(direction) == TowardsDigitizing)
             (0.toDouble, mValue)
           else {
-            val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-            (length - mValue, "%.3f".formatLocal(java.util.Locale.US, length).toDouble)
+            val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
+            (length - mValue, length)
           }
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), starMeasure, endMeasure, Set(sign.id))
         }
@@ -940,23 +945,18 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
           val (starMeasure, endMeasure) = if (SideCode.apply(direction) == AgainstDigitizing)
             (0L.toDouble, sign.mValue)
           else {
-            val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-            (sign.mValue, "%.3f".formatLocal(java.util.Locale.US, length).toDouble)
+            val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
+            (sign.mValue, length)
           }
 
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), starMeasure, endMeasure, Set(sign.id))
         }
         else {
 
-          val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-          TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, "%.3f".formatLocal(java.util.Locale.US, length).toDouble, Set(sign.id))
+          val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
+          TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, length, Set(sign.id))
         }
     }
-    val assetLength = trafficSignToLinear.endMeasure - trafficSignToLinear.startMeasure
-    if (assetLength <= 0.0) {
-      logger.error(s"generated erroneous linear asset of length ${assetLength} from traffic sign ${sign.id} on road link ${trafficSignToLinear.roadLink.linkId}")
-    }
-    trafficSignToLinear
   }
 
 }
