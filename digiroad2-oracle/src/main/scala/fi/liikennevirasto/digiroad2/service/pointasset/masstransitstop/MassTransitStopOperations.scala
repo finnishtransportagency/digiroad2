@@ -10,16 +10,14 @@ sealed trait BusStopType {
   def value: Int
 }
 object BusStopType {
-  val values = Set(Virtual, Commuter, LongDistance, Terminal, ServicePoint, Unknown)
+  val values = Set(Tram, Virtual, Bus, Terminal, ServicePoint, Unknown)
 
   def apply(intValue: Int): BusStopType = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
   case object Tram extends BusStopType { def value = 1 }
-  case object Commuter extends BusStopType { def value = 2 }
-  case object LongDistance extends BusStopType { def value = 3 }
-  case object Local extends BusStopType { def value = 4 }
+  case object Bus extends BusStopType { def value = 2 }
   case object Virtual extends BusStopType { def value = 5 }
   case object Terminal extends BusStopType { def value = 6 }
   case object ServicePoint extends BusStopType { def value = 7 }
@@ -32,8 +30,8 @@ object MassTransitStopOperations {
 
   val StateOwned: Set[AdministrativeClass] = Set(State)
   val OtherOwned: Set[AdministrativeClass] = Set(Municipality, Private)
-  val CommuterBusStopPropertyValue: String = "2"
-  val LongDistanceBusStopPropertyValue: String = "3"
+  val TramPropertyValue: String = "1"
+  val BusStopPropertyValue: String = "2"
   val VirtualBusStopPropertyValue: String = "5"
   val ServicePointBusStopPropertyValue: String = "7"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
@@ -142,8 +140,8 @@ object MassTransitStopOperations {
 
   def isValidBusStopDirections(properties: Seq[SimplePointAssetProperty], roadLink: Option[RoadLinkLike]) = {
     val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).getOrElse(throw new IllegalStateException("Road link no longer available"))
-    val stopTypes = properties.filter(prop => prop.publicId == "pysakin_tyyppi").flatMap(_.values).map(_.asInstanceOf[PropertyValue].propertyValue)
-    val anyDirectionIsValidBecauseOfTram = stopTypes.contains("1")
+    val stopTypes = properties.filter(prop => prop.publicId == MassTransitStopTypePublicId).flatMap(_.values).map(_.asInstanceOf[PropertyValue].propertyValue)
+    val anyDirectionIsValidBecauseOfTram = stopTypes.contains(TramPropertyValue)
 
     if (anyDirectionIsValidBecauseOfTram) {
       true

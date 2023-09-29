@@ -148,6 +148,7 @@
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
       currentAsset.payload.linkId = position.linkId;
+      currentAsset.linkId = position.linkId;
       currentAsset.payload.validityDirection = position.validityDirection;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
@@ -194,6 +195,7 @@
 
     var open = function(asset) {
       currentAsset.id = asset.id;
+      currentAsset.linkId = asset.linkId;
       currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
@@ -220,19 +222,6 @@
      return !_.isUndefined(currentAsset.payload.municipalityCode) ? currentAsset.payload.municipalityCode : selectedMassTransitStopModel.getRoadLink().getData().municipalityCode;
     };
 
-    var pikavuoroIsAlone = function()
-    {
-      return _.some(currentAsset.payload.properties, function(property)
-      {
-        if (property.publicId == "pysakin_tyyppi") {
-          return _.some(property.values, function(propertyValue){
-            return (propertyValue.propertyValue == 4 && property.values.length<2) ;
-          });
-        }
-        return false;
-      });
-    };
-
     var hasMixedVirtualAndRealStops = function()
     {
       return _.some(currentAsset.payload.properties, function(property)
@@ -244,6 +233,36 @@
         }
         return false;
       });
+    };
+
+    var isWalkingCyclingLink = function () {
+      var selectedRoadLink = getRoadLink();
+      if (_.isEmpty(selectedRoadLink)) {
+        return false;
+      } else {
+        return selectedRoadLink.isPedestrianCyclingRoad();
+      }
+    };
+
+    var wrongStopTypeOnWalkingCyclingLink = function () {
+      var selectedRoadLink = getRoadLink();
+      if (_.isEmpty(selectedRoadLink)) {
+        return false;
+      } else {
+        var isOnlyTramStop = _.some(currentAsset.payload.properties, function (property) {
+          if (property.publicId == massTransitStopTypePublicId) {
+            return _.some(property.values, function (propertyValue) {
+              return (propertyValue.propertyValue == 1 && property.values.length == 1);
+            });
+          }
+          return false;
+        });
+        if (isWalkingCyclingLink()) {
+          return !isOnlyTramStop;
+        } else {
+          return false;
+        }
+      }
     };
 
     var requiredPropertiesMissing = function () {
@@ -461,7 +480,7 @@
 
     var get = function() {
       if (exists()) {
-          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), currentAsset.payload.lon, currentAsset.payload.lat);
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForCarPedestrianCycling(), currentAsset.payload.lon, currentAsset.payload.lat);
           var linkId = nearestLine.linkId;
           if (!currentAsset.linkId)
               currentAsset.linkId = linkId;
@@ -649,7 +668,8 @@
       requiredPropertiesMissing: requiredPropertiesMissing,
       place: place,
       hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops,
-      pikavuoroIsAlone: pikavuoroIsAlone,
+      wrongStopTypeOnWalkingCyclingLink: wrongStopTypeOnWalkingCyclingLink,
+      isWalkingCyclingLink: isWalkingCyclingLink,
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
       deleteMassTransitStop: deleteMassTransitStop,
