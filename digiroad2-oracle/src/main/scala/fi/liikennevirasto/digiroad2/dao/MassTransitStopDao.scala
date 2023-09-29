@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.model.LRMPosition
+import fi.liikennevirasto.digiroad2.model.PointAssetLRMPosition
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{LightGeometryMassTransitStop, MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
 import org.joda.time.format.ISODateTimeFormat
@@ -42,7 +42,7 @@ class MassTransitStopDao {
           when np.value is not null then cast(np.value as text)
           else null
         end as display_value,
-        lrm.id as lrm_id, lrm.start_measure, lrm.end_measure, lrm.link_id,
+        lrm.id as lrm_id, lrm.start_measure, lrm.link_id,
         a.created_date, a.created_by, a.modified_date, a.modified_by,
         ST_Transform(a.geometry, 4326) AS position_wgs84, lrm.link_source,
         tbs.terminal_asset_id as terminal_asset_id
@@ -69,7 +69,7 @@ class MassTransitStopDao {
 
         s"select id, national_id, asset_type_id, bearing, side_code, valid_from, valid_to, geometry, municipality_code, floating, "+
         s" adjusted_timestamp, p_id, public_id, property_type, required, max_value_length, value, display_value, lrm_id, start_measure, "+
-        s" end_measure, link_id, created_date, created_by, modified_date, modified_by, position_wgs84, link_source, terminal_asset_id "+
+        s" link_id, created_date, created_by, modified_date, modified_by, position_wgs84, link_source, terminal_asset_id "+
         s" from ( ${queryFilter(query.replace("from asset a", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum "
 
       case _ => queryFilter(queryFetchPointAssets())
@@ -176,7 +176,6 @@ class MassTransitStopDao {
         propertyMaxCharacters = propertyMaxCharacters)
       val lrmId = r.nextLong
       val startMeasure = r.nextDouble()
-      val endMeasure = r.nextDouble()
       val linkId = r.nextString()
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
@@ -185,7 +184,7 @@ class MassTransitStopDao {
       val terminalId = r.nextLongOption
       MassTransitStopRow(id, nationalId, assetTypeId, point, linkId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, timeStamp, linkSource),
+        lrmPosition = PointAssetLRMPosition(lrmId, startMeasure, point, timeStamp, linkSource),
         municipalityCode = municipalityCode, persistedFloating = persistedFloating, terminalId = terminalId)
     }
   }
@@ -481,7 +480,6 @@ class MassTransitStopDao {
         sqlu"""
            update lrm_position
             set start_measure = $mValue,
-            end_measure = $mValue,
             link_id = $linkId,
             link_source = ${linkSource.value},
             adjusted_timestamp = ${adjustedTimeStamp}
@@ -495,7 +493,7 @@ class MassTransitStopDao {
       case _ =>
         sqlu"""
            update lrm_position
-           set start_measure = $mValue, end_measure = $mValue, link_id = $linkId, link_source = ${linkSource.value}
+           set start_measure = $mValue, link_id = $linkId, link_source = ${linkSource.value}
            where id = (
             select lrm.id
             from asset a
@@ -508,15 +506,15 @@ class MassTransitStopDao {
 
   def insertLrmPosition(id: Long, mValue: Double, linkId: String, linkSource: LinkGeomSource) {
     sqlu"""
-           insert into lrm_position (id, start_measure, end_measure, link_id, link_source)
-           values ($id, $mValue, $mValue, $linkId, ${linkSource.value})
+           insert into lrm_position (id, start_measure, link_id, link_source)
+           values ($id, $mValue, $linkId, ${linkSource.value})
       """.execute
   }
 
   def insertLrmPosition(id: Long, mValue: Double, linkId: String, linkSource: LinkGeomSource, sideCode: SideCode) {
     sqlu"""
-           insert into lrm_position (id, start_measure, end_measure, link_id, link_source, side_code)
-           values ($id, $mValue, $mValue, $linkId, ${linkSource.value}, ${sideCode.value})
+           insert into lrm_position (id, start_measure, link_id, link_source, side_code)
+           values ($id, $mValue, $linkId, ${linkSource.value}, ${sideCode.value})
       """.execute
   }
 

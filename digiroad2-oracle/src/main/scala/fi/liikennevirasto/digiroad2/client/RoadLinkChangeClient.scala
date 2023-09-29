@@ -2,6 +2,9 @@ package fi.liikennevirasto.digiroad2.client
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.linearasset.SurfaceType
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.AwsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
@@ -10,11 +13,9 @@ import org.json4s.JsonAST.JString
 import org.json4s.jackson.parseJson
 import org.json4s.{CustomSerializer, _}
 import org.postgis.PGgeometry
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
-import scala.io.Source.fromInputStream
 
 trait RoadLinkChangeType {
   def value: String
@@ -33,11 +34,21 @@ object RoadLinkChangeType {
   case object Unknown extends RoadLinkChangeType { def value = "unknown" }
 }
 
+case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int,
+                        adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection,
+                        surfaceType: SurfaceType = SurfaceType.Unknown)
+case class ReplaceInfo(oldLinkId: Option[String], newLinkId: Option[String], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
+case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
+case class ChangeSetId(key: String, statusDate: DateTime, targetDate: DateTime)
+case class RoadLinkChangeSet(key: String, statusDate: DateTime, targetDate: DateTime, changes: Seq[RoadLinkChange])
+
 class RoadLinkChangeClient {
   lazy val awsService = new AwsService
   lazy val s3Service: awsService.S3.type = awsService.S3
   lazy val s3Bucket: String = Digiroad2Properties.roadLinkChangeS3BucketName
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
   private def lineStringToPoints(lineString: String): List[Point] = {
     val geometry = PGgeometry.geomFromString(lineString)
@@ -97,6 +108,26 @@ class RoadLinkChangeClient {
   }
   ))
 
+  object SurfaceTypeSerializer extends CustomSerializer[SurfaceType](_ => (
+  {
+    case JInt(directionValue) =>
+      directionValue.toInt match {
+        case 1 => SurfaceType.None
+        case 2 => SurfaceType.Paved
+        case _ => SurfaceType.Unknown
+      }
+  },
+  {
+    case surfaceType: SurfaceType =>
+      surfaceType match {
+        case SurfaceType.Unknown => JInt(0)
+        case SurfaceType.None => JInt(1)
+        case SurfaceType.Paved => JInt(2)
+        case _ => JNull
+      }
+  }
+  ))
+
   object GeometrySerializer extends CustomSerializer[List[Point]](_ => (
     {
       case JString(lineString) =>
@@ -109,58 +140,108 @@ class RoadLinkChangeClient {
   ))
 
   implicit val formats = DefaultFormats + changeItemSerializer + RoadLinkChangeTypeSerializer + GeometrySerializer +
-    AdminClassSerializer + TrafficDirectionSerializer
-
-  case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int, adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection)
-  case class ReplaceInfo(oldLinkId: String, newLinkId: String, oldFromMValue: Double, oldToMValue: Double, newFromMValue: Double, newToMValue: Double, digitizationChange: Boolean)
-  case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
+    AdminClassSerializer + TrafficDirectionSerializer + SurfaceTypeSerializer
 
   def fetchLatestSuccessfulUpdateDate(): DateTime = {
     // placeholder value as long as fetching this date from db is possible
     DateTime.parse("2022-05-10")
   }
 
-  def listFilesAccordingToDates(since: DateTime, until: DateTime) = {
-    def isValidKey(key: String): Boolean = {
+  def listFilesAccordingToDates(since: DateTime): List[ChangeSetId] = {
+    def isValidKey(key: String): Option[ChangeSetId] = {
       try {
         val keyParts = key.replace(".json", "").split("_")
-        val keySince = DateTime.parse(keyParts.head)
-        val keyUntil = DateTime.parse(keyParts.last)
-        !(keySince.isBefore(since) || keyUntil.isAfter(until)) // get no changes before or after the requested period
+        val keyStatusDate = DateTime.parse(keyParts.head)
+        val keyTargetDate = DateTime.parse(keyParts.last)
+        if (!(keyStatusDate.isBefore(since) || keyTargetDate.isAfterNow)) {
+          Some(ChangeSetId(key, keyStatusDate, keyTargetDate))
+        } else None
       } catch {
-        case illegalArgument: IllegalArgumentException =>
-          logger.error("Key provides no valid dates.")
-          false
-        case e: Exception =>
+        case _: IllegalArgumentException =>
+          logger.error(s"Key ($key) provides no valid dates.")
+          None
+        case e: Throwable =>
           logger.error(e.getMessage)
-          false
+          None
       }
     }
 
-    val objects = s3Service.listObjects(s3Bucket).asScala.toList
-    objects.map(_.key()).filter(key => isValidKey(key))
+    val objects = s3Service.listObjects(s3Bucket)
+    objects.flatMap(s3Object => isValidKey(s3Object.key())).sortBy(_.statusDate)
   }
 
-  def fetchChangeSetFromS3(filename: String) = {
-    val s3Object = s3Service.getObjectFromS3(s3Bucket, filename)
-    fromInputStream(s3Object).mkString
+  def fetchChangeSetFromS3(filename: String): String = {
+    s3Service.getObjectFromS3(s3Bucket, filename)
   }
 
 
   def convertToRoadLinkChange(changeJson: String) : Seq[RoadLinkChange] = {
     val json = parseJson(changeJson)
     try {
-      json.extract[Seq[RoadLinkChange]]
+      mergeReplaceInfoWithSameLink(json.extract[Seq[RoadLinkChange]])
     } catch {
-      case e =>
+      case e: Throwable =>
         logger.error(e.getMessage)
         Seq.empty[RoadLinkChange]
     }
   }
 
-  def getRoadLinkChanges(since: DateTime = fetchLatestSuccessfulUpdateDate(), until: DateTime = DateTime.now()): Seq[RoadLinkChange] = {
-    val keys = listFilesAccordingToDates(since, until)
-    val changes = keys.map(key => fetchChangeSetFromS3(key))
-    changes.map(change => convertToRoadLinkChange(change)).flatten
+  // this removes the unnecessary split caused by road address changes in Tiekamu
+  def mergeReplaceInfoWithSameLink(roadLinkChanges: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+
+    def isContinuous(first: ReplaceInfo, second: ReplaceInfo) = {
+      first.oldToMValue.getOrElse(None) == second.oldFromMValue.getOrElse(None) && first.newToMValue.getOrElse(None) == second.newFromMValue.getOrElse(None) && first.digitizationChange == second.digitizationChange
+    }
+
+    def combineReplaceInfo(continuousParts: Seq[ReplaceInfo]) = {
+      ReplaceInfo(
+        continuousParts.head.oldLinkId,
+        continuousParts.head.newLinkId,
+        continuousParts.map(_.oldFromMValue).min,
+        continuousParts.map(_.oldToMValue).max,
+        continuousParts.map(_.newFromMValue).min,
+        continuousParts.map(_.newToMValue).max,
+        continuousParts.head.digitizationChange
+      )
+    }
+
+    roadLinkChanges.map { change =>
+      val groupedReplaceInfo = change.replaceInfo.groupBy(r => (r.oldLinkId, r.newLinkId))
+      val mergedReplaceInfo = groupedReplaceInfo.flatMap { groupedInfo =>
+        val replaceInfoSeq = groupedInfo._2
+        if (replaceInfoSeq.size > 1) {
+          val sortedReplaceInfoSeq = replaceInfoSeq.sortBy(_.newToMValue)
+          val continuousParts = sortedReplaceInfoSeq.foldLeft(Seq.empty[ReplaceInfo], Seq.empty[ReplaceInfo]) { (acc, next) =>
+            val (combinedReplaceInfos, currentContinuous) = acc
+            val latestPart = currentContinuous.lastOption
+            latestPart match {
+              case Some(latest: ReplaceInfo) =>
+                if (isContinuous(latest, next) || latest.equals(next)) {
+                  (combinedReplaceInfos, currentContinuous ++ Seq(next))
+                } else {
+                  val newCombined = combineReplaceInfo(currentContinuous)
+                  (combinedReplaceInfos ++ Seq(newCombined), Seq(next))
+                }
+              case _ =>
+                (combinedReplaceInfos, Seq(next))
+            }
+          }
+          val lastPartCombined = combineReplaceInfo(continuousParts._2)
+          continuousParts._1 ++ Seq(lastPartCombined)
+
+        } else {
+          replaceInfoSeq
+        }
+      }
+      change.copy(replaceInfo = mergedReplaceInfo.toSeq)
+    }
+  }
+
+  def getRoadLinkChanges(since: DateTime = fetchLatestSuccessfulUpdateDate()): Seq[RoadLinkChangeSet] = {
+    val keys = listFilesAccordingToDates(since)
+    keys.map(key => {
+      val changes = fetchChangeSetFromS3(key.key)
+      RoadLinkChangeSet(key.key, key.statusDate, key.targetDate, convertToRoadLinkChange(changes))
+    })
   }
 }

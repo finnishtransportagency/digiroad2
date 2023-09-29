@@ -55,6 +55,7 @@ trait Digiroad2Properties {
   val apiS3ObjectTTLSeconds: String
   val awsConnectionEnabled: Boolean
   val roadLinkChangeS3BucketName: String
+  val samuutusReportsBucketName: String
   val bonecpProperties: Properties
   val batchMode:Boolean
 }
@@ -101,6 +102,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val batchMode: Boolean = scala.util.Properties.envOrElse("batchMode", "false").toBoolean
   val roadLinkChangeS3BucketName: String = scala.util.Properties.envOrElse("roadLinkChangeS3BucketName", null)
+  val samuutusReportsBucketName: String = scala.util.Properties.envOrElse("samuutusReportsBucketName", null)
 
   val cacheHostname: String = scala.util.Properties.envOrElse("cacheHostname", null)
   val cacheHostPort: String = scala.util.Properties.envOrElse("cacheHostPort", null)
@@ -195,6 +197,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val apiS3ObjectTTLSeconds: String = envOrProperties("apiS3ObjectTTLSeconds")
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val roadLinkChangeS3BucketName: String = envOrProperties("roadLinkChangeS3BucketName")
+  override val samuutusReportsBucketName: String = envOrProperties("samuutusReportsBucketName")
   override val batchMode: Boolean =  envProps.getProperty("batchMode", "false").toBoolean
 
   override lazy val bonecpProperties: Properties = {
@@ -281,6 +284,7 @@ object Digiroad2Properties {
   lazy val apiS3ObjectTTLSeconds: String = properties.apiS3ObjectTTLSeconds
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
   lazy val roadLinkChangeS3BucketName: String = properties.roadLinkChangeS3BucketName
+  lazy val samuutusReportsBucketName: String = properties.samuutusReportsBucketName
   lazy val batchMode: Boolean = properties.batchMode
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties

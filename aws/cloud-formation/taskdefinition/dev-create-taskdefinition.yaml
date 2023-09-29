@@ -23,10 +23,6 @@ Parameters:
     Type: Number
     Default: 300
     Description: Seconds, how long s3 object can be fetched after last modification
-  RoadLinkChangeS3BucketName:
-    Type: String
-    Default: dev-vaylapilvi-digiroad2-road-link-change-bucket
-    Description: Name of bucket storing road link change information
 
 Resources:
   ECSTaskExecutionRoleForTaskDefinitionDigiroad:
@@ -170,8 +166,6 @@ Resources:
               Value: !Sub '${ApiS3BucketName}'
             - Name: apiS3ObjectTTLSeconds
               Value: !Sub '${ApiS3ObjectTTLSeconds}'
-            - Name: roadLinkChangeS3BucketName
-              Value: !Sub '${RoadLinkChangeS3BucketName}'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/bonecp.password'

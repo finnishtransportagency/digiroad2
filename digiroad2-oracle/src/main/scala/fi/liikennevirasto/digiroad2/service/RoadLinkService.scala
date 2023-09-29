@@ -8,14 +8,13 @@ import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{IncompleteLinkDao, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
-import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdate
+import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdateActor
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.generateProperties
 import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -34,9 +33,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 case class IncompleteLink(linkId: String, municipalityCode: Int, administrativeClass: AdministrativeClass)
-case class AdjustedRoadLinksAndRoadLinkFetched(adjustedRoadLink:RoadLink, roadLinkFetched:RoadLinkFetched)
 case class RoadLinkSet(link: RoadLink, itNext: Option[RoadLink], itPrevious: Option[RoadLink])
-case class RoadLinkChangeSet(adjustedRoadLinks: Seq[AdjustedRoadLinksAndRoadLinkFetched], incompleteLinks: Seq[IncompleteLink], changes: Seq[ChangeInfo] = Nil, roadLinks: Seq[RoadLink] = Nil)
 case class ChangedRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 case class LinkProperties(linkId: String, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection,
                           administrativeClass: AdministrativeClass, privateRoadAssociation: Option[String] = None, additionalInfo: Option[AdditionalInformation] = None,
@@ -232,6 +229,42 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   def getRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksByLinkIds(Set(linkId), newTransaction: Boolean).headOption
+
+  /**
+   * This method returns existing and expired road links by link ids. Used by samuutus.
+   * ATTENTION: Use this method always with transaction, never with session.
+   */
+  def getExistingAndExpiredRoadLinksByLinkIds(linkIds: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
+    def getLinks: Seq[RoadLinkFetched] = {
+      val nonExpiredLinks = fetchRoadlinksByIds(linkIds)
+      val missingLinkIds = linkIds.diff(nonExpiredLinks.map(_.linkId).toSet)
+
+      if (missingLinkIds.nonEmpty)
+        nonExpiredLinks ++ roadLinkDAO.fetchExpiredByLinkIds(linkIds)
+      else
+        nonExpiredLinks
+    }
+
+    if (newTransaction) withDynTransaction ( enrichFetchedRoadLinks(getLinks) )
+    else enrichFetchedRoadLinks(getLinks)
+  }
+
+  def getExistingOrExpiredRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] =
+    getExistingAndExpiredRoadLinksByLinkIds(Set(linkId), newTransaction).headOption
+
+  def getExpiredRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = {
+    val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(linkId)
+    if (newTransaction)
+      withDynTransaction {
+        enrichFetchedRoadLinks(fetchedRoadLinks).headOption
+      }
+    else
+      enrichFetchedRoadLinks(fetchedRoadLinks).headOption
+  }
+
+  def getExpiredRoadLinkByLinkIdNonEncrished(linkId: String, newTransaction: Boolean = true): Option[RoadLinkFetched] = {
+   roadLinkDAO.fetchExpiredRoadLink(linkId).headOption
+  }
 
   /**
     * This method returns road links that have been changed within a specified time period.
@@ -523,23 +556,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def getLinksWithComplementaryAndGenerateProperties(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])= {
-    val fut = for{
-      f2Result <- roadLinkClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
-    } yield f2Result
-    val changes = Await.result(fut, Duration.Inf)
-
-    val (complementaryLinks, links) = withDbConnection {
-      (complementaryLinkDAO.fetchWalkwaysByMunicipalities(municipalities),roadLinkDAO.fetchByMunicipality(municipalities))
-    }
-    
-    val complementaryLinkIds = complementaryLinks.map(complementaryLink => Some(complementaryLink.linkId))
-    val (complementaryChanges, roadLinkChanges) = changes.partition(change => complementaryLinkIds.contains(change.oldId) || complementaryLinkIds.contains(change.newId))
-
-      withDynTransaction {
-        (generateProperties(links, roadLinkChanges), changes, generateProperties(complementaryLinks, complementaryChanges))
-      }
-  }
   
   /**
     * This method returns road links and change data by municipality.
@@ -579,28 +595,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * Returns incomplete links by municipalities (Incomplete link = road link with no functional class and link type saved in OTH).
     * Used by Digiroad2Api /roadLinks/incomplete GET endpoint.
     */
-  def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[String]]] = {
-    case class IncompleteLink(linkId: String, municipality: String, administrativeClass: String)
-    def toIncompleteLink(x: (String, String, Int)) = IncompleteLink(x._1, x._2, AdministrativeClass(x._3).toString)
-
-    withDynSession {
-      val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
-      val incompleteLinksQuery = """
-        select l.link_id, m.name_fi, l.administrative_class
-        from incomplete_link l
-        join municipality m on l.municipality_code = m.id
-                                 """
-
-      val sql = optionalMunicipalities match {
-        case Some(municipalities) => incompleteLinksQuery + s" where l.municipality_code in ($municipalities)"
-        case _ => incompleteLinksQuery
-      }
-
-      Q.queryNA[(String, String, Int)](sql).list
-        .map(toIncompleteLink)
-        .groupBy(_.municipality)
-        .mapValues { _.groupBy(_.administrativeClass)
-          .mapValues(_.map(_.linkId)) }
+  def getIncompleteLinks(includedMunicipalities: Option[Set[Int]], newSession: Boolean = true): Map[String, Map[String, Seq[String]]] = {
+    if (newSession) {
+      withDynSession(IncompleteLinkDao.getIncompleteLinks(includedMunicipalities))
+    } else {
+      IncompleteLinkDao.getIncompleteLinks(includedMunicipalities)
     }
   }
 
@@ -676,7 +675,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   
   def updateSideCodes(roadLinks:Seq[RoadLinkLike] ): Unit = {
     AssetTypeInfo.updateSideCodes.foreach(a=> {
-      eventbus.publish("linearAssetUpdater",AssetUpdate(roadLinks.map(_.linkId).toSet,a.typeId,roadLinkUpdate = true))
+      eventbus.publish("linearAssetUpdater",AssetUpdateActor(roadLinks.map(_.linkId).toSet,a.typeId,roadLinkUpdate = true))
     })
   }
 
@@ -907,346 +906,19 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     sqlu"""delete from incomplete_link where link_id = $linkId""".execute
   }
 
-  protected def removeIncompleteness(links: Seq[AdjustedRoadLinksAndRoadLinkFetched]): Unit = {
-    val insertLinkPropertyPS = dynamicSession.prepareStatement(
-      s"""delete from incomplete_link where link_id = (?)""".stripMargin)
-    try {
-      links.foreach { link =>
-        if (link.adjustedRoadLink.functionalClass != UnknownFunctionalClass.value
-              && link.adjustedRoadLink.linkType != UnknownLinkType){
-          insertLinkPropertyPS.setString(1, link.adjustedRoadLink.linkId)
-          insertLinkPropertyPS.addBatch()
-        }
-      }
-      insertLinkPropertyPS.executeBatch()
-    } finally {
-      insertLinkPropertyPS.close()
-    }
-  }
-
-  def updateAutoGeneratedProperties(adjustedRoadLinks: Seq[AdjustedRoadLinksAndRoadLinkFetched]): Unit = {
-    def createUsernameForAutogenerated(modifiedBy: Option[String]): Option[String] = {
-      modifiedBy match {
-        case Some("automatic_generation") => modifiedBy
-        case _ => None
-      }
-    }
-
-    def parseDate(latestModifiedAt: Option[String]): Option[String] = {
-      if (latestModifiedAt.isDefined) {
-        try {
-          if (latestModifiedAt.get.matches("^\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d.*")) {
-            // Finnish date format
-            Some(DateTimePropertyFormat.parseDateTime(latestModifiedAt.get).toString())
-          } else {
-            Some(DateTime.parse(latestModifiedAt.get).toString(ISODateTimeFormat.dateTime()))
-          }
-        } catch {
-          case e: Exception =>
-            logger.error(s"parsing failed: ${latestModifiedAt.getOrElse("null")}")
-            None
-        }
-      } else None
-    }
-
-    def setupEntries(roadLink: RoadLink): ( Option[String], LinkProperties) = {
-      (createUsernameForAutogenerated(roadLink.modifiedBy), // Separate auto-generated links from change info links: username should be empty for change info links
-        LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass))
-    }
-
-    def partitionIntoTypes(adjustedRoadLinks: Seq[AdjustedRoadLinksAndRoadLinkFetched]): (Seq[AdjustedRoadLinksAndRoadLinkFetched], Seq[AdjustedRoadLinksAndRoadLinkFetched], Seq[AdjustedRoadLinksAndRoadLinkFetched]) = {
-      val trafficDirection, functionalClass, linkType: ListBuffer[AdjustedRoadLinksAndRoadLinkFetched] = new ListBuffer[AdjustedRoadLinksAndRoadLinkFetched]
-      for (link <- adjustedRoadLinks) {
-        if (link.adjustedRoadLink.trafficDirection != TrafficDirection.UnknownDirection) {
-          trafficDirection.append(link)
-        }
-        if (link.adjustedRoadLink.functionalClass != UnknownFunctionalClass.value) {
-          functionalClass.append(link)
-        }
-        if (link.adjustedRoadLink.linkType != UnknownLinkType) {
-          linkType.append(link)
-        }
-      }
-      (trafficDirection.toList, functionalClass.toList, linkType.toList)
-    }
-
-    def separateUpdateAndInsert(entries: Seq[LinkPropertiesEntries], propertyName: String): (Seq[LinkPropertiesEntries], Seq[LinkPropertiesEntries]) = {
-      val updateValues, insertValues: ListBuffer[LinkPropertiesEntries] = new ListBuffer[LinkPropertiesEntries]
-      val optionalExistingValues = RoadLinkOverrideDAO.getValues(propertyName, entries.map(_.linkProperty.linkId))
-      for (entry <- entries) {
-        val optionalExistingValue = optionalExistingValues.find(_.linkId == entry.linkProperty.linkId)
-        (optionalExistingValue, RoadLinkOverrideDAO.getMasterDataValue(entry.propertyName, entry.roadLinkFetched)) match {
-          case (Some(_), _) =>
-            updateValues.append(entry)
-          case (None, None) =>
-            insertValues.append(entry)
-          case (None, Some(masterDataValue)) =>
-            if (masterDataValue != RoadLinkOverrideDAO.getValue(entry.propertyName, entry.linkProperty))
-              insertValues.append(entry) // only if it override master data value
-          case _ => Unit
-        }
-      }
-      (updateValues.toList, insertValues.toList)
-    }
-    
-    val (trafficDirections, functionalClass, linkTypes) = partitionIntoTypes(adjustedRoadLinks)
-
-    val trafficDirectionEntries: Seq[LinkPropertiesEntries] = trafficDirections.map(link => {
-      val (username, linkProperty) = setupEntries(link.adjustedRoadLink)
-      LinkPropertiesEntries(RoadLinkOverrideDAO.TrafficDirection, linkProperty, username, link.roadLinkFetched, None, None, None)
-    })
-
-    val functionalClassEntries: Seq[LinkPropertiesEntries] = functionalClass.map(link => {
-      val (username, linkProperty) = setupEntries(link.adjustedRoadLink)
-      val parsedDate = parseDate(link.adjustedRoadLink.modifiedAt)
-      LinkPropertiesEntries(RoadLinkOverrideDAO.FunctionalClass, linkProperty, username, link.roadLinkFetched, parsedDate, link.adjustedRoadLink.modifiedBy, None)
-    })
-
-    val linkTypeEntries: Seq[LinkPropertiesEntries] = linkTypes.map(link => {
-      val (username, linkProperty) = setupEntries(link.adjustedRoadLink)
-      val parsedDate = parseDate(link.adjustedRoadLink.modifiedAt)
-      LinkPropertiesEntries(RoadLinkOverrideDAO.LinkType, linkProperty, username, link.roadLinkFetched, parsedDate, link.adjustedRoadLink.modifiedBy, None)
-    })
-
-    val (updateTrafficDirectionEntries, insertTrafficDirectionEntries) = separateUpdateAndInsert(trafficDirectionEntries,RoadLinkOverrideDAO.TrafficDirection)
-    val (updateFunctionalClass, insertFunctionalClass) = separateUpdateAndInsert(functionalClassEntries,RoadLinkOverrideDAO.FunctionalClass)
-    val (updateLinkTypeEntries, insertLinkTypeEntries) = separateUpdateAndInsert(linkTypeEntries,RoadLinkOverrideDAO.LinkType)
-
-    RoadLinkOverrideDAO.insertMass(RoadLinkOverrideDAO.TrafficDirection, insertTrafficDirectionEntries)
-    RoadLinkOverrideDAO.insertMass(RoadLinkOverrideDAO.FunctionalClass, insertFunctionalClass)
-    RoadLinkOverrideDAO.insertMass(RoadLinkOverrideDAO.LinkType, insertLinkTypeEntries)
-
-    RoadLinkOverrideDAO.updateMass(RoadLinkOverrideDAO.TrafficDirection, updateTrafficDirectionEntries)
-    RoadLinkOverrideDAO.updateMass(RoadLinkOverrideDAO.FunctionalClass, updateFunctionalClass)
-    RoadLinkOverrideDAO.updateMass(RoadLinkOverrideDAO.LinkType, updateLinkTypeEntries)
-    
-    removeIncompleteness(adjustedRoadLinks)
-  }
-  
   /**
-    * Updates incomplete road link list (incomplete = functional class or link type missing). Used by RoadLinkService.updateRoadLinkChanges.
+    * Updates incomplete road link list (incomplete = functional class or link type missing).
     */
   def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]): Unit = {
-
-    val insertLinkPropertyPS = dynamicSession.prepareStatement(
-      s"""insert into incomplete_link(id, link_id, municipality_code, administrative_class)
-         |select nextval('primary_key_seq'), (?), (?), (?)
-         |where not exists (select * from incomplete_link where link_id = (?))""".stripMargin)
-    try {
-      incompleteLinks.foreach { incompleteLink =>
-        insertLinkPropertyPS.setString(1, incompleteLink.linkId)
-        insertLinkPropertyPS.setInt(2, incompleteLink.municipalityCode)
-        insertLinkPropertyPS.setInt(3, incompleteLink.administrativeClass.value)
-        insertLinkPropertyPS.setString(4, incompleteLink.linkId)
-        insertLinkPropertyPS.addBatch()
-      }
-      insertLinkPropertyPS.executeBatch()
-    } finally {
-      insertLinkPropertyPS.close()
-    }
-  }
-  /**
-    * Returns value when all given values are the same. Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData.
-    */
-  def useValueWhenAllEqual[T](values: Seq[T]): Option[T] = {
-    if (values.nonEmpty && values.forall(_ == values.head))
-      Some(values.head)
-    else
-      None
+    IncompleteLinkDao.insertIncompleteLinks(incompleteLinks)
   }
 
-  private def getLatestModification[T](values: Map[Option[String], Option [String]]) = {
-    if (values.nonEmpty)
-      Some(values.reduce(calculateLatestDate))
-    else
-      None
-  }
-
-  private def calculateLatestDate(stringOption1: (Option[String], Option[String]), stringOption2: (Option[String], Option[String])): (Option[String], Option[String]) = {
-    val date1 = convertStringToDate(stringOption1._1)
-    val date2 = convertStringToDate(stringOption2._1)
-    (date1, date2) match {
-      case (Some(d1), Some(d2)) =>
-        if (d1.after(d2))
-          stringOption1
-        else
-          stringOption2
-      case (Some(d1), None) => stringOption1
-      case (None, Some(d2)) => stringOption2
-      case (None, None) => (None, None)
-    }
-  }
-
-  private def convertStringToDate(str: Option[String]): Option[Date] = {
-    if (str.exists(_.trim.nonEmpty))
-      Some(new SimpleDateFormat("dd.MM.yyyy hh:mm:ss").parse(str.get))
-    else
-      None
-  }
-
-  /**
-    *  Fills incomplete road links with the previous link information.
-    *  Used by UpdateIncompleteLinkList.
-    */
-  def fillIncompleteLinksWithPreviousLinkData(incompleteLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): (Seq[RoadLink], Seq[RoadLink]) = {
-    val oldRoadLinkProperties = getOldRoadLinkPropertiesForChanges(changes)
-    incompleteLinks.map { incompleteLink =>
-      val oldIdsForIncompleteLink = changes.filter(_.newId == Option(incompleteLink.linkId)).flatMap(_.oldId)
-      val oldPropertiesForIncompleteLink = oldRoadLinkProperties.filter(oldLink => oldIdsForIncompleteLink.contains(oldLink.linkId))
-      val newFunctionalClass = incompleteLink.functionalClass match {
-        case value if (value == UnknownFunctionalClass.value) =>  useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.functionalClass)).getOrElse(UnknownFunctionalClass.value)
-        case _ => incompleteLink.functionalClass
-      }
-      val newLinkType = incompleteLink.linkType match {
-        case UnknownLinkType => useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.linkType)).getOrElse(UnknownLinkType)
-        case _ => incompleteLink.linkType
-      }
-      val modifications = (oldPropertiesForIncompleteLink.map(_.modifiedAt) zip oldPropertiesForIncompleteLink.map(_.modifiedBy))
-        .toMap ++ Map(incompleteLink.modifiedAt -> incompleteLink.modifiedBy)
-      val (newModifiedAt, newModifiedBy) = getLatestModification(modifications).getOrElse(incompleteLink.modifiedAt, incompleteLink.modifiedBy)
-      val previousDirection = useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.trafficDirection))
-
-      incompleteLink.copy(
-        functionalClass  = newFunctionalClass,
-        linkType          = newLinkType,
-        trafficDirection  =  previousDirection match
-        { case Some(TrafficDirection.UnknownDirection) => incompleteLink.trafficDirection
-          case None => incompleteLink.trafficDirection
-          case _ => previousDirection.get
-        },
-        modifiedAt = newModifiedAt,
-        modifiedBy = newModifiedBy)
-    }.partition(isComplete)
-  }
-
-  /**
-    * Checks if road link is complete (has both functional class and link type in OTH).
-    * Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData and RoadLinkService.isIncomplete.
-    */
-  def isComplete(roadLink: RoadLink): Boolean = {
-    roadLink.linkSource != LinkGeomSource.NormalLinkInterface ||
-      roadLink.functionalClass != UnknownFunctionalClass.value && roadLink.linkType.value != UnknownLinkType.value
-  }
 
   def getRoadLinksAndComplementaryLinksByMunicipality(municipality: Int): Seq[RoadLink] = {
     val (roadLinks,_, complementaries) =  LogUtils.time(logger,"Get roadlinks with cache")(
       getCachedRoadLinks(municipality)
     )
     roadLinks ++ complementaries
-  }
-
-  /**
-    * Checks if road link is not complete. Used by UpdateIncompleteLinkList.
-    */
-  def isIncomplete(roadLink: RoadLink): Boolean = !isComplete(roadLink)
-
-  /**
-    * Checks if road link is partially complete (has functional class OR link type but not both). Used by UpdateIncompleteLinkList.
-    */
-  def isPartiallyIncomplete(roadLink: RoadLink): Boolean = {
-    val onlyFunctionalClassIsSet = roadLink.functionalClass != UnknownFunctionalClass.value && roadLink.linkType.value == UnknownLinkType.value
-    val onlyLinkTypeIsSet = roadLink.functionalClass == UnknownFunctionalClass.value && roadLink.linkType.value != UnknownLinkType.value
-    onlyFunctionalClassIsSet || onlyLinkTypeIsSet
-  }
-
-  def roadLinkToMap(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): mutable.HashMap[String, RoadLinkSet] = {
-    val hashMap: mutable.HashMap[String, RoadLinkSet] = new mutable.HashMap()
-    val newChanges=changes.partition(c=>c.changeType ==ChangeType.New.value )._1
-
-    newChanges.foreach(change => {
-      val roadLinkFound = roadLinks.find(_.linkId == change.newId.get)
-      if (roadLinkFound.isDefined){
-        val (startPoint, endPoint) = GeometryUtils.geometryEndpoints(roadLinkFound.get.geometry)
-        val roadLinksAdjFirst = roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, startPoint) && link != roadLinkFound.get)
-        val roadLinksAdjLast = roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, endPoint) && link != roadLinkFound.get)
-        hashMap.put(roadLinkFound.get.linkId, RoadLinkSet(roadLinkFound.get, roadLinksAdjFirst, roadLinksAdjLast))
-      }
-    })
-    hashMap
-  }
-
-  /**
-    * Updates roadLinks attributes based on the changes received
-    * @param roadLinks      UpToDate roadLinks
-    * @param changes        Change information to treat
-    * @param changeUsername Username applied to this changes
-    */
-  def fillRoadLinkAttributes(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], changeUsername: String = AutoGeneratedUsername.generatedInUpdate): Unit = {
-    val roadLinkMap: mutable.HashMap[String, RoadLinkSet] = roadLinkToMap(roadLinks, changes)
-
-    def resolveNewChange(change: ChangeInfo): Unit = {
-
-      val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.newId.get)
-      val roadLinkFind: Option[RoadLinkSet] = roadLinkMap.get(change.newId.get)
-
-      if (roadLinkAttributesRelatedWithThisChange.isEmpty && roadLinkFind.isDefined) {
-        val roadLink = roadLinkFind.get
-        val roadLinksAdjFirst: Option[RoadLink] = roadLink.itNext
-        val roadLinksAdjLast: Option[RoadLink] = roadLink.itPrevious
-
-        if (roadLinksAdjFirst.nonEmpty && roadLinksAdjLast.nonEmpty) {
-          val attributesFirstRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjFirst.get.linkId)
-          val attributesLastRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjLast.get.linkId)
-          val commonAttributes = returnEqualAttributes(Seq(attributesFirstRoadLink, attributesLastRoadLink))
-
-          commonAttributes.foreach { case (attribute, value) =>
-            LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.timeStamp)
-          }
-        }
-      }
-    }
-
-    def returnEqualAttributes(oldAttributes: Seq[Map[String, String]]): Map[String, String] = {
-      oldAttributes.flatMap { mapToFilter =>
-        mapToFilter.filter { case (attr, value) =>
-          oldAttributes.forall { oldAttribute =>
-            val attribute = oldAttribute.get(attr)
-            attribute.nonEmpty && attribute.get == value
-          }
-        }
-      }.toMap
-    }
-
-    def resolveChanges(changesToBeProcessed: Seq[ChangeInfo]): Unit = {
-      changesToBeProcessed.foreach { change =>
-        ChangeType.apply(change.changeType) match {
-          case ChangeType.New =>
-            resolveNewChange(change)
-          case ChangeType.Removed =>
-            if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.timeStamp)).nonEmpty)
-              LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.timeStamp))
-          case _ if LinkAttributesDao.getExistingValues(change.newId.get).isEmpty =>
-            val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)
-            if (newIdFromVariousOld.size > 1) {
-              val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
-                LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.timeStamp))
-              }
-              returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
-                LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.timeStamp)
-              }
-            } else {
-              val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.timeStamp))
-
-              if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
-                roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
-                  LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.timeStamp)
-                }
-              }
-            }
-          case _ =>
-        }
-      }
-    }
-
-    val changesToBeProcessed = changes.filterNot{change =>
-      val isOldEqNew = change.oldId == change.newId
-      val isNotToExpire = change.oldId.isDefined && change.newId.isEmpty && change.changeType != ChangeType.Removed.value
-      val isNotToCreate = change.oldId.isEmpty && change.newId.isDefined && change.changeType != ChangeType.New.value
-
-      isOldEqNew || isNotToExpire || isNotToCreate
-    }
-      .sortWith(_.timeStamp < _.timeStamp)
-    resolveChanges(changesToBeProcessed)
   }
 
 
@@ -1258,27 +930,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + filteredRoadLinks.size){getRoadLinkDataByLinkIds(filteredRoadLinks)}
   }
 
-  /**
-    * Uses old road link ids from change data to fetch their OTH overridden properties from db.
-    * Used by RoadLinkSErvice.fillIncompleteLinksWithPreviousLinkData.
-    */
-  def getOldRoadLinkPropertiesForChanges(changes: Seq[ChangeInfo]): Seq[RoadLinkProperties] = {
-    val oldLinkIds = changes.flatMap(_.oldId)
-    val propertyRows = fetchRoadLinkPropertyRows(oldLinkIds.toSet)
-
-    oldLinkIds.map { linkId =>
-      val latestModification = propertyRows.latestModifications(linkId)
-      val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
-
-      RoadLinkProperties(linkId,
-        propertyRows.functionalClassValue(linkId),
-        propertyRows.linkTypeValue(linkId),
-        propertyRows.trafficDirectionValue(linkId).getOrElse(TrafficDirection.UnknownDirection),
-        propertyRows.administrativeClassValue(linkId).getOrElse(Unknown),
-        modifiedAt.map(DateTimePropertyFormat.print),
-        modifiedBy)
-    }
-  }
 
   /**
     * Passes fetched road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichFetchedRoadLinks and UpdateIncompleteLinkList.
@@ -1296,7 +947,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
 
       RoadLink(link.linkId, link.geometry,
-        GeometryUtils.geometryLength(link.geometry),
+        link.length,
         propertyRows.administrativeClassValue(link.linkId).getOrElse(link.administrativeClass),
         propertyRows.functionalClassValue(link.linkId),
         propertyRows.trafficDirectionValue(link.linkId).getOrElse(link.trafficDirection),

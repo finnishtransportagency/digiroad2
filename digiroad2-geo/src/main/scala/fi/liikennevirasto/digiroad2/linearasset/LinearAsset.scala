@@ -3,6 +3,9 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{DateTime, LocalDate}
+import org.json4s.{JArray, JBool, JField, JInt, JObject, JString, JValue}
+
+import scala.util.Try
 
 trait LinearAsset extends PolyLine {
   val id: Long
@@ -14,22 +17,24 @@ trait LinearAsset extends PolyLine {
 }
 
 sealed trait Value {
-  def toJson: Any
+  def toJson: JValue
 }
-
+case class EmptyValue() extends Value {
+  def toJson: JObject = JObject()
+}
 case class SpeedLimitValue(value: Int, isSuggested: Boolean = false) extends Value {
-  override def toJson: Any = value
+  override def toJson: JObject = JObject(JField("value", JInt(value)), JField("isSuggested", JBool(isSuggested)))
 }
 
 case class NumericValue(value: Int) extends Value {
-  override def toJson: Any = value
+  override def toJson = JInt(value)
 }
 case class TextualValue(value: String) extends Value {
-  override def toJson: Any = value
+  override def toJson = JObject(JField("value", JString(value)))
 }
 
 case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolean = false) extends Value {
-  override def toJson: Any = prohibitions
+  override def toJson = JObject(JField("prohibitions",JArray(prohibitions.map(_.toJson).toList)) , JField("isSuggested", JBool(isSuggested)))
 
   override def equals(obj: scala.Any): Boolean = {
     obj match {
@@ -40,12 +45,14 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolea
   }
 }
 case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
-  override def toJson: Any = massLimitation
+  override def toJson = JObject(JField("massLimitation",JArray(massLimitation.map(_.toJson).toList)))
 }
 
-case class DynamicAssetValue(properties: Seq[DynamicProperty])
+case class DynamicAssetValue(properties: Seq[DynamicProperty]) {
+  def toJson = JObject(JField("properties",JArray(properties.map(_.toJson).toList)))
+}
 case class DynamicValue(value: DynamicAssetValue) extends Value {
-  override def toJson: Any = value
+  override def toJson: JObject = value.toJson
 
   override def equals(obj: scala.Any): Boolean = {
     obj match {
@@ -64,13 +71,19 @@ case class DynamicValue(value: DynamicAssetValue) extends Value {
   }
 }
 
-case class AssetTypes(typeId: Int, value: String, isSuggested: Int)
+case class AssetTypes(typeId: Int, value: String, isSuggested: Int) {
+  def toJson = JObject(JField("typeId", JInt(typeId)),JField("isSuggested", JInt(isSuggested)))
+}
 case class AssetProperties(name: String, value: String)
 case class ManoeuvreProperties(name: String, value: Any)
 
-case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
+case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "") {
+  def toJson = JObject(JField("typeId", JInt(typeId)), JField("validityPeriods", JArray(validityPeriods.map(_.toJson).toList)),JField("exceptions", JArray(exceptions.map(JInt(_)).toList)),JField("additionalInfo", JString(additionalInfo)))
+}
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {
+  def toJson = JObject(JField("startHour", JInt(startHour)),JField("endHour", JInt(endHour)),JField("startMinute", JInt(startMinute)),JField("endMinute", JInt(endMinute)),JField("days",days.toJson))
+
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {
     if (overlaps(b)) {
       Some(ValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days), math.min(startMinute, b.startMinute), math.min(endMinute, b.endMinute)))
@@ -122,7 +135,9 @@ case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: Validi
   }
 }
 
-sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int }
+sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int
+  def toJson = JObject(JField("value", JInt(value)))
+}
 object ValidityPeriodDayOfWeek {
   def apply(value: Int) = Seq(Weekday, Saturday, Sunday).find(_.value == value).getOrElse(Unknown)
   def apply(value: String) = value match {
@@ -168,13 +183,25 @@ case class PieceWiseLinearAsset(id: Long, linkId: String, sideCode: SideCode, va
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                 createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
                                 timeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass,
-                                attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[InformationSource]) extends LinearAsset
+                                attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime],
+                                informationSource: Option[InformationSource],oldId:Long = 0  /*for keeping record in LinearAssetUpdater */   ) extends LinearAsset
 
 case class PersistedLinearAsset(id: Long, linkId: String, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
                                 timeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime],
-                                informationSource: Option[InformationSource])
+                                informationSource: Option[InformationSource], oldId:Long = 0  /*for keeping record in LinearAssetUpdater */ ){
+  def toJson: JObject = JObject(
+    JField("modifiedBy", JString(modifiedBy.getOrElse(""))),
+    JField("createdBy", JString(createdBy.getOrElse(""))),
+    JField("createdDateTime", JString(Try(createdDateTime.get.toString()).getOrElse(""))),
+    JField("modifiedDateTime", JString(Try(modifiedDateTime.get.toString()).getOrElse(""))),
+    JField("verifiedBy", JString(verifiedBy.getOrElse(""))),
+    JField("verifiedDate", JString(Try(verifiedDate.get.toString()).getOrElse(""))),
+    JField("informationSource", JInt(informationSource.getOrElse(UnknownSource).value)),
+    JField("value", value.getOrElse(EmptyValue()).toJson)
+  )
+}
 
 case class NewLinearAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
                           timeStamp: Long, geomModifiedDate: Option[DateTime])
