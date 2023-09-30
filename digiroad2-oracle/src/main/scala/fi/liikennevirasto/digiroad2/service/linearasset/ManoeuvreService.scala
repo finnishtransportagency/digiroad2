@@ -203,6 +203,31 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     else dao.fetchManoeuvresByLinkIdsNoGrouping(linksIds.toSeq)
     existingAssets
   }
+  /**
+    * No manouvre validation, used for for test only
+    * @param linksIds
+    * @param newTransaction
+    * @return
+    */
+  def getByRoadLinkId(linksIds: Set[String],newTransaction: Boolean = true):  Seq[Manoeuvre]  = {
+    def getManouvres: Seq[Manoeuvre] = {
+      dao.getByRoadLinks(linksIds.toSeq).map { manoeuvre =>
+        val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
+        val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
+        val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
+        manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
+      }
+    }
+    if (newTransaction) withDynTransaction {getManouvres} else getManouvres
+  }
+  
+  def createManoeuvres(manoeuvres: Seq[NewManoeuvre], username: String): Unit = {
+    manoeuvres.map { manoeuvre =>
+      val linkIds = manoeuvres.flatMap(_.linkIds)
+      val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds.toSet)
+      createManoeuvre(username, manoeuvre, roadLinks)
+    }
+  }
 
   def updateManouvreLinkVersion(update:ManoeuvreUpdateLinks, newTransaction: Boolean = true): Unit = {
     if (newTransaction) withDynTransaction {dao.updateManoeuvreLinkIds(update)}
@@ -290,10 +315,9 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   }
 
-  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
-    withDynTransaction {
-      createWithoutTransaction(userName, manoeuvre, roadlinks)
-    }
+  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink],newTransaction:Boolean=true) : Long = {
+    if (newTransaction) withDynTransaction {createWithoutTransaction(userName, manoeuvre, roadlinks)} 
+    else createWithoutTransaction(userName, manoeuvre, roadlinks)
   }
 
   def createWithoutTransaction(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {

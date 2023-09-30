@@ -206,7 +206,7 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
       manoeuvreRow.additionalInfo, manoeuvreRow.createdDate, manoeuvreRow.createdBy, manoeuvreRow.isSuggested)
   }
 
-  private def fetchManoeuvresByLinkIds(linkIds: Seq[String]): Map[Long, Seq[PersistedManoeuvreRow]] = {
+  def fetchManoeuvresByLinkIds(linkIds: Seq[String]): Map[Long, Seq[PersistedManoeuvreRow]] = {
     val manoeuvres = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by, m.suggested
             FROM MANOEUVRE m
