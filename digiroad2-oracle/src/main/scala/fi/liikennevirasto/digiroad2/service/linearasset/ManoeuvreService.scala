@@ -353,14 +353,14 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       dao.deleteManoeuvreByTrafficSign(filter, username)
   }
 
-  override def withMunicipalities(municipalities: Set[Int])(query: String): String = {
+   def withMunicipalities(municipalities: Set[Int])(query: String): String = {
     query + s"and a.municipality_code in (${municipalities.mkString(",")})"
   }
 
-  override def withId(id: Long)(query: String): String = {
+   def withId(id: Long)(query: String): String = {
     query + s" and a.id = $id"
   }
-  override def withIds(ids: Set[Long])(query: String): String = {
+   def withIds(ids: Set[Long])(query: String): String = {
     query + s"and a.id in (${ids.mkString(",")})"
   }
 
