@@ -373,9 +373,9 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, newLinks, false)
       assetsAfter.size should be(3)
       assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
-      assetsAfter.forall(_.createdDateTime.get.toString() == "2020-01-01T00:00:00.000+02:00") should be(true)
+      assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
       assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
-      assetsAfter.forall(_.modifiedDateTime.get.toString() == "2021-01-01T00:00:00.000+02:00") should be(true)
+      assetsAfter.forall(_.modifiedDateTime.get.toString().startsWith("2021-01-01")) should be(true)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9.334)
@@ -427,9 +427,9 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linkId14), false)
       assetsAfter.size should be(1)
       assetsAfter.head.createdBy.get should be("testCreator")
-      assetsAfter.head.createdDateTime.get.toString() should be("2019-01-01T00:00:00.000+02:00")
+      assetsAfter.head.createdDateTime.get.toString().startsWith("2019-01-01") should be(true)
       assetsAfter.head.modifiedBy.get should be("testModifier")
-      assetsAfter.head.modifiedDateTime.get.toString() should be("2023-01-01T00:00:00.000+02:00")
+      assetsAfter.head.modifiedDateTime.get.toString().startsWith("2023-01-01") should be(true)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
       

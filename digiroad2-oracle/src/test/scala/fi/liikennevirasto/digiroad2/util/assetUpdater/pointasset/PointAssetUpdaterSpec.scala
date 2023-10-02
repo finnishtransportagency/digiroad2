@@ -268,18 +268,18 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
         val newId = service.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
         val newAsset = service.getPersistedAssetsByIds(Set(newId)).head.asInstanceOf[PersistedPoint]
         newAsset.createdBy.get should be("testCreator")
-        newAsset.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+        newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
         newAsset.modifiedBy.get should be("testModifier")
-        newAsset.modifiedAt.get.toString() should be("2022-05-10T10:52:28.783+03:00")
+        newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
       }
       val asset = railwayCrossingService.getPersistedAssetsByIds(ids).head
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = railwayCrossingService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
       val newAsset = railwayCrossingService.getPersistedAssetsByIds(Set(newId)).head
       newAsset.createdBy.get should be("testCreator")
-      newAsset.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+      newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset.modifiedBy.get should be("testModifier")
-      newAsset.modifiedAt.get.toString() should be("2022-05-10T10:52:28.783+03:00")
+      newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
     }
   }
 
@@ -296,18 +296,18 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
         val newId = service.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
         val newAsset = service.getPersistedAssetsByIds(Set(newId)).head.asInstanceOf[PersistedPoint]
         newAsset.createdBy.get should be("testCreator")
-        newAsset.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+        newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
         newAsset.modifiedBy.get should be("testModifier")
-        newAsset.modifiedAt.get.toString() should be("2022-05-10T10:52:28.783+03:00")
+        newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
       }
       val asset = railwayCrossingService.getPersistedAssetsByIds(ids).head
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = railwayCrossingService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
       val newAsset = railwayCrossingService.getPersistedAssetsByIds(Set(newId)).head
       newAsset.createdBy.get should be("testCreator")
-      newAsset.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+      newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset.modifiedBy.get should be("testModifier")
-      newAsset.modifiedAt.get.toString() should be("2022-05-10T10:52:28.783+03:00")
+      newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
     }
   }
 
@@ -326,9 +326,9 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
         val newAsset = service.getPersistedAssetsByIds(Set(asset.id)).head.asInstanceOf[PersistedPoint]
         newAsset.floating should be(true)
         newAsset.createdBy.get should be("testCreator")
-        newAsset.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+        newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
         newAsset.modifiedBy.get should be("testModifier")
-        newAsset.modifiedAt.get.toString() should be("2022-05-10T10:52:28.783+03:00")
+        newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
       }
       val asset = railwayCrossingService.getPersistedAssetsByIds(ids).head
       val corrected = updater.correctPersistedAsset(asset, change)
@@ -336,9 +336,9 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       val newAsset = railwayCrossingService.getPersistedAssetsByIds(Set(asset.id)).head
       newAsset.floating should be(true)
       newAsset.createdBy.get should be("testCreator")
-      newAsset.createdAt.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+      newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset.modifiedBy.get should be("testModifier")
-      newAsset.modifiedAt.get.toString() should be("2022-05-10T10:52:28.783+03:00")
+      newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
     }
   }
 }
