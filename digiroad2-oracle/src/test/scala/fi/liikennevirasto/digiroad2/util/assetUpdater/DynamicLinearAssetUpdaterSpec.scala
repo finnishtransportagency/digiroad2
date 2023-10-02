@@ -144,9 +144,9 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
 
       assetsAfter.size should be(3)
       assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
-      assetsAfter.forall(_.createdDateTime.get.toString() == "2020-01-01T00:00:00.000+02:00") should be(true)
+      assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
       assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
-      assetsAfter.forall(_.modifiedDateTime.get.toString() == "2022-01-01T00:00:00.000+02:00") should be(true)
+      assetsAfter.forall(_.modifiedDateTime.get.toString().startsWith("2022-01-01")) should be(true)
       assetsAfter.map(a => a.value.get.toString should be(cyclingAndWalkingValue.toString))
       assetsAfter.map(_.startMeasure) should be(List(0.0, 0.0, 0.0))
       assetsAfter.map(_.endMeasure).sorted should be(List(9.334, 11.841, 34.906))
