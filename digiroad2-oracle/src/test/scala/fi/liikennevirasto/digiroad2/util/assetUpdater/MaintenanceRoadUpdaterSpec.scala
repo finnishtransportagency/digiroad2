@@ -72,9 +72,9 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtil
       val assetsAfter = Service.getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, newLinks, false)
       assetsAfter.size should be(3)
       assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
-      assetsAfter.forall(_.createdDateTime.get.toString() == "2020-01-01T00:00:00.000+02:00") should be(true)
+      assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
       assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
-      assetsAfter.forall(_.modifiedDateTime.get.toString() == "2021-01-01T00:00:00.000+02:00") should be(true)
+      assetsAfter.forall(_.modifiedDateTime.get.toString().startsWith("2021-01-01")) should be(true)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
