@@ -1939,7 +1939,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks(ParkingProhibition.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByIds(ParkingProhibition.typeId, Set(id, id2), false)
+      val assetsAfter = service.getPersistedAssetsByIds(ParkingProhibition.typeId, Set(id, id2), false).sortBy(_.startMeasure)
       assetsAfter.size should be(2)
 
       val startAsset = assetsAfter.head
