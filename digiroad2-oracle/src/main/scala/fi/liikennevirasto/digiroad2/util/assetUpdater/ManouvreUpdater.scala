@@ -92,14 +92,17 @@ class ManouvreUpdater() {
     val pairs = versionUpgrade.map(a=> (a.oldLink.get.linkId, a.newLinks.map(_.linkId).distinct)).filter(a=>{a._2.size==1}).map(a=>{VersionUpgrade(a._1,a._2.head)})
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(versionUpgradeIds, newTransaction = false)
     logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of version upgrade in the sets: ${versionUpgrade.size}")
-    val upgradeVersion = existingAssets.filter(a=> versionUpgradeIds.contains(a.linkId))
-    val pairs3 =   existingAssets.map(
+    val upgradeVersion = existingAssets.filter(a=> versionUpgradeIds.contains(a.linkId) || versionUpgradeIds.contains(a.destLinkId))
+    val pairs3 = upgradeVersion.map(
     asset=> {
-        PairForReport(asset,asset.copy(linkId = pairs.find(_.oldId==asset.linkId).get.newId, 
-        destLinkId = pairs.find(_.oldId==asset.destLinkId).get.newId))}
+      def selector(findLink:String):String = if (pairs.exists(_.oldId == findLink)) pairs.find(_.oldId==findLink).get.newId else findLink
+      val dest  = if (asset.destLinkId != null) selector(asset.destLinkId) else null
+      PairForReport(asset, asset.copy(linkId = selector(asset.linkId), destLinkId = dest))
+      }
     )
     
-    pairs.map(a=>ManoeuvreUpdateLinks(a.oldId,a.newId)).foreach(service.updateManouvreLinkVersion(_))
+    
+    pairs.map(a=>ManoeuvreUpdateLinks(a.oldId,a.newId)).foreach(service.updateManouvreLinkVersion(_,newTransaction = false))
     
     // TODO add inserting here
     
