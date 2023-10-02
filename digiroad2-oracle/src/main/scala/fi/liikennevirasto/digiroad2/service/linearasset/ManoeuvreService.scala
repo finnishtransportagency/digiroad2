@@ -44,6 +44,8 @@ object ElementTypes {
 }
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
+
+case class ChangedManoeuvre (manoeuvreId:Long,linkIds:Set[String])
 class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
   def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -211,12 +213,17 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     */
   def getByRoadLinkId(linksIds: Set[String],newTransaction: Boolean = true):  Seq[Manoeuvre]  = {
     def getManouvres: Seq[Manoeuvre] = {
-      dao.getByRoadLinks(linksIds.toSeq).map { manoeuvre =>
+    val manoeuvres = dao.getByRoadLinks(linksIds.toSeq).map { manoeuvre =>
         val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
         val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
         val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
         manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
       }
+
+      val roadLinks = if (newTransaction) {
+        roadLinkService.getRoadLinksByLinkIds(linksIds, false)
+      } else roadLinkService.getRoadLinksByLinkIds(linksIds, newTransaction)
+      manoeuvres.filter(isValidManoeuvre(roadLinks))
     }
     if (newTransaction) withDynTransaction {getManouvres} else getManouvres
   }
