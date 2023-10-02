@@ -54,13 +54,12 @@ export const handler = async (event: Event) => {
     console.info(`Got ${changeSet.changeEntries.length} changes`);
     
     //console.log(changeSetString)
-    // TODO: Commented out until Tiekamu is working properly
-    //console.time("Save new links and expire old")
-    //await roadLinkDao.saveLinkChangesToDb(oldLinkIds, newLinks);  // Save links to Digiroad db
-    //console.timeEnd("Save new links and expire old")
-    //console.time("Load to S3")
-    //await s3Service.uploadToBucket(since, until, changeSetString);      // Put change set to s3
-    //console.timeEnd("Load to S3")
+    console.time("Save new links and expire old")
+    await roadLinkDao.saveLinkChangesToDb(oldLinkIds, newLinks);  // Save links to Digiroad db
+    console.timeEnd("Save new links and expire old")
+    console.time("Load to S3")
+    await s3Service.uploadToBucket(since, until, changeSetString);      // Put change set to s3
+    console.timeEnd("Load to S3")
 }
 
 export interface Event {
