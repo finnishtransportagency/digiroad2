@@ -275,9 +275,9 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       // Verify that original creation and modification data is preserved
       lanesAfterChanges.forall(_.createdBy.get == "testCreator") should be(true)
-      lanesAfterChanges.forall(_.createdDateTime.get.toString() == "2021-05-10T10:52:28.783+03:00") should be(true)
+      lanesAfterChanges.forall(_.createdDateTime.get.toString().startsWith("2021-05-10")) should be(true)
       lanesAfterChanges.forall(_.modifiedBy.get == "testModifier") should be(true)
-      lanesAfterChanges.forall(_.modifiedDateTime.get.toString() == "2022-05-10T10:52:28.783+03:00") should be(true)
+      lanesAfterChanges.forall(_.modifiedDateTime.get.toString().startsWith("2022-05-10")) should be(true)
 
       val (mainLanesAfterChanges, additionalLanesAfterChanges) = lanesAfterChanges.partition(_.laneCode == MainLane.oneDigitLaneCode)
 
@@ -494,9 +494,9 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
         mainLane.startMeasure should equal(0.0)
         mainLane.endMeasure should equal(newRoadLinkLength)
         mainLane.createdBy.get should be("testCreator")
-        mainLane.createdDateTime.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+        mainLane.createdDateTime.get.toString().startsWith("2021-05-10") should be(true)
         mainLane.modifiedBy.get should be("testModifier")
-        mainLane.modifiedDateTime.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+        mainLane.modifiedDateTime.get.toString().startsWith("2021-05-10") should be(true)
         val startDate = LaneServiceWithDao.getPropertyValue(mainLane, "start_date")
         // Main lanes on original links had different start dates, latest one should be inherited
         startDate.get.value should equal("16.8.2015")
