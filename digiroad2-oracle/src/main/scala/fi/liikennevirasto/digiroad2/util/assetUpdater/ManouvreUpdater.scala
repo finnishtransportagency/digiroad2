@@ -16,20 +16,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Seq, mutable}
 
-sealed case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(), 
-                                changeInfo: Option[ChangeSet] = None,
-                                assetsBefore: Seq[PersistedLinearAsset] = Seq())
-
-sealed case class OperationStepSplit(assetsAfter: Seq[PersistedLinearAsset] = Seq(),
-                                changeInfo: Option[ChangeSet] = None,
-                                newLinkId: String = "",
-                                assetsBefore: Seq[PersistedLinearAsset] = Seq())
-sealed case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset])
-
-sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], changeType: ChangeType)
-
-sealed case class LinkAndOperation(newLinkId: String, operation: OperationStepSplit)
-
 class ManouvreUpdater() {
   def eventBus: DigiroadEventBus = new DummyEventBus
   def roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -77,7 +63,7 @@ class ManouvreUpdater() {
         updateByRoadLinks(typeId, changeSet.changes)
         Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
       }
-      generateAndSaveReport(typeId, changeSet.targetDate)
+      //generateAndSaveReport(typeId, changeSet.targetDate)
     })
   }
   
