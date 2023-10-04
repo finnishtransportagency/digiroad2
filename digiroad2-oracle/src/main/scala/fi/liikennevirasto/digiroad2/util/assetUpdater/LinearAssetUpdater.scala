@@ -298,7 +298,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     // here we assume that RoadLinkProperties updater has already remove override if KMTK version traffic direction is same.
     // still valid overrided has also been samuuted
     val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
-    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet)
+    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, false)
     
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
     val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
