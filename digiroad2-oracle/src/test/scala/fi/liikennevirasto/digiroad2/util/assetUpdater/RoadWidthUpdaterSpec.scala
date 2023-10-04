@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.MTKClassWidth.CarRoad_IIIa
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, MTKClassWidth}
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, RoadWidthService}
+import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
@@ -88,7 +89,8 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
 
       val id = roadWidthService.createWithoutTransaction(RoadWidth.typeId, linkId,
-        valueDynamic, SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
+        valueDynamic, SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), true, Some("testCreator"),
+        Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2022-01-01")))
       val assetsBefore = roadWidthService.getPersistedAssetsByIds(RoadWidth.typeId, Set(id), false)
       
       assetsBefore.size should be(1)
@@ -97,6 +99,10 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
       val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, newLinks, false)
       assetsAfter.size should be(3)
+      assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
+      assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
+      assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
+      assetsAfter.forall(_.modifiedDateTime.get.toString().startsWith("2022-01-01")) should be(true)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9.334)

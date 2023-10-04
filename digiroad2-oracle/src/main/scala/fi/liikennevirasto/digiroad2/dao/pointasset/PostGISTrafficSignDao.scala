@@ -293,12 +293,16 @@ object PostGISTrafficSignDao {
 
   def create(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long,
              linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""),
-             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String]): Long = {
+             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String],
+             fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+    val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
+    val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
     sqlu"""
         insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $username, current_timestamp);
+        values ($id, $externalIdFromUpdate, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $modifiedBy, $modifiedAt);
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code, modified_date)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection}, current_timestamp);
@@ -314,9 +318,9 @@ object PostGISTrafficSignDao {
   }
 
   def update(id: Long, trafficSign: IncomingTrafficSign, mValue: Double, municipality: Int,
-             username: String, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
+             username: String, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource, fromPointAssetUpdater: Boolean = false) = {
     sqlu""" update asset set municipality_code = $municipality, bearing=${trafficSign.bearing} where id = $id """.execute
-    updateAssetModified(id, username).execute
+    if (!fromPointAssetUpdater) updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
     createOrUpdateTrafficSign(trafficSign, id)

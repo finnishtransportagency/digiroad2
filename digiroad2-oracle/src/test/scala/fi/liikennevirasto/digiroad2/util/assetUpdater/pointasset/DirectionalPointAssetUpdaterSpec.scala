@@ -5,11 +5,15 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.DirectionalTrafficSignService
+import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, FloatingReason, PersistedPointAsset, Point}
 import org.mockito.Mockito.when
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.TestTransactions
+import slick.jdbc.StaticQuery.interpolation
 
 class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
 
@@ -32,9 +36,22 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
+
+  val trafficLightService: TrafficLightService = new TrafficLightService(mockRoadLinkService) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
+  }
+
+  val trafficSignService: TrafficSignService = new TrafficSignService(mockRoadLinkService, mockEventBus) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
+  }
+
   val updater: DirectionalPointAssetUpdater = new DirectionalPointAssetUpdater(directionalTrafficSignService) {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
   }
+
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("Link split to multiple new links: assets are moved to correct link") {
     val oldLinkId = "99ade73f-979b-480b-976a-197ad365440a:1"
@@ -266,5 +283,137 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     val corrected = updater.correctPersistedAsset(asset, change)
     corrected.floating should be(true)
     corrected.floatingReason should be(Some(FloatingReason.DistanceToRoad))
+  }
+
+  def createTestAssets(x: Double, y: Double, roadLink: RoadLink, validityDirection: Option[Int], bearing: Option[Int], updateModifiedBy: Boolean = true) = {
+    val dtsId = directionalTrafficSignService.create(IncomingDirectionalTrafficSign(x,y, roadLink.linkId, validityDirection.get, bearing, Set()), "testCreator", roadLink, false)
+    val tlId = trafficLightService.create(IncomingTrafficLight(x,y, roadLink.linkId, Set(), validityDirection), "testCreator", roadLink, false)
+    val tsId = trafficSignService.create(IncomingTrafficSign(x,y,roadLink.linkId, Set(SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("1"))),
+      SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("80")))), validityDirection.get, bearing),"testCreator", roadLink, false)
+
+    if (updateModifiedBy) {
+      sqlu"""UPDATE ASSET
+          SET CREATED_DATE = to_timestamp('2021-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z'),
+              MODIFIED_BY = 'testModifier', MODIFIED_DATE = to_timestamp('2022-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
+          WHERE id in (${dtsId}, ${tlId}, ${tsId})
+      """.execute
+    } else {
+      sqlu"""UPDATE ASSET
+          SET CREATED_DATE = to_timestamp('2021-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
+          WHERE id in (${dtsId}, ${tlId}, ${tsId})
+      """.execute
+    }
+
+    Set(dtsId, tlId, tsId)
+  }
+
+
+  test("update due to adjustmentOperation does not change creation or modification data if it's called by PointAssetUpdater") {
+
+    runWithRollback {
+      val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(367880.004, 6673884.307), Point(367824.646, 6674001.441)), 131.683, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+
+      val ids = createTestAssets(367880.004, 6673884.307, roadLink, Some(SideCode.TowardsDigitizing.value), Some(317))
+      val asset = directionalTrafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = directionalTrafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.createdBy.get should be("testCreator")
+      newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset.modifiedBy.get should be("testModifier")
+      newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
+
+      val asset2 = trafficLightService.getPersistedAssetsByIds(ids).head
+      val corrected2 = updater.correctPersistedAsset(asset2, change)
+      val newId2 = trafficLightService.adjustmentOperation(asset2, corrected2, change.newLinks.find(_.linkId == corrected2.linkId).get)
+      val newAsset2 = trafficLightService.getPersistedAssetsByIds(Set(newId2)).head
+      newAsset2.createdBy.get should be("testCreator")
+      newAsset2.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset2.modifiedBy.get should be("testModifier")
+      newAsset2.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
+
+      val asset3 = trafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected3 = updater.correctPersistedAsset(asset3, change)
+      val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
+      val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
+      newAsset3.createdBy.get should be("testCreator")
+      newAsset3.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset3.modifiedBy.get should be("testModifier")
+      newAsset3.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
+    }
+  }
+
+  test("creation due to adjustmentOperation does not change creation or modification data if it's called by PointAssetUpdater") {
+
+    runWithRollback {
+      val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(370276.441, 6670348.945), Point(370276.441, 6670367.114)), 45.317, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+      val ids = createTestAssets(370276.441, 6670348.945, roadLink, Some(SideCode.TowardsDigitizing.value), Some(289))
+      val asset = directionalTrafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = directionalTrafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.createdBy.get should be("testCreator")
+      newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset.modifiedBy.get should be("testModifier")
+      newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
+
+      val asset2 = trafficLightService.getPersistedAssetsByIds(ids).head
+      val corrected2 = updater.correctPersistedAsset(asset2, change)
+      val newId2 = trafficLightService.adjustmentOperation(asset2, corrected2, change.newLinks.find(_.linkId == corrected2.linkId).get)
+      val newAsset2 = trafficLightService.getPersistedAssetsByIds(Set(newId2)).head
+      newAsset2.createdBy.get should be("testCreator")
+      newAsset2.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset2.modifiedBy.get should be("testModifier")
+      newAsset2.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
+
+      val asset3 = trafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected3 = updater.correctPersistedAsset(asset3, change)
+      val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
+      val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
+      newAsset3.createdBy.get should be("testCreator")
+      newAsset3.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset3.modifiedBy.get should be("testModifier")
+      newAsset3.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
+    }
+  }
+
+  test("creation due to adjustmentOperation does not change creation or modification data if it's called by PointAssetUpdater (modification data is null)") {
+
+    runWithRollback {
+      val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(370276.441, 6670348.945), Point(370276.441, 6670367.114)), 45.317, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+      val ids = createTestAssets(370276.441, 6670348.945, roadLink, Some(SideCode.TowardsDigitizing.value), Some(289), false)
+      val asset = directionalTrafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = directionalTrafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.createdBy.get should be("testCreator")
+      newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset.modifiedBy should be(None)
+      newAsset.modifiedAt should be(None)
+
+      val asset2 = trafficLightService.getPersistedAssetsByIds(ids).head
+      val corrected2 = updater.correctPersistedAsset(asset2, change)
+      val newId2 = trafficLightService.adjustmentOperation(asset2, corrected2, change.newLinks.find(_.linkId == corrected2.linkId).get)
+      val newAsset2 = trafficLightService.getPersistedAssetsByIds(Set(newId2)).head
+      newAsset2.createdBy.get should be("testCreator")
+      newAsset2.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset2.modifiedBy should be(None)
+      newAsset2.modifiedAt should be(None)
+
+      val asset3 = trafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected3 = updater.correctPersistedAsset(asset3, change)
+      val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
+      val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
+      newAsset3.createdBy.get should be("testCreator")
+      newAsset3.createdAt.get.toString().startsWith("2021-05-10") should be(true)
+      newAsset3.modifiedBy should be(None)
+      newAsset3.modifiedAt should be(None)
+    }
   }
 }

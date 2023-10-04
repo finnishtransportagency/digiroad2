@@ -119,6 +119,11 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane = laneDao.fetchLanesByIds( Set(newLane.head)).head
       lane.expired should be (false)
+      lane.createdBy.get should be(usernameTest)
+      lane.createdDateTime.get.getDayOfYear should be(DateTime.now().getDayOfYear)
+      Math.abs(DateTime.now().getSecondOfDay - lane.createdDateTime.get.getSecondOfDay) should be < 120
+      lane.modifiedBy should be(None)
+      lane.modifiedDateTime should be(None)
 
       lane.attributes.foreach{ laneProp =>
         val attr = lanePropertiesValues1.find(_.publicId == laneProp.publicId)
@@ -1260,7 +1265,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1), token = Some("cGFnZU51bWJlcjoxLHJlY29yZE51bWJlcjoy"))
 
-      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Shortened))
+      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add))
       lanesChanged.size should equal(2)
     }
   }

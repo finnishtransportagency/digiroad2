@@ -91,7 +91,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val changeSet = LinearAssetFiller.emptyChangeSet
     val linearAssets = Map.empty[String, Seq[PieceWiseLinearAsset]]
-    val filledTopology = assetFiller.fillTopology(topology.map(assetFiller.toRoadLinkForFillTopology), linearAssets, 30, Some(changeSet), geometryChanged = false)._1
+    val filledTopology = assetFiller.generateUnknowns(topology.map(assetFiller.toRoadLinkForFillTopology), linearAssets, 30)._1
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
@@ -113,7 +113,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map(
       linkId1 -> assets)
 
-    val (filledTopology, changeSet) = assetFiller.fillTopology(topology.map(assetFiller.toRoadLinkForFillTopology), linearAssets, 110)
+    val (filledTopology, changeSet) = assetFiller.generateUnknowns(topology.map(assetFiller.toRoadLinkForFillTopology), linearAssets, 110)
     filledTopology should have size 2
 
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing))

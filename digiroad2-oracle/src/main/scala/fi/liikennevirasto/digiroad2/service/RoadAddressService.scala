@@ -127,12 +127,14 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
+    if (linkIds.nonEmpty) {
+      val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
       ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
-        LogUtils.time(logger,"TEST LOG Retrieve road address by links"){
+        LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
           viiteClient.fetchAllByLinkIds(linkIds)
         }
-    }
+      }
+    } else Seq()
   }
   
   def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = {

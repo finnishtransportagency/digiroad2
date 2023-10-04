@@ -21,6 +21,10 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
     properties.filter(prop => defaultChanges.contains(prop.publicId)).map(_.values).toSeq.diff(asset.propertyData.filter(prop => defaultChanges.contains(prop.publicId)).map(_.values)).nonEmpty
   }
 
+  override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
+    persistedStops
+  }
+  
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     throw new UnsupportedOperationException
   }

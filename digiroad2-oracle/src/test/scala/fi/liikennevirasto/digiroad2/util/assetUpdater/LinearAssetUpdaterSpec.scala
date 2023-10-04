@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
+import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
@@ -355,13 +356,15 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     TestLinearAssetUpdaterNoRoadLinkMock.resetReport()
   }
   
-  test("case 1 links under asset is split") {
+  test("case 1 links under asset is split, the creation and modification data is retained") {
     val newLinks = Seq( linkId2,linkId1, linkId4)
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
     
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId5).get
-      val id = service.createWithoutTransaction(TrafficVolume.typeId, linkId5, NumericValue(3), SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id = service.createWithoutTransaction(TrafficVolume.typeId, linkId5, NumericValue(3), SideCode.BothDirections.value,
+        Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), true, Some("testCreator"),
+        Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2021-01-01")))
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
@@ -369,6 +372,10 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, changes)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, newLinks, false)
       assetsAfter.size should be(3)
+      assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
+      assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
+      assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
+      assetsAfter.forall(_.modifiedDateTime.get.toString().startsWith("2021-01-01")) should be(true)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9.334)
@@ -406,8 +413,11 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid1).get
       val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(linksid2).get
 
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid1, NumericValue(3), SideCode.BothDirections.value, Measures(0, 23.48096698), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid2, NumericValue(3), SideCode.BothDirections.value, Measures(0, 66.25297685), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid1, NumericValue(3), SideCode.BothDirections.value,
+        Measures(0, 23.48096698), "testuser", 0L, Some(oldRoadLink), true, Some("testCreator"),
+        Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2022-01-01")))
+      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid2, NumericValue(3), SideCode.BothDirections.value, Measures(0, 66.25297685), "testuser", 0L, Some(oldRoadLink2), true, Some("testCreator"),
+        Some(DateTime.parse("2019-01-01")), Some("testModifier"), Some(DateTime.parse("2023-01-01")))
       
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
@@ -416,6 +426,10 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linkId14), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.createdBy.get should be("testCreator")
+      assetsAfter.head.createdDateTime.get.toString().startsWith("2019-01-01") should be(true)
+      assetsAfter.head.modifiedBy.get should be("testModifier")
+      assetsAfter.head.modifiedDateTime.get.toString().startsWith("2023-01-01") should be(true)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
       
@@ -616,6 +630,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val assetsAfter = service.getPersistedAssetsByIds(TrafficVolume.typeId, Seq(id1).toSet, false)
       assetsAfter.size should be(1)
       assetsAfter.head.expired should be(true)
+      assetsAfter.head.modifiedBy.get should be(AutoGeneratedUsername.generatedInUpdate)
+      assetsAfter.head.modifiedDateTime.get.isAfter(DateTime.now().minusDays(1))
 
       val oldIds = Seq(id1)
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
@@ -1923,7 +1939,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks(ParkingProhibition.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByIds(ParkingProhibition.typeId, Set(id, id2), false)
+      val assetsAfter = service.getPersistedAssetsByIds(ParkingProhibition.typeId, Set(id, id2), false).sortBy(_.startMeasure)
       assetsAfter.size should be(2)
 
       val startAsset = assetsAfter.head

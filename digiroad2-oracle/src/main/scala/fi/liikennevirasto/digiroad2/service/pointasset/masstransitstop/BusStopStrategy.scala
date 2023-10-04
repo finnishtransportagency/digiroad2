@@ -2,10 +2,11 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.{PointAssetForConversion, RoadAddressBoundToAsset}
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils, RoadSide}
 import org.joda.time.LocalDate
 
 import scala.util.Try
@@ -19,26 +20,41 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   private val sideCodePublicId = "puoli"
 
   def getRoadAddressPropertiesByLinkId(persistedStop: PersistedMassTransitStop, roadLink: RoadLinkLike, oldProperties: Seq[Property]): Seq[Property] = {
-    val road =
-      roadLink.attributes.find(_._1 == "ROADNUMBER") match {
-        case Some((key, value)) => Try(value.toString.toInt).toOption
-        case _ => None
-      }
+    val road = extractRoadNumber(roadLink)
 
     val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get, road = road)
 
-    val newRoadAddressProperties =
-      Seq(
-        Property(0, roadNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.road.toString, Some(address.road.toString)))),
-        Property(0, roadPartNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.roadPart.toString, Some(address.roadPart.toString)))),
-        Property(0, startMeasurePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.addrM.toString, Some(address.addrM.toString)))),
-        Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.track.value.toString, Some(address.track.value.toString)))),
-        Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(roadSide.value.toString, Some(roadSide.value.toString))))
-      )
+    val newRoadAddressProperties = extractRoadAddress(address,roadSide)
 
     oldProperties.filterNot(op => newRoadAddressProperties.map(_.publicId).contains(op.publicId)) ++ newRoadAddressProperties
   }
 
+  private def extractRoadAddress(address: RoadAddress, roadSide: RoadSide): Seq[Property] = {
+    Seq(
+      Property(0, roadNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.road.toString, Some(address.road.toString)))),
+      Property(0, roadPartNumberPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.roadPart.toString, Some(address.roadPart.toString)))),
+      Property(0, startMeasurePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.addrM.toString, Some(address.addrM.toString)))),
+      Property(0, trackCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(address.track.value.toString, Some(address.track.value.toString)))),
+      Property(0, sideCodePublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue(roadSide.value.toString, Some(roadSide.value.toString))))
+    )
+  }
+
+ private def extractTerminal(terminalId: Long, terminalAssetOption: Option[PersistedMassTransitStop]): (Property, Property) = {
+    val displayValue = terminalAssetOption.map { terminalAsset =>
+      val name = MassTransitStopOperations.extractStopName(terminalAsset.propertyData)
+      s"${terminalAsset.nationalId} $name"
+    }
+    val newProperty = Property(0, "liitetty_terminaaliin", PropertyTypes.ReadOnlyText, values = Seq(PropertyValue(terminalId.toString, displayValue)))
+
+    val terminalNationalId = terminalAssetOption.map(_.nationalId.toString) match {
+      case Some(extId) => Seq(PropertyValue(extId))
+      case _ => Seq()
+    }
+
+    val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalNationalId)
+    (newProperty, newPropertyExtId)
+  }
+  
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     publishInfo.asset match {
       case Some(asset) =>
@@ -77,7 +93,12 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
       case _ => None
     }
   }
-
+  /**
+    *  enrich with additional data 
+    * @param asset Mass Transit Stop
+    * @param roadLinkOption provide road link when MassTransitStop need road address
+    * @return
+    */
   override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
     def addRoadAddressProperties(oldProperties: Seq[Property]): Seq[Property] = {
       roadLinkOption match {
@@ -94,26 +115,63 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
     asset.terminalId match {
       case Some(terminalId) =>
-        val terminalAssetOption = massTransitStopDao.fetchPointAssets(massTransitStopDao.withId(terminalId)).headOption
-        val displayValue = terminalAssetOption.map { terminalAsset =>
-          val name = MassTransitStopOperations.extractStopName(terminalAsset.propertyData)
-          s"${terminalAsset.nationalId} $name"
-        }
-        val newProperty = Property(0, "liitetty_terminaaliin", PropertyTypes.ReadOnlyText, values = Seq(PropertyValue(terminalId.toString, displayValue)))
-
-        val terminalNationalId = terminalAssetOption.map(_.nationalId.toString) match {
-          case Some(extId) => Seq(PropertyValue(extId))
-          case _ => Seq()
-        }
-
-        val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalNationalId)
-
-        (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData ++ Seq(newProperty, newPropertyExtId))), false)
+          val terminalAssetOption = massTransitStopDao.fetchPointAssets(massTransitStopDao.withId(terminalId)).headOption
+          val (newProperty: Property, newPropertyExtId: Property) = extractTerminal(terminalId, terminalAssetOption)
+          (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData ++ Seq(newProperty, newPropertyExtId))), false)
       case _ =>
         (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData)), false)
     }
   }
 
+  override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
+    val roadAddressAdded = addRoadAddress(persistedStops, links)
+    addTerminals(roadAddressAdded)
+  }
+
+  private def addRoadAddress(assets: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
+    def mapToQuery(links: Seq[RoadLink], stop: PersistedMassTransitStop): Option[PointAssetForConversion] = {
+      links.find(_.linkId == stop.linkId) match {
+        case Some(link) =>
+          val road = extractRoadNumber(link)
+          Some(PointAssetForConversion(stop.id, Point(stop.lon, stop.lat), stop.bearing, stop.mValue, stop.linkId, stop.validityDirection, road = road))
+        case None => None
+      }
+    }
+
+    def mapAssetToRoadAddress(roadAddress: Seq[RoadAddressBoundToAsset], stop: PersistedMassTransitStop): PersistedMassTransitStop = {
+      roadAddress.find(_.asset == stop.id) match {
+        case Some(found) => stop.copy(propertyData = stop.propertyData ++ extractRoadAddress(found.address, found.side))
+        case None => stop
+      }
+    }
+
+    val query = assets.map(mapToQuery(links, _)).filter(_.isDefined).map(_.get)
+    val roadAddress = geometryTransform.resolveMultipleAddressAndLocations(query)
+    assets.map(mapAssetToRoadAddress(roadAddress, _))
+  }
+
+  private def extractRoadNumber(link: RoadLinkLike) = {
+    link.attributes.find(_._1 == "ROADNUMBER") match {
+      case Some((key, value)) => Try(value.toString.toInt).toOption
+      case _ => None
+    }
+  }
+  private def addTerminals(allStops: Seq[PersistedMassTransitStop]) = {
+    LogUtils.time(logger, s"TEST LOG addTerminals") {
+      allStops.map(addTerminal(allStops, _))
+    }
+  }
+
+  private def addTerminal(allStops: Seq[PersistedMassTransitStop], stop: PersistedMassTransitStop): PersistedMassTransitStop = {
+    stop.terminalId match {
+      case Some(terminalId) =>
+        val findTerminal = allStops.find(_.id == terminalId)
+        val (newProperty: Property, newPropertyExtId: Property) = extractTerminal(terminalId, findTerminal)
+        stop.copy(propertyData = stop.propertyData ++ Seq(newProperty, newPropertyExtId))
+      case None => stop
+    }
+  }
+  
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     validateBusStopDirections(asset.properties, roadLink)

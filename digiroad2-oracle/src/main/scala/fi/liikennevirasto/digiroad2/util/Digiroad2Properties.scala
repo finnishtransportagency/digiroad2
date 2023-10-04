@@ -20,6 +20,7 @@ trait Digiroad2Properties {
   val viiteRestApiEndPoint: String
   val vkmUrl: String
   val vkmApiKey: String
+  val valluApiKey: String
   val valluServerSengindEnabled: Boolean
   val valluServerAddress: String
   val cacheHostname: String
@@ -40,8 +41,6 @@ trait Digiroad2Properties {
   val viiteApiKey: String
   val sesUsername: String
   val sesPassword: String
-  val oagUsername: String
-  val oagPassword: String
   val emailTo: String
   val emailHost: String
   val emailPort: String
@@ -79,6 +78,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val sesPassword: String = scala.util.Properties.envOrElse("ses.password", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkm.apikey", null)
+  val valluApiKey: String = scala.util.Properties.envOrElse("vallu.apikey", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
   val valluServerAddress: String = scala.util.Properties.envOrElse("vallu.server.address", null)
   val feedbackAssetsEndPoint: String = scala.util.Properties.envOrElse("feedbackAssetsEndPoint", null)
@@ -126,8 +126,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val bonecpJdbcUrl: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_jdbcUrl", null), scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
   val bonecpUsername: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_username", null), scala.util.Properties.envOrElse("bonecp.username", null))
   val bonecpPassword: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_password", null), scala.util.Properties.envOrElse("bonecp.password", null))
-  val oagUsername: String = selectEnvType(scala.util.Properties.envOrElse("oag_username", null),scala.util.Properties.envOrElse("oag.username", null))
-  val oagPassword: String =  selectEnvType(scala.util.Properties.envOrElse("oag_password", null),scala.util.Properties.envOrElse("oag.password", null))
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
     try {
@@ -164,6 +162,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val viiteRestApiEndPoint: String =  envOrProperties("viiteRestApiEndPoint")
   override val vkmUrl: String = envProps.getProperty("vkmUrl")
   override val vkmApiKey: String = envOrProperties("vkm.apikey")
+  override val valluApiKey: String = envOrProperties("vallu.apikey")
   override val valluServerSengindEnabled: Boolean = envProps.getProperty("vallu.server.sending_enabled", "true").toBoolean
   override val valluServerAddress: String = envProps.getProperty("vallu.server.address")
   override val cacheHostname: String = envProps.getProperty("cacheHostname", null)
@@ -184,8 +183,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val viiteApiKey: String = envOrProperties("viite.apikey")
   override val sesUsername: String = envOrProperties("ses.username")
   override val sesPassword: String = envOrProperties("ses.password")
-  override val oagUsername: String = envOrProperties("oag.username")
-  override val oagPassword: String = envOrProperties("oag.password")
   override val emailTo: String = envProps.getProperty("email.to")
   override val emailHost: String = envProps.getProperty("email.host")
   override val emailPort: String = envProps.getProperty("email.port")
@@ -252,6 +249,7 @@ object Digiroad2Properties {
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey
+  lazy val valluApikey: String = properties.valluApiKey
   lazy val valluServerSendingEnabled: Boolean = properties.valluServerSengindEnabled
   lazy val valluServerAddress: String = properties.valluServerAddress
   lazy val cacheHostname: String = properties.cacheHostname
@@ -272,8 +270,6 @@ object Digiroad2Properties {
   lazy val viiteApiKey: String = properties.viiteApiKey
   lazy val sesUsername: String = properties.sesUsername
   lazy val sesPassword: String = properties.sesPassword
-  lazy val oagUsername: String = properties.oagUsername
-  lazy val oagPassword: String = properties.oagPassword
   lazy val emailTo: String = properties.emailTo
   lazy val emailHost: String = properties.emailHost
   lazy val emailPort: String = properties.emailPort

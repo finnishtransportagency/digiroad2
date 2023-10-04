@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object SpeedLimitFiller extends AssetFiller {
-  
+
   def getOperations(geometryChanged: Boolean): Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     val fillOperations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       debugLogging("start running fillTopology state now"),
@@ -57,6 +57,18 @@ object SpeedLimitFiller extends AssetFiller {
     else adjustmentOperations
   }
 
+  override def getGenerateUnknowns(typeId: Int): Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
+    Seq(
+      generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
+      debugLogging("generateTwoSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, SpeedLimitAsset.typeId),
+      debugLogging("generateOneSidedNonExistingLinearAssets")
+    )
+  }
+
+
   override protected def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val onlyLimitOnLink = assets.length == 1 && assets.head.sideCode != SideCode.BothDirections
     if (onlyLimitOnLink) {
@@ -107,10 +119,7 @@ object SpeedLimitFiller extends AssetFiller {
                             geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations = getOperations(geometryChanged)
     // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
-    val changeSet = changedSet match {
-      case Some(change) => change
-      case None => LinearAssetFiller.emptyChangeSet
-    }
+    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
 
     roadLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
@@ -144,10 +153,7 @@ object SpeedLimitFiller extends AssetFiller {
       debugLogging("fillHoles"),
       clean
     )
-    val changeSet = changedSet match {
-      case Some(change) => change
-      case None => LinearAssetFiller.emptyChangeSet
-    }
+    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
     // if links does not have any asset filter it away
     topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
@@ -167,6 +173,21 @@ object SpeedLimitFiller extends AssetFiller {
       )
 
       (existingAssets ++ adjustedAssets, noDuplicate)
+    }
+  }
+  override def adjustSideCodes(roadLinks: Seq[RoadLinkForFillTopology], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
+    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
+
+    roadLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingSegments, changeSet) = acc
+      val segments = speedLimits.getOrElse(roadLink.linkId, Nil)
+      val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
+
+      val (adjustedSegments, segmentAdjustments) = getUpdateSideCodes.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
+      (existingSegments ++ adjustedSegments, segmentAdjustments)
     }
   }
 
