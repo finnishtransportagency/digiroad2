@@ -17,11 +17,11 @@ object PostGISHeightLimitDao {
   def fetchByFilter(queryFilter: String => String): Seq[HeightLimit] = {
     val query =
       s"""
-        select a.id, lrm.link_id, a.geometry, lrm.start_measure, a.floating, lrm.adjusted_timestamp, a.municipality_code,
-        a.created_by, a.created_date, a.modified_by, a.modified_date, lrm.link_source, npv.value
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code,
+        a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source, npv.value
         from asset a
         join asset_link al on a.id = al.asset_id
-        join lrm_position lrm on al.position_id = lrm.id
+        join lrm_position pos on al.position_id = pos.id
         left join number_property_value npv on npv.asset_id = a.id
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null) "
