@@ -80,7 +80,7 @@ class ManouvreUpdater() {
 
   case class VersionUpgrade(oldId:String, newId:String)
   case class PairForReport(oldAsset:PersistedManoeuvreRow, newAssets:PersistedManoeuvreRow)
-  def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]): Unit = {
+  def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]):Seq[ChangedManoeuvre] = {
 
     def partition = {
       val (versionUpgrade2, other2) = changesAll.groupBy(_.changeType).partition(recognizeVersionUpgrade)
@@ -104,12 +104,12 @@ class ManouvreUpdater() {
     pairs.map(a=>ManoeuvreUpdateLinks(a.oldId,a.newId)).foreach(service.updateManouvreLinkVersion(_,newTransaction = false))
 
    val manouvre = service.getByRoadLinkId(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, false)
-    
-    
+    logger.info("")
     manouvre.map(a=> {
       val (elementA,elementB) = (a.elements.map(_.sourceLinkId),a.elements.map(_.destLinkId))
-      ChangedManoeuvre(linkIds=(elementA++elementB).toSet,manoeuvreId = a.id )
+      ChangedManoeuvre(manoeuvreId = a.id,linkIds=(elementA++elementB).toSet)
     })
+    
     // TODO add inserting here
     
   }

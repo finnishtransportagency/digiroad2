@@ -206,24 +206,19 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     existingAssets
   }
   /**
-    * No manouvre validation, used for for test only
+    * No manouvre validation, used for for test and samuutus updater
     * @param linksIds
     * @param newTransaction
     * @return
     */
   def getByRoadLinkId(linksIds: Set[String],newTransaction: Boolean = true):  Seq[Manoeuvre]  = {
     def getManouvres: Seq[Manoeuvre] = {
-    val manoeuvres = dao.getByRoadLinks(linksIds.toSeq).map { manoeuvre =>
+     dao.getByRoadLinks(linksIds.toSeq).map { manoeuvre =>
         val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
         val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
         val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
         manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
       }
-
-      val roadLinks = if (newTransaction) {
-        roadLinkService.getRoadLinksByLinkIds(linksIds, false)
-      } else roadLinkService.getRoadLinksByLinkIds(linksIds, newTransaction)
-      manoeuvres.filter(isValidManoeuvre(roadLinks))
     }
     if (newTransaction) withDynTransaction {getManouvres} else getManouvres
   }
