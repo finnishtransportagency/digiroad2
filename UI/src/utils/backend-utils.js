@@ -594,6 +594,10 @@
       return $.getJSON('api/laneWorkList');
     };
 
+    this.getManoeuvreSamuutusWorkList = function () {
+      return $.getJSON('api/manoeuvreSamuutusWorkList');
+    };
+
     this.getMunicipalityIdByName = function(municipalityName) {
       return $.getJSON('api/municipalities/idByName?name=' + municipalityName);
     };

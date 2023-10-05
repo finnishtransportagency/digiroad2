@@ -137,6 +137,7 @@
     new SuggestedAssetsWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
     new InaccurateWorkList().initialize();
+    new ManoeuvreSamuutusWorkList().initialize(backend);
     new LaneWorkList().initialize(backend);
     new PrivateRoadsWorkList().initialize(backend);
     new CsvReportsWorkList().initialize(backend);

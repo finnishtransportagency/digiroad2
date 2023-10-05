@@ -110,6 +110,8 @@ class ManouvreUpdater() {
       ChangedManoeuvre(manoeuvreId = a.id,linkIds=(elementA++elementB).toSet)
     })
     
+    // check for situation when asset is already on worklist, do not insert then
+    
     // TODO add inserting here
     
   }

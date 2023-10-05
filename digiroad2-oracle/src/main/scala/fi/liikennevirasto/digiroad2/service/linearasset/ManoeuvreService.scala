@@ -476,4 +476,8 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     countExistings(sourceId, destLinkId, elementType) == 0
   }
   
+  def getManoeuvreSamuutusWorkList: Seq[Int] = {
+    Seq(0)
+  }
+  
 }

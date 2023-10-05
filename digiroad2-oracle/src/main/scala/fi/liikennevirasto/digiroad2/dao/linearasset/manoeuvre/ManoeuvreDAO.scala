@@ -367,11 +367,11 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
   
   def insertSamuutusChange(row:Seq[ChangedManoeuvre]): Unit ={
     row.foreach(a=> {
-      sql"""insert into manouvreSamuutusChange (id,linkIds) values (${a.manoeuvreId},${a.linkIds.map(t=>s"'$t'").mkString(",")})"""
+      sql"""insert into manouvre_samuutus_work_list (assetId,linkIds) values (${a.manoeuvreId},${a.linkIds.map(t=>s"'$t'").mkString(",")})"""
     })
   }
   
   def getSamuutusChange(): List[(Long, String)] = {
-    sql"""select id,linkIds from manouvreSamuutusChange """.as[(Long, String)].list
+    sql"""select assetId,linkIds from manouvre_samuutus_work_list """.as[(Long, String)].list
   }
 }
