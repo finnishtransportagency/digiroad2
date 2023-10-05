@@ -445,4 +445,12 @@ object Queries {
     sqlu"""delete from single_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute
     sqlu"""delete from multiple_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute
   }
+  
+  def getLatestSuccessfulSamuutus(typeid: Int):DateTime = {
+    sql"""select last_succesfull_samuutus from samuutus_success where asset_type_id = $typeid """.as[DateTime].list.head
+  }
+  def updateLatestSuccessfulSamuutus(typeid: Int, latestSuccess: DateTime): Unit = {
+    sqlu"""UPDATE samuutus_success SET last_succesfull_samuutus = to_timestamp($latestSuccess, 'YYYY-MM-DD"T"HH24:MI:SS.FF') WHERE asset_type_id = $typeid""".execute
+  }
+ 
 }
