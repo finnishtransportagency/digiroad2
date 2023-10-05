@@ -71,10 +71,6 @@ trait AbstractBusStopStrategy {
   def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo]
   def pickRoadLink(optRoadLink: Option[RoadLink], optHistoric: Option[RoadLink]): RoadLink = {optRoadLink.getOrElse(throw new NoSuchElementException)}
 
-  /***
-   * Removes LiViId TextPropertyValue from the given MassTransitStop
-   * @param existingAsset
-   */
   def undoLiviId(existingAsset: PersistedMassTransitStop): Unit = {
     massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, null)
   }
@@ -315,7 +311,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   }
 
-  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true, liviId: Option[String] = None): MassTransitStopWithProperties = {
+  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): MassTransitStopWithProperties = {
     def updateExistingById() = {
       val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
 

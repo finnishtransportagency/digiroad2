@@ -54,5 +54,4 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
   }
 
   override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (true, Some(FloatingReason.TerminatedRoad)) }
-
 }
