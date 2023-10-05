@@ -24,6 +24,12 @@ object BusStopType {
   case object Unknown extends BusStopType { def value = 99 }
 }
 
+object BusStopAdministrator {
+  case object Municipality { def value = 1 }
+  case object Ely {def value = 2 }
+  case object HSL { def value = 3 }
+}
+
 
 object MassTransitStopOperations {
   val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
