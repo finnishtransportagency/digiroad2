@@ -1,0 +1,1 @@
+delete from enumerated_value where name_fi in ('Kaukoliikenne (vanha tll)', 'Pikavuoro (vanha tll)');

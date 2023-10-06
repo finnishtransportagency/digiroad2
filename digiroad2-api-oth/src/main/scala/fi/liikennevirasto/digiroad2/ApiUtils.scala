@@ -14,10 +14,10 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.compat.Platform.EOL
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Random
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Random, Success}
 
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -35,6 +35,7 @@ object ApiUtils {
 
   /**
    * Avoid API Gateway restrictions
+   * When using avoidRestrictions, do not hide errors but delegate these to avoidRestrictions method.
    * API Gateway timeouts if response is not received in 30 sec
    *  -> Return redirect to same url with retry param if query is not finished within maxWaitTime
    *  -> Save response to S3 when its ready (access with pre-signed url)
@@ -67,8 +68,8 @@ object ApiUtils {
         try {
           newQuery(workId, queryId, path, f, params, responseType)
         } catch {
-          case e: Exception => 
-            logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
+          case e: Throwable =>
+            logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: ",e);
             InternalServerError(s"Request with id $queryId failed.")
         }
       case (Some(retry: String), false) =>
@@ -77,7 +78,7 @@ object ApiUtils {
           redirectBasedOnS3ObjectExistence(workId, queryId, path, currentRetry)
         else {
           logger.info(s"API LOG $queryId: Maximum retries reached. Unable to respond to query.")
-          BadRequest("Maximum retries reached. Unable to get object.")
+          BadRequest(s"Request with id $queryId failed. Maximum retries reached.")
         }
     }
   }
@@ -91,7 +92,7 @@ object ApiUtils {
 
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
     val ret = Future {
-      f(params) // In error situation this future does not get Promise.failed states.
+      f(params)
     }
     try {
       val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
@@ -108,17 +109,23 @@ object ApiUtils {
           else {
             Future {
               s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType)
+            }.onComplete {
+              case Failure(e) => 
+                logger.error(s"API LOG $queryId: failed to save S3, stacktrace: ",e);
+              case Success(t) => ""
+                
             }
             redirectToUrl(path, queryId, Some(1))
           }
       }
     } catch {
       case _: TimeoutException =>
-        Future { // Complete query and save results to s3 in future
-          val finished = Await.result(ret, Duration.Inf)
-          val responseBody = formatResponse(finished, responseType, queryId)
-          s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
-        }
+          ret.onComplete {
+            case Failure(e) =>  logger.error(s"API LOG $queryId: error with message ${e.getMessage}, stacktrace: ",e);
+            case Success(t) => 
+              val responseBody = formatResponse(t, responseType, queryId)
+              s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
+          }
         redirectToUrl(path, queryId, Some(1))
     }
   }

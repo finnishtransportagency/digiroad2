@@ -20,8 +20,6 @@
     var massTransitStopLegend = [
       {symbolUrl: 'images/mass-transit-stops/1.png', label: 'Raitiovaunu'},
       {symbolUrl: 'images/mass-transit-stops/2.png', label: 'Linja-autopysäkki'},
-      {symbolUrl: 'images/mass-transit-stops/3.png', label: 'Kaukoliikenne (vanha tll)'},
-      {symbolUrl: 'images/mass-transit-stops/4.png', label: 'Pikavuoro (vanha tll)'},
       {symbolUrl: 'images/mass-transit-stops/5.png', label: 'Virtuaalipysäkki'},
       {symbolUrl: 'images/mass-transit-stops/6.png', label: 'Terminaalipysäkki'}
     ];
@@ -112,6 +110,9 @@
         '  <div class="panel-section roadLink-complementary-checkbox">',
         '<div class="check-box-container">' +
         '<input id="complementaryLinkCheckBox" type="checkbox" checked/> <lable>Näytä täydentävä geometria</lable>' +
+        '</div>' +
+        '<div class="check-box-container">' +
+        '<input id="walkingCyclingCheckbox" type="checkbox" unchecked/> <lable>Salli raitiovaunupysäkin luonti kävelyn ja pyöräilyn väylälle</lable>' +
         '</div>' +
         '</div>'
       ].join('');
