@@ -59,11 +59,6 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
   stopLiviId.isDefined && OthBusStopLifeCycleBusStopStrategy.isOthLiviId(existingAsset.propertyData, administrationClass)
   }
 
-  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {
-    //Remove the Livi ID
-    massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, null)
-  }
-
   override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
     val enrichPersistedStop = { super.enrichBusStop(persistedStop, roadLinkOption)._1 }
     if(enrichPersistedStop.id !=0 ){
