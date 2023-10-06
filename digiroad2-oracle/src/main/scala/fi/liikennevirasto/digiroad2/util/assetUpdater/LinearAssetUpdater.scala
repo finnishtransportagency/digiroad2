@@ -412,13 +412,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   @tailrec
-  private def slicer(assets: Seq[PersistedLinearAsset], fitIntRoadLinkPrevious: Seq[PersistedLinearAsset], change: RoadLinkChange): Seq[PersistedLinearAsset] = {
+  private def slicer(assets: Seq[PersistedLinearAsset], fitIntoRoadLinkPrevious: Seq[PersistedLinearAsset], change: RoadLinkChange): Seq[PersistedLinearAsset] = {
     def slice(change: RoadLinkChange, asset: PersistedLinearAsset): Seq[PersistedLinearAsset] = {
       val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw new NoSuchElementException(s"Replace info for asset ${asset.id} on link ${asset.linkId} not found from change ${change}"))
-      
+
       val shorted = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
       val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = asset.id)
-      
+
       val shortedLength = shorted.endMeasure - shorted.startMeasure
       val newPartLength = newPart.endMeasure - newPart.startMeasure
 
@@ -447,10 +447,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       else false
     }
 
-    val sliced = assets.flatMap(slice(change, _))
-    val (fitIntoRoadLink, assetGoOver) = sliced.partition(partitioner(_, change))
-    if (assetGoOver.nonEmpty) slicer(assetGoOver, fitIntoRoadLink ++ fitIntRoadLinkPrevious, change) 
-    else fitIntRoadLinkPrevious ++ fitIntoRoadLink
+    val (fitIntoRoadLink, assetGoOver) = assets.partition(partitioner(_, change))
+    if (assetGoOver.nonEmpty) {
+      val sliced = assetGoOver.flatMap(slice(change, _))
+      slicer(sliced, fitIntoRoadLink ++ fitIntoRoadLinkPrevious, change)
+    } else {
+      fitIntoRoadLinkPrevious ++ fitIntoRoadLink
+    }
   }
 
   /**
