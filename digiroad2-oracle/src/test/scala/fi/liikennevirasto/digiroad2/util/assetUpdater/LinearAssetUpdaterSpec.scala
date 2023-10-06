@@ -2015,10 +2015,10 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsOnLink1.last.startMeasure should be(142.003)
       assetsOnLink1.last.endMeasure should be(149.256)
       assetsOnLink1.last.value.get should be(NumericValue(5))
-      val assetsOnLink2 = assetsAfter.find(_.linkId == newLinkId2).get
-      assetsOnLink2.startMeasure should be(0.0)
-      assetsOnLink2.endMeasure should be(10.248)
-      assetsOnLink2.value.get should be(NumericValue(5))
+      val assetOnLink2 = assetsAfter.find(_.linkId == newLinkId2).get
+      assetOnLink2.startMeasure should be(0.0)
+      assetOnLink2.endMeasure should be(10.248)
+      assetOnLink2.value.get should be(NumericValue(5))
     }
   }
 }
