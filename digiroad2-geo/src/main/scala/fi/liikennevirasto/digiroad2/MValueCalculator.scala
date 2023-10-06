@@ -53,7 +53,7 @@ object MValueCalculator {
     (roundMeasure(start), roundMeasure(end), newSideCode)
   }
   private def logAndWarn(asset: AssetLinearReference, start: Double, end: Double): Unit = {
-    if (end - start <= 0) logger.warn(s"new size is zero")
+    if (end - start <= 0) logger.warn(s"new size is zero, start: $start, end: $end, asset ${asset}")
     if (start > end) logger.warn(s"invalid meters start: $start , end $end")
     logger.debug(s"adjusting asset: ${asset.id}")
     logger.debug(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}")
