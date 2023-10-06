@@ -447,10 +447,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       else false
     }
 
-    val sliced = assets.flatMap(slice(change, _))
-    val (fitIntoRoadLink, assetGoOver) = sliced.partition(partitioner(_, change))
-    if (assetGoOver.nonEmpty) slicer(assetGoOver, fitIntoRoadLink ++ fitIntRoadLinkPrevious, change) 
-    else fitIntRoadLinkPrevious ++ fitIntoRoadLink
+    val (fitIntoRoadLink, assetGoOver) = assets.partition(partitioner(_, change))
+    if (assetGoOver.nonEmpty) {
+      val sliced = assetGoOver.flatMap(slice(change, _))
+      slicer(sliced, fitIntoRoadLink ++ fitIntRoadLinkPrevious, change)
+    } else {
+      fitIntRoadLinkPrevious ++ fitIntoRoadLink
+    }
   }
 
   /**
