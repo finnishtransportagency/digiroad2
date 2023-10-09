@@ -724,7 +724,7 @@ class AssetFiller {
   }
 
   /**
-    * Removes obsoleted mvalue adjustments and side code adjustments from the list
+    * Removes adjustments that were overwritten later. The latest adjustment has to be preserved.
     *
     * @param roadLink
     * @param assets
@@ -732,45 +732,13 @@ class AssetFiller {
     * @return
     */
   def clean(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    /**
-      * Remove adjustments that were overwritten later (new version appears later in the sequence)
-      *
-      * @param adj list of adjustments
-      * @return list of adjustment final values
-      */
-    def prune(adj: Seq[MValueAdjustment]): Seq[MValueAdjustment] = {
-      if (adj.isEmpty)
-        return adj
-      adj.tail.exists(a => a.assetId == adj.head.assetId) match {
-        case true => prune(adj.tail)
-        case false => Seq(adj.head) ++ prune(adj.tail)
-      }
-    }
-
-    /**
-      * Remove side code adjustments that were overwritten
-      *
-      * @param adj original list
-      * @return list of final values
-      */
-    def pruneSideCodes(adj: Seq[SideCodeAdjustment]): Seq[SideCodeAdjustment] = {
-      if (adj.isEmpty)
-        return adj
-      adj.tail.exists(a => a.assetId == adj.head.assetId) match {
-        case true => pruneSideCodes(adj.tail)
-        case false => Seq(adj.head) ++ pruneSideCodes(adj.tail)
-      }
-    }
 
     val droppedIds = changeSet.droppedAssetIds
-    //TODO remove logging after stackOverFlow error is fixed
-    val adjustmentsToPrune = changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId))
-    logger.info(adjustmentsToPrune.toString())
-    val sideCodesToPrune = changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId))
-    logger.info(sideCodesToPrune.toString())
-    val adjustments = prune(changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId)))
-    val sideAdjustments = pruneSideCodes(changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId)))
-    (assets, changeSet.copy(droppedAssetIds = Set(), expiredAssetIds = (changeSet.expiredAssetIds ++ changeSet.droppedAssetIds) -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
+    val groupedMValueAdjustments = changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId)).groupBy(_.assetId)
+    val adjustments = groupedMValueAdjustments.map(grouped => grouped._2.last).toSeq
+    val groupedSideCodeAdjustments = changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId)).groupBy(_.assetId)
+    val sideCodeAdjustments = groupedSideCodeAdjustments.map(grouped => grouped._2.last).toSeq
+    (assets, changeSet.copy(droppedAssetIds = Set(), expiredAssetIds = (changeSet.expiredAssetIds ++ changeSet.droppedAssetIds) -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideCodeAdjustments))
 
   }
 
