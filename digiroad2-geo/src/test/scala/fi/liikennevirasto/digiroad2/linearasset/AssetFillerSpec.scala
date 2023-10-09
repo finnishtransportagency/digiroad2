@@ -1236,4 +1236,19 @@ class AssetFillerSpec extends FunSuite with Matchers {
     result._2.adjustedMValues.size should be(20000)
     result._2.adjustedSideCodes.size should be(20000)
   }
+
+  test("clean takes the latest adjustment for each asset") {
+    val roadLink = assetFiller.toRoadLinkForFillTopology(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
+    val adjustedMValuesId1 = List.tabulate(10)(id => MValueAdjustment(1, generateRandomLinkId(), 0, Random.nextDouble() * 100))
+    val adjustedMValuesId2 = List.tabulate(10)(id => MValueAdjustment(2, generateRandomLinkId(), 0, Random.nextDouble() * 100))
+    val adjustedMValuesId3 = List.tabulate(10)(id => MValueAdjustment(3, generateRandomLinkId(), 0, Random.nextDouble() * 100))
+    val changeSet = ChangeSet(Set(), adjustedMValuesId1 ++ adjustedMValuesId2 ++ adjustedMValuesId3, Nil, Set(), Seq())
+    val result = assetFiller.clean(roadLink, Seq(), changeSet)
+    result._2.adjustedMValues.filter(_.assetId == 1).size should be(1)
+    result._2.adjustedMValues.filter(_.assetId == 1).head should be(adjustedMValuesId1.last)
+    result._2.adjustedMValues.filter(_.assetId == 2).size should be(1)
+    result._2.adjustedMValues.filter(_.assetId == 2).head should be(adjustedMValuesId2.last)
+    result._2.adjustedMValues.filter(_.assetId == 3).size should be(1)
+    result._2.adjustedMValues.filter(_.assetId == 3).head should be(adjustedMValuesId3.last)
+  }
 }
