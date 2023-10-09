@@ -724,7 +724,7 @@ class AssetFiller {
   }
 
   /**
-    * Removes obsoleted mvalue adjustments and side code adjustments from the list
+    * Removes adjustments that were overwritten later. The latest adjustment has to be preserved.
     *
     * @param roadLink
     * @param assets
