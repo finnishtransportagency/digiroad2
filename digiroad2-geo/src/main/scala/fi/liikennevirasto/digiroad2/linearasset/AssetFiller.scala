@@ -732,35 +732,6 @@ class AssetFiller {
     * @return
     */
   def clean(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    /**
-      * Remove adjustments that were overwritten later (new version appears later in the sequence)
-      *
-      * @param adj list of adjustments
-      * @return list of adjustment final values
-      */
-    def prune(adj: Seq[MValueAdjustment]): Seq[MValueAdjustment] = {
-      if (adj.isEmpty)
-        return adj
-      adj.tail.exists(a => a.assetId == adj.head.assetId) match {
-        case true => prune(adj.tail)
-        case false => Seq(adj.head) ++ prune(adj.tail)
-      }
-    }
-
-    /**
-      * Remove side code adjustments that were overwritten
-      *
-      * @param adj original list
-      * @return list of final values
-      */
-    def pruneSideCodes(adj: Seq[SideCodeAdjustment]): Seq[SideCodeAdjustment] = {
-      if (adj.isEmpty)
-        return adj
-      adj.tail.exists(a => a.assetId == adj.head.assetId) match {
-        case true => pruneSideCodes(adj.tail)
-        case false => Seq(adj.head) ++ pruneSideCodes(adj.tail)
-      }
-    }
 
     val droppedIds = changeSet.droppedAssetIds
     val groupedMValueAdjustments = changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId)).groupBy(_.assetId)
