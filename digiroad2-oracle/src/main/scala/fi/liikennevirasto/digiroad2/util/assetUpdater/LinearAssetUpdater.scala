@@ -529,7 +529,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       logger.info(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.map(a => s"${a.assetId}/${a.linkId}").mkString(", ")}")
       logger.debug(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
     changeSet.adjustedMValues.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, adjustment.linkId, Measures(adjustment.startMeasure, adjustment.endMeasure).roundMeasures(), adjustment.timeStamp)
+      dao.updateMValuesChangeInfo(adjustment.assetId, adjustment.linkId, Measures(adjustment.startMeasure, adjustment.endMeasure).roundMeasures(), LinearAssetUtils.createTimeStamp())
     }
 
     val ids = changeSet.expiredAssetIds.toSeq

@@ -763,14 +763,11 @@ class AssetFiller {
     }
 
     val droppedIds = changeSet.droppedAssetIds
-    //TODO remove logging after stackOverFlow error is fixed
-    val adjustmentsToPrune = changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId))
-    logger.info(adjustmentsToPrune.toString())
-    val sideCodesToPrune = changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId))
-    logger.info(sideCodesToPrune.toString())
-    val adjustments = prune(changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId)))
-    val sideAdjustments = pruneSideCodes(changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId)))
-    (assets, changeSet.copy(droppedAssetIds = Set(), expiredAssetIds = (changeSet.expiredAssetIds ++ changeSet.droppedAssetIds) -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
+    val groupedMValueAdjustments = changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId)).groupBy(_.assetId)
+    val adjustments = groupedMValueAdjustments.map(grouped => grouped._2.last).toSeq
+    val groupedSideCodeAdjustments = changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId)).groupBy(_.assetId)
+    val sideCodeAdjustments = groupedSideCodeAdjustments.map(grouped => grouped._2.last).toSeq
+    (assets, changeSet.copy(droppedAssetIds = Set(), expiredAssetIds = (changeSet.expiredAssetIds ++ changeSet.droppedAssetIds) -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideCodeAdjustments))
 
   }
 
