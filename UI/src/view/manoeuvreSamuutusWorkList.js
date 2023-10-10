@@ -1,8 +1,6 @@
 (function (root) {
     root.ManoeuvreSamuutusWorkList = function () {
 
-        var enumerations = new Enumerations();
-
         WorkListView.call(this);
         var me = this;
         var backend;
@@ -33,7 +31,7 @@
             };
 
             var changeRow = function (item) {
-                return $('<dd class="laneWorkListTextSize"/>')
+                return $('<dd class="manoeuvreWorkListTextSize"/>')
                     .html("Rajoituksen id:" +" " + item.assetId + " "+"Rajoituksen linkit:"  + item.links
                     )
             };
@@ -46,7 +44,6 @@
             };
 
             return $('<div/>')
-                //.append(header)
                 .append(tableForGroupingValues(workListItems));
         };
     };
