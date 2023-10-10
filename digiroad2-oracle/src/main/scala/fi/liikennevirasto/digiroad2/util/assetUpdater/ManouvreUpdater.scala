@@ -22,13 +22,8 @@ class ManouvreUpdater() {
   
   private val roadLinkChangeClient = new RoadLinkChangeClient
   
-  val logger: Logger = LoggerFactory.getLogger(getClass)
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
   
-  def splitLinkId(linkId: String): (String, Int) = {
-    val split = linkId.split(":")
-    (split(0), split(1).toInt)
-  }
-
   def updateLinearAssets(typeId: Int = Manoeuvres.typeId): Unit = {
     val latestSuccess = PostGISDatabase.withDynSession(Queries.getLatestSuccessfulSamuutus(typeId))
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(latestSuccess)
@@ -45,20 +40,24 @@ class ManouvreUpdater() {
   def recognizeVersionUpgrade(change: (RoadLinkChangeType, Seq[RoadLinkChange])): Boolean = {
     change._1 == RoadLinkChangeType.Replace && change._2.size == 1 && recognizeVersionUpgrade(change._2.head)
   }
+
+  def splitLinkId(linkId: String): (String, Int) = {
+    val split = linkId.split(":")
+    (split(0), split(1).toInt)
+  }
+  
   def recognizeVersionUpgrade(change: RoadLinkChange): Boolean = {
     val oldId = splitLinkId(change.oldLink.get.linkId)._1
     val newId = splitLinkId(change.newLinks.head.linkId)._1
-    if (oldId == newId) {
-      true
-    } else false
+    if (oldId == newId) true else false
   }
 
   case class VersionUpgrade(oldId:String, newId:String)
   def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]):Seq[ChangedManoeuvre] = {
 
-    def partition = {
+    def partition: (Seq[RoadLinkChange], Seq[RoadLinkChange]) = {
       val (versionUpgrade2, other2) = changesAll.groupBy(_.changeType).partition(recognizeVersionUpgrade)
-      (versionUpgrade2.values.flatten.toSeq,other2.values.flatten.toSeq)
+      (versionUpgrade2.values.flatten.toSeq, other2.values.flatten.toSeq)
     }
 
     val (versionUpgrade, other) = partition
@@ -82,6 +81,5 @@ class ManouvreUpdater() {
     logger.info(s"Number of manoeuvre ${rows.size} which need manual adjustments.")
     
     service.insertSamuutusChange(rows,false)
-    
   }
 }
