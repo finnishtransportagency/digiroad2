@@ -492,7 +492,6 @@
         eventbus.trigger('csvReports:select', backend.getMunicipalities());
       },
         manoeuvreSamuutusWorkList: function () {
-          console.log("trigger");
             eventbus.trigger('workList-manoeuvreSamuutus:select','manoeuvreSamuutusWorkList', backend.getManoeuvreSamuutusWorkList());
         },
 
