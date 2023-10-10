@@ -2,11 +2,10 @@ package fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.TrafficSigns
-import fi.liikennevirasto.digiroad2.dao.PostGISAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedManoeuvre, ElementTypes, Manoeuvre, ManoeuvreElement, NewManoeuvre, SamuuutusWorkListItem}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation

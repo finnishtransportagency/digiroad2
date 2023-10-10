@@ -1,18 +1,16 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Municipality, SingleCarriageway, TrafficDirection, TrafficVolume}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISMaintenanceDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, ValidityPeriod}
-import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, MaintenanceService, ManoeuvreService, NewManoeuvre}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, ManoeuvreService, NewManoeuvre}
 import fi.liikennevirasto.digiroad2.util.PolygonTools
-import org.mockito.ArgumentMatchers.any
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.Mockito.when
-import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.Matchers.{be, convertToAnyShouldWrapper}
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{FunSuite, Matchers}
 
 class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite {
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
@@ -102,8 +100,6 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
     val geometry = generateGeometry(0, 10)
     val oldRoadLink = createRoadLink(linkId, geometry)
     val change = changeReplaceShortenedFromEnd(linkId)
-    val newLink = createRoadLink(linkId1, generateGeometry(0, 5))
-    val unchangedLink = createRoadLink(linkId7, generateGeometry(10, 10))
 
     runWithRollback {
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
@@ -111,11 +107,6 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
 
       val roadLink2 = Seq(
         RoadLink(linkId, List(Point(0.0, 0.0), Point(9.0, 0.0)), 9, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None),
-        RoadLink(linkId7, List(Point(10.0, 0.0), Point(9.0, 0.0)), 9.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None)
-      )
-
-      val roadLink3 = Seq( // this highly unlikely scenario in real world
-        RoadLink(linkId1, List(Point(0.0, 0.0), Point(4.0, 0.0)), 4, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None),
         RoadLink(linkId7, List(Point(10.0, 0.0), Point(9.0, 0.0)), 9.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None)
       )
 
@@ -138,12 +129,7 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
       changed.head.manoeuvreId should be(id)
 
       Service.getManoeuvreSamuutusWorkList(false).size should be(1)
-
       Service.getManoeuvreSamuutusWorkList(false).head.assetId should be(id)
-      
     }
   }
-  
-  
-
 }

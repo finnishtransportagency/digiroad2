@@ -1,19 +1,18 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import java.security.InvalidParameterException
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Manoeuvres, SideCode}
-import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.{ManoeuvreDao, ManoeuvreUpdateLinks, PersistedManoeuvreRow}
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, _}
+import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+
+import java.security.InvalidParameterException
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime],
                      modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String, isSuggested: Boolean)
@@ -225,14 +224,6 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     if (newTransaction) withDynTransaction {getManouvres} else getManouvres
   }
   
-  def createManoeuvres(manoeuvres: Seq[NewManoeuvre], username: String): Unit = {
-    manoeuvres.map { manoeuvre =>
-      val linkIds = manoeuvres.flatMap(_.linkIds)
-      val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds.toSet)
-      createManoeuvre(username, manoeuvre, roadLinks)
-    }
-  }
-
   def updateManouvreLinkVersion(update:ManoeuvreUpdateLinks, newTransaction: Boolean = true): Unit = {
     if (newTransaction) withDynTransaction {dao.updateManoeuvreLinkIds(update)}
     else dao.updateManoeuvreLinkIds(update)
