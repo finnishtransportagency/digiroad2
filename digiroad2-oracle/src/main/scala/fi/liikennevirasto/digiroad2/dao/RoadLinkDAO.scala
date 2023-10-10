@@ -350,6 +350,14 @@ class RoadLinkDAO {
     }
   }
 
+  protected def deleteLinksWithFilter(filter: String): Unit = {
+    LogUtils.time(logger, "TEST LOG Delete road links"){
+      sqlu"""delete from kgv_roadlink
+           where #$filter
+         """.execute
+    }
+  }
+
   protected def getExpiredRoadLinks(): Seq[RoadLinkFetched] = {
     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
@@ -443,4 +451,9 @@ class RoadLinkDAO {
       listOfPoint.toList
     }
   }
+
+  def deleteRoadLinksByIds(linkIdsToDelete: Set[String]) = {
+    deleteLinksWithFilter(withLinkIdFilter(linkIdsToDelete))
+  }
+
 }
