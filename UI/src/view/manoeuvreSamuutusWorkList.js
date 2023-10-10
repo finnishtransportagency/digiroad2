@@ -19,9 +19,6 @@
         };
 
         this.workListItemTable = function (layerName, showDeleteCheckboxes, workListItems) {
-            var selectedToDelete = [];
-            console.log(workListItems)
-            var header = $('<h2/>').html("Samuutuksen muuttaneita linkkejä");
             var tableContentRows = function (item) {
                 console.log(item)
                     return $('<tr/>')
@@ -36,15 +33,14 @@
                     )
             };
 
-            var tableForGroupingValues = function (items) {
+            var addTable = function (items) {
                 if (!items || items.length === 0) return '';
                 return $('<table><tbody>').addClass('table')
                     .append(tableContentRows(items))
                     .append('</tbody></table>');
             };
 
-            return $('<div/>')
-                .append(tableForGroupingValues(workListItems));
+            return $('<div/>').append(addTable(workListItems));
         };
     };
 })(this);
