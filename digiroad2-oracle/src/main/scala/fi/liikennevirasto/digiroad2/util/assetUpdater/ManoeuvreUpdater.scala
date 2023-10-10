@@ -13,7 +13,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.Seq
 
-class ManouvreUpdater() {
+class ManoeuvreUpdater() {
   def eventBus: DigiroadEventBus = new DummyEventBus
   def roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)

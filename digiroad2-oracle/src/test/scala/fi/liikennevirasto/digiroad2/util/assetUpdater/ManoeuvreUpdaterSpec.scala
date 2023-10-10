@@ -12,7 +12,7 @@ import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite {
+class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite {
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty[String])).thenReturn(Seq())
 
@@ -28,13 +28,13 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
-  object TestManouvreUpdater extends ManouvreUpdater() {
+  object TestManoeuvreUpdater extends ManoeuvreUpdater() {
     override def withDynTransaction[T](f: => T): T = f
     override def eventBus: DigiroadEventBus = mockEventBus
     override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
   }
 
-  test("case 6 links version is changes, move to new version") {
+  test("Links version changes, move to new version") {
     val linkId = generateRandomKmtkId()
     val linkIdVersion1 = s"$linkId:1"
     val linkIdVersion2 = s"$linkId:2"
@@ -73,7 +73,7 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
       assetsBefore.exists(p => p.id == id) should be(true)
       assetsBefore.find(p=>p.id ==id).get.id should be(id)
 
-      val changed =  TestManouvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
+      val changed =  TestManoeuvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
       val assetsAfter = Service.getByRoadLinkId(roadLink3.map(_.linkId).toSet, false)
 
       assetsAfter.exists(p => p.id == id) should be(true)
@@ -95,7 +95,7 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
       changed.isEmpty should be(true)
     }
   }
-  test("case 4 links under asset is replaced with shorter") {
+  test("Link under manoeuvre asset changed, add into worklist ") {
     val linkId = generateRandomLinkId()
     val geometry = generateGeometry(0, 10)
     val oldRoadLink = createRoadLink(linkId, geometry)
@@ -119,7 +119,7 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
       assetsBefore.exists(p => p.id == id) should be(true)
       assetsBefore.find(p => p.id == id).get.id should be(id)
 
-      val changed =  TestManouvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
+      val changed =  TestManoeuvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
       val assetsAfter = Service.getByRoadLinkId(roadLink2.map(_.linkId).toSet, newTransaction = false)
 
       assetsAfter.exists(p => p.id == id) should be(true)
