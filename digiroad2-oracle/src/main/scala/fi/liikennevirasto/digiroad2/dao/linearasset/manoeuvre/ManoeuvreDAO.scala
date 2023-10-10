@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.PostGISAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedManoeuvre, ElementTypes, Manoeuvre, ManoeuvreElement, NewManoeuvre}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedManoeuvre, ElementTypes, Manoeuvre, ManoeuvreElement, NewManoeuvre, SamuuutusWorkListItem}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -367,11 +367,16 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
   
   def insertSamuutusChange(row:Seq[ChangedManoeuvre]): Unit ={
     row.foreach(a=> {
-      sql"""insert into manouvre_samuutus_work_list (assetId,linkIds) values (${a.manoeuvreId},${a.linkIds.map(t=>s"'$t'").mkString(",")})"""
+      sqlu"""insert into manouvre_samuutus_work_list (assetId,linkIds) values (${a.manoeuvreId},${a.linkIds.map(t=>s"'$t'").mkString(",")})
+           
+ON CONFLICT (assetId) do nothing
+         """.execute
     })
   }
   
-  def getSamuutusChange(): List[(Long, String)] = {
-    sql"""select assetId,linkIds from manouvre_samuutus_work_list """.as[(Long, String)].list
+  def getSamuutusChange(): List[SamuuutusWorkListItem] = {
+    sql"""select assetId,linkIds from manouvre_samuutus_work_list """.as[(Long, String)].list.map(
+      a=>SamuuutusWorkListItem(a._1,a._2)
+    )
   }
 }

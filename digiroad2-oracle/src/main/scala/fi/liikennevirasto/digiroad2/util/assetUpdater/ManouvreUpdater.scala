@@ -24,33 +24,12 @@ class ManouvreUpdater() {
   def service = new ManoeuvreService(new RoadLinkService(roadLinkClient, eventBus, new DummySerializer),eventBus)
   
   private val roadLinkChangeClient = new RoadLinkChangeClient
-
-  private val changesForReport: mutable.ListBuffer[ChangedAsset] = ListBuffer()
-
-  private val emptyStep: OperationStep = OperationStep(Seq(), None, Seq())
-
-  // Mark generated part to be removed. Used when removing pavement in PaveRoadUpdater
-  protected val removePart: Int = -1
-
-  def resetReport(): Unit = {
-    changesForReport.clear
-  }
-  def getReport(): mutable.Seq[ChangedAsset] = {
-    changesForReport.distinct
-  }
-
+  
   val logger: Logger = LoggerFactory.getLogger(getClass)
   
   def splitLinkId(linkId: String): (String, Int) = {
     val split = linkId.split(":")
     (split(0), split(1).toInt)
-  }
-  def kmtkidIsSame(change: RoadLinkChange): Boolean = {
-    val oldId = splitLinkId(change.oldLink.get.linkId)._1
-    val newId = splitLinkId(change.newLinks.head.linkId)._1
-    if (oldId == newId) {
-      true
-    } else false
   }
 
   def updateLinearAssets(typeId: Int = Manoeuvres.typeId): Unit = {
@@ -63,7 +42,6 @@ class ManouvreUpdater() {
         updateByRoadLinks(typeId, changeSet.changes)
         Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
       }
-      //generateAndSaveReport(typeId, changeSet.targetDate)
     })
   }
   
@@ -79,7 +57,6 @@ class ManouvreUpdater() {
   }
 
   case class VersionUpgrade(oldId:String, newId:String)
-  case class PairForReport(oldAsset:PersistedManoeuvreRow, newAssets:PersistedManoeuvreRow)
   def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]):Seq[ChangedManoeuvre] = {
 
     def partition = {
@@ -92,27 +69,22 @@ class ManouvreUpdater() {
     val pairs = versionUpgrade.map(a=> (a.oldLink.get.linkId, a.newLinks.map(_.linkId).distinct)).filter(a=>{a._2.size==1}).map(a=>{VersionUpgrade(a._1,a._2.head)})
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(versionUpgradeIds, newTransaction = false)
     logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of version upgrade in the sets: ${versionUpgrade.size}")
-    def createReportRow(asset: PersistedManoeuvreRow):PairForReport = {
-      def selector(findLink: String): String = if (pairs.exists(_.oldId == findLink)) pairs.find(_.oldId == findLink).get.newId else findLink
-      val dest = if (asset.destLinkId != null) selector(asset.destLinkId) else null
-      PairForReport(asset, asset.copy(linkId = selector(asset.linkId), destLinkId = dest))
-    }
-
-    val forReport = existingAssets.filter(a=> versionUpgradeIds.contains(a.linkId) || versionUpgradeIds.contains(a.destLinkId)).map(createReportRow)
     
+    val forLogging = existingAssets.filter(a=> versionUpgradeIds.contains(a.linkId) || versionUpgradeIds.contains(a.destLinkId))
     
     pairs.map(a=>ManoeuvreUpdateLinks(a.oldId,a.newId)).foreach(service.updateManouvreLinkVersion(_,newTransaction = false))
-
-   val manouvre = service.getByRoadLinkId(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, false)
-    logger.info("")
-    manouvre.map(a=> {
+    
+   val rows =  service.getByRoadLinkId(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, false)
+     .map(a=> {
       val (elementA,elementB) = (a.elements.map(_.sourceLinkId),a.elements.map(_.destLinkId))
       ChangedManoeuvre(manoeuvreId = a.id,linkIds=(elementA++elementB).toSet)
     })
+
+    logger.info(s"Number of manoeuvre ${forLogging.size} which has been updated automatically updated to new version.")
+    logger.info(s"Assets: ${forLogging.map(_.id).mkString(",")}")
+    logger.info(s"Number of manoeuvre ${rows.size} which need manual adjustments.")
     
-    // check for situation when asset is already on worklist, do not insert then
-    
-    // TODO add inserting here
+    service.insertSamuutusChange(rows,false)
     
   }
 

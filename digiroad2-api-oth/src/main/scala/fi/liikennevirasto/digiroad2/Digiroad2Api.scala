@@ -1492,22 +1492,20 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  /*List( Map(
+       "assetId" -> 0,
+       "links"-> "1,2,3"
+     ),
+       Map(
+         "assetId" -> 0,
+         "links" -> "1,2,3"
+       )
+     )*/
+
   get("/manoeuvreSamuutusWorkList") {
     val user = userProvider.getCurrentUser()
-    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList
-    else Seq()
-
-    //var list = [{assetId:0,links:"1,2,3"}];
-
-   List( Map(
-     "assetId" -> 0,
-     "links"-> "1,2,3"
-   ),
-     Map(
-       "assetId" -> 0,
-       "links" -> "1,2,3"
-     )
-   )
+    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
+    workListItems.map(a=> Map("assetId" -> a.assetId, "links" -> a.links)).toList
   }
   
   delete("/laneWorkList") {

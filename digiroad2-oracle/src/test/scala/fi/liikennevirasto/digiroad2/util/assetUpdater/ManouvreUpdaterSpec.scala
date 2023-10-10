@@ -74,8 +74,8 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
       val assetsBefore = Service.getByRoadLinkId(roadLink2.map(_.linkId).toSet, newTransaction = false)
       assetsBefore.exists(p => p.id == id) should be(true)
       assetsBefore.find(p=>p.id ==id).get.id should be(id)
-      
-      TestManouvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
+
+      val changed =  TestManouvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
       val assetsAfter = Service.getByRoadLinkId(roadLink3.map(_.linkId).toSet, false)
 
       assetsAfter.exists(p => p.id == id) should be(true)
@@ -93,6 +93,8 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
           roadLink3.map(_.linkId).contains(source) should be(true)
         }
       })
+
+      changed.isEmpty should be(true)
     }
   }
   test("case 4 links under asset is replaced with shorter") {
@@ -127,12 +129,17 @@ class ManouvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuite
       assetsBefore.find(p => p.id == id).get.id should be(id)
 
       val changed =  TestManouvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
-      val assetsAfter = Service.getByRoadLinkId(roadLink2.map(_.linkId).toSet, false)
+      val assetsAfter = Service.getByRoadLinkId(roadLink2.map(_.linkId).toSet, newTransaction = false)
 
       assetsAfter.exists(p => p.id == id) should be(true)
       assetsAfter.find(p => p.id == id).get.id should be(id)
 
       changed.size should be(1)
+      changed.head.manoeuvreId should be(id)
+
+      Service.getManoeuvreSamuutusWorkList(false).size should be(1)
+
+      Service.getManoeuvreSamuutusWorkList(false).head.assetId should be(id)
       
     }
   }

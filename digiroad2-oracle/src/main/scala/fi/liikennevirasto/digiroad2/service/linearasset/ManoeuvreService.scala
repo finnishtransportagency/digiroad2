@@ -45,7 +45,9 @@ object ElementTypes {
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
 
+
 case class ChangedManoeuvre (manoeuvreId:Long,linkIds:Set[String])
+case class SamuuutusWorkListItem(assetId:Long,links:String)
 class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
   def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -475,9 +477,17 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   private def validateManoeuvre(sourceId: String, destLinkId: String, elementType: Int): Boolean  = {
     countExistings(sourceId, destLinkId, elementType) == 0
   }
+
+  def insertSamuutusChange(rows: Seq[ChangedManoeuvre],newTransaction: Boolean = true): Seq[ChangedManoeuvre]= {
+    if (newTransaction) { withDynTransaction {  dao.insertSamuutusChange(rows)}
+    } else dao.insertSamuutusChange(rows)
+    rows
+  }
   
-  def getManoeuvreSamuutusWorkList: Seq[Int] = {
-    Seq(0)
+  
+  def getManoeuvreSamuutusWorkList(newTransaction: Boolean = true): Seq[SamuuutusWorkListItem] = {
+    if (newTransaction) { withDynTransaction {dao.getSamuutusChange()}
+    }else dao.getSamuutusChange()
   }
   
 }
