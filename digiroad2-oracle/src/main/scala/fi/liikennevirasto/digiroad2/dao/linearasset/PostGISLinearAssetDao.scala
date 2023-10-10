@@ -26,7 +26,7 @@ case class ProhibitionsRow(id: Long, linkId: String, sideCode: Int, prohibitionI
 
 case class AssetLastModification(id: Long, linkId: String, modifiedBy: Option[String], modifiedDate: Option[DateTime])
 case class AssetLink(id: Long, linkId: String, assetTypeId: Int)
-
+case class AssetLinkWithMeasures(id: Long, assetTypeId: Int, linkId: String, sideCode: Int, startMeasure: Double, endMeasure: Double)
 
 class PostGISLinearAssetDao() {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
@@ -232,6 +232,21 @@ class PostGISLinearAssetDao() {
     }
   }
 
+  def fetchAssetsWithPositionByLinkIds(assetTypeId: Set[Int], linkIds: Seq[String], includeFloating: Boolean = false
+                                       , includeExpired: Boolean = false): Seq[AssetLinkWithMeasures] = {
+    val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
+      sql"""
+        select a.id, a.asset_type_id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join #$idTableName i on i.id = pos.link_id
+          where a.asset_type_id in (#${assetTypeId.mkString(",")}) #$filterFloating #$filterExpired""".as[AssetLinkWithMeasures](getAssetLinkWithMeasures).list
+    }
+  }
+
   implicit val getAssetLink = new GetResult[AssetLink] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
@@ -239,6 +254,19 @@ class PostGISLinearAssetDao() {
       val assetTypeId = r.nextInt()
 
       AssetLink(id, linkId, assetTypeId)
+    }
+  }
+
+  implicit val getAssetLinkWithMeasures = new GetResult[AssetLinkWithMeasures] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val assetTypeId = r.nextInt()
+      val linkId = r.nextString()
+      val sideCode = r.nextInt()
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+
+      AssetLinkWithMeasures(id, assetTypeId, linkId, sideCode, startMeasure, endMeasure)
     }
   }
 

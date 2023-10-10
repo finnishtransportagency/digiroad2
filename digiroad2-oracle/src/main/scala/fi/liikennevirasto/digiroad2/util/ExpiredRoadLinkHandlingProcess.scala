@@ -1,10 +1,10 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Lanes, Manoeuvres}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Lanes, Manoeuvres, SideCode}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
-import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLink, PostGISLinearAssetDao}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLink, AssetLinkWithMeasures, PostGISLinearAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -23,13 +23,16 @@ object ExpiredRoadLinkHandlingProcess {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def getAllExistingAssetsOnExpiredLinks(expiredRoadLinks: Seq[RoadLink]): Seq[AssetLink] = {
+  def getAllExistingAssetsOnExpiredLinks(expiredRoadLinks: Seq[RoadLink]): Seq[AssetLinkWithMeasures] = {
     expiredRoadLinks.flatMap(roadLink => {
-      val assetsOnExpiredLink = postGISLinearAssetDao.fetchAssetsByLinkIds(assetTypeIds, Seq(roadLink.linkId), includeFloating = false, includeExpired = false)
-      val lanesOnExpiredLink = laneDao.fetchAllLanesByLinkIds(Seq(roadLink.linkId)).map(lane => AssetLink(lane.id, lane.linkId, Lanes.typeId))
+      val assetsOnExpiredLink = postGISLinearAssetDao.fetchAssetsWithPositionByLinkIds(assetTypeIds, Seq(roadLink.linkId), includeFloating = false, includeExpired = false)
+      val lanesOnExpiredLink = laneDao.fetchAllLanesByLinkIds(Seq(roadLink.linkId)).map(lane =>
+        AssetLinkWithMeasures(lane.id, Lanes.typeId, lane.linkId, lane.sideCode, lane.startMeasure, lane.endMeasure))
       val manoeuvresOnLink = manoeuvreDao.getByRoadLinks(Seq(roadLink.linkId))
         .flatMap(manoeuvre => manoeuvre.elements
-        .flatMap(element => Seq(AssetLink(element.manoeuvreId, element.sourceLinkId, Manoeuvres.typeId), AssetLink(element.manoeuvreId, element.destLinkId, Manoeuvres.typeId))))
+        .flatMap(element =>
+          Seq(AssetLinkWithMeasures(element.manoeuvreId, Manoeuvres.typeId,  element.sourceLinkId, SideCode.Unknown.value, 0, roadLink.length),
+          AssetLinkWithMeasures(element.manoeuvreId, Manoeuvres.typeId, element.destLinkId, SideCode.Unknown.value, 0, roadLink.length))))
 
       assetsOnExpiredLink ++ lanesOnExpiredLink ++ manoeuvresOnLink
     })
