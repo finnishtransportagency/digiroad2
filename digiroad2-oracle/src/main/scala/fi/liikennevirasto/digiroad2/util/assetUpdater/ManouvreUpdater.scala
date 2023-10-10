@@ -77,7 +77,7 @@ class ManouvreUpdater() {
    val rows =  service.getByRoadLinkId(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, false)
      .map(a=> {
       val (elementA,elementB) = (a.elements.map(_.sourceLinkId),a.elements.map(_.destLinkId))
-      ChangedManoeuvre(manoeuvreId = a.id,linkIds=(elementA++elementB).toSet)
+      ChangedManoeuvre(manoeuvreId = a.id,linkIds=(elementA++elementB).filter(_!=null).toSet)
     })
 
     logger.info(s"Number of manoeuvre ${forLogging.size} which has been updated automatically updated to new version.")
@@ -87,6 +87,4 @@ class ManouvreUpdater() {
     service.insertSamuutusChange(rows,false)
     
   }
-
-
 }
