@@ -52,7 +52,7 @@ class ManoeuvreUpdater() {
   def kmtkIdAreSame(change: RoadLinkChange): Boolean = {
     val oldId = splitLinkId(change.oldLink.get.linkId)._1
     val newId = splitLinkId(change.newLinks.head.linkId)._1
-    if (oldId == newId) true else false
+    oldId == newId 
   }
 
   case class VersionUpgrade(oldId:String, newId:String)
