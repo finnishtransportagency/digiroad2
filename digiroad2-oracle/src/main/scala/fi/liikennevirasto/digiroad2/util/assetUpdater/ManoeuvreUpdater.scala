@@ -41,7 +41,7 @@ class ManoeuvreUpdater() {
   }
   
   def recognizeVersionUpgrade(change: (RoadLinkChangeType, Seq[RoadLinkChange])): Boolean = {
-    change._1 == RoadLinkChangeType.Replace && change._2.size == 1 && recognizeVersionUpgrade(change._2.head)
+    change._1 == RoadLinkChangeType.Replace && change._2.size == 1 && kmtkIdAreSame(change._2.head)
   }
 
   def splitLinkId(linkId: String): (String, Int) = {
@@ -49,7 +49,7 @@ class ManoeuvreUpdater() {
     (split(0), split(1).toInt)
   }
   
-  def recognizeVersionUpgrade(change: RoadLinkChange): Boolean = {
+  def kmtkIdAreSame(change: RoadLinkChange): Boolean = {
     val oldId = splitLinkId(change.oldLink.get.linkId)._1
     val newId = splitLinkId(change.newLinks.head.linkId)._1
     if (oldId == newId) true else false
