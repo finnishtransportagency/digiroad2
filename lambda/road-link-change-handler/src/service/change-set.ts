@@ -82,7 +82,7 @@ export class ChangeSet {
 
             console.time("Correcting incomplete version changes ")
             const [incompleteVersionChanges, rest] = _.partition(separated[1], entry => this.isVersionChange(entry) && !this.mValuesConformToLinkLength(entry, entry.replaceInfo[0]))
-            console.log(`Found ${incompleteVersionChanges.length} incomplete version changes`)
+            console.info(`Found ${incompleteVersionChanges.length} incomplete version changes`)
             const correctedVersionChanges = this.correctIncompleteVersionChanges(incompleteVersionChanges, partialAdd)
             console.timeEnd("Correcting incomplete version changes ")
 
@@ -174,7 +174,7 @@ export class ChangeSet {
             if (_.uniq(checkContinuity).length === 1 && checkContinuity[0]) {
                 const combinedReplaceInfo = this.combineReplaceInfo(allReplaceInfosForLink, true)
                 if (this.mValuesConformToLinkLength(entry, combinedReplaceInfo)) {
-                    console.log(`Completed incomplete version change ${JSON.stringify(entry)} with partial add replace 
+                    console.info(`Completed incomplete version change ${JSON.stringify(entry)} with partial add replace 
                     infos ${JSON.stringify(partialAddReplaceInfos)}`)
                     return [{
                         changeType:     entry.changeType,
