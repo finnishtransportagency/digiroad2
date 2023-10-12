@@ -68,20 +68,123 @@ export class ChangeSet {
             
             console.timeEnd("Convert to change entries ")
 
+            console.time("Combine replace infos for same links ")
+            const combined = this.combineReplaceInfos(converted)
+            console.timeEnd("Combine replace infos for same links ")
+
             console.time("Separate Add ")
-            const separated = _.partition(converted, p => p.changeType == ChangeTypes.add);
+            const separated = _.partition(combined, p => p.changeType == ChangeTypes.add);
             console.timeEnd("Separate Add ")
 
-            console.time("Filter unneeded ")
-            const add = _.filter(separated[0], p => { return this.filterPartialAdds(p); });
-            console.timeEnd("Filter unneeded ")
+            console.time("Filter partial adds ")
+            const [add, partialAdd] = _.partition(separated[0], p => { return this.filterPartialAdds(p); });
+            console.timeEnd("Filter partial adds ")
 
-            console.time("Merging add back ")
-            const list = separated[1].concat(add)
-            console.timeEnd("Merging add back ")
+            console.time("Correcting incomplete version changes ")
+            const [incompleteVersionChanges, rest] = _.partition(separated[1], entry => this.isVersionChange(entry) && !this.mValuesConformToLinkLength(entry, entry.replaceInfo[0]))
+            console.log(`Found ${incompleteVersionChanges.length} incomplete version changes`)
+            const correctedVersionChanges = this.correctIncompleteVersionChanges(incompleteVersionChanges, partialAdd)
+            console.timeEnd("Correcting incomplete version changes ")
+
+            console.time("Merging all changes together ")
+            const list = add.concat(correctedVersionChanges).concat(rest)
+            console.timeEnd("Merging all changes together ")
 
             console.timeEnd("convertToEntries total time ")
             return list
+    }
+
+    private combineReplaceInfo(continuousParts: ReplaceInfo[], fromPartialAdd: boolean = false) {
+        const oldId = continuousParts.map(p => p.oldLinkId).find(id => id != null) || undefined
+        const newId = continuousParts.map(p => p.newLinkId).find(id => id != null) || undefined
+        const newFromM = _.min(continuousParts.map(p => p.newFromMValue))
+        const newToM = _.max(continuousParts.map(p => p.newToMValue))
+        const oldFromM = fromPartialAdd ? newFromM : _.min(continuousParts.map(p => p.oldFromMValue))
+        const oldToM = fromPartialAdd ? newToM : _.max(continuousParts.map(p => p.oldToMValue))
+        return new ReplaceInfo(
+            oldId,
+            newId,
+            _.isNull(oldFromM) ? undefined : oldFromM,
+            _.isNull(oldToM) ? undefined : oldToM,
+            _.isNull(newFromM) ? undefined : newFromM,
+            _.isNull(newToM) ? undefined : newToM
+        )
+    }
+
+    private combineReplaceInfos(entries: ChangeEntry[]): ChangeEntry[] {
+        return entries.map(entry => {
+            const groupedReplaceInfo = _.groupBy(entry.replaceInfo, r => [r.oldLinkId, r.newLinkId])
+            const mergedReplaceInfo: ReplaceInfo[] = _.flatMap(groupedReplaceInfo, info => {
+                if (info.length > 1) {
+                    const sortedInfo = _.sortBy(_.uniqWith(info, _.isEqual), i => i.newToMValue)
+                    const continuityCheckSteps = this.checkContinuity(sortedInfo)
+                    let continuousParts: ReplaceInfo[] = []
+                    let currentContinuous: ReplaceInfo[] = [sortedInfo[0]]
+                    for (let i = 1; i < sortedInfo.length; i++) {
+                        if (continuityCheckSteps[i - 1]) {
+                            currentContinuous.push(sortedInfo[i])
+                        } else {
+                            if (currentContinuous.length > 0) {
+                                continuousParts.push(this.combineReplaceInfo(currentContinuous))
+                                currentContinuous = []
+                            }
+                            continuousParts.push(sortedInfo[i])
+                        }
+                    }
+                    if (currentContinuous.length > 0) {
+                        continuousParts.push(this.combineReplaceInfo(currentContinuous))
+                    }
+                    return continuousParts
+                }
+                return info
+            })
+            return {
+                changeType:     entry.changeType,
+                old:            entry.old,
+                new:            entry.new,
+                replaceInfo:    mergedReplaceInfo
+            }
+        })
+    }
+
+    private isVersionChange(entry: ChangeEntry) {
+        return entry.old != null && entry.new.length === 1 && entry.old?.linkId.split(":")[0] === entry.new[0].linkId.split(":")[0]
+    }
+
+    private mValuesConformToLinkLength(entry: ChangeEntry, replaceInfo: ReplaceInfo) {
+        const newFromM = replaceInfo.newFromMValue
+        const newToM = replaceInfo.newToMValue
+        return newFromM != null && newToM != null && entry.new[0].linkLength != null && Math.abs(Math.abs(newFromM - newToM) - entry.new[0].linkLength) <= 0.1
+    }
+
+    private correctIncompleteVersionChanges(entries: ChangeEntry[], partialAdds: ChangeEntry[]): ChangeEntry[] {
+        const correctedEntries: [ChangeEntry, boolean][] =  entries.map(entry => {
+            const partialAddsForEntry = _.filter(partialAdds, p => p.new.length === 1 && p.new[0].linkId === entry.new[0].linkId)
+            const partialAddReplaceInfos = partialAddsForEntry.flatMap(p => p.replaceInfo)
+            const allReplaceInfosForLink = _.sortBy(_.uniqWith(entry.replaceInfo.concat(partialAddReplaceInfos), _.isEqual), i => i.newToMValue)
+            const checkContinuity = this.checkContinuity(allReplaceInfosForLink)
+            if (_.uniq(checkContinuity).length === 1 && checkContinuity[0]) {
+                const combinedReplaceInfo = this.combineReplaceInfo(allReplaceInfosForLink, true)
+                if (this.mValuesConformToLinkLength(entry, combinedReplaceInfo)) {
+                    console.log(`Completed incomplete version change ${JSON.stringify(entry)} with partial add replace 
+                    infos ${JSON.stringify(partialAddReplaceInfos)}`)
+                    return [{
+                        changeType:     entry.changeType,
+                        old:            entry.old,
+                        new:            entry.new,
+                        replaceInfo:    [combinedReplaceInfo]
+                    }, true]
+                } else {
+                    console.error(`Unable to complete version change ${JSON.stringify(entry)}. The partial add replace 
+                    infos ${JSON.stringify(partialAddReplaceInfos)} do not conform to the link length.`)
+                }
+            } else {
+                console.error(`Unable to complete version change ${JSON.stringify(entry)}. The partial add replace 
+                infos ${JSON.stringify(partialAddReplaceInfos)} do not form a continuous part.`)
+            }
+            return [entry, false]
+        })
+        return _.reject(correctedEntries, c => !c[1]).map(c => c[0])
     }
     
     private filterPartialAdds(p: ChangeEntry) {
