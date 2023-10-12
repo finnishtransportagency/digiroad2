@@ -5,7 +5,7 @@ import Database.dynamicSession
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
-import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, LinkIdAndExpiredDate, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.linearasset.LinkId
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
@@ -120,7 +120,15 @@ class RoadLinkDAO {
   protected def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
     combineFiltersWithAnd(filter2.getOrElse(""), filter1)
   }
-  
+
+  implicit val getLinkIdAndExpiredDate: GetResult[LinkIdAndExpiredDate] = new GetResult[LinkIdAndExpiredDate] {
+    def apply(r: PositionedResult): LinkIdAndExpiredDate = {
+      val linkId = r.nextString()
+      val expiredDate = r.nextTimestampOption().map(new DateTime(_))
+      LinkIdAndExpiredDate(linkId, expiredDate)
+    }
+  }
+
   implicit val getRoadLink: GetResult[RoadLinkFetched] = new GetResult[RoadLinkFetched] {
     def apply(r: PositionedResult): RoadLinkFetched = {
       val linkId = r.nextString()
@@ -368,6 +376,13 @@ class RoadLinkDAO {
           """.as[RoadLinkFetched].list
   }
 
+  protected def getRoadLinkExpiredDateWithFilter(filter: String): Seq[LinkIdAndExpiredDate] = {
+    sql"""select link_id, expired_date
+          from kgv_roadlink
+          where #$filter
+       """.as[LinkIdAndExpiredDate].list
+  }
+
   protected def getExpiredLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
@@ -454,6 +469,10 @@ class RoadLinkDAO {
 
   def deleteRoadLinksByIds(linkIdsToDelete: Set[String]) = {
     deleteLinksWithFilter(withLinkIdFilter(linkIdsToDelete))
+  }
+
+  def getRoadLinkExpiredDateWithLinkIds(linkIds: Set[String]): Seq[LinkIdAndExpiredDate] = {
+    getRoadLinkExpiredDateWithFilter(withLinkIdFilter(linkIds))
   }
 
 }

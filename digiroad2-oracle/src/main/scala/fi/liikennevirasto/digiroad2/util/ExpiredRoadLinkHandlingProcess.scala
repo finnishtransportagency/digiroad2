@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{AssetOnExpiredLink, AssetsOnExpiredLinksService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, GeometryUtils}
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 object ExpiredRoadLinkHandlingProcess {
@@ -32,28 +33,30 @@ object ExpiredRoadLinkHandlingProcess {
     * @param expiredRoadLinks All expired road links
     * @return Enriched assets which are on expired road links
     */
-  def getAllExistingAssetsOnExpiredLinks(expiredRoadLinks: Seq[RoadLink]): Seq[AssetOnExpiredLink] = {
-    def enrichAssetLink(assetLink: AssetLinkWithMeasures, roadLink: RoadLink): AssetOnExpiredLink = {
-      val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, assetLink.startMeasure, assetLink.endMeasure)
-      val roadLinkExpiredDate = ???
+  def getAllExistingAssetsOnExpiredLinks(expiredRoadLinks: Seq[(RoadLink, Option[DateTime])]): Seq[AssetOnExpiredLink] = {
+    def enrichAssetLink(assetLink: AssetLinkWithMeasures, roadLinkWithExpiredDate: (RoadLink, Option[DateTime])): AssetOnExpiredLink = {
+      val geometry = GeometryUtils.truncateGeometry3D(roadLinkWithExpiredDate._1.geometry, assetLink.startMeasure, assetLink.endMeasure)
+      val roadLinkExpiredDate = roadLinkWithExpiredDate._2
       AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate)
     }
 
-    expiredRoadLinks.flatMap(roadLink => {
+    expiredRoadLinks.flatMap(roadLinkWithExpiredDate => {
+      val roadLink = roadLinkWithExpiredDate._1
       val assetsOnExpiredLink = postGISLinearAssetDao.fetchAssetsWithPositionByLinkIds(assetTypeIds, Seq(roadLink.linkId), includeFloating = false, includeExpired = false)
       val lanesOnExpiredLink = laneDao.fetchAllLanesByLinkIds(Seq(roadLink.linkId)).map(lane =>
         AssetLinkWithMeasures(lane.id, Lanes.typeId, lane.linkId, lane.sideCode, lane.startMeasure, lane.endMeasure))
 
       val assetLinks = assetsOnExpiredLink ++ lanesOnExpiredLink
-      assetLinks.map(enrichAssetLink(_, roadLink))
+      assetLinks.map(enrichAssetLink(_, roadLinkWithExpiredDate))
     })
   }
 
 
   def process(): Unit = {
     withDynTransaction {
-      val expiredRoadLinks = roadLinkService.getAllExpiredRoadLinks()
-      val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinks)
+      val expiredRoadLinksWithExpireDates = roadLinkService.getAllExpiredRoadLinksWithExpiredDates()
+      val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_._1)
+      val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
       val emptyExpiredLinks = expiredRoadLinks.filter(rl => {
         val linkIdsWithExistingAssets = assetsOnExpiredLinks.map(_.linkId)
         !linkIdsWithExistingAssets.contains(rl.linkId)

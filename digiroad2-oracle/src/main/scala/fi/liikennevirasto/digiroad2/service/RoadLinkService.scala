@@ -266,9 +266,14 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
    roadLinkDAO.fetchExpiredRoadLink(linkId).headOption
   }
 
-  def getAllExpiredRoadLinks(): Seq[RoadLink] = {
+  def getAllExpiredRoadLinksWithExpiredDates(): Seq[(RoadLink, Option[DateTime])]= {
     val fetchedExpiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
-    enrichFetchedRoadLinks(fetchedExpiredLinks)
+    val expiredDates = roadLinkDAO.getRoadLinkExpiredDateWithLinkIds(fetchedExpiredLinks.map(_.linkId).toSet)
+    val roadLinks = enrichFetchedRoadLinks(fetchedExpiredLinks)
+    roadLinks.map(roadLink => {
+      val expiredDate = expiredDates.find(_.linkId == roadLink.linkId).get
+      (roadLink, expiredDate.expiredDate)
+    })
   }
 
   /**
