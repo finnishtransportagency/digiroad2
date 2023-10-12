@@ -1,4 +1,4 @@
-CREATE TABLE assets_on_expired_road_links (
+CREATE TABLE IF NOT EXISTS assets_on_expired_road_links (
     asset_id BIGINT NOT NULL,
     asset_type_id INT NOT NULL,
     link_id varchar(40) NOT NULL,
