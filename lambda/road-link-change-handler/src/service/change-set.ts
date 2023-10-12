@@ -113,24 +113,32 @@ export class ChangeSet {
 
     private combineReplaceInfos(entries: ChangeEntry[]): ChangeEntry[] {
         return entries.map(entry => {
+            const isAdd = entry.changeType === ChangeTypes.add
             const groupedReplaceInfo = _.groupBy(entry.replaceInfo, r => [r.oldLinkId, r.newLinkId])
             const mergedReplaceInfo: ReplaceInfo[] = _.flatMap(groupedReplaceInfo, info => {
                 if (info.length > 1) {
-                    const sortedInfo = _.sortBy(_.uniqWith(info, _.isEqual), i => i.newToMValue)
-                    const continuityCheckSteps = this.checkContinuity(sortedInfo)
+                    const infoWithoutDuplicates = _.uniqWith(info, _.isEqual)
+                    // sort by new mValues for "add" (old mValues are null) and by old mValues for other change types (new mValues may be null)
+                    const sortedInfo = isAdd ? _.sortBy(infoWithoutDuplicates, i => i.newToMValue)
+                        : _.sortBy(infoWithoutDuplicates, i => i.oldToMValue)
+                    // check continuity from new values for "add", and from old values for other change types
+                    const continuityCheckSteps = this.checkContinuity(sortedInfo, !isAdd)
                     let continuousParts: ReplaceInfo[] = []
+                    // the first part starts always a continuous sequence
                     let currentContinuous: ReplaceInfo[] = [sortedInfo[0]]
                     for (let i = 1; i < sortedInfo.length; i++) {
+                        // if the current part is continuous with the previous, add it to the sequence
                         if (continuityCheckSteps[i - 1]) {
                             currentContinuous.push(sortedInfo[i])
+                        // otherwise combine the accumulated continuous sequence and start a new sequence
                         } else {
                             if (currentContinuous.length > 0) {
                                 continuousParts.push(this.combineReplaceInfo(currentContinuous))
-                                currentContinuous = []
+                                currentContinuous = [sortedInfo[i]]
                             }
-                            continuousParts.push(sortedInfo[i])
                         }
                     }
+                    // after going through all the parts, combine the last part
                     if (currentContinuous.length > 0) {
                         continuousParts.push(this.combineReplaceInfo(currentContinuous))
                     }
@@ -206,14 +214,15 @@ export class ChangeSet {
         return endPart == newLinkLength && startPart == 0 && continuity
     }
 
-    private checkContinuity(infos: ReplaceInfo[]) {
+    private checkContinuity(infos: ReplaceInfo[], oldValues: boolean = false) {
         const continuityCheckSteps: boolean[] = []
         if (infos.length > 1) {
             for (let i = 0; i < infos.length; i++) {
                 const firstItem = infos[i]
                 const nextItem = infos[i + 1]
                 const partAreDefined = !_.isNil(firstItem) && !_.isNil(nextItem)
-                const notContinuous = partAreDefined && firstItem.newToMValue != nextItem.newFromMValue;
+                const notContinuous = oldValues ? partAreDefined && firstItem.oldToMValue != nextItem.oldFromMValue
+                    : partAreDefined && firstItem.newToMValue != nextItem.newFromMValue;
                 if (notContinuous) {
                     continuityCheckSteps.push(false)
                 } else if (partAreDefined) {
