@@ -259,7 +259,7 @@ object LaneUpdater {
   // If lanes from old roadLink are currently on lane work list
   // then only process the main lanes
   def isOldLinkOnLaneWorkList(change: RoadLinkChange): Boolean = {
-      val linkIdsOnWorkList = laneWorkListService.getLaneWorkList.map(_.linkId)
+      val linkIdsOnWorkList = laneWorkListService.getLaneWorkList(false).map(_.linkId)
       change.oldLink match {
         case Some(oldLink) =>
           linkIdsOnWorkList.contains(oldLink.linkId)
