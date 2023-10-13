@@ -1511,7 +1511,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
     val workListItems = userHasRights match {
-      case true => laneWorkListService.getLaneWorkList
+      case true => laneWorkListService.getLaneWorkList()
       case false => halt(Forbidden("User not authorized to get items from lane work list"))
     }
 

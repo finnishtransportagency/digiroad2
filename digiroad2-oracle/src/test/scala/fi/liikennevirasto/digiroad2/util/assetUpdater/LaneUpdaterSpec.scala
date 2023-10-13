@@ -541,7 +541,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val additionalLane2 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, subLane2PropertiesA)
       LaneServiceWithDao.create(Seq(additionalLane2), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
 
-      val currentItems = laneWorkListService.getLaneWorkList
+      val currentItems = laneWorkListService.getLaneWorkList()
       currentItems.size should equal(0)
 
       LaneUpdater.updateTrafficDirectionChangesLaneWorkList(Seq(trafficDirectionChange))
@@ -584,7 +584,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val additionalLane2 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, subLane2PropertiesA)
       LaneServiceWithDao.create(Seq(additionalLane2), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
 
-      val currentItems = laneWorkListService.getLaneWorkList
+      val currentItems = laneWorkListService.getLaneWorkList()
       currentItems.size should equal(0)
 
       LaneUpdater.updateTrafficDirectionChangesLaneWorkList(Seq(trafficDirectionChange))
