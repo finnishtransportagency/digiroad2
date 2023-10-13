@@ -50,6 +50,28 @@ class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceV
   override type LinkType = RoadLinkFetched
 }
 
+/**
+ * Client for Municipality Border interface
+ * @param collection
+ * @param linkGeomSourceValue TODO: remove inherited RoadLink dependecies as the client does not use them
+ * @param extractor
+ */
+class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSourceValue: Option[LinkGeomSource] = None, extractor: ExtractorBase) extends KgvOperation(extractor) {
+  override def restApiEndPoint: String = Digiroad2Properties.kgvEndpoint
+  protected val serviceName:String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
+  protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse("LinkGeomSource is not defined")
+
+  val filter: Filter = FilterOgc
+
+  def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
+    queryByMunicipality(municipality)
+  }
+
+  def fetchByMunicipalityF(municipality: Int): Future[Seq[LinkType]] = {
+    Future(queryByMunicipality(municipality))
+  }
+}
+
 class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSourceValue:Option[LinkGeomSource] = None, extractor:ExtractorBase = new Extractor) extends KgvOperation(extractor) {
 
   override type LinkType
