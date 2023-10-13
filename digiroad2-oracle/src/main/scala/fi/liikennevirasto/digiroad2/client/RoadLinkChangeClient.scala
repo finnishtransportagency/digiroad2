@@ -174,66 +174,14 @@ class RoadLinkChangeClient {
     s3Service.getObjectFromS3(s3Bucket, filename)
   }
 
-
   def convertToRoadLinkChange(changeJson: String) : Seq[RoadLinkChange] = {
     val json = parseJson(changeJson)
     try {
-      mergeReplaceInfoWithSameLink(json.extract[Seq[RoadLinkChange]])
+      json.extract[Seq[RoadLinkChange]]
     } catch {
       case e: Throwable =>
         logger.error(e.getMessage)
         Seq.empty[RoadLinkChange]
-    }
-  }
-
-  // this removes the unnecessary split caused by road address changes in Tiekamu
-  def mergeReplaceInfoWithSameLink(roadLinkChanges: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
-
-    def isContinuous(first: ReplaceInfo, second: ReplaceInfo) = {
-      first.oldToMValue.getOrElse(None) == second.oldFromMValue.getOrElse(None) && first.newToMValue.getOrElse(None) == second.newFromMValue.getOrElse(None) && first.digitizationChange == second.digitizationChange
-    }
-
-    def combineReplaceInfo(continuousParts: Seq[ReplaceInfo]) = {
-      ReplaceInfo(
-        continuousParts.head.oldLinkId,
-        continuousParts.head.newLinkId,
-        continuousParts.map(_.oldFromMValue).min,
-        continuousParts.map(_.oldToMValue).max,
-        continuousParts.map(_.newFromMValue).min,
-        continuousParts.map(_.newToMValue).max,
-        continuousParts.head.digitizationChange
-      )
-    }
-
-    roadLinkChanges.map { change =>
-      val groupedReplaceInfo = change.replaceInfo.groupBy(r => (r.oldLinkId, r.newLinkId))
-      val mergedReplaceInfo = groupedReplaceInfo.flatMap { groupedInfo =>
-        val replaceInfoSeq = groupedInfo._2
-        if (replaceInfoSeq.size > 1) {
-          val sortedReplaceInfoSeq = replaceInfoSeq.sortBy(_.newToMValue)
-          val continuousParts = sortedReplaceInfoSeq.foldLeft(Seq.empty[ReplaceInfo], Seq.empty[ReplaceInfo]) { (acc, next) =>
-            val (combinedReplaceInfos, currentContinuous) = acc
-            val latestPart = currentContinuous.lastOption
-            latestPart match {
-              case Some(latest: ReplaceInfo) =>
-                if (isContinuous(latest, next) || latest.equals(next)) {
-                  (combinedReplaceInfos, currentContinuous ++ Seq(next))
-                } else {
-                  val newCombined = combineReplaceInfo(currentContinuous)
-                  (combinedReplaceInfos ++ Seq(newCombined), Seq(next))
-                }
-              case _ =>
-                (combinedReplaceInfos, Seq(next))
-            }
-          }
-          val lastPartCombined = combineReplaceInfo(continuousParts._2)
-          continuousParts._1 ++ Seq(lastPartCombined)
-
-        } else {
-          replaceInfoSeq
-        }
-      }
-      change.copy(replaceInfo = mergedReplaceInfo.toSeq)
     }
   }
 
