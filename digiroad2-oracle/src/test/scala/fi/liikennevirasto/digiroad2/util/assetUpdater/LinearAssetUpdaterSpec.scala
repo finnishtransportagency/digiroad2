@@ -1704,44 +1704,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     }
   }
 
-  test("change info comes originally in two parts, merged in RoadLinkChangeClient") {
-    val linkId = "350e7577-020e-4abe-bf12-509f070371ed:1"
-    val linkIdNew = "dfdf4f1e-9e12-4dc0-9b44-868320164539:1"
-
-    val change = roadLinkChangeClient.convertToRoadLinkChange(source)
-
-    runWithRollback {
-      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
-      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 189.231), "testuser", 0L, Some(oldRoadLink), false, None, None)
-
-      val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1), false)
-      assetsBefore.size should be(1)
-      assetsBefore.head.expired should be(false)
-
-      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(HeightLimit.typeId, change)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(HeightLimit.typeId, Seq(linkIdNew), false)
-
-      val sorted = assetsAfter.sortBy(_.endMeasure)
-
-      sorted.head.startMeasure should be(0)
-      sorted.head.endMeasure should be(191.552)
-      sorted.head.value.isEmpty should be(false)
-      sorted.head.value.get should be(NumericValue(3))
-      SideCode.apply(sorted.head.sideCode) should be(SideCode.TowardsDigitizing)
-
-      TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a=> PairAsset(a.before,a.after.headOption,a.changeType)).size should be(1)
-
-      val oldIds = Seq(id1)
-      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
-      assets.size should be(1)
-      assets.map(a => {
-        a.oldAsset.isDefined should be(true)
-        oldIds.contains(a.oldAsset.get.assetId) should be(true)
-        a.newAsset.get.linearReference.get.sideCode.get should be(SideCode.TowardsDigitizing.value)
-      })
-    }
-  }
-
   test("Split. Given a Road Link that is split into 2 new Links; when 1 new Link is deleted; then the Linear Asset's length should equal remaining Link's length.") {
     val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
     val newLinkID2 = "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1"

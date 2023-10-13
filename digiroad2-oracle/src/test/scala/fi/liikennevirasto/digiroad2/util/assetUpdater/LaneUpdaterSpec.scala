@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Replace
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Replace, Split}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
@@ -533,11 +533,11 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val trafficDirectionChange: RoadLinkChange = relevantChange.copy(oldLink = oldLinkWithAgainstDigitizingTD)
       val oldLink = trafficDirectionChange.oldLink.get
 
-      // Main lane towards digitizing
+      // Main lane against digitizing
       val mainLane1 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
       LaneServiceWithDao.create(Seq(mainLane1), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
 
-      // Main lane towards digitizing
+      // Additional lane against digitizing
       val additionalLane2 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, subLane2PropertiesA)
       LaneServiceWithDao.create(Seq(additionalLane2), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
 
@@ -565,6 +565,48 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       lanesOnNewLinkAfter.size should equal(2)
       lanesOnNewLinkAfter.foreach(lane => LaneNumber.isMainLane(lane.laneCode) should equal(true))
 
+    }
+  }
+
+  test("TrafficDirection changed on a split link with the other removed. Check that lane work list update doesn't fail on none.get") {
+    runWithRollback {
+      val newLinkId = "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1"
+      val relevantChange = testChanges.find(change => change.changeType == Split && change.newLinks.head.linkId == newLinkId).get
+      val oldLinkWithAgainstDigitizingTD = Option(relevantChange.oldLink.get.copy(trafficDirection = TrafficDirection.apply(3)))
+      val trafficDirectionChange: RoadLinkChange = relevantChange.copy(oldLink = oldLinkWithAgainstDigitizingTD)
+      val oldLink = trafficDirectionChange.oldLink.get
+
+      // Main lane against digitizing
+      val mainLane1 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane1), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      // Additional lane against digitizing
+      val additionalLane2 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, subLane2PropertiesA)
+      LaneServiceWithDao.create(Seq(additionalLane2), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      val currentItems = laneWorkListService.getLaneWorkList
+      currentItems.size should equal(0)
+
+      LaneUpdater.updateTrafficDirectionChangesLaneWorkList(Seq(trafficDirectionChange))
+
+      val itemsAfterUpdate = laneWorkListService.workListDao.getAllItems
+      itemsAfterUpdate.size should equal(1)
+
+      val lanesOnOldLinkBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
+      // Old link has one main lane and one additional lane
+      lanesOnOldLinkBefore.size should equal(2)
+
+      val changeSet = LaneUpdater.handleChanges(Seq(), Seq(trafficDirectionChange))
+      LaneUpdater.updateSamuutusChangeSet(changeSet, Seq(trafficDirectionChange))
+
+      val lanesOnOldLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
+      // Additional lane should stay on old link
+      lanesOnOldLinkAfter.size should equal(1)
+
+      val lanesOnNewLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
+      // Two main lanes should be generated for new link
+      lanesOnNewLinkAfter.size should equal(2)
+      lanesOnNewLinkAfter.foreach(lane => LaneNumber.isMainLane(lane.laneCode) should equal(true))
     }
   }
 

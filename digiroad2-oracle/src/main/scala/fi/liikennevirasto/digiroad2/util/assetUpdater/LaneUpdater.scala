@@ -271,7 +271,7 @@ object LaneUpdater {
     change.newLinks.exists(newLink => {
       val oldOriginalTrafficDirection = change.oldLink.get.trafficDirection
       val newOriginalTrafficDirection = newLink.trafficDirection
-      val replaceInfo = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get
+      val replaceInfo = change.replaceInfo.find(_.newLinkId.getOrElse(None) == newLink.linkId).getOrElse(throw new NoSuchElementException(s"Replace info for link ${newLink.linkId} not found from change ${change}"))
       val isDigitizationChange = replaceInfo.digitizationChange
       val overWrittenTdValueOnNewLink = TrafficDirectionDao.getExistingValue(newLink.linkId)
 
