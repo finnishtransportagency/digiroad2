@@ -289,7 +289,7 @@ object LaneUpdater {
     val createdMainLanes = workListChanges.flatMap(change => {
       val newLinkIds = change.newLinks.map(_.linkId)
       // Need to fetch RoadLinks because Link Type is needed for main lane creation
-      val addedRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet)
+      val addedRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
       val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(addedRoadLinks, saveResult = false)
       createdMainLanes
     })
