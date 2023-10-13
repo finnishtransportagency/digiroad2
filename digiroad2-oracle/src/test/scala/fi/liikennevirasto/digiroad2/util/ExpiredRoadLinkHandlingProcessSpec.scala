@@ -1,18 +1,96 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue}
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
+import fi.liikennevirasto.digiroad2.service.{AssetsOnExpiredLinksService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, Point}
+import org.joda.time.DateTime
+import org.mockito.Mockito.when
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
+  def roadLinkDAO = new RoadLinkDAO
+  val workListService = new AssetsOnExpiredLinksService
+  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val speedLimitService: SpeedLimitService = new SpeedLimitService(new DummyEventBus, mockRoadLinkService) {
+    override def withDynTransaction[T](f: => T): T = f
+  }
+  val obstacleService = new ObstacleService(mockRoadLinkService)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
-  test("Delete expired link with no assets"){
-    ???
+  val testUser = "test_user"
+  val expiredLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
+  val geometryString = "LINESTRING ZM(367880.004 6673884.307 21.732 0, 367877.133 6673892.641 22.435 8.815, 367868.672 6673919.942 24.138 37.397, 367858.777 6673950.125 24.72 69.16, 367851.607 6673967.978 24.331 88.399, 367843.6280000001 6673981.799 23.742 104.358, 367834.833 6673991.432 23.121 117.402, 367824.646 6674001.441 22.455 131.683)"
+  val geometry = Seq(Point(367880.004, 6673884.307, 21.732), Point(367824.646, 6674001.441, 22.455))
+
+  val testRoadLinkFetched: RoadLinkFetched = RoadLinkFetched(expiredLinkId, municipalityCode = 49, geometry = geometry,
+    administrativeClass = Municipality, trafficDirection = TrafficDirection.BothDirections,
+    featureClass = FeatureClass.CarRoad_IIIa, modifiedAt = None, attributes = Map(), constructionType = ConstructionType.InUse,
+    linkSource = LinkGeomSource.NormalLinkInterface, length = 131.683)
+
+  val testRoadLink: RoadLink = RoadLink(linkId = expiredLinkId, geometry = geometry, length = 131.683,
+    administrativeClass = Municipality, functionalClass = 99, trafficDirection = TrafficDirection.BothDirections,
+    linkType = UnknownLinkType, modifiedAt = None, modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(49)), constructionType = ConstructionType.InUse,
+    linkSource = LinkGeomSource.NormalLinkInterface, lanes = Seq())
+  val obstacleValues = Seq(PropertyValue("2"))
+
+  val simpleProperty: SimplePointAssetProperty = SimplePointAssetProperty("esterakennelma", obstacleValues)
+  val incomingObstacle: IncomingObstacle = IncomingObstacle(2.0, 0.0, expiredLinkId, Set(simpleProperty))
+
+  test("Delete expired links with no assets"){
+    runWithRollback{
+      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+      expiredLinks.isEmpty should equal(false)
+      ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks()
+      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
+      expiredLinksAfter.isEmpty should equal(true)
+    }
   }
 
-  test("Delete expired link with floating point assets"){
-    ???
+  test("Delete expired links with floating point assets"){
+    runWithRollback {
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(expiredLinkId)).thenReturn(Some(testRoadLinkFetched))
+
+      val createdObstacleId = obstacleService.create(incomingObstacle, testUser, testRoadLink, newTransaction = false)
+      val createdObstacle = Obstacle(createdObstacleId, expiredLinkId, 2.0, 0.0, 0.0, floating = true, 0L, 49, Seq(),
+        None, None, Some(testUser), Some(DateTime.now()), expired = false, LinkGeomSource.NormalLinkInterface, None)
+      obstacleService.updateFloatingAsset(createdObstacle)
+      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+      expiredLinks.isEmpty should equal(false)
+
+      ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks()
+      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
+      expiredLinksAfter.isEmpty should equal(true)
+
+      val assetsOnWorkList = workListService.getAllWorkListAssets()
+      assetsOnWorkList.size should equal(0)
+    }
   }
 
-  test("Persist link with assets, insert assets on work list"){
-    ???
+  test("Persist links with assets, insert assets on work list"){
+    runWithRollback {
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(expiredLinkId)).thenReturn(Some(testRoadLinkFetched))
+
+      val createdSpeedLimitId = speedLimitService.create(Seq(NewLimit(expiredLinkId, 0.0, 131.683)), SpeedLimitValue(30), "test", (_, _) => Unit).head
+      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+      expiredLinks.isEmpty should equal(false)
+
+      ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks()
+      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
+      expiredLinksAfter.size should equal(1)
+
+      val assetsOnWorkList = workListService.getAllWorkListAssets()
+      assetsOnWorkList.size should equal(1)
+      assetsOnWorkList.head.id should equal(createdSpeedLimitId)
+      assetsOnWorkList.head.linkId should equal(expiredLinkId)
+      assetsOnWorkList.head.assetTypeId should equal(SpeedLimitAsset.typeId)
+    }
   }
 }

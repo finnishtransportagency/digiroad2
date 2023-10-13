@@ -124,8 +124,8 @@ class RoadLinkDAO {
   implicit val getLinkIdAndExpiredDate: GetResult[LinkIdAndExpiredDate] = new GetResult[LinkIdAndExpiredDate] {
     def apply(r: PositionedResult): LinkIdAndExpiredDate = {
       val linkId = r.nextString()
-      val expiredDate = r.nextTimestampOption().map(new DateTime(_))
-      LinkIdAndExpiredDate(linkId, expiredDate)
+      val expiredDate = r.nextTimestamp()
+      LinkIdAndExpiredDate(linkId, new DateTime(expiredDate))
     }
   }
 
@@ -377,7 +377,7 @@ class RoadLinkDAO {
   }
 
   protected def getRoadLinkExpiredDateWithFilter(filter: String): Seq[LinkIdAndExpiredDate] = {
-    sql"""select link_id, expired_date
+    sql"""select linkid, expired_date
           from kgv_roadlink
           where #$filter
        """.as[LinkIdAndExpiredDate].list

@@ -37,7 +37,7 @@ case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[
   val timeStamp = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 
-case class LinkIdAndExpiredDate(linkId: String, expiredDate: Option[DateTime])
+case class LinkIdAndExpiredDate(linkId: String, expiredDate: DateTime)
 
 
 case class HistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,

@@ -33,8 +33,8 @@ object ExpiredRoadLinkHandlingProcess {
     * @param expiredRoadLinks All expired road links
     * @return Enriched assets which are on expired road links
     */
-  def getAllExistingAssetsOnExpiredLinks(expiredRoadLinks: Seq[(RoadLink, Option[DateTime])]): Seq[AssetOnExpiredLink] = {
-    def enrichAssetLink(assetLink: AssetLinkWithMeasures, roadLinkWithExpiredDate: (RoadLink, Option[DateTime])): AssetOnExpiredLink = {
+  def getAllExistingAssetsOnExpiredLinks(expiredRoadLinks: Seq[(RoadLink, DateTime)]): Seq[AssetOnExpiredLink] = {
+    def enrichAssetLink(assetLink: AssetLinkWithMeasures, roadLinkWithExpiredDate: (RoadLink, DateTime)): AssetOnExpiredLink = {
       val geometry = GeometryUtils.truncateGeometry3D(roadLinkWithExpiredDate._1.geometry, assetLink.startMeasure, assetLink.endMeasure)
       val roadLinkExpiredDate = roadLinkWithExpiredDate._2
       AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate)
@@ -53,7 +53,12 @@ object ExpiredRoadLinkHandlingProcess {
 
 
   def process(): Unit = {
-    withDynTransaction {
+    withDynTransaction{
+      handleExpiredRoadLinks()
+    }
+  }
+
+  def handleExpiredRoadLinks(): Unit = {
       val expiredRoadLinksWithExpireDates = roadLinkService.getAllExpiredRoadLinksWithExpiredDates()
       val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_._1)
       val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
@@ -65,6 +70,5 @@ object ExpiredRoadLinkHandlingProcess {
 
       roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
       assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
-    }
   }
 }
