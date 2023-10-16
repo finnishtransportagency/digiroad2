@@ -160,8 +160,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       massTransitStops.find(_.id == 300000).get.stopTypes should be(Seq(2))
-      massTransitStops.find(_.id == 300001).get.stopTypes.sorted should be(Seq(2, 3, 4))
-      massTransitStops.find(_.id == 300003).get.stopTypes.sorted should be(Seq(2, 3))
+      massTransitStops.find(_.id == 300001).get.stopTypes should be(Seq(2))
+      massTransitStops.find(_.id == 300003).get.stopTypes.sorted should be(Seq(1,2))
     }
   }
 
@@ -778,10 +778,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val admin = props.find(_.publicId == "tietojen_yllapitaja").get
       val newAdmin = admin.copy(values = List(PropertyValue("2")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
-      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("1")))
       admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
       types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
-      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
@@ -812,10 +812,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val admin = props.find(_.publicId == "tietojen_yllapitaja").get
       val newAdmin = admin.copy(values = List(PropertyValue("3")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
-      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("1")))
       admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
       types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
-      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
@@ -833,7 +833,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, randomLinkId5, 2,
         Seq(
           SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("2"))),
-          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"), PropertyValue("3"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
           SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]]
@@ -870,9 +870,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(Private)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
 
       // hsl can not add liviID to bust stop in private road
       OthBusStopLifeCycleBusStopStrategy
@@ -887,9 +887,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(Municipality)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
 
       // hsl can not add liviID to bust stop in municipality road
       OthBusStopLifeCycleBusStopStrategy
@@ -905,9 +905,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(State)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
+        stopType(MassTransitStopOperations.BusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
+        stopType(MassTransitStopOperations.BusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
       OthBusStopLifeCycleBusStopStrategy
@@ -933,7 +933,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(Municipality)
       val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
 
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
@@ -943,48 +943,40 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(State)
       val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
 
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
     }
   }
 
-  test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, HSL"){
+  test("liviId when not terminated and bus or servicePoint, HSL"){
     runWithRollback {
       val roadLink = roadLinkFactory(State)
       val hsl =  MassTransitStopOperations.HSLPropertyValue
       val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      val longDistanceBusStop:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
-        stopType(MassTransitStopOperations.LongDistanceBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
       val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
         stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
 
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
       OthBusStopLifeCycleBusStopStrategy
-        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
-      OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
     }
   }
 
-  test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, Ely"){
+  test("liviId when not terminated and bus or servicePoint, Ely"){
     runWithRollback {
       val roadLink = roadLinkFactory(State)
       val ely =  MassTransitStopOperations.CentralELYPropertyValue
       val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      val longDistanceBusStop:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
-        stopType(MassTransitStopOperations.LongDistanceBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
       val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
         stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
 
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
-      OthBusStopLifeCycleBusStopStrategy
-        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
     }
@@ -1238,10 +1230,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val admin = props.find(_.publicId == "tietojen_yllapitaja").get
       val newAdmin = admin.copy(values = List(PropertyValue("2")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
-      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("1")))
       admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
       types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
-      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
