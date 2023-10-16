@@ -20,7 +20,6 @@
 
         this.workListItemTable = function (layerName, showDeleteCheckboxes, workListItems) {
             var tableContentRows = function (item) {
-                console.log(item)
                     return $('<tr/>')
                         .append($('<th/>')
                         .append(changeRow(item)));
@@ -29,8 +28,8 @@
 
             var changeRow = function (item) {
                 return $('<dd class="manoeuvreWorkListTextSize"/>')
-                    .html("Rajoituksen id:" +" " + item.assetId + " "+"Rajoituksen linkit:"  + item.links
-                    )
+                    .html("Rajoituksen id:" +" " + item.assetId + " "+" Linkit:"  + item.links
+                    );
             };
 
             var addTable = function (items) {

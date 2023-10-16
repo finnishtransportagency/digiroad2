@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
