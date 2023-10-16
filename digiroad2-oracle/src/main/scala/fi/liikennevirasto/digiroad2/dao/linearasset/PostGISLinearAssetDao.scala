@@ -310,6 +310,9 @@ class PostGISLinearAssetDao() {
     }.toSeq
   }
 
+  
+  
+  
   /**
     * Iterates a set of link ids with prohibition asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     * and CsvGenerator.generateDroppedProhibitions.
@@ -565,6 +568,27 @@ class PostGISLinearAssetDao() {
   /**
     * Updates m-values in db. Used by PostGISLinearAssetDao.splitSpeedLimit, LinearAssetService.persistMValueAdjustments and LinearAssetService.split.
     */
+  def updateMValues(id: Long,linkId:String, linkMeasures: (Double, Double)): Unit = {
+    val (startMeasure, endMeasure) = linkMeasures
+    sqlu"""
+      update LRM_POSITION
+      set
+        link_id = $linkId,
+        start_measure = $startMeasure,
+        end_measure = $endMeasure,
+        modified_date = current_timestamp
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = $id)
+    """.execute
+  }
+
+  /**
+    * Updates m-values in db. Used by PostGISLinearAssetDao.splitSpeedLimit, LinearAssetService.persistMValueAdjustments and LinearAssetService.split.
+    */
   def updateMValues(id: Long, linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
@@ -585,14 +609,14 @@ class PostGISLinearAssetDao() {
   /**
     * Updates from Change Info in db.
     */
-  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
+  def updateMValuesChangeInfo(id: Long,linkId:String, linkMeasures: Measures, timeStamp: Long): Unit = {
     println("asset_id -> " + id)
-    val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
       update LRM_POSITION
       set
-        start_measure = $startMeasure,
-        end_measure = $endMeasure,
+        link_id = $linkId,
+        start_measure = ${linkMeasures.startMeasure},
+        end_measure = ${linkMeasures.endMeasure},
         modified_date = current_timestamp,
         adjusted_timestamp = $timeStamp
       where id = (
@@ -601,13 +625,6 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.ID = al.ASSET_ID
           join lrm_position lrm on lrm.id = al.POSITION_ID
           where a.id = $id)
-    """.execute
-
-    sqlu"""
-      update ASSET
-      set modified_by = $username,
-          modified_date = current_timestamp
-      where id = $id
     """.execute
   }
 
@@ -681,13 +698,15 @@ class PostGISLinearAssetDao() {
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: String, expired: Boolean, sideCode: Int, measures: Measures, username: String, timeStamp: Long = 0L, linkSource: Option[Int],
-                        fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
+  def createLinearAsset(typeId: Int, linkId: String, expired: Boolean, sideCode: Int, measures: Measures, username: String,
+                        timeStamp: Long = 0L, linkSource: Option[Int], fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),
+                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
                         verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq()): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "current_timestamp" else "null"
     val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "current_timestamp"
+    val modifiedBy = modifiedByFromUpdate.getOrElse(username)
 
     val geom: String = if (geometry.nonEmpty) {
       val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
@@ -710,7 +729,7 @@ class PostGISLinearAssetDao() {
         case Some(value) => sqlu"""
 
       insert  into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom);
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $modifiedBy, $modifiedDateTimeFromUpdate, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom);
 
       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);
@@ -720,7 +739,7 @@ class PostGISLinearAssetDao() {
     """.execute
         case None => sqlu"""
        insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, #$verifiedDate, $informationSource, #$geom);
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $modifiedBy, $modifiedDateTimeFromUpdate, $verifiedBy, #$verifiedDate, $informationSource, #$geom);
 
        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);

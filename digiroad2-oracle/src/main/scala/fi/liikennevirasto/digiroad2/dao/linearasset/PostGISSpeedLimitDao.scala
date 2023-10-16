@@ -16,10 +16,10 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
+case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
 class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends DynamicLinearAssetDao {
   def MassQueryThreshold = 500
-  case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
+ 
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
@@ -183,6 +183,11 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     groupSpeedLimitsResult(speedLimitRows)
   }
 
+  override def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    val queryFilter = "AND (valid_to IS NULL OR valid_to > current_timestamp)"
+    fetchByLinkIds(linkIds,queryFilter)
+  }
+
   /**
     * Returns speed limits that match a set of link ids.
     */
@@ -249,6 +254,21 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       }
 
     addCountsFor(limitsByMunicipality)
+  }
+
+  def getUnknownSpeedLimits(links: Set[String]): Seq[UnknownLimit] = {
+    if (links.isEmpty) {
+      throw new Exception("Parameters is empty")
+    }
+   
+    val sql =
+      s"""
+      select s.link_id, m.name_fi, s.administrative_class
+      from unknown_speed_limit s
+      join municipality m on s.municipality_code = m.id
+      where s.unnecessary = 0 and s.link_id in (${links.map(t=>s"'$t'").mkString(",")}) """
+    
+    Q.queryNA[UnknownLimit](sql).list
   }
 
   def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
@@ -648,34 +668,4 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       }
     }
   }
-
-  /**
-    * Updates from Change Info in db.
-    */
-  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
-    println("asset_id -> " + id)
-    val (startMeasure, endMeasure) = linkMeasures
-    sqlu"""
-      update LRM_POSITION
-      set
-        start_measure = $startMeasure,
-        end_measure = $endMeasure,
-        modified_date = current_timestamp,
-        adjusted_timestamp = $timeStamp
-      where id = (
-        select lrm.id
-          from asset a
-          join asset_link al on a.ID = al.ASSET_ID
-          join lrm_position lrm on lrm.id = al.POSITION_ID
-          where a.id = $id)
-    """.execute
-
-    sqlu"""
-      update ASSET
-      set modified_by = $username,
-          modified_date = current_timestamp
-      where id = $id
-    """.execute
-  }
-
 }

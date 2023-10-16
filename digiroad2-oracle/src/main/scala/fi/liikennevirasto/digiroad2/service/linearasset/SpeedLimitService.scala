@@ -5,9 +5,10 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
-import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISSpeedLimitDao, UnknownLimit}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{adjustSideCodes, fillTopology}
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{fillTopology, toRoadLinkForFillTopology}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -18,6 +19,7 @@ import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 
 import java.util.NoSuchElementException
+import scala.util.Try
 
 
 class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) extends DynamicLinearAssetService(roadLinkService, eventbus) {
@@ -128,41 +130,77 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   /**
     * Returns unknown speed limits for Digiroad2Api /speedlimits/unknown GET endpoint.
     */
-  def getUnknown(municipalities: Set[Int], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
-    withDynSession {
+  def getUnknown(municipalities: Set[Int], administrativeClass: Option[AdministrativeClass], newTransaction: Boolean = true): Map[String, Map[String, Any]] = {
+    if (newTransaction)
+      withDynTransaction {
+        speedLimitDao.getUnknownSpeedLimits(municipalities, administrativeClass)
+      }
+    else
       speedLimitDao.getUnknownSpeedLimits(municipalities, administrativeClass)
-    }
   }
 
+  def getUnknownByLinkIds(links: Set[String], newTransaction: Boolean = true):  Seq[UnknownLimit] = {
+    if (newTransaction) {
+      withDynTransaction {
+        speedLimitDao.getUnknownSpeedLimits(links)
+      }
+    } else speedLimitDao.getUnknownSpeedLimits(links)
+  }
+  
   def hideUnknownSpeedLimits(linkIds: Set[String]): Set[String] = {
     withDynTransaction {
       speedLimitDao.hideUnknownSpeedLimits(linkIds)
     }
   }
 
-  def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
-    withDynSession {
-      speedLimitDao.getMunicipalitiesWithUnknown(administrativeClass)
-    }
+  def persistUnknown(limits: Seq[UnknownSpeedLimit], newTransaction: Boolean = true): Unit = {
+    if (newTransaction) {
+      withDynTransaction {
+        speedLimitDao.persistUnknownSpeedLimits(limits)
+      }
+    } else speedLimitDao.persistUnknownSpeedLimits(limits)
+  }
+
+  def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass], newTransaction: Boolean = true): Seq[(Long, String)] = {
+    
+    if (newTransaction) {
+      withDynTransaction {
+        speedLimitDao.getMunicipalitiesWithUnknown(administrativeClass)
+      }
+    } else speedLimitDao.getMunicipalitiesWithUnknown(administrativeClass)
   }
 
   /**
     * Removes speed limit from unknown speed limits list if speed limit exists. Used by SpeedLimitUpdater actor.
     */
-  def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
+  def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String], newTransaction: Boolean = true): Unit = {
     val roadLinks = roadLinkService.fetchRoadlinksByIds(linkIds)
-    withDynTransaction {
-      roadLinks.foreach { rl =>
-        speedLimitDao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
-      }
+    if (newTransaction) {
+      withDynTransaction {
+        if (roadLinks.nonEmpty){
+          roadLinks.foreach { rl =>
+            speedLimitDao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
+          }
+        }
+       
 
+        //To remove nonexistent road links of unknown speed limits list
+        if (expiredLinkIds.nonEmpty)
+          speedLimitDao.deleteUnknownSpeedLimits(expiredLinkIds)
+      }
+    } else {
+      if (roadLinks.nonEmpty) {
+        roadLinks.foreach { rl =>
+          speedLimitDao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
+        }
+      }
       //To remove nonexistent road links of unknown speed limits list
       if (expiredLinkIds.nonEmpty)
         speedLimitDao.deleteUnknownSpeedLimits(expiredLinkIds)
     }
   }
 
-  protected def createUnknownLimits(speedLimits: Seq[PieceWiseLinearAsset], roadLinksByLinkId: Map[String, RoadLink]): Seq[UnknownSpeedLimit] = {
+  def createUnknownLimits(speedLimits: Seq[PieceWiseLinearAsset], roadLinksByLinkId: Map[String, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(speedLimit => speedLimit.id == 0 && speedLimit.value.isEmpty)
     generatedLimits.map { limit =>
       val roadLink = roadLinksByLinkId(limit.linkId)
@@ -179,6 +217,41 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(roadLink.linkId)))
   }
 
+  def getExistingAssetByRoadLinkId(linkId:String, newTransaction: Boolean = true): Seq[PieceWiseLinearAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(linkId)))
+      }
+    else
+      speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(linkId)))
+  }
+  def getExistingAssetByRoadLinkIds(linkIds: Set[String], newTransaction: Boolean = true): Seq[PieceWiseLinearAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linkIds))
+      }
+    else
+      speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linkIds))
+  }
+  
+  override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    val existingAssets = if (newTransaction) {
+      withDynTransaction {
+        enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq))
+      }.filterNot(_.expired)
+    } else {
+      enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq).filterNot(_.expired))
+    }
+    existingAssets
+  }
+  override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds))
+      } else
+      enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds))
+  }
+  
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], generateUnknownBoolean: Boolean = true, showHistory: Boolean,
                                         roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     withDynTransaction {
@@ -215,8 +288,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
   def adjustSpeedLimitsAndGenerateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
                         changeSet:Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
-    val (filledTopology, changedSet) = fillTopology(roadLinks, speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
-    val cleanedChangeSet = speedLimitUpdater.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
+    val (filledTopology, changedSet) = fillTopology(roadLinks.map(toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
+    val cleanedChangeSet = LinearAssetFiller.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
 
     cleanedChangeSet.isEmpty match {
       case true => filledTopology
@@ -232,8 +305,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
   def adjustSpeedLimitsSideCode(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
                                            changeSet: Option[ChangeSet] = None, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
-    val (filledTopology, changedSet) = adjustSideCodes(roadLinks, speedLimits, SpeedLimitAsset.typeId, changeSet)
-    val cleanedChangeSet = speedLimitUpdater.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
+    val (filledTopology, changedSet) = adjustSideCodes(roadLinks.map(toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId, changeSet)
+    val cleanedChangeSet = LinearAssetFiller.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
 
     cleanedChangeSet.isEmpty match {
       case true => filledTopology
@@ -247,7 +320,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
   }
   def generateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]]): Seq[PieceWiseLinearAsset] = {
-     SpeedLimitFiller.generateUnknowns(roadLinks, speedLimits, SpeedLimitAsset.typeId)._1
+     SpeedLimitFiller.generateUnknowns(roadLinks.map(assetFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)._1
   }
 
   /**
@@ -465,6 +538,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     newLimits.flatMap { limit =>
       speedLimitDao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, createTimeStamp(), (_, _) => Unit)
     }
+  }
+
+  override def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, timeStamp: Long = createTimeStamp(), roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+                                        createdByFromUpdate: Option[String] = Some(""),
+                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long={
+    speedLimitDao.createSpeedLimit(username,linkId, measures, SideCode(sideCode),value.asInstanceOf[SpeedLimitValue], timeStamp, (_, _) => Unit).get
   }
 
   def getAssetsAndPoints(existingAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, PieceWiseLinearAsset)] = {

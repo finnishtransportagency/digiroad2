@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeClient, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
+import org.slf4j.LoggerFactory
 
 import scala.sys.exit
 
@@ -24,6 +25,15 @@ object LinearAssetUpdateProcess {
   lazy val hazMatTransportProhibitionService = new HazmatTransportProhibitionService(roadLinkService, eventbus)
   lazy val roadWidthService = new RoadWidthService(roadLinkService, eventbus)
   lazy val speedLimitService = new SpeedLimitService(eventbus, roadLinkService)
+
+  //TODO remove this tester when LinearAssetUpdaters work with new change sets
+  private def testFetchChangesFromS3() = {
+    val roadLinkChangeClient = new RoadLinkChangeClient
+    val logger = LoggerFactory.getLogger(getClass)
+    val changes = roadLinkChangeClient.getRoadLinkChanges()
+    logger.info(s"fetched ${changes.size} changes")
+    changes.foreach(c => logger.info(c.toString))
+  }
 
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
@@ -68,6 +78,8 @@ object LinearAssetUpdateProcess {
     }
   }
 
+  lazy val roadLinkPropertyUpdater = new RoadLinkPropertyUpdater
+
   def main(args: Array[String]): Unit = {
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
@@ -83,10 +95,9 @@ object LinearAssetUpdateProcess {
       val assetName = args(0)
 
       assetName match {
+        // position, value and side code
         case "animal_warnings" => getAssetUpdater(AnimalWarnings.typeId).updateLinearAssets(AnimalWarnings.typeId)
         case "care_class" => getAssetUpdater(CareClass.typeId).updateLinearAssets(CareClass.typeId)
-        case "carrying_capacity" => getAssetUpdater(CarryingCapacity.typeId).updateLinearAssets(CarryingCapacity.typeId)
-        case "damaged_by_thaw" => getAssetUpdater(DamagedByThaw.typeId).updateLinearAssets(DamagedByThaw.typeId)
         case "height_limit" => getAssetUpdater(HeightLimit.typeId).updateLinearAssets(HeightLimit.typeId)
         case "length_limit" => getAssetUpdater(LengthLimit.typeId).updateLinearAssets(LengthLimit.typeId)
         case "width_limit" => getAssetUpdater(WidthLimit.typeId).updateLinearAssets(WidthLimit.typeId)
@@ -95,21 +106,34 @@ object LinearAssetUpdateProcess {
         case "axle_weight_limit" => getAssetUpdater(AxleWeightLimit.typeId).updateLinearAssets(AxleWeightLimit.typeId)
         case "bogie_weight_limit" => getAssetUpdater(BogieWeightLimit.typeId).updateLinearAssets(BogieWeightLimit.typeId)
         case "mass_transit_lane" => getAssetUpdater(MassTransitLane.typeId).updateLinearAssets(MassTransitLane.typeId)
-        case "parking_prohibition" => getAssetUpdater(ParkingProhibition.typeId).updateLinearAssets(ParkingProhibition.typeId)
-        case "cycling_and_walking" => getAssetUpdater(CyclingAndWalking.typeId).updateLinearAssets(CyclingAndWalking.typeId)
-        case "lit_road" => getAssetUpdater(LitRoad.typeId).updateLinearAssets(LitRoad.typeId)
-        case "road_work_asset" => getAssetUpdater(RoadWorksAsset.typeId).updateLinearAssets(RoadWorksAsset.typeId)
         case "number_of_lanes" => getAssetUpdater(NumberOfLanes.typeId).updateLinearAssets(NumberOfLanes.typeId)
-        case "traffic_volume" => getAssetUpdater(TrafficVolume.typeId).updateLinearAssets(TrafficVolume.typeId)
         case "winter_speed_limit" => getAssetUpdater(WinterSpeedLimit.typeId).updateLinearAssets(WinterSpeedLimit.typeId)
+        case "paved_roads" => getAssetUpdater(PavedRoad.typeId).updateLinearAssets(PavedRoad.typeId)
+        case "speed_limit" => getAssetUpdater(SpeedLimitAsset.typeId).updateLinearAssets(SpeedLimitAsset.typeId)
+
+        //  position, value, side code and validation period
+        case "road_work_asset" => getAssetUpdater(RoadWorksAsset.typeId).updateLinearAssets(RoadWorksAsset.typeId)
+        case "parking_prohibition" => getAssetUpdater(ParkingProhibition.typeId).updateLinearAssets(ParkingProhibition.typeId)
+        case "hazmat_prohibition" => getAssetUpdater(HazmatTransportProhibition.typeId).updateLinearAssets(HazmatTransportProhibition.typeId)
+        case "prohibition" => getAssetUpdater(Prohibition.typeId).updateLinearAssets(Prohibition.typeId)
+
+
+        // regulars, position and/or value
+        case "road_width" => getAssetUpdater(RoadWidth.typeId).updateLinearAssets(RoadWidth.typeId)
+        case "damaged_by_thaw" => getAssetUpdater(DamagedByThaw.typeId).updateLinearAssets(DamagedByThaw.typeId)
+        case "carrying_capacity" => getAssetUpdater(CarryingCapacity.typeId).updateLinearAssets(CarryingCapacity.typeId)
+        case "lit_road" => getAssetUpdater(LitRoad.typeId).updateLinearAssets(LitRoad.typeId)
+        case "traffic_volume" => getAssetUpdater(TrafficVolume.typeId).updateLinearAssets(TrafficVolume.typeId)
         case "european_roads" => getAssetUpdater(EuropeanRoads.typeId).updateLinearAssets(EuropeanRoads.typeId)
         case "exit_numbers" => getAssetUpdater(ExitNumbers.typeId).updateLinearAssets(ExitNumbers.typeId)
         case "maintenance_roads" => getAssetUpdater(MaintenanceRoadAsset.typeId).updateLinearAssets(MaintenanceRoadAsset.typeId)
-        case "paved_roads" => getAssetUpdater(PavedRoad.typeId).updateLinearAssets(PavedRoad.typeId)
-        case "prohibition" => getAssetUpdater(Prohibition.typeId).updateLinearAssets(Prohibition.typeId)
-        case "hazmat_prohibition" => getAssetUpdater(HazmatTransportProhibition.typeId).updateLinearAssets(HazmatTransportProhibition.typeId)
-        case "road_width" => getAssetUpdater(RoadWidth.typeId).updateLinearAssets(RoadWidth.typeId)
-        case "speed_limit" => getAssetUpdater(SpeedLimitAsset.typeId).updateLinearAssets(SpeedLimitAsset.typeId)
+        
+        case "cycling_and_walking" => getAssetUpdater(CyclingAndWalking.typeId).updateLinearAssets(CyclingAndWalking.typeId)
+        
+        case "road_link_properties" => roadLinkPropertyUpdater.updateProperties()
+        //special case       
+        case "lanes" => LaneUpdater.updateLanes()
+        case "test" => testFetchChangesFromS3()
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
     }

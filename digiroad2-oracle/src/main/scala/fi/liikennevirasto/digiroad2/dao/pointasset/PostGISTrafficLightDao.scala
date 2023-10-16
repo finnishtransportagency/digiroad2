@@ -40,7 +40,10 @@ case class TrafficLight(id: Long, linkId: String,
                         modifiedBy: Option[String] = None,
                         modifiedAt: Option[DateTime] = None,
                         linkSource: LinkGeomSource,
-                        externalId: Option[String] = None) extends PersistedPointAsset
+                        externalId: Option[String] = None) extends PersistedPointAsset {
+  override def getValidityDirection: Option[Int] = Try(getProperty("sidecode").map(_.propertyValue).getOrElse("").toInt).toOption
+  override def getBearing: Option[Int] = Try(getProperty("bearing").map(_.propertyValue).getOrElse("").toDouble.toInt).toOption
+}
 
 object PostGISTrafficLightDao {
   def fetchByFilter(queryFilter: String => String): Seq[TrafficLight] = {
@@ -104,7 +107,7 @@ object PostGISTrafficLightDao {
 
       id -> TrafficLight(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
-        createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, linkSource = row.linkSource, externalId = row.externalId)
+        createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt, linkSource = row.linkSource, externalId = row.externalId)
     }.values.toSeq
   }
 
@@ -196,12 +199,17 @@ object PostGISTrafficLightDao {
 
   def create(trafficLight: IncomingTrafficLight, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long,
              linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""),
-             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String]): Long = {
+             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String],
+             fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+    val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
+    val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
+
     sqlu"""
         insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 280, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp);
+        values ($id, $externalIdFromUpdate, 280, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $modifiedBy, $modifiedAt);
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
         values ($lrmPositionId, $mValue, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
@@ -216,10 +224,10 @@ object PostGISTrafficLightDao {
     id
   }
 
-  def update(id: Long, trafficLight: IncomingTrafficLight, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
+  def update(id: Long, trafficLight: IncomingTrafficLight, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource, fromPointAssetUpdater: Boolean = false) = {
     sqlu""" update asset set municipality_code = ${municipality} where id = $id """.execute
     updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
-    updateAssetModified(id, username).execute
+    if (!fromPointAssetUpdater) updateAssetModified(id, username).execute
 
     adjustedTimeStampOption match {
       case Some(adjustedTimeStamp) =>

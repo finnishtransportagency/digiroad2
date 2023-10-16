@@ -84,6 +84,7 @@ drop table if exists kgv_roadlink cascade;
 drop table if exists qgis_roadlinkex cascade;
 drop table if exists lane_work_list cascade;
 drop table if exists change_table cascade;
+drop table if exists samuutus_success cascade;
 drop sequence if exists grouped_id_seq cascade;
 drop sequence if exists lrm_position_primary_key_seq cascade;
 drop sequence if exists manoeuvre_id_seq cascade;

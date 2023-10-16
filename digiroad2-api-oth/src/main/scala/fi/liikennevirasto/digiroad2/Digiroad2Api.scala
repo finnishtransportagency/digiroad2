@@ -1487,9 +1487,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     user.isOperator() match {
       case true =>
-        manoeuvreService.getInaccurateRecords()
+        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId)
       case false =>
-        manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
+        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId,municipalityCode, Set(Municipality))
     }
   }
 
@@ -1511,7 +1511,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
     val workListItems = userHasRights match {
-      case true => laneWorkListService.getLaneWorkList
+      case true => laneWorkListService.getLaneWorkList()
       case false => halt(Forbidden("User not authorized to get items from lane work list"))
     }
 
@@ -1711,7 +1711,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         validateBoundingBox(boundingRectangle)
       }
       LogUtils.time(logger, "TEST LOG Get manoeuvres by boundingBox total operation") {
-        manoeuvreService.getByBoundingBox(boundingRectangle, Set())
+        manoeuvreService.getByBoundingBox(boundingRectangle, Set[Int]())
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")

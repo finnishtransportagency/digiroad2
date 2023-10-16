@@ -119,6 +119,11 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane = laneDao.fetchLanesByIds( Set(newLane.head)).head
       lane.expired should be (false)
+      lane.createdBy.get should be(usernameTest)
+      lane.createdDateTime.get.getDayOfYear should be(DateTime.now().getDayOfYear)
+      Math.abs(DateTime.now().getSecondOfDay - lane.createdDateTime.get.getSecondOfDay) should be < 120
+      lane.modifiedBy should be(None)
+      lane.modifiedDateTime should be(None)
 
       lane.attributes.foreach{ laneProp =>
         val attr = lanePropertiesValues1.find(_.publicId == laneProp.publicId)
@@ -1134,7 +1139,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       ServiceWithDao.create(Seq(newLane21), Set(linkId1), 2, usernameTest)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
-
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType) should be(Seq(LaneChangeType.Add, LaneChangeType.Add))
@@ -1155,6 +1160,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       ServiceWithDao.update(Seq(newLane1.copy(id = lane1Id, properties = newLanePropertiesValues11)), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1176,6 +1182,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       ServiceWithDao.deleteMultipleLanes(Seq(persistedLane2), usernameTest)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1201,6 +1208,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       ServiceWithDao.update(Seq(newLane4.copy(id = lane4Id, properties = newLanePropertiesValuesOld4)), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1226,6 +1234,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       ServiceWithDao.update(Seq(subLane2Split), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1237,7 +1246,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Lane Change: Get only the 2 Add with token"){
+  test("Lane Change: Get only the first 2 changes with token"){
     //token = pageNumber:1,recordNumber:2
     runWithRollback {
       val newLane1 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues1)
@@ -1252,11 +1261,12 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2Id = ServiceWithDao.update(Seq(subLane2Split), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes).head
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1), token = Some("cGFnZU51bWJlcjoxLHJlY29yZE51bWJlcjoy"))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add))
-      lanesChanged.map(_.lane.id).contains(subLane2Id) should be(false)
+      lanesChanged.size should equal(2)
     }
   }
 
@@ -1279,6 +1289,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       ServiceWithDao.createMultiLanesOnLink(Seq(lane2SplitA,lane2SplitB), Set(linkId1), 2, usernameTest)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1317,6 +1328,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val updatedIds = ServiceWithDao.update(Seq(lane1toLaneCode2, lane2toLaneCode1), Set(linkId1), 2,usernameTest, Seq(sideCodesForLinkIds), allExistingLanes)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.LaneCodeTransfer, LaneChangeType.LaneCodeTransfer))
@@ -1390,6 +1402,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1,linkId2), false)).thenReturn(
         Seq(roadlink1,roadlink2)
       )
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1, roadlink2))).thenReturn(Seq(roadlink1, roadlink2))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1466,9 +1479,8 @@ class LaneServiceSpec extends LaneTestSupporter {
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(0)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(roadlink1)
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1529,6 +1541,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       expiredLanes.size should be(3)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1580,6 +1593,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       expiredLanes.size should be(4)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1678,6 +1692,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       expiredLanes.size should be(3)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1743,6 +1758,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       expiredLanes.size should be(3)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1809,6 +1825,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         }
       }
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1891,6 +1908,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       expiredLanes.size should be(4)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
+      when(mockRoadAddressService.roadLinkWithRoadAddress(Seq(roadlink1))).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))

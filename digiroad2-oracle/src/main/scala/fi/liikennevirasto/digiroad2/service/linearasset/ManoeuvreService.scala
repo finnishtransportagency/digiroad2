@@ -2,14 +2,15 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Manoeuvres, SideCode}
-import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.LogUtils
+import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, _}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -43,12 +44,19 @@ object ElementTypes {
 }
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
-class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
-  val logger = LoggerFactory.getLogger(getClass)
+class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
+  override val logger = LoggerFactory.getLogger(getClass)
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override def municipalityDao: MunicipalityDao = new MunicipalityDao
+  override def eventBus: DigiroadEventBus = eventBusImpl
+  override def polygonTools: PolygonTools = new PolygonTools()
+  override def assetDao: PostGISAssetDao = new PostGISAssetDao
 
+  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+  
   def dao: ManoeuvreDao = new ManoeuvreDao()
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
@@ -307,14 +315,14 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       dao.deleteManoeuvreByTrafficSign(filter, username)
   }
 
-  def withMunicipalities(municipalities: Set[Int])(query: String): String = {
+  override def withMunicipalities(municipalities: Set[Int])(query: String): String = {
     query + s"and a.municipality_code in (${municipalities.mkString(",")})"
   }
 
-  def withId(id: Long)(query: String): String = {
+  override def withId(id: Long)(query: String): String = {
     query + s" and a.id = $id"
   }
-  def withIds(ids: Set[Long])(query: String): String = {
+  override def withIds(ids: Set[Long])(query: String): String = {
     query + s"and a.id in (${ids.mkString(",")})"
   }
 
@@ -330,7 +338,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     }
   }
 
-  def getInaccurateRecords(municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
+  def getInaccurateRecords(typeId:Int,municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
     withDynTransaction {
       inaccurateDAO.getInaccurateAsset(Manoeuvres.typeId, municipalities, adminClass)
         .groupBy(_.municipality)
@@ -427,4 +435,5 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
   private def validateManoeuvre(sourceId: String, destLinkId: String, elementType: Int): Boolean  = {
     countExistings(sourceId, destLinkId, elementType) == 0
   }
+  
 }
