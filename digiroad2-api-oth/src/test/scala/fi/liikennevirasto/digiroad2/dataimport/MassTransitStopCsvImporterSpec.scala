@@ -271,6 +271,21 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     result.notImportedData.isEmpty should be (true)
   }
 
+  test("validation fails when stop type is obsolete") {
+    val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkClient, mockRoadLinkService, mockEventBus, mockService)
+
+    val assetFields = Map("valtakunnallinen id" -> 1, "pysäkin tyyppi" -> "3") // old long distance bus type
+    val invalidCsv = massTransitStopImporterUpdate.csvRead(assetFields)
+
+    val result = massTransitStopCsvOperation.propertyUpdater.processing(invalidCsv, testUser)
+    result.malformedRows.size should be (1)
+    result.malformedRows.head.malformedParameters.size should be (1)
+    result.malformedRows.head.malformedParameters.head should be ("pysäkin tyyppi")
+    result.incompleteRows.isEmpty should be (true)
+    result.excludedRows.isEmpty should be (true)
+    result.notImportedData.isEmpty should be (true)
+  }
+
   test("update asset admin id by CSV import") {
     val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkClient, mockRoadLinkService, mockEventBus, mockService)
 
