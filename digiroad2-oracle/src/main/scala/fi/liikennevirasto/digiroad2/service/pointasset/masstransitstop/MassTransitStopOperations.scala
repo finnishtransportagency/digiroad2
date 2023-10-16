@@ -10,7 +10,7 @@ sealed trait BusStopType {
   def value: Int
 }
 object BusStopType {
-  val values = Set(Virtual, Bus, Terminal, ServicePoint, Unknown)
+  val values = Set(Tram, Virtual, Bus, Terminal, ServicePoint, Unknown)
 
   def apply(intValue: Int): BusStopType = {
     values.find(_.value == intValue).getOrElse(Unknown)

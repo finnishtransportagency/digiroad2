@@ -3,6 +3,7 @@
   var poistaSelected = false;
   var authorizationPolicy;
   var pointAssetToSave = false;
+  var tramStopToSave = false;
 
   var rootElement = $("#feature-attributes");
 
@@ -21,7 +22,29 @@
     return _.find(selectedMassTransitStopModel.getCurrentAsset().payload.properties, {'publicId' : public_id});
   }
 
-  var ValidationErrorLabel = function() {
+  var walkingCyclingErrorLabel = function() {
+    var element = $('<span class="validation-error">Vain raitiovaunupysäkki voidaan tallentaa kävelyn ja pyöräilyn väylälle</span>');
+    var updateVisibility = function() {
+      if(selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()) {
+        element.show();
+      }
+      else {
+        element.hide();
+      }
+    };
+
+    updateVisibility();
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      updateVisibility();
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
+  var missingInfoLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
     var updateVisibility = function() {
@@ -84,6 +107,15 @@
   }
 
   var SaveButton = function(busStopTypeSelected) {
+    function saveWithPossibleWalkingCyclingPopUp() {
+      if(selectedMassTransitStopModel.isWalkingCyclingLink()){
+        new GenericConfirmPopup('Oletko varma, että haluat luoda pysäkin kävelyn ja pyöräilyn väylälle?', {
+          successCallback: function () {
+            saveStop();
+          }});
+      } else saveStop();
+    }
+
     var deleteMessage = 'pysäkin';
 
     if (selectedMassTransitStopModel.isTerminalType(busStopTypeSelected))
@@ -99,29 +131,34 @@
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
           }
         });
+      } else if(tramStopToSave) {
+        new GenericConfirmPopup('Oletko varma, että haluat luoda pysäkin kävelyn ja pyöräilyn väylälle?', {
+          successCallback: function () {
+            saveStop();
+          }});
       } else if (pointAssetToSave) {
-        saveStop();
+        saveWithPossibleWalkingCyclingPopUp();
       } else {
         if(optionalSave()){
           if(saveNewBusStopStrategy()) {
             new GenericConfirmPopup('Koska tämä bussipysäkki on määritetty vihjeeksi se ei saa LIVI-tunnusta. Haluatko silti tallentaa sen OTH:ssa?', {
               successCallback: function () {
                 selectedMassTransitStopModel.setAdditionalProperty('liviIdSave', [{ propertyValue: 'false' }]);
-                saveStop();
+                saveWithPossibleWalkingCyclingPopUp();
               }});
           } else {
             new GenericConfirmPopup('Haluatko antaa LIVI-tunnuksen?', {
               successCallback: function () {
-                saveStop();
+                saveWithPossibleWalkingCyclingPopUp();
               },
               closeCallback: function () {
                 selectedMassTransitStopModel.setAdditionalProperty('liviIdSave', [{ propertyValue: 'false' }]);
-                saveStop();
+                saveWithPossibleWalkingCyclingPopUp();
               }
             });
           }
         } else {
-          saveStop();
+          saveWithPossibleWalkingCyclingPopUp();
         }
       }
     });
@@ -141,7 +178,9 @@
     var updateStatus = function() {
       if(pointAssetToSave && !isValidServicePoint()){
         element.prop('disabled', true);
-      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops()){
+      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() &&
+          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
+          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
         element.prop('disabled', false);
       } else if(poistaSelected) {
         element.prop('disabled', false);
@@ -233,7 +272,9 @@
 
         var buttons = function (busStopTypeSelected) {
           return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
-              .append(new ValidationErrorLabel().element)
+              .append(new walkingCyclingErrorLabel().element)
+              .append($('<br>'))
+              .append(new missingInfoLabel().element)
               .append(new SaveButton(busStopTypeSelected).element)
               .append(new CancelButton().element);
         };
@@ -1061,6 +1102,10 @@
           updateViranomaisdataaValue();
 
           pointAssetToSave = true;
+        }
+
+        if (property.publicId === "pysakin_tyyppi" && _.some(property.values, function (value) {return value.propertyValue === 1;})) {
+          tramStopToSave = true;
         }
 
       });
