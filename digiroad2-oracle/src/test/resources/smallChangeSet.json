@@ -1756,19 +1756,10 @@
       {
         "oldLinkId": "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1",
         "newLinkId": "d989ee2b-f6d0-4433-b5b6-0a4fe3d62400:1",
-        "oldFromMValue": 5.085,
-        "oldToMValue": 337.589,
-        "newFromMValue": 5.085,
-        "newToMValue": 337.589,
-        "digitizationChange": false
-      },
-      {
-        "oldLinkId": "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1",
-        "newLinkId": "d989ee2b-f6d0-4433-b5b6-0a4fe3d62400:1",
         "oldFromMValue": 0,
-        "oldToMValue": 5.085,
+        "oldToMValue": 337.589,
         "newFromMValue": 0,
-        "newToMValue": 5.085,
+        "newToMValue": 337.589,
         "digitizationChange": false
       },
       {
@@ -1928,9 +1919,9 @@
       {
         "oldLinkId": "deb91a05-e182-44ae-ad71-4ba169d57e41:1",
         "newLinkId": "0a4cb6e7-67c3-411e-9446-975c53c0d054:1",
-        "oldFromMValue": 139.559,
+        "oldFromMValue": 0,
         "oldToMValue": 242.651,
-        "newFromMValue": 306.439,
+        "newFromMValue": 166.88,
         "newToMValue": 409.531,
         "digitizationChange": false
       }

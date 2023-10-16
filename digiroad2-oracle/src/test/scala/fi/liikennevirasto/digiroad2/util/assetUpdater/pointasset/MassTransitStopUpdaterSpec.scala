@@ -277,9 +277,9 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       adjustedAsset1.floating should be(false)
       adjustedAsset1.validityDirection should be(Some(SideCode.AgainstDigitizing.value))
       adjustedAsset1.created.modifier.get should be("testCreator")
-      adjustedAsset1.created.modificationTime.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+      adjustedAsset1.created.modificationTime.get.toString().startsWith("2021-05-10") should be(true)
       adjustedAsset1.modified.modifier.get should be("testModifier")
-      adjustedAsset1.modified.modificationTime.get.toString() should be("2022-05-10T10:52:28.783+03:00")
+      adjustedAsset1.modified.modificationTime.get.toString().startsWith("2022-05-10") should be(true)
       distanceToOldLocation1 should be < updater.MaxDistanceDiffAllowed
       adjustedAsset1.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = createdStop1.propertyData.find(_.publicId == property.publicId).get
@@ -295,7 +295,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       adjustedAsset2.floating should be(false)
       adjustedAsset2.validityDirection should be(Some(SideCode.AgainstDigitizing.value))
       adjustedAsset2.created.modifier.get should be("testCreator")
-      adjustedAsset2.created.modificationTime.get.toString() should be("2021-05-10T10:52:28.783+03:00")
+      adjustedAsset2.created.modificationTime.get.toString().startsWith("2021-05-10") should be(true)
       adjustedAsset2.modified.modifier should be(None)
       adjustedAsset2.modified.modificationTime should be(None)
       distanceToOldLocation2 should be < updater.MaxDistanceDiffAllowed

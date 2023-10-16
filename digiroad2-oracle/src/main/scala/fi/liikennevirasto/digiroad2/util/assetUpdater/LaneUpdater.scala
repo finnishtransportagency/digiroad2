@@ -259,7 +259,7 @@ object LaneUpdater {
   // If lanes from old roadLink are currently on lane work list
   // then only process the main lanes
   def isOldLinkOnLaneWorkList(change: RoadLinkChange): Boolean = {
-      val linkIdsOnWorkList = laneWorkListService.getLaneWorkList.map(_.linkId)
+      val linkIdsOnWorkList = laneWorkListService.getLaneWorkList(false).map(_.linkId)
       change.oldLink match {
         case Some(oldLink) =>
           linkIdsOnWorkList.contains(oldLink.linkId)
@@ -271,7 +271,7 @@ object LaneUpdater {
     change.newLinks.exists(newLink => {
       val oldOriginalTrafficDirection = change.oldLink.get.trafficDirection
       val newOriginalTrafficDirection = newLink.trafficDirection
-      val replaceInfo = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get
+      val replaceInfo = change.replaceInfo.find(_.newLinkId.getOrElse(None) == newLink.linkId).getOrElse(throw new NoSuchElementException(s"Replace info for link ${newLink.linkId} not found from change ${change}"))
       val isDigitizationChange = replaceInfo.digitizationChange
       val overWrittenTdValueOnNewLink = TrafficDirectionDao.getExistingValue(newLink.linkId)
 
@@ -289,7 +289,7 @@ object LaneUpdater {
     val createdMainLanes = workListChanges.flatMap(change => {
       val newLinkIds = change.newLinks.map(_.linkId)
       // Need to fetch RoadLinks because Link Type is needed for main lane creation
-      val addedRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet)
+      val addedRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
       val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(addedRoadLinks, saveResult = false)
       createdMainLanes
     })
@@ -343,7 +343,7 @@ object LaneUpdater {
     val oldWorkListLinkIds = workListChanges.flatMap(_.oldLink).map(_.linkId)
 
     val newLinkIds = roadLinkChanges.flatMap(_.newLinks.map(_.linkId))
-    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet)
+    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
 
     val lanesOnOldRoadLinks = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false)
     val lanesOnWorkListLinks = laneService.fetchAllLanesByLinkIds(oldWorkListLinkIds, newTransaction = false)

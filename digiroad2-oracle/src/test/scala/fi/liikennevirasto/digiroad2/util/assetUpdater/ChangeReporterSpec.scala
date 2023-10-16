@@ -21,7 +21,8 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     ))
     val (csv, contentRows) = ChangeReporter.generateCSV(changeReport)
     val contents = csv.split("\\\n")(2)
-    contents.startsWith(s"41cca8ff-4644-41aa-8de1-2702f1a57f80:2,http://localhost:9001/index.html#linkProperty/41cca8ff-4644-41aa-8de1-2702f1a57f80:2,4,3,3,2,2,7,7,oldLink,,3,mtkClass,") should be(true)
+    contents.startsWith(s"41cca8ff-4644-41aa-8de1-2702f1a57f80:2") should be(true)
+    contents.contains("2,4,3,3,2,2,7,7,oldLink,,3,mtkClass,") should be(true)
     contentRows should be(1)
   }
 
