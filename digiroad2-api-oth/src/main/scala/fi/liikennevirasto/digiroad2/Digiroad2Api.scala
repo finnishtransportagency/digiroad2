@@ -378,6 +378,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val massTransitStop = massTransitStopReturned._1.map { stop =>
 
       Map("id" -> stop.id,
+        "linkId" -> stop.linkId,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
         "lat" -> stop.lat,

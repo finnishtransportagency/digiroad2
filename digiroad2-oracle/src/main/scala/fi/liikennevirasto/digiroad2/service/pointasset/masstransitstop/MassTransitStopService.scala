@@ -25,7 +25,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int]) extends FloatingAsset
 
-case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
+case class MassTransitStopWithProperties(id: Long, linkId: String = "", nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                                          validityDirection: Option[Int], bearing: Option[Int],
                                          validityPeriod: Option[String], floating: Boolean,
                                          propertyData: Seq[Property], municipalityName: Option[String] = None) extends FloatingAsset
@@ -65,7 +65,6 @@ trait AbstractBusStopStrategy {
   def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop]): Boolean = {false}
   def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop], saveOption: Option[Boolean]): Boolean = {false}
   def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
-  def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {}
   /**
     * enrich with additional data 
     * @param persistedStop Mass Transit Stop
@@ -91,6 +90,10 @@ trait AbstractBusStopStrategy {
   def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
   def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo]
   def pickRoadLink(optRoadLink: Option[RoadLink], optHistoric: Option[RoadLink]): RoadLink = {optRoadLink.getOrElse(throw new NoSuchElementException)}
+
+  def undoLiviId(existingAsset: PersistedMassTransitStop): Unit = {
+    massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, null)
+  }
 
   protected def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
     massTransitStopDao.updateNumberPropertyValue(assetId, "linkin_hallinnollinen_luokka", administrativeClass.value)
@@ -197,6 +200,23 @@ trait MassTransitStopService extends PointAssetOperations {
     } else {
       throw InvalidParameterException("Ids list is empty")
     }
+  }
+
+  override def getPersistedAssetsByLinkId(linkId: String): Seq[PersistedAsset] = {
+    val filter = s"where a.asset_type_id = $typeId and pos.link_Id = '$linkId'"
+    fetchPointAssets(withFilter(filter)).map { asset =>
+      val strategy = getStrategy(asset)
+      val (enrichedStop, _) = strategy.enrichBusStop(asset)
+      enrichedStop
+    }
+  }
+
+  def getPersistedAssetsByLinkId(linkId: String, newTransaction: Boolean = true): Seq[PersistedAsset] = {
+    if (newTransaction)
+      withDynSession {
+        getPersistedAssetsByLinkId(linkId)
+    }
+    else getPersistedAssetsByLinkId(linkId)
   }
 
   override def update(id: Long, updatedAsset: NewMassTransitStop, roadLink: RoadLink, username: String): Long = {
@@ -343,8 +363,8 @@ trait MassTransitStopService extends PointAssetOperations {
       val roadLink = currentStrategy.pickRoadLink(optRoadLink, optHistoric)
       val newProperties = excludeProperties(properties.toSeq)
 
-      if (previousStrategy != currentStrategy)
-        previousStrategy.undo(asset, properties, username)
+      if (properties.exists(property => property.publicId == "tietojen_yllapitaja" && property.values.head.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.MunicipalityPropertyValue))
+        previousStrategy.undoLiviId(asset)
 
       val (persistedAsset, publishInfo) = currentStrategy.update(asset, optionalPosition, newProperties, username, municipalityValidation, roadLink)
 
@@ -617,7 +637,7 @@ trait MassTransitStopService extends PointAssetOperations {
   private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: String => Option[RoadLinkLike], getMunicipalityName: Int => Option[String] = _ => None)
                                                           (persistedStop: PersistedMassTransitStop): (MassTransitStopWithProperties, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
-    (MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+    (MassTransitStopWithProperties(id = persistedStop.id, linkId = persistedStop.linkId, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
       propertyData = persistedStop.propertyData, municipalityName = getMunicipalityName(persistedStop.municipalityCode)), floatingReason)
@@ -746,6 +766,12 @@ trait MassTransitStopService extends PointAssetOperations {
   def getLatestModifiedAsset(assets: Seq[PersistedMassTransitStop]): PersistedMassTransitStop = {
     assets.maxBy(asset => asset.modified.modificationTime.getOrElse(asset.created.modificationTime.get).getMillis)
   }
+
+  def getBusStopPropertyValue(pointAssetAttributes: List[AssetProperty]): BusStopType = {
+    val busStopType = pointAssetAttributes.find(prop => prop.columnName == "pysakin_tyyppi").map(_.value).get.asInstanceOf[List[PropertyValue]].head
+    BusStopType.apply(busStopType.propertyValue.toInt)
+  }
+
 }
 
 class MassTransitStopException(string: String) extends RuntimeException {
