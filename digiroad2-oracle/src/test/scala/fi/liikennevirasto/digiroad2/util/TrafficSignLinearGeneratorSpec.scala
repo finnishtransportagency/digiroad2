@@ -573,4 +573,32 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     resultB3.get.endMeasure should be(20)
     resultB3.get.sideCode should be(SideCode.BothDirections)
   }
+
+  test("generate parking prohibitions against digitizing starting from an intermediate location on the first link and ending to intersection") {
+    val linkIdB11 = LinkIdGenerator.generateRandom()
+    val roadLinkNameB11 = RoadLink(linkIdB11, Seq(Point(10.0, 0.0), Point(10.0, 20.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+
+    val parkingProhibitionGenerator = new TestTrafficSignParkingProhibitionGenerator()
+    val signProperty = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(StandingAndParkingProhibited.OTHvalue.toString))))
+    val trafficSign = PersistedTrafficSign(1, linkIdB3, 40, 20, 5, false, 0, 235, signProperty, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+
+    val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
+    when(mockRoadLinkService.getAdjacent(linkIdB3, Seq(Point(20, 0)))).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(linkIdB2, Seq(Point(10, 0)))).thenReturn(Seq(roadLinkNameB1, roadLinkNameB11))
+
+    val result = parkingProhibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign), Seq()).toSeq
+    result.size should be(2)
+
+    val resultB3 = result.find(_.roadLink.linkId == linkIdB3)
+    resultB3 should not be None
+    resultB3.get.startMeasure should be(0)
+    resultB3.get.endMeasure should be(5)
+    resultB3.get.sideCode should be(SideCode.AgainstDigitizing)
+
+    val resultB2 = result.find(_.roadLink.linkId == linkIdB2)
+    resultB2 should not be None
+    resultB2.get.startMeasure should be(0)
+    resultB2.get.endMeasure should be(10)
+    resultB2.get.sideCode should be(SideCode.AgainstDigitizing)
+  }
 }

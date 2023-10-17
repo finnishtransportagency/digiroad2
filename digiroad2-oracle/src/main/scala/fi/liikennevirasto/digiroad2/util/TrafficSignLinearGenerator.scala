@@ -897,7 +897,7 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
 
   def generateSegmentPiece(currentRoadLink: RoadLink, sign: PersistedTrafficSign, value: Value, endDistance: Option[Double], direction: Int): TrafficSignToLinear = {
     if (debbuger) println("generateSegmentPiece")
-    endDistance match {
+    val trafficSignToLinear = endDistance match {
       case Some(mValue) =>
         if (currentRoadLink.linkId == sign.linkId) {
           val orderedMValue = Seq(sign.mValue, mValue).sorted
@@ -929,6 +929,11 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, "%.3f".formatLocal(java.util.Locale.US, length).toDouble, Set(sign.id))
         }
     }
+    val assetLength = trafficSignToLinear.endMeasure - trafficSignToLinear.startMeasure
+    if (assetLength <= 0.0) {
+      logger.error(s"generated erroneous linear asset of length ${assetLength} from traffic sign ${sign.id} on road link ${trafficSignToLinear.roadLink.linkId}")
+    }
+    trafficSignToLinear
   }
 
 }
@@ -1074,7 +1079,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
       val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(direction))
       val getAdjacents = roadLinkService.getAdjacent(actualRoadLink.linkId, Seq(pointOfInterest._1.getOrElse(pointOfInterest._2.get)), false)
       if (getAdjacents.size > 1)
-        if(pointOfInterest._1.nonEmpty) Some(0) else Some(length)
+        if(pointOfInterest._1.nonEmpty && mainSign.linkId == actualRoadLink.linkId) Some(0) else Some(length)
       else
         None
     }
