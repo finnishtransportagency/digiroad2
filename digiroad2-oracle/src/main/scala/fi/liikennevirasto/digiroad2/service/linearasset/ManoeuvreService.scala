@@ -234,9 +234,9 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     else getManoeuvres.filter(_.isDefined).map(_.get)
   }
   
-  def updateManouvreLinkVersion(update:ManoeuvreUpdateLinks, newTransaction: Boolean = true): Unit = {
-    if (newTransaction) withDynTransaction {dao.updateManoeuvreLinkIds(update)}
-    else dao.updateManoeuvreLinkIds(update)
+  def updateManoeuvreLinkVersions(updates:Seq[ManoeuvreUpdateLinks], newTransaction: Boolean = true): Unit = {
+    if (newTransaction) withDynTransaction {dao.updateManoeuvreLinkIds(updates)}
+    else dao.updateManoeuvreLinkIds(updates)
   }
   
   private def getByRoadLinks(roadLinks: Seq[RoadLink], getDaoManoeuvres: Seq[String] => Seq[Manoeuvre]): Seq[Manoeuvre] = {

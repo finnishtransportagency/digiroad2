@@ -71,7 +71,7 @@ class ManoeuvreUpdater() {
     
     val forLogging = existingAssets.filter(a=> versionUpgradeIds.contains(a.linkId) || versionUpgradeIds.contains(a.destLinkId))
     LogUtils.time(logger, s"Updating manoeuvres into new version of link took: ") {
-      pairs.map(a=>ManoeuvreUpdateLinks(a.oldId,a.newId)).foreach(service.updateManouvreLinkVersion(_,newTransaction = false))
+      service.updateManoeuvreLinkVersions(pairs.map(a=>ManoeuvreUpdateLinks(a.oldId,a.newId)),newTransaction = false)
     }
     
    val rows =  service.getByRoadLinkIdsNoValidation(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, false)
