@@ -20,16 +20,13 @@
 
         this.workListItemTable = function (layerName, showDeleteCheckboxes, workListItems) {
             var tableContentRows = function (item) {
-                    return $('<tr/>')
-                        .append($('<th/>')
-                        .append(changeRow(item)));
-              
+                    return $('<tr/>').append($('<th/>').append(changeRow(item)));
             };
 
             var changeRow = function (item) {
-                return $('<dd class="manoeuvreWorkListTextSize"/>')
-                    .html("Rajoituksen id:" +" " + item.assetId + " "+" Linkit:"  + item.links
-                    );
+                var idRow =     "<p>" + "Rajoituksen id: " + item.assetId + "</p>";
+                var linksRow =  "<p>" + "Linkit: "  + item.links +          "</p>";
+                return $('<dd class="manoeuvreWorkListTextSize"/>').html(idRow+linksRow);
             };
 
             var addTable = function (items) {
