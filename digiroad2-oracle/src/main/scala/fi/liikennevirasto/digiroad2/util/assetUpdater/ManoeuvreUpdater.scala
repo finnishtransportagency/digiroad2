@@ -74,7 +74,7 @@ class ManoeuvreUpdater() {
       pairs.map(a=>ManoeuvreUpdateLinks(a.oldId,a.newId)).foreach(service.updateManouvreLinkVersion(_,newTransaction = false))
     }
     
-   val rows =  service.getByRoadLinkId(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, false)
+   val rows =  service.getByRoadLinkIdsNoValidation(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, false)
      .map(a=> {
       val (elementA,elementB) = (a.elements.map(_.sourceLinkId),a.elements.map(_.destLinkId))
       ChangedManoeuvre(manoeuvreId = a.id,linkIds=(elementA++elementB).filter(_!=null).toSet)

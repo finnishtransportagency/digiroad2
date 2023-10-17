@@ -20,6 +20,7 @@ case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods:
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: String, destLinkId: String, elementType: Int)
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[String], trafficSignId: Option[Long], isSuggested: Boolean)
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String],  isSuggested: Option[Boolean])
+case class MissingElement(message:String) extends NoSuchElementException(message)
 
 sealed trait ManoeuvreTurnRestrictionType {
   def value: Int
@@ -213,16 +214,24 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     * @param newTransaction
     * @return
     */
-  def getByRoadLinkId(linksIds: Set[String],newTransaction: Boolean = true):  Seq[Manoeuvre]  = {
-    def getManouvres: Seq[Manoeuvre] = {
+  def getByRoadLinkIdsNoValidation(linksIds: Set[String], newTransaction: Boolean = true):  Seq[Manoeuvre]  = {
+    def getManoeuvres: Seq[Option[Manoeuvre]] = {
      dao.getByRoadLinks(linksIds.toSeq).map { manoeuvre =>
-        val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
-        val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
-        val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
-        manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
+       try {
+         val firstElement = manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement)
+           .getOrElse(throw MissingElement(s"Manoeuvre is invalid ${manoeuvre.id}, no first element"))
+         val lastElement = manoeuvre.elements.find(_.elementType == ElementTypes.LastElement)
+           .getOrElse(throw MissingElement(s"Manoeuvre is invalid ${manoeuvre.id}, no last element"))
+         val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
+         Some(manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements)))
+       } catch {
+         case e: MissingElement =>  logger.error(e.getMessage); None
+         case e: Throwable => throw e
+       }
       }
     }
-    if (newTransaction) withDynTransaction {getManouvres} else getManouvres
+    if (newTransaction) withDynTransaction {getManoeuvres.filter(_.isDefined).map(_.get)} 
+    else getManoeuvres.filter(_.isDefined).map(_.get)
   }
   
   def updateManouvreLinkVersion(update:ManoeuvreUpdateLinks, newTransaction: Boolean = true): Unit = {
