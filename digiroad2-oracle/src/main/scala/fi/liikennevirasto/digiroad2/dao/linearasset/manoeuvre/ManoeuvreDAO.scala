@@ -2,11 +2,10 @@ package fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.TrafficSigns
-import fi.liikennevirasto.digiroad2.dao.PostGISAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
-import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, Manoeuvre, ManoeuvreElement, NewManoeuvre}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -16,6 +15,8 @@ import slick.jdbc.{StaticQuery => Q}
   */
 case class PersistedManoeuvreRow(id: Long, linkId: String, destLinkId: String, elementType: Int, modifiedDate: Option[DateTime],
                                  modifiedBy: Option[String], additionalInfo: String, createdDate: DateTime, createdBy: String, isSuggested: Boolean)
+
+sealed case class ManoeuvreUpdateLinks (oldLinkId:String,newLinkId:String)
 
 class ManoeuvreDao() extends PostGISLinearAssetDao{
 
@@ -112,6 +113,14 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
     addManoeuvreValidityPeriods(manoeuvreId, manoeuvre.validityPeriods)
     manoeuvreId
   }
+  def updateManoeuvreLinkIds(update:ManoeuvreUpdateLinks): Unit = {
+    sqlu""" update manoeuvre_element
+            set link_id = ${update.newLinkId}
+            where link_id = ${update.oldLinkId} """.execute
+    sqlu""" update manoeuvre_element
+            set dest_link_id = ${update.newLinkId}
+            where dest_link_id = ${update.oldLinkId}""".execute
+  }
 
   def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String], modifiedDateOpt: Option[DateTime]): Long = {
     val manoeuvreId = sql"select nextval('manoeuvre_id_seq')".as[Long].first
@@ -196,7 +205,7 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
       manoeuvreRow.additionalInfo, manoeuvreRow.createdDate, manoeuvreRow.createdBy, manoeuvreRow.isSuggested)
   }
 
-  private def fetchManoeuvresByLinkIds(linkIds: Seq[String]): Map[Long, Seq[PersistedManoeuvreRow]] = {
+  def fetchManoeuvresByLinkIds(linkIds: Seq[String]): Map[Long, Seq[PersistedManoeuvreRow]] = {
     val manoeuvres = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by, m.suggested
             FROM MANOEUVRE m
@@ -213,6 +222,25 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
       PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6,
         manoeuvreRow._7, manoeuvreRow._8, manoeuvreRow._9, manoeuvreRow._10 )
     }.groupBy(_.id)
+  }
+
+  def fetchManoeuvresByLinkIdsNoGrouping(linkIds: Seq[String]): Seq[PersistedManoeuvreRow] = {
+    val manoeuvres = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
+      sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by, m.suggested
+            FROM MANOEUVRE m
+            JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
+            WHERE (valid_to is null OR valid_to > current_timestamp) AND
+                EXISTS (SELECT k.manoeuvre_id
+                               FROM MANOEUVRE_ELEMENT k
+                               join #$idTableName i on i.id = k.link_id
+                               where
+                                   k.manoeuvre_id = m.id)
+        """.as[(Long, String, String, Int, Option[DateTime], Option[String], String, DateTime, String, Boolean)].list
+    }
+    manoeuvres.map { manoeuvreRow =>
+      PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6,
+        manoeuvreRow._7, manoeuvreRow._8, manoeuvreRow._9, manoeuvreRow._10)
+    }
   }
 
   private def fetchManoeuvresByElementTypeLinkIds(elementType: Long, linkIds: Seq[String]): Map[Long, Seq[PersistedManoeuvreRow]] = {
@@ -334,5 +362,20 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
          join MANOEUVRE m on m.ID = me.MANOEUVRE_ID
          where me.LINK_ID = $sourceId and me.element_type = $elementType and me.DEST_LINK_ID = $destId and m.VALID_TO is null
       """.as[Long].first
+  }
+  
+  def insertSamuutusChange(row:Seq[ChangedManoeuvre]): Unit ={
+    row.foreach(a=> {
+      sqlu"""insert into manouvre_samuutus_work_list (assetId,linkIds) values (${a.manoeuvreId},${a.linkIds.map(t=>s"'$t'").mkString(",")})
+           
+ON CONFLICT (assetId) do nothing
+         """.execute
+    })
+  }
+  
+  def getSamuutusChange(): List[SamuuutusWorkListItem] = {
+    sql"""select assetId,linkIds from manouvre_samuutus_work_list """.as[(Long, String)].list.map(
+      a=>SamuuutusWorkListItem(a._1,a._2)
+    )
   }
 }

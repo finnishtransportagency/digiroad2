@@ -1,19 +1,19 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import java.security.InvalidParameterException
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Manoeuvres, SideCode}
-import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.{ManoeuvreDao, ManoeuvreUpdateLinks, PersistedManoeuvreRow}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, _}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+
+import java.security.InvalidParameterException
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime],
                      modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String, isSuggested: Boolean)
@@ -44,19 +44,23 @@ object ElementTypes {
 }
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
-class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
-  override val logger = LoggerFactory.getLogger(getClass)
-  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def municipalityDao: MunicipalityDao = new MunicipalityDao
-  override def eventBus: DigiroadEventBus = eventBusImpl
-  override def polygonTools: PolygonTools = new PolygonTools()
-  override def assetDao: PostGISAssetDao = new PostGISAssetDao
 
-  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+
+case class ChangedManoeuvre (manoeuvreId:Long,linkIds:Set[String])
+case class SamuuutusWorkListItem(assetId:Long,links:String)
+class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+  val logger = LoggerFactory.getLogger(getClass)
+  def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  def municipalityDao: MunicipalityDao = new MunicipalityDao
+  def eventBus: DigiroadEventBus = eventBusImpl
+  def polygonTools: PolygonTools = new PolygonTools()
+  def assetDao: PostGISAssetDao = new PostGISAssetDao
+
+  def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   
   def dao: ManoeuvreDao = new ManoeuvreDao()
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
@@ -195,6 +199,37 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     getByRoadLinks(roadLinks, dao.getByRoadLinks)
   }
 
+  def fetchExistingAssetsByLinksIdsString(linksIds: Set[String], newTransaction: Boolean = true): Seq[PersistedManoeuvreRow] = {
+    val existingAssets = if (newTransaction) 
+      withDynTransaction {
+        dao.fetchManoeuvresByLinkIdsNoGrouping(linksIds.toSeq)
+      } 
+    else dao.fetchManoeuvresByLinkIdsNoGrouping(linksIds.toSeq)
+    existingAssets
+  }
+  /**
+    * No manouvre validation, used for for test and samuutus updater
+    * @param linksIds
+    * @param newTransaction
+    * @return
+    */
+  def getByRoadLinkId(linksIds: Set[String],newTransaction: Boolean = true):  Seq[Manoeuvre]  = {
+    def getManouvres: Seq[Manoeuvre] = {
+     dao.getByRoadLinks(linksIds.toSeq).map { manoeuvre =>
+        val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
+        val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
+        val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
+        manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
+      }
+    }
+    if (newTransaction) withDynTransaction {getManouvres} else getManouvres
+  }
+  
+  def updateManouvreLinkVersion(update:ManoeuvreUpdateLinks, newTransaction: Boolean = true): Unit = {
+    if (newTransaction) withDynTransaction {dao.updateManoeuvreLinkIds(update)}
+    else dao.updateManoeuvreLinkIds(update)
+  }
+  
   private def getByRoadLinks(roadLinks: Seq[RoadLink], getDaoManoeuvres: Seq[String] => Seq[Manoeuvre]): Seq[Manoeuvre] = {
     val manoeuvres =
       withDynTransaction {
@@ -276,10 +311,9 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   }
 
-  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
-    withDynTransaction {
-      createWithoutTransaction(userName, manoeuvre, roadlinks)
-    }
+  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink],newTransaction:Boolean=true) : Long = {
+    if (newTransaction) withDynTransaction {createWithoutTransaction(userName, manoeuvre, roadlinks)} 
+    else createWithoutTransaction(userName, manoeuvre, roadlinks)
   }
 
   def createWithoutTransaction(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
@@ -315,14 +349,14 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       dao.deleteManoeuvreByTrafficSign(filter, username)
   }
 
-  override def withMunicipalities(municipalities: Set[Int])(query: String): String = {
+   def withMunicipalities(municipalities: Set[Int])(query: String): String = {
     query + s"and a.municipality_code in (${municipalities.mkString(",")})"
   }
 
-  override def withId(id: Long)(query: String): String = {
+   def withId(id: Long)(query: String): String = {
     query + s" and a.id = $id"
   }
-  override def withIds(ids: Set[Long])(query: String): String = {
+   def withIds(ids: Set[Long])(query: String): String = {
     query + s"and a.id in (${ids.mkString(",")})"
   }
 
@@ -434,6 +468,18 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   private def validateManoeuvre(sourceId: String, destLinkId: String, elementType: Int): Boolean  = {
     countExistings(sourceId, destLinkId, elementType) == 0
+  }
+
+  def insertSamuutusChange(rows: Seq[ChangedManoeuvre],newTransaction: Boolean = true): Seq[ChangedManoeuvre]= {
+    if (newTransaction) { withDynTransaction {  dao.insertSamuutusChange(rows)}
+    } else dao.insertSamuutusChange(rows)
+    rows
+  }
+  
+  
+  def getManoeuvreSamuutusWorkList(newTransaction: Boolean = true): Seq[SamuuutusWorkListItem] = {
+    if (newTransaction) { withDynTransaction {dao.getSamuutusChange()}
+    }else dao.getSamuutusChange()
   }
   
 }
