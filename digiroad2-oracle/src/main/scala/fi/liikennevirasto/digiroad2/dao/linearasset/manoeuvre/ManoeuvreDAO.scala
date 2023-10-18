@@ -10,6 +10,8 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
+
+import java.sql.PreparedStatement
 /**
   * Created by venholat on 3.5.2016.
   */
@@ -113,13 +115,19 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
     addManoeuvreValidityPeriods(manoeuvreId, manoeuvre.validityPeriods)
     manoeuvreId
   }
-  def updateManoeuvreLinkIds(update:ManoeuvreUpdateLinks): Unit = {
-    sqlu""" update manoeuvre_element
-            set link_id = ${update.newLinkId}
-            where link_id = ${update.oldLinkId} """.execute
-    sqlu""" update manoeuvre_element
-            set dest_link_id = ${update.newLinkId}
-            where dest_link_id = ${update.oldLinkId}""".execute
+  def updateManoeuvreLinkIds(updates:Seq[ManoeuvreUpdateLinks]): Unit = {
+    val updateLinkIds =     "update manoeuvre_element set link_id = (?) where link_id = (?)"
+    val updateDestLinkIds = "update manoeuvre_element set dest_link_id = (?) where dest_link_id = (?)"
+    
+    def setStatement(p: PreparedStatement): Unit = {
+      updates.foreach(a => {
+        p.setString(1, a.newLinkId)
+        p.setString(2, a.oldLinkId)
+        p.addBatch()
+      })
+    }
+    MassQuery.executeBatch(updateLinkIds){ setStatement }
+    MassQuery.executeBatch(updateDestLinkIds) { setStatement }
   }
 
   def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String], modifiedDateOpt: Option[DateTime]): Long = {
@@ -365,12 +373,14 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
   }
   
   def insertSamuutusChange(row:Seq[ChangedManoeuvre]): Unit ={
-    row.foreach(a=> {
-      sqlu"""insert into manouvre_samuutus_work_list (assetId,linkIds) values (${a.manoeuvreId},${a.linkIds.map(t=>s"'$t'").mkString(",")})
-           
-ON CONFLICT (assetId) do nothing
-         """.execute
-    })
+    val insert= "insert into manouvre_samuutus_work_list (assetId,linkIds) values ((?),(?)) ON CONFLICT (assetId) do nothing "
+    MassQuery.executeBatch(insert){p=>
+      row.foreach(a=>{
+        p.setLong(1,a.manoeuvreId)
+        p.setString(2,a.linkIds.map(t=>s"'$t'").mkString(","))
+        p.addBatch()
+      })
+    }
   }
   
   def getSamuutusChange(): List[SamuuutusWorkListItem] = {
