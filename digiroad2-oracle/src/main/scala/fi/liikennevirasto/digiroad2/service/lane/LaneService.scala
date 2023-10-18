@@ -958,6 +958,12 @@ trait LaneOperations {
       Seq()
   }
 
+  def moveToHistoryBatch(lanesToMoveToHistoryWithNewID: Seq[OldLaneWithNewId], username: String): Unit = {
+    val oldIds = lanesToMoveToHistoryWithNewID.map(_.lane.id)
+    historyDao.createHistoryLanesWithNewIdsBatch(lanesToMoveToHistoryWithNewID, username)
+    dao.deleteEntryLanes(oldIds)
+  }
+
   def moveToHistory(oldId: Long, newId: Option[Long], expireHistoryLane: Boolean = false, deleteFromLanes: Boolean = false,
                     username: String): Long = {
     val historyLaneId = historyDao.insertHistoryLane(oldId, newId, username)

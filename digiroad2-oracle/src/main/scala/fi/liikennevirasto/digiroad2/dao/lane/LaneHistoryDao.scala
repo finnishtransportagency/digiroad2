@@ -5,7 +5,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.Decode
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, LaneToExpireWithNewId, PersistedHistoryLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, OldLaneWithNewId, PersistedHistoryLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import org.joda.time.DateTime
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -129,17 +129,18 @@ class LaneHistoryDao() {
   }
 
   /**
-    * Optimized method for creating history lanes. Specifically created for samuutus saving
+    * Creates expired history lanes with given new_ids
+    * Optimized method for samuutus usage.
     * @param expiredLanesWithNewIds Lanes with optional newId
     * @param username User name to be used on expired_by and history_created_by fields
     * @return Created lane history IDs
     */
-  def createHistoryLanesWithNewIdsBatch(expiredLanesWithNewIds: Seq[LaneToExpireWithNewId], username: String): Seq[PersistedLane] = {
+  def createHistoryLanesWithNewIdsBatch(expiredLanesWithNewIds: Seq[OldLaneWithNewId], username: String): Seq[Long] = {
     val laneHistoryIds = Sequences.nextPrimaryKeySeqValues(expiredLanesWithNewIds.size)
     val lanePositionHistoryIds = Sequences.nextPrimaryKeySeqValues(expiredLanesWithNewIds.size)
     val laneHistoryEventNumbers = Sequences.nextLaneHistoryEventOrderNumberValues(expiredLanesWithNewIds.size)
     val oldLanesWithHistory = expiredLanesWithNewIds.zipWithIndex.map{ case (laneToExpire, index) =>
-      val newId = laneToExpire.newId.getOrElse(0)
+      val newId = laneToExpire.newId.getOrElse(0L)
       HistoryLaneWithIds(newId, laneHistoryIds(index), lanePositionHistoryIds(index), laneHistoryEventNumbers(index), laneToExpire.lane)
     }
 

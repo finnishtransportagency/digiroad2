@@ -50,7 +50,7 @@ case class ViewOnlyLane(linkId: String, startMeasure: Double, endMeasure: Double
 
 case class SideCodesForLinkIds(linkId: String, sideCode: Int)
 
-case class LaneToExpireWithNewId(lane: PersistedLane, newId: Option[Long])
+case class OldLaneWithNewId(lane: PersistedLane, newId: Option[Long])
 
 sealed trait LaneValue {
   def toJson: Any
