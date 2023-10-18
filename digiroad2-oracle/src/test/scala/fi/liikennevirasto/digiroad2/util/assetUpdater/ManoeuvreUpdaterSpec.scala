@@ -69,12 +69,12 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
         Seq(), None, linkIds = roadLink2.map(_.linkId), trafficSignId = None, isSuggested = false
       )
       val id = Service.createManoeuvre("test",newManoeuvres1,roadLink2,newTransaction = false)
-      val assetsBefore = Service.getByRoadLinkId(roadLink2.map(_.linkId).toSet, newTransaction = false)
+      val assetsBefore = Service.getByRoadLinkIdsNoValidation(roadLink2.map(_.linkId).toSet, newTransaction = false)
       assetsBefore.exists(p => p.id == id) should be(true)
       assetsBefore.find(p=>p.id ==id).get.id should be(id)
 
       val changed =  TestManoeuvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
-      val assetsAfter = Service.getByRoadLinkId(roadLink3.map(_.linkId).toSet, false)
+      val assetsAfter = Service.getByRoadLinkIdsNoValidation(roadLink3.map(_.linkId).toSet, false)
 
       assetsAfter.exists(p => p.id == id) should be(true)
       
@@ -115,12 +115,12 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
       )
 
       val id = Service.createManoeuvre("test",newManoeuvres1,roadLink2,newTransaction = false)
-      val assetsBefore = Service.getByRoadLinkId(roadLink2.map(_.linkId).toSet, newTransaction = false)
+      val assetsBefore = Service.getByRoadLinkIdsNoValidation(roadLink2.map(_.linkId).toSet, newTransaction = false)
       assetsBefore.exists(p => p.id == id) should be(true)
       assetsBefore.find(p => p.id == id).get.id should be(id)
 
       val changed =  TestManoeuvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
-      val assetsAfter = Service.getByRoadLinkId(roadLink2.map(_.linkId).toSet, newTransaction = false)
+      val assetsAfter = Service.getByRoadLinkIdsNoValidation(roadLink2.map(_.linkId).toSet, newTransaction = false)
 
       assetsAfter.exists(p => p.id == id) should be(true)
       assetsAfter.find(p => p.id == id).get.id should be(id)
