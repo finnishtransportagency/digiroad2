@@ -24,4 +24,8 @@ object Sequences {
   def nextLaneHistoryEventOrderNumberValue: Long = {
     nextLaneHistoryEventOrderNumber.as[Long].first
   }
+
+  def nextLaneHistoryEventOrderNumberValues(len: Int): Seq[Long] = {
+    nextLaneHistoryEventOrderNumbers(len).as[Long].list
+  }
 }

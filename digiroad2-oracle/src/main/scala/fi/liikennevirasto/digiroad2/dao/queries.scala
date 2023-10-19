@@ -84,6 +84,10 @@ object Queries {
 
   def nextLaneHistoryEventOrderNumber = sql"select nextval('lane_history_event_order_seq')"
 
+  def nextLaneHistoryEventOrderNumbers(len: Int) = {
+    sql"""select nextval('lane_history_event_order_seq') from generate_series(1, $len)"""
+  }
+
   def fetchLrmPositionIds(len: Int) = {
     sql"""SELECT nextval('lrm_position_primary_key_seq') from generate_series(1,$len)""".as[Long].list
   }

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
+import java.sql.Timestamp
 import scala.language.implicitConversions
 
 
@@ -314,21 +315,32 @@ class LaneDao(){
     }
 
     val insertLane =
-      s"""insert into lane (id, lane_code, created_date, created_by, municipality_code)
-         |values ((?), (?), current_timestamp, '$username', (?))""".stripMargin
+      s"""insert into lane (id, lane_code, created_date, created_by, modified_date, modified_by, municipality_code)
+         |values ((?), (?), (?), (?), (?), (?), (?))""".stripMargin
     val createdLanes = MassQuery.executeBatch(insertLane) { statement =>
       lanesToCreate.map { newLane =>
+        val createdDate = new Timestamp(newLane.lane.createdDateTime.getOrElse(DateTime.now()).getMillis)
         statement.setLong(1, newLane.laneId)
         statement.setInt(2, newLane.lane.laneCode)
-        statement.setLong(3, newLane.lane.municipalityCode)
+        statement.setTimestamp(3, createdDate)
+        if(newLane.lane.createdBy.nonEmpty) {
+          statement.setString(4, newLane.lane.createdBy.get)
+        } else statement.setNull(4, java.sql.Types.VARCHAR)
+        if(newLane.lane.modifiedDateTime.nonEmpty){
+          statement.setTimestamp(5, new Timestamp(newLane.lane.modifiedDateTime.get.getMillis))
+        } else statement.setNull(5, java.sql.Types.TIMESTAMP)
+        if(newLane.lane.modifiedBy.nonEmpty) {
+          statement.setString(6, newLane.lane.modifiedBy.get)
+        } else statement.setNull(6, java.sql.Types.VARCHAR)
+        statement.setLong(7, newLane.lane.municipalityCode)
         statement.addBatch()
         newLane.lane.copy(id = newLane.laneId)
       }
     }
 
     val insertLanePosition =
-      s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
-         |values ((?), (?), (?), (?), (?), (?))""".stripMargin
+      s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, modified_date)
+         |values ((?), (?), (?), (?), (?), current_timestamp)""".stripMargin
     MassQuery.executeBatch(insertLanePosition) { statement =>
       lanesToCreate.foreach { newLane =>
         statement.setLong(1, newLane.positionId)
@@ -336,7 +348,6 @@ class LaneDao(){
         statement.setDouble(3, newLane.lane.startMeasure)
         statement.setDouble(4, newLane.lane.endMeasure)
         statement.setString(5, newLane.lane.linkId)
-        statement.setLong(6, newLane.lane.timeStamp)
         statement.addBatch()
       }
     }
