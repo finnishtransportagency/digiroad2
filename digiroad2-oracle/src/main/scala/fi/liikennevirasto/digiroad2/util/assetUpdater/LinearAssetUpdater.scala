@@ -304,7 +304,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val changes = filterChanges(changesAll)
     val oldIds = changes.filterNot(isDeletedOrNew).map(_.oldLink.get.linkId)
     val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
-    val newLinks = changes.filter(isNew).flatMap(_.newLinks).size
+    val addedLinksCount = changes.filter(isNew).flatMap(_.newLinks).size
     // here we assume that RoadLinkProperties updater has already remove override if KMTK version traffic direction is same.
     // still valid overrided has also been samuuted
     val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
@@ -314,7 +314,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
     
     logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of changes in the sets: ${changes.size}")
-    logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${newLinks}")
+    logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${addedLinksCount}")
     val (projectedAssets, changedSet) = LogUtils.time(logger, s"Samuuting logic finished: ") {
       fillNewRoadLinksWithPreviousAssetsData(typeId, newRoadLinks, existingAssets, changes, initChangeSet)
     }
