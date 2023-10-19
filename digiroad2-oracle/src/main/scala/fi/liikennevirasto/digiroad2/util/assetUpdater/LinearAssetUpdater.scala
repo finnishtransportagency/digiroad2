@@ -168,16 +168,26 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         case Some(oldLink) => Some(oldLink.linkId)
         case None => None
       }
-      val laneOldLinkId = oldAsset match {
+      val assetOldLinkId = oldAsset match {
         case Some(asset) => Some(asset.linkId)
         case None => None
       }
       val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId).sorted
-      val checkByOldAsset = (roadLinkChangeOldLinkId.nonEmpty && laneOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == laneOldLinkId
+      val checkByOldAsset = (roadLinkChangeOldLinkId.nonEmpty && assetOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == assetOldLinkId
       if (newAsset.isDefined) checkByOldAsset || roadLinkChangeNewLinkIds.contains(newAsset.get.linkId)
       else checkByOldAsset
      
-    }).get
+    }).getOrElse({
+      val oldAssetLinkId = oldAsset match {
+        case Some(asset) => asset.linkId
+        case _ => "Old asset not defined"
+      }
+      val newAssetLinkId = newAsset match {
+        case Some(asset) => asset.linkId
+        case _ => "New asset not defined"
+      }
+      throw new NoSuchElementException(s"Could not find relevant road link change. Asset old linkId: $oldAssetLinkId Asset new linkId: $newAssetLinkId")
+    })
 
     val before = oldAsset match {
       case Some(ol) =>
@@ -304,7 +314,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
     
     logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of changes in the sets: ${changes.size}")
-    logger.info(s"Deleted links count: ${deletedLinks}, new links count: ${newLinks}")
+    logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${newLinks}")
     val (projectedAssets, changedSet) = LogUtils.time(logger, s"Samuuting logic finished: ") {
       fillNewRoadLinksWithPreviousAssetsData(typeId, newRoadLinks, existingAssets, changes, initChangeSet)
     }
