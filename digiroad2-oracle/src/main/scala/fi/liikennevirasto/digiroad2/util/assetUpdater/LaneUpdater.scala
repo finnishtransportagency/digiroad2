@@ -249,9 +249,13 @@ object LaneUpdater {
       withDynTransaction {
         logger.info(s"Started processing change set ${roadLinkChangeSet.key}")
         val allRoadLinkChanges = roadLinkChangeSet.changes
-        updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
+        LogUtils.time(logger, "Update Lane Work List with possible traffic direction changes"){
+          updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
+        }
         val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
-        val changeSet = handleChanges(roadLinkChanges, workListChanges)
+        val changeSet = LogUtils.time(logger, s"Process ${workListChanges.size} workListChanges and ${roadLinkChanges.size} roadLinkChanges") {
+          handleChanges(roadLinkChanges, workListChanges)
+        }
         val changedLanes = LogUtils.time(logger, "Saving Lane samuutus results") {
           updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
         }
