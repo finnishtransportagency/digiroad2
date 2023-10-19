@@ -136,9 +136,10 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Create multiple lanes") {
     runWithRollback {
-      val newLane1 = PersistedLane(0, linkId1, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
-      val newLane2 = PersistedLane(0, linkId1, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
-      val newLane3 = PersistedLane(0, linkId2, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val createdBy = Some("test_user")
+      val newLane1 = PersistedLane(0, linkId1, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, createdBy, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val newLane2 = PersistedLane(0, linkId1, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, createdBy, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val newLane3 = PersistedLane(0, linkId2, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, createdBy, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
       val createdLanes = ServiceWithDao.createMultipleLanes(Seq(newLane1, newLane2, newLane3), usernameTest)
       createdLanes.length should be(3)
 
