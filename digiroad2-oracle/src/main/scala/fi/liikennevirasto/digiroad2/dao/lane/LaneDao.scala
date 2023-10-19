@@ -339,8 +339,8 @@ class LaneDao(){
     }
 
     val insertLanePosition =
-      s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
-         |values ((?), (?), (?), (?), (?), (?))""".stripMargin
+      s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, modified_date)
+         |values ((?), (?), (?), (?), (?), current_timestamp""".stripMargin
     MassQuery.executeBatch(insertLanePosition) { statement =>
       lanesToCreate.foreach { newLane =>
         statement.setLong(1, newLane.positionId)
@@ -348,7 +348,6 @@ class LaneDao(){
         statement.setDouble(3, newLane.lane.startMeasure)
         statement.setDouble(4, newLane.lane.endMeasure)
         statement.setString(5, newLane.lane.linkId)
-        statement.setLong(6, newLane.lane.timeStamp)
         statement.addBatch()
       }
     }
