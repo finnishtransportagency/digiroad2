@@ -221,4 +221,16 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       (Math.abs(assetLength - 20) < 0.5) should equal(true)
     }
   }
+
+  test("Report Missing Change"){
+    val oldLinkId = "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1"
+    val newLinkId1 = "4a9f1948-8bae-4cc9-9f11-218079aac595:1"
+    val newLinkId2 = "254ed5a2-bc16-440a-88f1-23868011975b:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+    runWithRollback{
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId).get
+      val id = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 133.765), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+    }
+  }
 }
