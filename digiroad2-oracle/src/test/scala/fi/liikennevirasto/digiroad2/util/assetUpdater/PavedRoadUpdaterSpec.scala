@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Deletion, Divided}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -222,7 +223,9 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
     }
   }
 
-  test("Report Missing Change"){
+  test("Split, road link is split into two links, other has SurfaceType None. " +
+    "PavedRoad asset should not be moved to SurfaceType None link" +
+    "Report should have 1 Divided and 1 Deletion for asset"){
     val oldLinkId = "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1"
     val newLinkId1 = "4a9f1948-8bae-4cc9-9f11-218079aac595:1"
     val newLinkId2 = "254ed5a2-bc16-440a-88f1-23868011975b:1"
@@ -231,6 +234,16 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId).get
       val id = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 133.765), "testuser", 0L, Some(oldRoadLink), false, None, None)
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+      val changeReport = ChangeReport(PavedRoad.typeId, TestPavedRoadUpdater.getReport())
+      val oldLinkReports = changeReport.changes.filter(_.linkId == oldLinkId)
+      oldLinkReports.size should equal(2)
+      oldLinkReports.exists(_.changeType == Divided) should equal (true)
+      oldLinkReports.exists(_.changeType == Deletion) should equal (true)
+
+      val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId1, newLinkId2), newTransaction = false)
+      assetsAfter.size should equal (1)
+      assetsAfter.head.startMeasure should equal(23.65)
+      assetsAfter.head.endMeasure should equal(89.351)
     }
   }
 }

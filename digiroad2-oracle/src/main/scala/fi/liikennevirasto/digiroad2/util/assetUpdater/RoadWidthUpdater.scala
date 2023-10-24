@@ -32,7 +32,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     }
   }
 
-  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] ={
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], existingAssets: Seq[PersistedLinearAsset]): Option[OperationStep] ={
     expireAndCreate(operationStep,changes)
   }
 
