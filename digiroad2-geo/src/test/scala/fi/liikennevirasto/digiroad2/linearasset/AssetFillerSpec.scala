@@ -886,6 +886,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(3, 0.0)))
     sortedFilledTopology.head.startMeasure should be(0.0)
     sortedFilledTopology.head.endMeasure should be(3)
+    sortedFilledTopology.head.sideCode should be(SideCode.BothDirections)
     sortedFilledTopology.head.value should be(Some(SpeedLimitValue(80)))
 
     sortedFilledTopology.exists(_.sideCode == SideCode.TowardsDigitizing) should be(true)
@@ -906,6 +907,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(5, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5)
     sortedFilledTopology.last.endMeasure should be(10.0)
+    sortedFilledTopology.last.sideCode should be(SideCode.BothDirections)
     sortedFilledTopology.last.value should be(Some(SpeedLimitValue(80)))
   }
   
