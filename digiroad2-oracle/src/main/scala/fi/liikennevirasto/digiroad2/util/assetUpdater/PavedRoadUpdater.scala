@@ -37,7 +37,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     
   }
 
-  private def removePavement(operatio: OperationStep,changes: Seq[RoadLinkChange], existingAssets: Seq[PersistedLinearAsset]) = {
+  private def removePavement(operatio: OperationStep,changes: Seq[RoadLinkChange]) = {
     val assetsAll: Seq[PersistedLinearAsset] = operatio.assetsAfter
     val changeSets: ChangeSet = operatio.changeInfo.get
     val changesRemovePavement = changes.flatMap(_.newLinks).filter(_.surfaceType == SurfaceType.None).map(_.linkId)
@@ -45,7 +45,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         if (asset.id != 0) {
           operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
-          val originalAsset = existingAssets.find(_.id == asset.oldId).getOrElse(throw new NoSuchElementException(s"Could not find original asset for reporting, asset.oldId: ${asset.oldId}"))
+          val originalAsset = operatio.assetsBefore.find(_.id == asset.oldId).getOrElse(throw new NoSuchElementException(s"Could not find original asset for reporting, asset.oldId: ${asset.oldId}"))
           reportAssetChanges(Some(originalAsset), None, changes,  operatio.copy(assetsAfter = Seq()), Some(ChangeTypeReport.Deletion))
         }
     }).foldLeft(OperationStep(assetsAll.filterNot(a => changesRemovePavement.contains(a.linkId)), Some(changeSets)))((a, b) => {
@@ -53,8 +53,8 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     })
     Some(expiredPavement)
   }
-  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], existingAssets: Seq[PersistedLinearAsset]): Option[OperationStep] = {
-    removePavement(operationStep,changes, existingAssets)
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
+    removePavement(operationStep,changes)
   }
 
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
