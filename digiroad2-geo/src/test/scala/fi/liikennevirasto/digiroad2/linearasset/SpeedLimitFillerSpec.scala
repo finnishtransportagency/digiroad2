@@ -674,6 +674,54 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
             ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
     }*/
 
+  test("Overlapping assets, asset is both direction and full length of link, split so it does not overlap") {
+    val topology = Seq(
+      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0), Point(10, 0.0)),
+      false, 0, 10, Set(Point(0.0, 0.0), Point(10, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(50)), Seq(Point(3, 0.0), Point(5, 0.0)),
+      false, 3, 5, Set(Point(3, 0.0), Point(5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit3 = PieceWiseLinearAsset(3, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(60)), Seq(Point(3, 0.0), Point(5, 0.0)),
+      false, 3, 5, Set(Point(3, 0.0), Point(5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+
+    val speedLimits = Map(linkId1 -> Seq(speedLimit1, speedLimit2, speedLimit3))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
+    val sortedFilledTopology = filledTopology.sortBy(_.endMeasure)
+
+    sortedFilledTopology.length should be(4)
+    sortedFilledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(3, 0.0)))
+    sortedFilledTopology.head.startMeasure should be(0.0)
+    sortedFilledTopology.head.endMeasure should be(3)
+    sortedFilledTopology.head.sideCode should be(SideCode.BothDirections)
+    sortedFilledTopology.head.value should be(Some(SpeedLimitValue(80)))
+
+    sortedFilledTopology.exists(_.sideCode == SideCode.TowardsDigitizing) should be(true)
+
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.geometry should be(Seq(Point(3.0, 0.0), Point(5, 0.0)))
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.startMeasure should be(3.0)
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.endMeasure should be(5)
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.value should be(Some(SpeedLimitValue(50)))
+
+    sortedFilledTopology.exists(_.sideCode == SideCode.AgainstDigitizing) should be(true)
+
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.geometry should be(Seq(Point(3.0, 0.0), Point(5, 0.0)))
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.startMeasure should be(3.0)
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.endMeasure should be(5)
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.value should be(Some(SpeedLimitValue(60)))
+
+
+    sortedFilledTopology.last.geometry should be(Seq(Point(5, 0.0), Point(10.0, 0.0)))
+    sortedFilledTopology.last.startMeasure should be(5)
+    sortedFilledTopology.last.endMeasure should be(10.0)
+    sortedFilledTopology.last.sideCode should be(SideCode.BothDirections)
+    sortedFilledTopology.last.value should be(Some(SpeedLimitValue(80)))
+  }
+  
+
   test("Should repair speed limit data on overlaps and invalid data") {
     val rLink = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(50.0, 0.0)))
     val bdblue = Option(DateTime.now().minusDays(6))
