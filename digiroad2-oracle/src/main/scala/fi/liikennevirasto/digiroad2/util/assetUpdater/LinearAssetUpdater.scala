@@ -378,8 +378,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def adjustAndAdditionalOperations(typeId: Int, links: Seq[RoadLink],
-                                            assets: Option[OperationStep], changes: Seq[RoadLinkChange]
-                                           ): OperationStep = {
+                                            assets: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
     val adjusted = adjustAssets(typeId, links, assets.get)
     val additionalSteps = additionalOperations(adjusted, changes)
     if (additionalSteps.isDefined) additionalSteps.get else adjusted
