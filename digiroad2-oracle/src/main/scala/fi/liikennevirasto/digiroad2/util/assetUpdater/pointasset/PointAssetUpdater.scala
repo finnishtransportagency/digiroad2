@@ -56,7 +56,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
     ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBodyWithGeom, contentRowCount, true)
   }
-  private def processChanges(changedAssets: Set[service.PersistedAsset], linkChanges: Seq[RoadLinkChange): Set[Some[ChangedAsset]] = {
+  private def processChanges(changedAssets: Set[service.PersistedAsset], linkChanges: Seq[RoadLinkChange]): Set[Some[ChangedAsset]] = {
     changedAssets.map(asset => {
       val linkChange = linkChanges.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == asset.linkId).get
       correctPersistedAsset(asset, linkChange) match {
