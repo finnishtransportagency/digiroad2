@@ -42,7 +42,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
   before {
     TestPavedRoadUpdater.resetReport()
-    TestPavedRoadUpdater.resetReport()
+    TestPavedRoadUpdaterMock.resetReport()
   }
   
   def changeReplaceNewVersionChangePavement(oldRoadLinkId: String, newRoadLikId: String): RoadLinkChange = {
