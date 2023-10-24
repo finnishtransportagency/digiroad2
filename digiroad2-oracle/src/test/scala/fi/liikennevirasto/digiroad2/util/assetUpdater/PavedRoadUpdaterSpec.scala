@@ -13,9 +13,9 @@ import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Deletion
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
+class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite with BeforeAndAfter {
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val dynamicLinearAssetService = new DynamicLinearAssetService(mockRoadLinkService, mockEventBus)
@@ -38,6 +38,11 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
     override def dao: PostGISLinearAssetDao = linearAssetDao
     
     override def roadLinkService = mockRoadLinkService
+  }
+
+  before {
+    TestPavedRoadUpdater.resetReport()
+    TestPavedRoadUpdater.resetReport()
   }
   
   def changeReplaceNewVersionChangePavement(oldRoadLinkId: String, newRoadLikId: String): RoadLinkChange = {
@@ -74,7 +79,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
   val assetValues = DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka","single_choice",false,List(DynamicPropertyValue(99)))
     , DynamicProperty("suggest_box","checkbox",false,List())
   )))
-  
+
   test("Create new paved") {
 
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(_.changeType == RoadLinkChangeType.Add)
