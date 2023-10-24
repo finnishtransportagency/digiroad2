@@ -79,7 +79,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
         SideCode(limit.sideCode), service.getSpeedLimitValue(limit.value).get, Some(limit.timeStamp), limit.createdDateTime, limit.modifiedBy,
         limit.modifiedDateTime, limit.linkSource)
     }
-    service.purgeUnknown(newLinearAssets.map(_.linkId).toSet, Seq())
+    service.purgeUnknown(newLinearAssets.map(_.linkId).toSet, Seq(), newTransaction = false)
   }
   
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
