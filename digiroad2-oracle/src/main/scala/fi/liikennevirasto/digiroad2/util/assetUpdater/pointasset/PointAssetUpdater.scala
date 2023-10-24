@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
 import fi.liikennevirasto.digiroad2.util.assetUpdater._
 import org.joda.time.DateTime
@@ -46,9 +46,18 @@ class PointAssetUpdater(service: PointAssetOperations) {
     val changes = changeSet.changes
     val linkChanges = changes.filterNot(_.changeType == RoadLinkChangeType.Add)
     val changedLinkIds = linkChanges.flatMap(change => change.oldLink).map(_.linkId).toSet
-
+    logger.info("Fetching assets")
     val changedAssets = service.getPersistedAssetsByLinkIdsWithoutTransaction(changedLinkIds).toSet
-    val reportedChanges = changedAssets.map(asset => {
+
+    logger.info("Starting to process changes")
+    val reportedChanges = LogUtils.time(logger, s"Samuuting logic finished: "){processChanges(changedAssets,linkChanges)}
+    val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
+    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBody, contentRowCount)
+    val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBodyWithGeom, contentRowCount, true)
+  }
+  private def processChanges(changedAssets: Set[service.PersistedAsset], linkChanges: Seq[RoadLinkChange]): Set[Some[ChangedAsset]] = {
+    changedAssets.map(asset => {
       val linkChange = linkChanges.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == asset.linkId).get
       correctPersistedAsset(asset, linkChange) match {
         case adjustment if adjustment.floating =>
@@ -62,12 +71,8 @@ class PointAssetUpdater(service: PointAssetOperations) {
           Some(reportChange(asset, newAsset, Move, linkChange, adjustment))
       }
     })
-    val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
-    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBody, contentRowCount)
-    val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
-    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBodyWithGeom, contentRowCount, true)
   }
-
+  
   def reportChange(oldPersistedAsset: PersistedPointAsset, newPersistedAsset: PersistedPointAsset,
                    changeType: ChangeType, roadLinkChange: RoadLinkChange, assetUpdate: AssetUpdate): ChangedAsset = {
     val oldLinearReference = LinearReference(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, 0.0)
