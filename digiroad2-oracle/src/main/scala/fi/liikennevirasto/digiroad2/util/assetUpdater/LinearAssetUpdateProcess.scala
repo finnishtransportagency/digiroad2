@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.sys.exit
 
@@ -25,6 +25,7 @@ object LinearAssetUpdateProcess {
   lazy val hazMatTransportProhibitionService = new HazmatTransportProhibitionService(roadLinkService, eventbus)
   lazy val roadWidthService = new RoadWidthService(roadLinkService, eventbus)
   lazy val speedLimitService = new SpeedLimitService(eventbus, roadLinkService)
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   //TODO remove this tester when LinearAssetUpdaters work with new change sets
   private def testFetchChangesFromS3() = {
@@ -94,6 +95,7 @@ object LinearAssetUpdateProcess {
     } else {
       val assetName = args(0)
 
+      logger.info(s"Starting samuutus with parameter: $assetName")
       assetName match {
         // position, value and side code
         case "animal_warnings" => getAssetUpdater(AnimalWarnings.typeId).updateLinearAssets(AnimalWarnings.typeId)
@@ -137,6 +139,7 @@ object LinearAssetUpdateProcess {
         case "test" => testFetchChangesFromS3()
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
+      logger.info(s"Ending samuutus with parameter: $assetName")
     }
   }
 }
