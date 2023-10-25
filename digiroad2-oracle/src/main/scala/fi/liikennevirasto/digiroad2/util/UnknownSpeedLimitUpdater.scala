@@ -65,7 +65,7 @@ class UnknownSpeedLimitUpdater {
 
   def updateAdminClassAndMunicipalityCode(municipality: Int) = {
     val linksAndAdminsForUnknown = dao.getMunicipalitiesWithUnknown(municipality)
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksAndAdminsForUnknown.map(_._1).toSet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksAndAdminsForUnknown.map(_._1).toSet, false)
 
     linksAndAdminsForUnknown.foreach { case (linkIdForUnknown, adminClassForUnknown) =>
       roadLinks.find(_.linkId == linkIdForUnknown) match {
