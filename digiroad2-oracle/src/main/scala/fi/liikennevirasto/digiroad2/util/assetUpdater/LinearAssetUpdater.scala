@@ -80,12 +80,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"valueAdjustments size: ${changeSet.valueAdjustments.size}")
     logger.info(s"droppedAssetIds size: ${changeSet.droppedAssetIds.size}")
   }
-
-  def logRoadLinkChange(change: RoadLinkChange): Unit = {
-    val oldLinkId = if(change.oldLink.nonEmpty) change.oldLink.get.linkId else ""
-    val newLinkIds = change.newLinks.map(_.linkId).mkString(", ")
-    logger.info(s"RoadLink change changeType: ${change.changeType.value} old linkId: $oldLinkId new link ids: $newLinkIds")
-  }
   
   private val isDeleted: RoadLinkChange => Boolean = (change: RoadLinkChange) => {
     change.changeType.value == RoadLinkChangeType.Remove.value
@@ -378,10 +372,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                                        assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
                                                        changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val initStep = OperationStep(Seq(), Some(changeSet))
-    val projectedToNewLinks = changes.map(goThroughChanges(assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
-      .filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty)
-    
-    val OperationStep(assetsOperated, changeInfo,_) = adjustAndReport(typeId, links, projectedToNewLinks, initStep,changes).get
+    logger.info(s"Projecting ${assetsAll.size} assets to new links")
+    val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
+      changes.map(goThroughChanges(assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
+        .filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty)
+    }
+
+    logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
+    val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting projected assets") {
+      adjustAndReport(typeId, links, projectedToNewLinks, initStep,changes).get
+    }
 
     changeInfo.get.expiredAssetIds.map(asset => {
       val alreadyReported = changesForReport.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
@@ -396,7 +396,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   
   private def goThroughChanges(assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet,
                                initStep: OperationStep, change: RoadLinkChange,initStepSplit:OperationStepSplit): Option[OperationStep] = {
-    logRoadLinkChange(change)
     nonAssetUpdate(change, Seq(), null)
     change.changeType match {
       case RoadLinkChangeType.Add =>
