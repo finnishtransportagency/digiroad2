@@ -80,6 +80,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"valueAdjustments size: ${changeSet.valueAdjustments.size}")
     logger.info(s"droppedAssetIds size: ${changeSet.droppedAssetIds.size}")
   }
+
+  def logRoadLinkChange(change: RoadLinkChange): Unit = {
+    val oldLinkId = if(change.oldLink.nonEmpty) change.oldLink.get.linkId else ""
+    val newLinkIds = change.newLinks.map(_.linkId).mkString(", ")
+    logger.info(s"RoadLink change changeType: ${change.changeType.value} old linkId: $oldLinkId new link ids: $newLinkIds")
+  }
   
   private val isDeleted: RoadLinkChange => Boolean = (change: RoadLinkChange) => {
     change.changeType.value == RoadLinkChangeType.Remove.value
@@ -390,6 +396,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   
   private def goThroughChanges(assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet,
                                initStep: OperationStep, change: RoadLinkChange,initStepSplit:OperationStepSplit): Option[OperationStep] = {
+    logRoadLinkChange(change)
     nonAssetUpdate(change, Seq(), null)
     change.changeType match {
       case RoadLinkChangeType.Add =>
