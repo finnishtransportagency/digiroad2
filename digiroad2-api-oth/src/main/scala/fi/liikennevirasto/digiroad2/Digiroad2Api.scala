@@ -91,7 +91,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val cyclingAndWalkingService: CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService,
                    val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
-                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService)
+                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService,
+                   val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = Digiroad2Context.assetsOnExpiredLinksService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -1523,6 +1524,28 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "oldValue" -> item.oldValue,
           "createdAt" -> item.createdDate,
           "createdBy" -> item.createdBy)}))
+  }
+
+  get("/assetsOnExpiredLinkWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val workListItems = userHasRights match {
+      case true => assetsOnExpiredLinksService.getAllWorkListAssets()
+      case false => halt(Forbidden("User not authorized for assetsOnExpiredLinksWorkList"))
+    }
+
+    Map("items" -> workListItems.groupBy(_.assetTypeId)
+      .mapValues(_.map { item =>
+        Map("id" -> item.id,
+          "assetType" -> item.assetTypeId,
+          "linkId" -> item.linkId,
+          "sideCode" -> item.sideCode,
+          "startMeasure" -> item.startMeasure,
+          "endMeasure" -> item.endMeasure,
+          "geometry" -> item.geometry,
+          "roadLinkExpiredDate" -> item.roadLinkExpiredDate)
+      })
+    )
   }
 
   get("/inaccurates") {
