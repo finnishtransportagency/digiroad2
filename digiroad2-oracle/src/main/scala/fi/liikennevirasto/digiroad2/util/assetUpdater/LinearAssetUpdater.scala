@@ -372,10 +372,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                                        assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
                                                        changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val initStep = OperationStep(Seq(), Some(changeSet))
-    val projectedToNewLinks = changes.map(goThroughChanges(assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
-      .filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty)
-    
-    val OperationStep(assetsOperated, changeInfo,_) = adjustAndReport(typeId, links, projectedToNewLinks, initStep,changes).get
+    logger.info(s"Projecting ${assetsAll.size} assets to new links")
+    val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
+      changes.map(goThroughChanges(assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
+        .filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty)
+    }
+
+    logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
+    val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting projected assets") {
+      adjustAndReport(typeId, links, projectedToNewLinks, initStep,changes).get
+    }
 
     changeInfo.get.expiredAssetIds.map(asset => {
       val alreadyReported = changesForReport.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
