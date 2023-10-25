@@ -53,7 +53,7 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
     updateFloating(asset.id, false, None)
     updatePropertiesForAsset(asset.id, properties.toSeq, roadLink.administrativeClass, asset.nationalId)
 
-    val resultAsset = enrichBusStop(asset.copy(linkId = roadLink.linkId))._1
+    val resultAsset = enrichBusStop(fetchAsset(asset.id))._1
     (resultAsset, PublishInfo(Some(resultAsset)))
   }
 
