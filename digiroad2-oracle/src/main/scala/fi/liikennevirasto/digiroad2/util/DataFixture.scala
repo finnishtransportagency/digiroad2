@@ -178,6 +178,8 @@ object DataFixture {
 
   lazy val roadWidthGenerator = new RoadWidthGenerator
 
+  lazy val unknownSpeedLimitUpdater = new UnknownSpeedLimitUpdater
+
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -2155,7 +2157,7 @@ object DataFixture {
       case Some("traffic_sign_extract") =>
         extractTrafficSigns(args.lastOption)
       case Some("remove_unnecessary_unknown_speedLimits") =>
-        removeUnnecessaryUnknownSpeedLimits()
+        unknownSpeedLimitUpdater.updateUnknownSpeedLimits()
       case Some("list_incorrect_SpeedLimits_created") =>
         printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
       case Some("create_prohibition_using_traffic_signs") =>
