@@ -70,7 +70,7 @@ class UnknownSpeedLimitUpdater {
     linksAndAdminsForUnknown.foreach { case (linkIdForUnknown, adminClassForUnknown) =>
       roadLinks.find(_.linkId == linkIdForUnknown) match {
         case Some(r) if r.administrativeClass != AdministrativeClass.apply(adminClassForUnknown) | r.municipalityCode != municipality =>
-          println("Updated link " + linkIdForUnknown + " admin class to " + r.administrativeClass.value + " and municipality code to " + r.municipalityCode)
+          logger.info("Updated link " + linkIdForUnknown + " admin class to " + r.administrativeClass.value + " and municipality code to " + r.municipalityCode)
           dao.updateUnknownSpeedLimitAdminClassAndMunicipality(linkIdForUnknown, r.administrativeClass, r.municipalityCode)
         case _ => //do nothing
       }
