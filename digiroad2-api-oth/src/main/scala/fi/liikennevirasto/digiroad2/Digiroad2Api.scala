@@ -1492,7 +1492,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         manoeuvreService.getInaccurateRecords(Manoeuvres.typeId,municipalityCode, Set(Municipality))
     }
   }
-
+  
+  get("/manoeuvreSamuutusWorkList") {
+    val user = userProvider.getCurrentUser()
+    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
+    workListItems.map(a=> Map("assetId" -> a.assetId, "links" -> a.links)).toList
+  }
+  
   delete("/laneWorkList") {
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
@@ -1511,7 +1517,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
     val workListItems = userHasRights match {
-      case true => laneWorkListService.getLaneWorkList
+      case true => laneWorkListService.getLaneWorkList()
       case false => halt(Forbidden("User not authorized to get items from lane work list"))
     }
 

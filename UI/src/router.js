@@ -212,7 +212,8 @@
         'work-list/speedLimitErrors(/:administrativeClass)': 'speedLimitErrorsWorkList',
 
         'work-list/hazardousMaterialTransportProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
-        'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList',
+        'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList', 
+        'work-list/manoeuvreSamuutusWorkList': 'manoeuvreSamuutusWorkList',
         'work-list/heightLimitErrors': 'heightLimitErrorsWorkList',
         'work-list/bogieWeightLimitErrors': 'bogieWeightLimitErrorsWorkList',
         'work-list/lengthLimitErrors': 'lengthLimitErrorsWorkList',
@@ -490,6 +491,9 @@
       csvReports: function () {
         eventbus.trigger('csvReports:select', backend.getMunicipalities());
       },
+        manoeuvreSamuutusWorkList: function () {
+            eventbus.trigger('workList-manoeuvreSamuutus:select','manoeuvreSamuutusWorkList', backend.getManoeuvreSamuutusWorkList());
+        },
 
       laneWorkList: function () {
           eventbus.trigger('workList-laneModellingTool:select', 'lanes', backend.getLaneWorkList());

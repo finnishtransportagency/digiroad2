@@ -85,6 +85,7 @@ drop table if exists qgis_roadlinkex cascade;
 drop table if exists lane_work_list cascade;
 drop table if exists change_table cascade;
 drop table if exists samuutus_success cascade;
+drop table if exists manouvre_samuutus_work_list cascade;
 drop table if exists assets_on_expired_road_links cascade;
 drop sequence if exists grouped_id_seq cascade;
 drop sequence if exists lrm_position_primary_key_seq cascade;

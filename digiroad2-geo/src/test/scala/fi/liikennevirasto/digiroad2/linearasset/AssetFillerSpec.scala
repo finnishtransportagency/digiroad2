@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.scalatest._
@@ -606,7 +606,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(4.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(4.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)))
   }
 
 
@@ -637,8 +642,13 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(0.0)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 2.9, 10.0),
-      MValueAdjustment(3, linkId1, 0.0, 10.0)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 2.9, 10.0),
+      MValueAdjustment(3, linkId1, 0.0, 10.0)))
   }
 
   test("two opposite side directions with smallest start measure are adjusted") {
@@ -668,7 +678,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(2.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(2.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 0.0, 2.9)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0.0, 2.9), MValueAdjustment(2, linkId1, 0.0, 2.9)))
   }
 
   test("only the one-sided limit with the smallest start measure is adjusted when the two smallest are on the same side") {
@@ -699,7 +714,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(5.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0.0, 2.9)))
   }
 
   test("two opposite side directions with largest end measure and the two-sided limit in the beginning are adjusted") {
@@ -729,8 +749,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(2.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(2.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(3, linkId1, 2.9, 10.0), MValueAdjustment(2, linkId1, 2.9, 10.0),
-      MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 2.9, 10.0), MValueAdjustment(3, linkId1, 2.9, 10.0)))
   }
 
   test("only the one-sided limit with the largest end measure is adjusted when the two largest are on the same side") {
@@ -761,7 +785,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(5.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(3, linkId1, 5.9, 10.0), MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(3, linkId1, 5.9, 10.0)))
   }
 
   test("Adjust start and end m-value when difference is 0.001") {
@@ -828,6 +857,60 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sorted(0).endMeasure should be(18.082)
 
   }
+  private def roadLink(linkId: String, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
+    val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
+    RoadLink(
+      linkId, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
+      TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode))
+  }
+  
+  test("Overlapping assets, asset is both direction and full length of link, split so it does not overlap") {
+    val topology = Seq(
+      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0), Point(10, 0.0)),
+      false, 0, 10, Set(Point(0.0, 0.0), Point(10, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(50)), Seq(Point(3, 0.0), Point(5, 0.0)),
+      false, 3, 5, Set(Point(3, 0.0), Point(5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit3 = PieceWiseLinearAsset(3, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(60)), Seq(Point(3, 0.0), Point(5, 0.0)),
+      false, 3, 5, Set(Point(3, 0.0), Point(5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+
+    val speedLimits = Map(linkId1 -> Seq(speedLimit1, speedLimit2, speedLimit3))
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
+    val sortedFilledTopology = filledTopology.sortBy(_.endMeasure)
+
+    sortedFilledTopology.length should be(4)
+    sortedFilledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(3, 0.0)))
+    sortedFilledTopology.head.startMeasure should be(0.0)
+    sortedFilledTopology.head.endMeasure should be(3)
+    sortedFilledTopology.head.sideCode should be(SideCode.BothDirections)
+    sortedFilledTopology.head.value should be(Some(SpeedLimitValue(80)))
+
+    sortedFilledTopology.exists(_.sideCode == SideCode.TowardsDigitizing) should be(true)
+    
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.geometry should be(Seq(Point(3.0, 0.0), Point(5, 0.0)))
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.startMeasure should be(3.0)
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.endMeasure should be(5)
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.value should be(Some(SpeedLimitValue(50)))
+
+    sortedFilledTopology.exists(_.sideCode == SideCode.AgainstDigitizing) should be(true)
+    
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.geometry should be(Seq(Point(3.0, 0.0), Point(5, 0.0)))
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.startMeasure should be(3.0)
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.endMeasure should be(5)
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.value should be(Some(SpeedLimitValue(60)))
+    
+    
+    sortedFilledTopology.last.geometry should be(Seq(Point(5, 0.0), Point(10.0, 0.0)))
+    sortedFilledTopology.last.startMeasure should be(5)
+    sortedFilledTopology.last.endMeasure should be(10.0)
+    sortedFilledTopology.last.sideCode should be(SideCode.BothDirections)
+    sortedFilledTopology.last.value should be(Some(SpeedLimitValue(80)))
+  }
+  
 
   test("Fill whole in middle of links") {
     val roadLinks = Seq(
@@ -1196,5 +1279,30 @@ class AssetFillerSpec extends FunSuite with Matchers {
     outputAssets.size should be (1)
     changeSet.expiredAssetIds should have size 317
     outputAssets.head.id should be (18116559L)
+  }
+
+  test("clean lots of adjustments") {
+    val roadLink = assetFiller.toRoadLinkForFillTopology(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
+    val adjustedMValues = List.tabulate(20000)(id => MValueAdjustment(id, generateRandomLinkId(), 0, Random.nextDouble() * 100))
+    val adjustedSideCodes = List.tabulate(20000)(id => SideCodeAdjustment(id, BothDirections, RoadWidth.typeId))
+    val changeSet = ChangeSet(Set(), adjustedMValues, adjustedSideCodes, Set(), Seq())
+    val result = assetFiller.clean(roadLink, Seq(), changeSet)
+    result._2.adjustedMValues.size should be(20000)
+    result._2.adjustedSideCodes.size should be(20000)
+  }
+
+  test("clean takes the latest adjustment for each asset") {
+    val roadLink = assetFiller.toRoadLinkForFillTopology(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
+    val adjustedMValuesId1 = List.tabulate(10)(id => MValueAdjustment(1, generateRandomLinkId(), 0, Random.nextDouble() * 100))
+    val adjustedMValuesId2 = List.tabulate(10)(id => MValueAdjustment(2, generateRandomLinkId(), 0, Random.nextDouble() * 100))
+    val adjustedMValuesId3 = List.tabulate(10)(id => MValueAdjustment(3, generateRandomLinkId(), 0, Random.nextDouble() * 100))
+    val changeSet = ChangeSet(Set(), adjustedMValuesId1 ++ adjustedMValuesId2 ++ adjustedMValuesId3, Nil, Set(), Seq())
+    val result = assetFiller.clean(roadLink, Seq(), changeSet)
+    result._2.adjustedMValues.filter(_.assetId == 1).size should be(1)
+    result._2.adjustedMValues.filter(_.assetId == 1).head should be(adjustedMValuesId1.last)
+    result._2.adjustedMValues.filter(_.assetId == 2).size should be(1)
+    result._2.adjustedMValues.filter(_.assetId == 2).head should be(adjustedMValuesId2.last)
+    result._2.adjustedMValues.filter(_.assetId == 3).size should be(1)
+    result._2.adjustedMValues.filter(_.assetId == 3).head should be(adjustedMValuesId3.last)
   }
 }

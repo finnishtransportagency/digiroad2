@@ -33,7 +33,7 @@ object MValueCalculator {
     }else {
       val start = Math.min(linksLenght, Math.max(0.0, newStartMValue)) // take new start if it is greater than zero and smaller than roadLinkLength
       val end = Math.max(0.0, Math.min(linksLenght, newEndMValue)) // take new end if it is greater than zero and smaller than roadLinkLength
-      logAndWarn(asset, start, end)
+      logAndWarn(asset, start, end, projection)
       (roundMeasure(start), roundMeasure(end), asset.sideCode)
     }
   }
@@ -49,12 +49,12 @@ object MValueCalculator {
     logger.debug(s"new start $newStart, new end $newEnd, factor number $factor")
     val start = Math.min(newLinksLength, Math.max(0.0, newStart))
     val end = Math.max(0.0, Math.min(newLinksLength, newEnd))
-    logAndWarn(asset, start, end)
+    logAndWarn(asset, start, end, projection)
     (roundMeasure(start), roundMeasure(end), newSideCode)
   }
-  private def logAndWarn(asset: AssetLinearReference, start: Double, end: Double): Unit = {
-    if (end - start <= 0) logger.warn(s"new size is zero")
-    if (start > end) logger.warn(s"invalid meters start: $start , end $end")
+  private def logAndWarn(asset: AssetLinearReference, start: Double, end: Double, projection: Projection): Unit = {
+    if (end - start <= 0) logger.warn(s"new size is zero, start: $start, end: $end, asset ${asset}, projected link id: ${projection.linkId}")
+    if (start > end) logger.warn(s"invalid meters start: $start , end $end, projected link id: ${projection.linkId}")
     logger.debug(s"adjusting asset: ${asset.id}")
     logger.debug(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}")
     logger.debug(s"new start $start, new end $end, new length ${end - start}")

@@ -1756,19 +1756,10 @@
       {
         "oldLinkId": "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1",
         "newLinkId": "d989ee2b-f6d0-4433-b5b6-0a4fe3d62400:1",
-        "oldFromMValue": 5.085,
-        "oldToMValue": 337.589,
-        "newFromMValue": 5.085,
-        "newToMValue": 337.589,
-        "digitizationChange": false
-      },
-      {
-        "oldLinkId": "ed1dff4a-b3f1-41a1-a1af-96e896c3145d:1",
-        "newLinkId": "d989ee2b-f6d0-4433-b5b6-0a4fe3d62400:1",
         "oldFromMValue": 0,
-        "oldToMValue": 5.085,
+        "oldToMValue": 337.589,
         "newFromMValue": 0,
-        "newToMValue": 5.085,
+        "newToMValue": 337.589,
         "digitizationChange": false
       },
       {
@@ -1928,9 +1919,9 @@
       {
         "oldLinkId": "deb91a05-e182-44ae-ad71-4ba169d57e41:1",
         "newLinkId": "0a4cb6e7-67c3-411e-9446-975c53c0d054:1",
-        "oldFromMValue": 139.559,
+        "oldFromMValue": 0,
         "oldToMValue": 242.651,
-        "newFromMValue": 306.439,
+        "newFromMValue": 166.88,
         "newToMValue": 409.531,
         "digitizationChange": false
       }
@@ -2078,6 +2069,97 @@
         "oldToMValue": 3953.594,
         "newFromMValue": 0,
         "newToMValue": 2919.51,
+        "digitizationChange": false
+      }
+    ]
+  },
+  {
+    "changeType": "replace",
+    "old": {
+      "linkId": "45887aef-cb0f-4542-b738-cf44e76709ac:1",
+      "linkLength": 64.938,
+      "geometry":"SRID=3067;LINESTRING ZM(280231.9 6809519.247 85.175 0,280215.732 6809522.93 84.313 16.582,280196.16 6809526.016 83.786 36.396,280176.588 6809528.895 83.323 56.179,280167.932 6809530.237 83.314 64.938)",
+      "roadClass": 12141,
+      "adminClass": 3,
+      "municipality": 790,
+      "surfaceType": 1,
+      "trafficDirection": 0
+    },
+    "new": [
+      {
+        "linkId": "4a9f1948-8bae-4cc9-9f11-218079aac595:1",
+        "linkLength": 132.982,
+        "geometry":"SRID=3067;LINESTRING ZM(280263.875 6809458.465 84.771 0,280258.18 6809470.62 84.948 13.423,280250.817 6809485.394 85.099 29.93,280243.359 6809499.062 85.041 45.5,280238.183 6809508.726 85.144 56.463,280234.531 6809515.334 85.193 64.013,280227.876 6809520.019 84.982 72.152,280218.726 6809521.876 84.465 81.489,280206.01 6809524.065 83.952 94.392,280191.037 6809525.99 83.64 109.488,280179.073 6809528.032 83.363 121.625,280167.932 6809530.237 83.314 132.982)",
+        "roadClass": 12141,
+        "adminClass": 3,
+        "municipality": 790,
+        "surfaceType": 1,
+        "trafficDirection": 0
+      }
+    ],
+    "replaceInfo": [
+      {
+        "oldLinkId": "45887aef-cb0f-4542-b738-cf44e76709ac:1",
+        "newLinkId": "4a9f1948-8bae-4cc9-9f11-218079aac595:1",
+        "oldFromMValue": 0,
+        "oldToMValue": 64.938,
+        "newFromMValue": 68.417,
+        "newToMValue": 132.982,
+        "digitizationChange": false
+      }
+    ]
+  },
+  {
+    "changeType": "split",
+    "old": {
+      "linkId": "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1",
+      "linkLength": 133.765,
+      "geometry": "SRID=3067;LINESTRING ZM(280304.723 6809408.628 84.827 0, 280294.815 6809422.017 84.87 16.656, 280282.041 6809433.755 84.756 34.004, 280276.477 6809440.757 84.76 42.948, 280266.764 6809454.004 84.747 59.374, 280255.273 6809478.182 84.879 86.144, 280239.684 6809509.963 85.184 121.542, 280235.385 6809516.305 85.212 129.204, 280231.9 6809519.247 85.175 133.765)",
+      "roadClass": 12131,
+      "adminClass": 3,
+      "municipality": 790,
+      "surfaceType": 2,
+      "trafficDirection": 0
+    },
+    "new": [
+      {
+        "linkId": "4a9f1948-8bae-4cc9-9f11-218079aac595:1",
+        "linkLength": 132.982,
+        "geometry":"SRID=3067;LINESTRING ZM(280263.875 6809458.465 84.771 0,280258.18 6809470.62 84.948 13.423,280250.817 6809485.394 85.099 29.93,280243.359 6809499.062 85.041 45.5,280238.183 6809508.726 85.144 56.463,280234.531 6809515.334 85.193 64.013,280227.876 6809520.019 84.982 72.152,280218.726 6809521.876 84.465 81.489,280206.01 6809524.065 83.952 94.392,280191.037 6809525.99 83.64 109.488,280179.073 6809528.032 83.363 121.625,280167.932 6809530.237 83.314 132.982)",
+        "roadClass": 12141,
+        "adminClass": 3,
+        "municipality": 790,
+        "surfaceType": 1,
+        "trafficDirection": 0
+      },
+      {
+        "linkId": "254ed5a2-bc16-440a-88f1-23868011975b:1",
+        "linkLength": 89.351,
+        "geometry": "SRID=3067;LINESTRING ZM(280306.734 6809385.077 84.431 0, 280305.287 6809397.431 84.679 12.438, 280304.723 6809408.628 84.827 23.65, 280300.26 6809417.034 84.914 33.167, 280290.631 6809423.912 84.799 45, 280283.32 6809429.244 84.782 54.049, 280275.438 6809437.989 84.703 65.822, 280270.371 6809446.147 84.702 75.425, 280263.875 6809458.465 84.771 89.351)",
+        "roadClass": 12131,
+        "adminClass": 3,
+        "municipality": 790,
+        "surfaceType": 2,
+        "trafficDirection": 0
+      }
+    ],
+    "replaceInfo": [
+      {
+        "oldLinkId": "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1",
+        "newLinkId": "4a9f1948-8bae-4cc9-9f11-218079aac595:1",
+        "oldFromMValue": 64.643,
+        "oldToMValue": 133.765,
+        "newFromMValue": 0,
+        "newToMValue": 68.417,
+        "digitizationChange": false
+      },
+      {
+        "oldLinkId": "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1",
+        "newLinkId": "254ed5a2-bc16-440a-88f1-23868011975b:1",
+        "oldFromMValue": 0,
+        "oldToMValue": 64.643,
+        "newFromMValue": 23.65,
+        "newToMValue": 89.351,
         "digitizationChange": false
       }
     ]

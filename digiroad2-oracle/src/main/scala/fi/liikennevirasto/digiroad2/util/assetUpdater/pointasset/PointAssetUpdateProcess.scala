@@ -9,8 +9,10 @@ import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTrans
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util._
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{getClass, logger}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, PointAssetOperations}
 import org.apache.http.impl.client.HttpClientBuilder
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.sys.exit
 
@@ -31,6 +33,8 @@ object PointAssetUpdateProcess {
     }
     new MassTransitStopServiceWithDynTransaction(eventBus, roadLinkService, roadAddressService)
   }
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   private def getAssetUpdater(typeId: Int): PointAssetUpdater = {
     val directionalPointAssets = List(DirectionalTrafficSigns.typeId, TrafficSigns.typeId, TrafficLights.typeId)
@@ -72,7 +76,7 @@ object PointAssetUpdateProcess {
       println("Usage: PointAssetUpdater <asset_name>")
     } else {
       val assetName = args(0)
-
+      logger.info(s"Starting samuutus with parameter: $assetName")
       assetName match {
         case "pedestrian_crossing" => runUpdateProcess(PedestrianCrossings.typeId)
         case "obstacle" => runUpdateProcess(Obstacles.typeId)
@@ -83,6 +87,7 @@ object PointAssetUpdateProcess {
         case "mass_transit_stop" => runUpdateProcess(MassTransitStopAsset.typeId)
         case _ => throw new IllegalArgumentException("Invalid asset name")
       }
+      logger.info(s"Ending samuutus with parameter: $assetName")
     }
   }
 }

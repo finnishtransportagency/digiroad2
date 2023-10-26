@@ -88,7 +88,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
     filledTopology.head.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 10.0)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 10.0)))
   }
 
   test("adjust two-sided speed limits from both ends leaving the middle limit intact") {
@@ -116,7 +121,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(4.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(4.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)))
   }
 
   test("adjust two-sided speed limits from both ends leaving the middle with two one-sided limits intact") {
@@ -150,7 +160,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(4.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(4.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(4, linkId1, 4.9, 10.0)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(4, linkId1, 4.9, 10.0)))
   }
 
   test("adjust two-sided speed limits from both ends leaving the middle with one one-sided limit intact") {
@@ -178,7 +193,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(4.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(4.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.0), MValueAdjustment(3, linkId1, 4.9, 10.0)))
   }
 
   test("adjust one-sided limits when there is one on one side and two on the other") {
@@ -206,8 +226,13 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(0.0)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 2.9, 10.0),
-      MValueAdjustment(3, linkId1, 0.0, 10.0)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 2.9, 10.0),
+      MValueAdjustment(3, linkId1, 0.0, 10.0)))
   }
 
   test("two opposite side directions with smallest start measure are adjusted") {
@@ -235,8 +260,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(2.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(2.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 0.0, 2.9)),
-      Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0.0, 2.9), MValueAdjustment(2, linkId1, 0.0, 2.9)))
   }
 
   test("only the one-sided limit with the smallest start measure is adjusted when the two smallest are on the same side") {
@@ -265,7 +294,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(5.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0.0, 2.9)))
   }
 
   test("two opposite side directions with largest end measure and the two-sided limit in the beginning are adjusted") {
@@ -293,8 +327,13 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(2.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(2.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(3, linkId1, 2.9, 10.0), MValueAdjustment(2, linkId1, 2.9, 10.0),
-      MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(2, linkId1, 2.9, 10.0),
+      MValueAdjustment(3, linkId1, 2.9, 10.0)))
   }
 
   test("only the one-sided limit with the largest end measure is adjusted when the two largest are on the same side") {
@@ -323,7 +362,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.geometry should be(Seq(Point(5.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(3, linkId1, 5.9, 10.0), MValueAdjustment(1, linkId1, 0, 2.9)), Nil, Set.empty, Nil))
+    changeSet.droppedAssetIds should be(Set.empty)
+    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.expiredAssetIds should be(Set.empty)
+    changeSet.valueAdjustments should be(Nil)
+    val adjustedMValues = changeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 2.9), MValueAdjustment(3, linkId1, 5.9, 10.0)))
   }
 
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
@@ -345,7 +389,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.startMeasure) should be(Seq(0.0, 0.0))
     filledTopology.map(_.endMeasure) should be(Seq(10.0, 10.0))
     changeSet.adjustedMValues should have size 2
-    changeSet.adjustedMValues should be(Seq(MValueAdjustment(1, linkId1, 0, 10.0), MValueAdjustment(2, linkId1, 0, 10.0)))
+    changeSet.adjustedMValues.sortBy(_.assetId) should be(Seq(MValueAdjustment(1, linkId1, 0, 10.0), MValueAdjustment(2, linkId1, 0, 10.0)))
   }
 
   case class Measure(startMeasure: Double, endMeasure: Double)
@@ -629,6 +673,54 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
             Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
             ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
     }*/
+
+  test("Overlapping assets, asset is both direction and full length of link, split so it does not overlap") {
+    val topology = Seq(
+      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0), Point(10, 0.0)),
+      false, 0, 10, Set(Point(0.0, 0.0), Point(10, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(50)), Seq(Point(3, 0.0), Point(5, 0.0)),
+      false, 3, 5, Set(Point(3, 0.0), Point(5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit3 = PieceWiseLinearAsset(3, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(60)), Seq(Point(3, 0.0), Point(5, 0.0)),
+      false, 3, 5, Set(Point(3, 0.0), Point(5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+
+    val speedLimits = Map(linkId1 -> Seq(speedLimit1, speedLimit2, speedLimit3))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
+    val sortedFilledTopology = filledTopology.sortBy(_.endMeasure)
+
+    sortedFilledTopology.length should be(4)
+    sortedFilledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(3, 0.0)))
+    sortedFilledTopology.head.startMeasure should be(0.0)
+    sortedFilledTopology.head.endMeasure should be(3)
+    sortedFilledTopology.head.sideCode should be(SideCode.BothDirections)
+    sortedFilledTopology.head.value should be(Some(SpeedLimitValue(80)))
+
+    sortedFilledTopology.exists(_.sideCode == SideCode.TowardsDigitizing) should be(true)
+
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.geometry should be(Seq(Point(3.0, 0.0), Point(5, 0.0)))
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.startMeasure should be(3.0)
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.endMeasure should be(5)
+    sortedFilledTopology.find(_.sideCode == SideCode.TowardsDigitizing).get.value should be(Some(SpeedLimitValue(50)))
+
+    sortedFilledTopology.exists(_.sideCode == SideCode.AgainstDigitizing) should be(true)
+
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.geometry should be(Seq(Point(3.0, 0.0), Point(5, 0.0)))
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.startMeasure should be(3.0)
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.endMeasure should be(5)
+    sortedFilledTopology.find(_.sideCode == SideCode.AgainstDigitizing).get.value should be(Some(SpeedLimitValue(60)))
+
+
+    sortedFilledTopology.last.geometry should be(Seq(Point(5, 0.0), Point(10.0, 0.0)))
+    sortedFilledTopology.last.startMeasure should be(5)
+    sortedFilledTopology.last.endMeasure should be(10.0)
+    sortedFilledTopology.last.sideCode should be(SideCode.BothDirections)
+    sortedFilledTopology.last.value should be(Some(SpeedLimitValue(80)))
+  }
+  
 
   test("Should repair speed limit data on overlaps and invalid data") {
     val rLink = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(50.0, 0.0)))

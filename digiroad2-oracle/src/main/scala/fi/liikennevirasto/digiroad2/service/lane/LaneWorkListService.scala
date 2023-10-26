@@ -9,8 +9,12 @@ import org.joda.time.DateTime
 class LaneWorkListService {
    def workListDao: LaneWorkListDAO = new LaneWorkListDAO
 
-  def getLaneWorkList: Seq[LaneWorkListItem] = {
-    PostGISDatabase.withDynTransaction {
+  def getLaneWorkList(newTransaction:Boolean = true): Seq[LaneWorkListItem] = {
+    if (newTransaction) {
+      PostGISDatabase.withDynTransaction {
+        workListDao.getAllItems
+      }
+    } else {
       workListDao.getAllItems
     }
   }

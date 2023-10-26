@@ -30,7 +30,7 @@ case class NumericValue(value: Int) extends Value {
   override def toJson = JInt(value)
 }
 case class TextualValue(value: String) extends Value {
-  override def toJson = JObject(JField("value", JString(value)))
+  override def toJson = JString(value)
 }
 
 case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolean = false) extends Value {
