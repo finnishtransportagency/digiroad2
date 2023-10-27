@@ -594,6 +594,10 @@
       return $.getJSON('api/laneWorkList');
     };
 
+    this.getAssetsOnExpiredLinksWorkList = function () {
+      return $.getJSON('api/assetsOnExpiredLinksWorkList');
+    };
+
     this.getManoeuvreSamuutusWorkList = function () {
       return $.getJSON('api/manoeuvreSamuutusWorkList');
     };

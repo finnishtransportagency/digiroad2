@@ -1532,7 +1532,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "createdBy" -> item.createdBy)}))
   }
 
-  get("/assetsOnExpiredLinkWorkList") {
+  get("/assetsOnExpiredLinksWorkList") {
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isOperator()
     val workListItems = userHasRights match {

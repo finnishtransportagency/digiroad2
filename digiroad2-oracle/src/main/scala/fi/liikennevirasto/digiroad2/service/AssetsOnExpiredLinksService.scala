@@ -13,7 +13,7 @@ class AssetsOnExpiredLinksService {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   protected def dao: AssetsOnExpiredLinksDAO = new AssetsOnExpiredLinksDAO
 
-  def getAllWorkListAssets(newTransaction: Boolean = false): Seq[AssetOnExpiredLink] = {
+  def getAllWorkListAssets(newTransaction: Boolean = true): Seq[AssetOnExpiredLink] = {
     if(newTransaction) withDynTransaction{
       dao.fetchWorkListAssets()
     }

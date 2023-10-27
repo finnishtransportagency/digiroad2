@@ -231,6 +231,11 @@
       }
     };
 
+    var renderLinktoAssetsOnExpiredLinksWorkList = function renderLinktoWorkList() {
+      $('ul[class=information-content]').append('' +
+          '<li><button id="work-list-link-assts-on-expired-links" class="assets-on-expired-links-work-list btn btn-tertiary" onclick=location.href="#work-list/assetsOnExpiredLinks">Poistuneilla tielinkeillä olevat kohteet</button></li>');
+    };
+
     var addressNumberString = function (minAddressNumber, maxAddressNumber) {
       if (selectedLinkProperty.count() > 1) {
         return "[useita eri arvoja]";
@@ -413,6 +418,7 @@
         layer = layerName;
         if(layerName === 'linkProperty') {
           renderLinkToIncompleteLinks();
+          renderLinktoAssetsOnExpiredLinksWorkList();
         }
         else {
           $('#incomplete-links-link').parent().remove();

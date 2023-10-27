@@ -69,7 +69,7 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
       val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
       expiredLinksAfter.isEmpty should equal(true)
 
-      val assetsOnWorkList = workListService.getAllWorkListAssets()
+      val assetsOnWorkList = workListService.getAllWorkListAssets(false)
       assetsOnWorkList.size should equal(0)
     }
   }
@@ -86,7 +86,7 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
       val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
       expiredLinksAfter.size should equal(1)
 
-      val assetsOnWorkList = workListService.getAllWorkListAssets()
+      val assetsOnWorkList = workListService.getAllWorkListAssets(false)
       assetsOnWorkList.size should equal(1)
       assetsOnWorkList.head.id should equal(createdSpeedLimitId)
       assetsOnWorkList.head.linkId should equal(expiredLinkId)
