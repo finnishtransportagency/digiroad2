@@ -53,23 +53,37 @@ class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceV
 /**
  * Client for Municipality Border interface
  * @param collection
- * @param linkGeomSourceValue TODO: remove inherited RoadLink dependecies as the client does not use them
+ * @param linkGeomSourceValue
  * @param extractor
+ * TODO: remove inherited RoadLink dependencies as the client has no use for them
  */
-class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSourceValue: Option[LinkGeomSource] = None, extractor: ExtractorBase) extends KgvOperation(extractor) {
+class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSourceValue: Option[LinkGeomSource] = None, extractor: ExtractorBase = new Extractor) extends KgvOperation(extractor) {
   override def restApiEndPoint: String = Digiroad2Properties.kgvEndpoint
   protected val serviceName:String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
-  protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse("LinkGeomSource is not defined")
+  protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
 
   val filter: Filter = FilterOgc
 
-  def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
-    queryByMunicipality(municipality)
+  /**
+   * Fetches the Municipality that matches a location point
+   * @param point
+   * @return Municipality code
+   */
+  def fetchAllMunicipalityBorders(): Seq[(Int,Geometry)] = {
+    val format = "f=application%2Fgeo%2Bjson"
+    queryMunicipalityBorders(restApiEndPoint, serviceName, format)
+    match {
+      case Right(features) => features.get.features.map(feature =>
+        (feature.properties.find(property => property._1 == "kuntanumer").get._1.toInt, feature.geometry))
+      case Left(error) => throw new ClientException(error.toString)
+    }
   }
 
-  def fetchByMunicipalityF(municipality: Int): Future[Seq[LinkType]] = {
-    Future(queryByMunicipality(municipality))
-  }
+  /*def fetchAllMunicipalityBordersF(): Future[Seq[(Int,Geometry)]] = {
+    val format = "f=application%2Fgeo%2Bjson"
+    queryMunicipalityBorders(restApiEndPoint, serviceName, format)
+  }*/
+
 }
 
 class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSourceValue:Option[LinkGeomSource] = None, extractor:ExtractorBase = new Extractor) extends KgvOperation(extractor) {

@@ -43,6 +43,7 @@ object KgvCollection {
   case object UnFrozen extends KgvCollection { def value = "keskilinjavarasto:road_links" }
   case object LinkVersios extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
   case object LinkCorreponceTable extends KgvCollection { def value = "keskilinjavarasto:frozenlinks_vastintaulu" }
+  case object MunicipalityBorders extends KgvCollection { def value = "paikkatiedot:kuntarajat"}
 }
 
 object FilterOgc extends Filter {
@@ -430,7 +431,18 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
         throw e
     }
   }
-  
+
+  /**
+   * Fetches the Municipality that matches a location point
+   *
+   * @param point
+   * @return Municipality code
+   */
+  def queryMunicipalityBorders(restApiEndPoint: String, serviceName: String, format: String): Either[LinkOperationError, Option[FeatureCollection]] = {
+    fetchFeatures(s"$restApiEndPoint/$serviceName/items?$format&crs=$crs")
+  }
+
+
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
@@ -519,5 +531,5 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
   }
-  
+
 }
