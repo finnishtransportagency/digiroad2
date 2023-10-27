@@ -12,7 +12,7 @@
         };
 
         this.bindEvents = function () {
-            eventbus.on('workList-laneModellingTool:select', function (layerName, listP) {
+            eventbus.on('workList-assetsOnExpiredLinks:select', function (layerName, listP) {
                 $('.container').hide();
                 $('#work-list').show();
                 $('body').addClass('scrollable');
