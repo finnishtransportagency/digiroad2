@@ -35,15 +35,23 @@ sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], ch
 sealed case class LinkAndOperation(newLinkId: String, operation: OperationStepSplit)
 
 /**
-  * override  
-  * [[filterChanges]],
-  * [[operationForNewLink]], <br>
-  * [[additionalRemoveOperation]],  <br>
-  * [[additionalRemoveOperationMass]], <br> 
-  * [[nonAssetUpdate]] ,<br>
-  * [[additionalOperations]] <br>
-  * with your needed additional logic
-  *
+  * Samuutus loops is :
+  * <br> 1) fetch changes 
+  * <br> 2) [[filterChanges]] Apply only needed changes to assets by filtering unneeded away.
+  * <br> 3) [[additionalRemoveOperationMass]] Mass operation based on list of removed links.
+  * <br> 4) Start projecting everything into new links based on replace info.
+  * <br> 4.1) [[nonAssetUpdate]] Add additional logic if something additional also need updating.
+  * <br> 4.2) [[operationForNewLink]] Additional operation for new link.
+  * <br> 4.3) [[additionalRemoveOperation]] Additional operation based on removed link.
+  * <br> 5) All assets is projected into new links.
+  * <br> 6) Run fillTopology to adjust assets based on link length and other assets on link.
+  * <br> 7) [[adjustLinearAssets]] Override if asset need totally different fillTopology implementation.
+  * <br> 8) [[additionalOperations]]  Additional logic after projecting everything in right place .
+  * <br> 9) Start creating report row.
+  * <br> 10) Save all projected 
+  * <br> 11) Generate report
+  * <br> Generally add additional logic only by overriding [[filterChanges]],[[additionalRemoveOperationMass]],
+  * [[nonAssetUpdate]], [[operationForNewLink]],[[additionalRemoveOperation]] or [[additionalOperations]]
   * @param service Inject needed linear asset service which implement [[LinearAssetOperations]]
   */
 class LinearAssetUpdater(service: LinearAssetOperations) {
@@ -267,7 +275,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     operationSteps
   }
-
+  /**
+    * 9) start creating report row
+    * @param initStep
+    * @param assetsInNewLink
+    * @param changes
+    * @return
+    */
   private def reportingAdjusted(initStep: OperationStep, assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
     val newLinks = changes.filter(isNew).flatMap(_.newLinks).map(_.linkId)
     val (assetsOnNew,assetsWhichAreMoved) = assetsInNewLink.assetsAfter.partition(a=>newLinks.contains(a.linkId))
@@ -367,7 +381,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       persistProjectedLinearAssets(projectedAssets.filterNot(_.id == removePart).filter(_.id == 0L))
     }
   }
-
+  /**
+    * 4) Start projecting everything into new links based on replace info.
+    * @param typeId
+    * @param links
+    * @param assetsAll
+    * @param changes
+    * @param changeSet
+    * @return
+    */
   private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, links: Seq[RoadLink],
                                                        assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
                                                        changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
@@ -429,7 +451,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val additionalSteps = additionalOperations(adjusted, changes)
     if (additionalSteps.isDefined) additionalSteps.get else adjusted
   }
-  
+  /**
+    * 6) Run fillTopology to adjust assets based on link length and other assets on link.
+    * @param typeId
+    * @param links
+    * @param operationStep
+    * @return
+    */
   private def adjustAssets(typeId: Int, links: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
     val OperationStep(assetsAfter,changeSetFromOperation,assetsBefore) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
