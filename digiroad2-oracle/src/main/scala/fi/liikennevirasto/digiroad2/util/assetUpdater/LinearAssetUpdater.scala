@@ -35,8 +35,8 @@ sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], ch
 sealed case class LinkAndOperation(newLinkId: String, operation: OperationStepSplit)
 
 /**
-  * Samuutus loops is :
-  * <br> 1) fetch changes 
+  * Samuutus logic is :
+  * <br> 1) fetch changes
   * <br> 2) [[filterChanges]] Apply only needed changes to assets by filtering unneeded away.
   * <br> 3) [[additionalRemoveOperationMass]] Mass operation based on list of removed links.
   * <br> 4) Start projecting everything into new links based on replace info.
@@ -46,10 +46,10 @@ sealed case class LinkAndOperation(newLinkId: String, operation: OperationStepSp
   * <br> 5) All assets is projected into new links.
   * <br> 6) Run fillTopology to adjust assets based on link length and other assets on link.
   * <br> 7) [[adjustLinearAssets]] Override if asset need totally different fillTopology implementation.
-  * <br> 8) [[additionalOperations]]  Additional logic after projecting everything in right place .
+  * <br> 8) [[additionalOperations]]  Additional logic after projecting everything in right place.
   * <br> 9) Start creating report row.
-  * <br> 10) Save all projected 
-  * <br> 11) Generate report
+  * <br> 10) Save all projected. 
+  * <br> 11) Generate report.
   * <br> Generally add additional logic only by overriding [[filterChanges]],[[additionalRemoveOperationMass]],
   * [[nonAssetUpdate]], [[operationForNewLink]],[[additionalRemoveOperation]] or [[additionalOperations]]
   * @param service Inject needed linear asset service which implement [[LinearAssetOperations]]
