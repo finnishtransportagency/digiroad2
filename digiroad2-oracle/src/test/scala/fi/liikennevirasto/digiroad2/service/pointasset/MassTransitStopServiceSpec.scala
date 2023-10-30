@@ -62,7 +62,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     RoadLinkFetched(randomLinkId6, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers),
     RoadLinkFetched(randomLinkId7, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("ROADNAME_SE" -> "roadname_se",
       "ROADNAME_FI" -> "roadname_fi")))
-  
+
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
@@ -722,7 +722,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       liviId shouldNot be ("")
     }
   }
-  
+
   test("Update existing masstransitstop if the new distance is greater than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
@@ -781,7 +781,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       expired should be(Some(false))
     }
   }
-  
+
   test("Send Vallus message when deleting stop"){
     runWithRollback {
       val linkId = randomLinkId1
@@ -807,7 +807,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
     }
   }
-  
+
   test("Updating the mass transit stop from others -> ELY should create a stop with liviID") {
     runWithRollback {
       val linkId1 = LinkIdGenerator.generateRandom()
@@ -1029,7 +1029,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
     }
   }
-  
+
   test ("Get enumerated property values") {
     runWithRollback {
       val propertyValues = RollbackMassTransitStopService.massTransitStopEnumeratedPropertyValues
@@ -1068,7 +1068,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   ignore("Stop floats if a Municipality road has got changed to a road owned by state"){
     val vvhRoadLinks = List(
       RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-    
+
     when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
     val massTransitStopDao = new MassTransitStopDao
@@ -1086,7 +1086,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   ignore("Stop floats if a Private road has got changed to a road owned by state"){
     val vvhRoadLinks = List(
       RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-    
+
     when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
     val massTransitStopDao = new MassTransitStopDao
@@ -1138,7 +1138,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId).flatMap(prop => prop.values.headOption).map(_.asInstanceOf[PropertyValue].propertyValue)
   }
   test("Updating an existing stop should not create a new Livi ID") {
-     
+
     runWithRollback {
       val rad = RoadAddress(Some("235"), 110, 10, Track.Combined, 108)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((rad, RoadSide.Right))
@@ -1161,7 +1161,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       dbResult.head should be ("livi114873")
     }
   }
-  
+
   test("auto correct geometry with bounding box less than 3m") {
     runWithRollback {
       val linkId1 = LinkIdGenerator.generateRandom()

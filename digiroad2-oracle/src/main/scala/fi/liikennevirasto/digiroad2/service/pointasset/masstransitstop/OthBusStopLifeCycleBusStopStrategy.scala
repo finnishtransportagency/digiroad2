@@ -12,10 +12,10 @@ import org.slf4j.{Logger, LoggerFactory}
 object OthBusStopLifeCycleBusStopStrategy{
 
   /**
-    * Verify if the stop is relevant to OthLiviId: Must be non-virtual and must be administered by ELY or HSL.
-    * Convenience method
-    *
-    */
+   * Verify if the stop is relevant to OthLiviId: Must be non-virtual and must be administered by ELY or HSL.
+   * Convenience method
+   *
+   */
   def isOthLiviId(properties: Seq[AbstractProperty], administrativeClass: Option[AdministrativeClass]): Boolean = {
     val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
     val stopType = properties.find(pro => pro.publicId == MassTransitStopOperations.MassTransitStopTypePublicId)
@@ -34,7 +34,7 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
 
   val toLiviId = "OTHJ%d"
   val MaxMovementDistanceMeters = 50
-  
+
   override def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
@@ -56,7 +56,7 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
       find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
       flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
-  stopLiviId.isDefined && OthBusStopLifeCycleBusStopStrategy.isOthLiviId(existingAsset.propertyData, administrationClass)
+    stopLiviId.isDefined && OthBusStopLifeCycleBusStopStrategy.isOthLiviId(existingAsset.propertyData, administrationClass)
   }
 
   override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
@@ -66,20 +66,20 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     }else{
       (enrichPersistedStop,false)
     }
-    
+
   }
 
   override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
     persistedStops
   }
-  
+
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     super.publishSaveEvent(publishInfo)
   }
 
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) ={
-    
-    validateBusStopDirections(asset.properties, roadLink) 
+
+    validateBusStopDirections(asset.properties, roadLink)
 
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -90,19 +90,19 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, roadLink.linkSource)
     massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, roadLink.municipalityCode, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
-    
+
     val properties = MassTransitStopOperations.setPropertiesDefaultValues(asset.properties, roadLink)
-    
+
     val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
       throw new IllegalArgumentException
-    
+
     massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
     updateAdministrativeClassValue(assetId, roadLink.administrativeClass)
-    
+
     val liviId = toLiviId.format(nationalId)
     massTransitStopDao.updateTextPropertyValue(assetId, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
-    
+
     val persistedAsset = fetchAsset(assetId)
     (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
@@ -155,7 +155,7 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
 
     (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
-  
+
   private def calculateMovedDistance(asset: PersistedMassTransitStop, optionalPosition: Option[Position]): Double = {
     optionalPosition match {
       case Some(position) =>
@@ -168,11 +168,11 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
   override def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo] = {
     super.delete(asset)
   }
-  
+
   private def getLiviIdValue(properties: Seq[AbstractProperty]) = {
     properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId).flatMap(prop => prop.values.headOption).map(_.asInstanceOf[PropertyValue].propertyValue)
   }
-  
+
   override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
     val floatingReason = persistedAsset.propertyData.find(_.publicId == MassTransitStopOperations.FloatingReasonPublicId).map(_.values).getOrElse(Seq()).headOption
 
@@ -182,5 +182,5 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
       (false, None)
     }
   }
-  
+
 }
