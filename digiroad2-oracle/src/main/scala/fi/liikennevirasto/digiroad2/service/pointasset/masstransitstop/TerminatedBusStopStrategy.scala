@@ -24,7 +24,7 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
   override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
     persistedStops
   }
-  
+
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     throw new UnsupportedOperationException
   }
