@@ -969,6 +969,9 @@ object AssetTypeInfo {
     HazmatTransportProhibition,Prohibition,CyclingAndWalking
   )
 
+  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
+    CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId)
+
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
   }
