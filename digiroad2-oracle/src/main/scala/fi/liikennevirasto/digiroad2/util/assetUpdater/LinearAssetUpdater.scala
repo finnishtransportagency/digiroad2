@@ -29,8 +29,10 @@ import scala.collection.{Seq, mutable}
 sealed case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(), 
                                 changeInfo: Option[ChangeSet] = None,
                                 assetsBefore: Seq[PersistedLinearAsset] = Seq())
-
-sealed case class OperationStepSplit(newLinkId: String = "") extends OperationStep
+sealed case class OperationStepSplit(assetsAfter: Seq[PersistedLinearAsset] = Seq(),
+                                     changeInfo: Option[ChangeSet] = None,
+                                     newLinkId: String = "",
+                                     assetsBefore: Seq[PersistedLinearAsset] = Seq())
 sealed case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset])
 
 sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], changeType: ChangeType)
