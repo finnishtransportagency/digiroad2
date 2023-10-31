@@ -36,6 +36,8 @@ object LaneUpdater {
   lazy val laneWorkListService: LaneWorkListService = new LaneWorkListService()
   private val logger = LoggerFactory.getLogger(getClass)
   lazy val laneFiller: LaneFiller = new LaneFiller
+  private var changes: Seq[ReportedChange] = Seq()
+  
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   case class RoadLinkChangeWithResults(roadLinkChange: RoadLinkChange, changeSet: ChangeSet, lanesOnAdjustedLink: Seq[PersistedLane])
 
@@ -246,35 +248,44 @@ object LaneUpdater {
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(lastSuccess)
 
     changeSets.foreach( roadLinkChangeSet => {
-      withDynTransaction {
-        logger.info(s"Started processing change set ${roadLinkChangeSet.key}")
-        val allRoadLinkChanges = roadLinkChangeSet.changes
-
-        logger.info("Starting to process traffic direction changes")
-        LogUtils.time(logger, "Update Lane Work List with possible traffic direction changes"){
-          updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
+      try {
+        PostGISDatabase.withDynTransaction {
+          changes = updateByRoadLinks(roadLinkChangeSet)
+          ValidateSamuutus.validate(logger, Lanes.typeId, roadLinkChangeSet)
+          generateAndSaveReport(roadLinkChangeSet.targetDate)
         }
-        val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
-        logger.info("Starting to process changes")
-        val changeSet = LogUtils.time(logger, s"Process ${workListChanges.size} workListChanges and ${roadLinkChanges.size} roadLinkChanges") {
-          handleChanges(roadLinkChanges, workListChanges)
-        }
-        logger.info("Starting to save lane samuutus results")
-        val changedLanes = LogUtils.time(logger, "Saving Lane samuutus results") {
-          updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
-        }
-        val changeReport = ChangeReport(Lanes.typeId, changedLanes)
-        generateAndSaveReport(changeReport, roadLinkChangeSet.targetDate)
-        Queries.updateLatestSuccessfulSamuutus(Lanes.typeId, roadLinkChangeSet.targetDate)
+      } catch {
+        case e: SamuutusFailled =>
+          generateAndSaveReport(roadLinkChangeSet.targetDate)
       }
     })
   }
 
-  def generateAndSaveReport(changeReport: ChangeReport, processedTo: DateTime): Unit = {
-    val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
+  private def updateByRoadLinks(roadLinkChangeSet: RoadLinkChangeSet) = {
+    logger.info(s"Started processing change set ${roadLinkChangeSet.key}")
+    val allRoadLinkChanges = roadLinkChangeSet.changes
+
+    logger.info("Starting to process traffic direction changes")
+    LogUtils.time(logger, "Update Lane Work List with possible traffic direction changes") {
+      updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
+    }
+    val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
+    logger.info("Starting to process changes")
+    val changeSet = LogUtils.time(logger, s"Process ${workListChanges.size} workListChanges and ${roadLinkChanges.size} roadLinkChanges") {
+      handleChanges(roadLinkChanges, workListChanges)
+    }
+    logger.info("Starting to save lane samuutus results")
+    val changedLanes = LogUtils.time(logger, "Saving Lane samuutus results") {
+      updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
+    }
+    changedLanes
+  }
+  def generateAndSaveReport(processedTo: DateTime): Unit = {
+    val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(Lanes.typeId, changes))
     ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBody, contentRowCount)
-    val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
+    val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(Lanes.typeId, changes), withGeometry = true)
     ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
+    changes = Seq()
   }
 
   def updateTrafficDirectionChangesLaneWorkList(roadLinkChanges: Seq[RoadLinkChange]): Unit = {

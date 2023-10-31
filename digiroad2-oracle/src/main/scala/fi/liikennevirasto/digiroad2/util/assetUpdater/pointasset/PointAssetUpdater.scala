@@ -23,6 +23,8 @@ class PointAssetUpdater(service: PointAssetOperations) {
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   lazy val roadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
 
+  private var reportedChanges: Set[Some[ChangedAsset]] = Set()
+
   val MaxDistanceDiffAllowed = 3.0 // Meters
 
   def adjustValidityDirection(assetDirection: Option[Int], digitizationChange: Boolean): Option[Int] = None
@@ -35,9 +37,16 @@ class PointAssetUpdater(service: PointAssetOperations) {
 
     changeSets.foreach(changeSet => {
       logger.info(s"Started processing change set ${changeSet.key}")
-      PostGISDatabase.withDynTransaction {
-        updateByRoadLinks(typeId, changeSet)
-        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+
+      try {
+        PostGISDatabase.withDynTransaction {
+          updateByRoadLinks(typeId, changeSet)
+          ValidateSamuutus.validate(logger, typeId, changeSet)
+          generateAndSaveReport(typeId, changeSet)
+        }
+      } catch {
+        case e: SamuutusFailled =>
+          generateAndSaveReport(typeId, changeSet)
       }
     })
   }
@@ -50,11 +59,14 @@ class PointAssetUpdater(service: PointAssetOperations) {
     val changedAssets = service.getPersistedAssetsByLinkIdsWithoutTransaction(changedLinkIds).toSet
 
     logger.info("Starting to process changes")
-    val reportedChanges = LogUtils.time(logger, s"Samuuting logic finished: "){processChanges(changedAssets,linkChanges)}
+    reportedChanges = LogUtils.time(logger, s"Samuuting logic finished: "){processChanges(changedAssets,linkChanges)}
+  }
+  private def generateAndSaveReport(typeId: Int, changeSet: RoadLinkChangeSet): Unit = {
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
     ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
     ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBodyWithGeom, contentRowCount, true)
+    reportedChanges = Set()
   }
   private def processChanges(changedAssets: Set[service.PersistedAsset], linkChanges: Seq[RoadLinkChange]): Set[Some[ChangedAsset]] = {
     changedAssets.map(asset => {

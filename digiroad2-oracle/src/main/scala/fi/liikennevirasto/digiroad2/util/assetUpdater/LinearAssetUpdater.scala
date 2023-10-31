@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.process.assetValidator.SamuutusValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils}
@@ -384,11 +385,17 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"Processing ${changeSets.size}} road link changes set")
     changeSets.foreach(changeSet => {
       logger.info(s"Started processing change set ${changeSet.key}")
-      withDynTransaction {
-        updateByRoadLinks(typeId, changeSet.changes)
-        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+      
+      try {
+        withDynTransaction {
+          updateByRoadLinks(typeId, changeSet.changes)
+          ValidateSamuutus.validate(logger, typeId, changeSet)
+          generateAndSaveReport(typeId, changeSet.targetDate)
+        } 
+      } catch {
+        case e:SamuutusFailled => 
+          generateAndSaveReport(typeId, changeSet.targetDate)
       }
-      generateAndSaveReport(typeId, changeSet.targetDate)
     })
   }
 

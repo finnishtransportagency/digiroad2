@@ -1,8 +1,12 @@
 package fi.liikennevirasto.digiroad2.process.assetValidator
 
+import com.github.tototoshi.csv.CSVWriter
+import fi.liikennevirasto.digiroad2.LinearReference
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Lanes}
 import fi.liikennevirasto.digiroad2.dao.LinearReferenceAsset
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+
+import java.io.StringWriter
 
 case class ValidationResult(rule: Int, pass: Boolean, invalidRows: Seq[LinearReferenceAsset])
 
@@ -16,12 +20,29 @@ trait ValidatorProcess {
     if (newTransaction) withDynTransaction {process(assetType, linkFilter)} else process(assetType, linkFilter)
   }
   protected def process(assetType: Int, linkFilter: Set[String]): Seq[ValidationResult] = ???
+  def createCSV(rows: Seq[ValidationResult]): String = {
+    val stringWriter = new StringWriter()
+    val csvWriter = new CSVWriter(stringWriter)
+    csvWriter.writeRow(Seq("sep=,"))
+    val labels = Seq("invalidReason", "assetId", "laneCode", "linkId", "startMValue", "endMValue", "sideCode")
+    csvWriter.writeRow(labels)
+    rows.map(a => {
+      val rule = a.rule
+      val rows = a.invalidRows
+      rows.map(asset => {
+        val lrm = asset.lrm
+        val row = Seq(rule, asset.assetId, asset.laneCode.orNull, lrm.linkId, lrm.startMValue, lrm.endMValue, lrm.sideCode.orNull)
+        csvWriter.writeRow(row)
+      })
+    })
+    stringWriter.toString
+  }
 }
 
 object SamuutusValidator extends ValidatorProcess {
-  override def process(assetType: Int, linkFilter: Set[String]): Seq[ValidationResult] = {
+  override protected def process(assetType: Int, linkFilter: Set[String]): Seq[ValidationResult] = {
     AssetTypeInfo.apply(assetType) match {
-      case Lanes => super.runValidation(LaneValidators.forSamuutus, assetType, linkFilter)
+      case Lanes => runValidation(LaneValidators.forSamuutus, assetType, linkFilter)
       case a if a.geometryType == "point" => runValidation(PointAssetValidators.forSamuutus, assetType, linkFilter)
       case _ => runValidation(LinearAssetValidators.forSamuutus, assetType, linkFilter)
     }
@@ -29,7 +50,7 @@ object SamuutusValidator extends ValidatorProcess {
 }
 
 object TopologyValidator extends ValidatorProcess {
-  override def process(assetType: Int, linkFilter: Set[String]): Seq[ValidationResult] = {
+  override protected def process(assetType: Int, linkFilter: Set[String]): Seq[ValidationResult] = {
     AssetTypeInfo.apply(assetType) match {
       case Lanes => runValidation(LaneValidators.forSamuutus, assetType, linkFilter)
       case a if a.geometryType == "point" => runValidation(PointAssetValidators.forSamuutus, assetType, linkFilter)
