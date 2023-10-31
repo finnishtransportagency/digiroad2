@@ -20,14 +20,17 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Seq, mutable}
 
+/**
+  *  This act as state object. Keep record of samuutus process.
+  * @param assetsAfter after samuutus record
+  * @param changeInfo ChangeSet for saving [[LinearAssetUpdater.updateChangeSet]]
+  * @param assetsBefore before samuutus record
+  */
 sealed case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(), 
                                 changeInfo: Option[ChangeSet] = None,
                                 assetsBefore: Seq[PersistedLinearAsset] = Seq())
 
-sealed case class OperationStepSplit(assetsAfter: Seq[PersistedLinearAsset] = Seq(),
-                                changeInfo: Option[ChangeSet] = None,
-                                newLinkId: String = "",
-                                assetsBefore: Seq[PersistedLinearAsset] = Seq())
+sealed case class OperationStepSplit(newLinkId: String = "") extends OperationStep
 sealed case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset])
 
 sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], changeType: ChangeType)
@@ -35,14 +38,16 @@ sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], ch
 sealed case class LinkAndOperation(newLinkId: String, operation: OperationStepSplit)
 
 /**
+  * System use [[OperationStep]] class as state object when doing samuutus process. Each operation step or phase update [[OperationStep]] or gives [[OperationStep]] as return object.
+  * This way we can add more steps easily as needed.
   * Samuutus logic is :
   * <br> 1) fetch changes
-  * <br> 2) [[filterChanges]] Apply only needed changes to assets by filtering unneeded away.
+  * <br> 2) [[filterChanges]] Apply only needed changes to assets by writing your own filtering logic.
   * <br> 3) [[additionalRemoveOperationMass]] Mass operation based on list of removed links.
   * <br> 4) Start projecting everything into new links based on replace info.
-  * <br> 4.1) [[nonAssetUpdate]] Add additional logic if something additional also need updating.
-  * <br> 4.2) [[operationForNewLink]] Additional operation for new link.
-  * <br> 4.3) [[additionalRemoveOperation]] Additional operation based on removed link.
+  * <br> 4.1) [[nonAssetUpdate]] Add additional logic if something more also need updating like some other table.
+  * <br> 4.2) [[operationForNewLink]] Add logic to create assets when link is created.
+  * <br> 4.3) [[additionalRemoveOperation]] Add additional operation based on removed link when something more also need updating like some other table.
   * <br> 5) All assets is projected into new links.
   * <br> 6) Run fillTopology to adjust assets based on link length and other assets on link.
   * <br> 7) [[adjustLinearAssets]] Override if asset need totally different fillTopology implementation.
@@ -50,8 +55,10 @@ sealed case class LinkAndOperation(newLinkId: String, operation: OperationStepSp
   * <br> 9) Start creating report row.
   * <br> 10) Save all projected. 
   * <br> 11) Generate report.
-  * <br> Generally add additional logic only by overriding [[filterChanges]],[[additionalRemoveOperationMass]],
-  * [[nonAssetUpdate]], [[operationForNewLink]],[[additionalRemoveOperation]] or [[additionalOperations]]
+  * Generally add additional logic only by overriding [[filterChanges]]
+  * [[nonAssetUpdate]], [[operationForNewLink]] or [[additionalOperations]].
+  * [[additionalOperations]] is used to add additional operation based on new position of links. For example based on roadclass changes.
+  * 
   * @param service Inject needed linear asset service which implement [[LinearAssetOperations]]
   */
 class LinearAssetUpdater(service: LinearAssetOperations) {
@@ -326,12 +333,47 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     ChangeReporter.saveReportToS3(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
     resetReport()
   }
-
+  /**
+    * 2) [[filterChanges]] Apply only needed changes to assets by writing your own filtering logic. Default is do nothing.
+    * @param changes
+    * @return
+    */
   def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = changes
+  /**
+    * 4.2) Add logic to create assets when link is created. Default is do nothing.
+    * @param change
+    * @param assetsAll
+    * @param changeSets
+    * @return
+    */
   def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = None
+  /**
+    * 4.3) Add additional operation based on removed link when something more also need updating like some other table. Default is do nothing.
+    * @param change
+    * @param assetsAll
+    * @param changeSets
+    * @return
+    */
   def additionalRemoveOperation(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = None
+  /**
+    * 3) Mass operation based on list of removed links. Default is do nothing.
+    * @param expiredLinks
+    */
   def additionalRemoveOperationMass(expiredLinks: Seq[String]): Unit = {}
+  /**
+    * 8) This is used to add additional operation based on new position of links. For example based on roadclass changes. Default is do nothing.
+    * @param operationStep
+    * @param changes
+    * @return
+    */
   def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = None
+  /**
+    * 4.1) Add additional logic if something more also need updating like some other table. Default is do nothing.
+    * @param change
+    * @param assetsAll
+    * @param changeSets
+    * @return
+    */
   def nonAssetUpdate(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = None
   
   def updateLinearAssets(typeId: Int): Unit = {
@@ -466,7 +508,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (adjusted, changeSet) = adjustLinearAssets(typeId,convert, groupedAssets, changeSetFromOperation)
     OperationStep(adjusted.map(convertToPersisted), Some(changeSet), assetsBefore)
   }
-  
+  /**
+    * 7) Override if asset need totally different fillTopology implementation.
+    * @param typeId
+    * @param roadLinks
+    * @param assets
+    * @param changeSet
+    * @return
+    */
   protected def adjustLinearAssets(typeId: Int,roadLinks: Seq[RoadLinkForFillTopology], assets: Map[String, Seq[PieceWiseLinearAsset]],
                                    changeSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
