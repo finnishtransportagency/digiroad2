@@ -60,6 +60,7 @@ object ExpiredRoadLinkHandlingProcess {
     withDynTransaction{
       logger.info("Starting to process expired road links")
       handleExpiredRoadLinks()
+      logger.info("Finished processing expired road links")
     }
   }
 
