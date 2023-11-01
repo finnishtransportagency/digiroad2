@@ -23,42 +23,67 @@
         this.workListItemTable = function (layerName, showDeleteCheckboxes, workListItems) {
             var selectedToDelete = [];
 
-            var trafficDirectionHeader = $('<h2/>').html("Tielinkin liikennevirran suuntaa muutettu");
-            var linkTypeHeader = $('<h2/>').html("<br>Tielinkin tyypin muutos vaikuttaa kaistojen lukumäärään");
-            var tableContentRows = function (items) {
-                var itemsSorted = _.sortBy(items, ["linkId", "createdAt"]);
-                return _.map(itemsSorted, function (item) {
-                    return $('<tr/>')
-                        .append(checkbox(item.id))
-                        .append($('<th/>')
-                            .append(assetLink(item))
-                            .append(changeToLinkInfo(item)));
-                });
-            };
+            var tableForGroupingValues = function (groupedItems) {
+                if (!groupedItems || groupedItems.length === 0) return '';
 
-            var changeToLinkInfo = function (item) {
-                var collectionToSearch = item.propertyName === "link_type" ? enumerations.linkTypes : enumerations.trafficDirections;
-                var newValueObject = _.find(collectionToSearch, {value: item.newValue});
-                var newValueLegend = _.isObject(newValueObject) ? newValueObject.text : 'Tuntematon';
-                var oldValueObject = _.find(collectionToSearch, {value: item.oldValue});
-                var oldValueLegend = _.isObject(oldValueObject) ? oldValueObject.text : 'Tuntematon';
-                return $('<dd class="laneWorkListTextSize"/>')
-                    .html("Vanha arvo: " + oldValueLegend + " (" + item.oldValue + ")" +
-                        "<br> Uusi arvo: " + newValueLegend + " (" + item.newValue + ")" +
-                        "<br> Muokkauksen ajankohta: " + item.createdAt +
-                        "<br> Muokkaaja: " + item.createdBy);
+                var table = $('<table>').addClass('table');
+                var tbody = $('<tbody>');
+
+                // Iterate through the grouped items and create a assetType header row and legend row for each group
+                _.each(groupedItems, function (group, assetTypeId) {
+                    var assetTypeName = _.find(enumerations.assetTypes, function(assetType) {
+                        return assetType.typeId === parseInt(assetTypeId, 10);
+                    }).nameFI;
+                    var headerRow = $('<tr>').addClass('group-header');
+                    var headerCell = $('<th>').attr('colspan', '8').text(assetTypeName);
+                    headerRow.append(headerCell);
+                    tbody.append(headerRow);
+
+                    var legendRow = $('<tr>').addClass('group-legend');
+                    var legendCells = [
+                        $('<td>'),
+                        $('<td>').text("ID"),
+                        $('<td>').text("LinkID"),
+                        $('<td>').text("SideCode"),
+                        $('<td>').text("StartM"),
+                        $('<td>').text("EndM"),
+                        $('<td>').text("Kohteen päätepisteet"),
+                        $('<td>').text("Tielinkin päättymispvm.")
+                    ];
+
+                    legendRow.append(legendCells);
+                    tbody.append(legendRow);
+
+                    // Iterate through the items in the group and create a row for each item
+                    _.each(group, function (item) {
+                        var row = $('<tr>');
+                        var firstPoint = _.head(item.geometry);
+                        var lastPoint = _.last(item.geometry);
+                        var geomString = firstPoint.x + " " + firstPoint.y + " , " + lastPoint.x + " " + lastPoint.y;
+
+                        var cells = [
+                            $('<td>').append(checkbox(item.id)),
+                            $('<td>').text(item.id),
+                            $('<td>').append(assetLink(item)),
+                            $('<td>').text(item.sideCode),
+                            $('<td>').text(item.startMeasure),
+                            $('<td>').text(item.endMeasure),
+                            $('<td>').text(geomString),
+                            $('<td>').text(item.roadLinkExpiredDate)
+                        ];
+
+                        row.append(cells);
+                        tbody.append(row);
+                    });
+                });
+
+                table.append(tbody);
+                return table;
             };
 
             var assetLink = function (item) {
                 var link = '#' + "linkProperty" + '/' + item.linkId;
-                return $('<a class="work-list-item"/>').attr('href', link).html("Link ID: " + item.linkId);
-            };
-
-            var tableForGroupingValues = function (items) {
-                if (!items || items.length === 0) return '';
-                return $('<table><tbody>').addClass('table')
-                    .append(tableContentRows(items))
-                    .append('</tbody></table>');
+                return $('<a class="work-list-item"/>').attr('href', link).html(item.linkId);
             };
 
             var checkbox = function (itemId) {
@@ -98,8 +123,7 @@
 
             return $('<div/>')
                 .append(deleteBtn())
-                .append(linkTypeHeader)
-                .append(trafficDirectionHeader);
+                .append(tableForGroupingValues(workListItems));
         };
     };
 })(this);
