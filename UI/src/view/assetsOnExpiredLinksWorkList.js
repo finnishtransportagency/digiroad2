@@ -58,8 +58,16 @@
                     _.each(group, function (item) {
                         var row = $('<tr>');
                         var firstPoint = _.head(item.geometry);
-                        var lastPoint = _.last(item.geometry);
-                        var geomString = firstPoint.x + " " + firstPoint.y + " , " + lastPoint.x + " " + lastPoint.y;
+                        var lastPoint;
+                        if (item.geometry.length === 1) {
+                            lastPoint = {
+                                x: "",
+                                y: ""
+                            };
+                        } else {
+                            lastPoint = _.last(item.geometry);
+                        }
+                        var geomString = firstPoint.x + " " + firstPoint.y + ", " + lastPoint.x + " " + lastPoint.y;
 
                         var cells = [
                             $('<td>').append(checkbox(item.id)),
