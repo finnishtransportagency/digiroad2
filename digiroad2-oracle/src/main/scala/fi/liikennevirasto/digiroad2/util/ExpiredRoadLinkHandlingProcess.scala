@@ -58,24 +58,35 @@ object ExpiredRoadLinkHandlingProcess {
 
   def process(): Unit = {
     withDynTransaction{
+      logger.info("Starting to process expired road links")
       handleExpiredRoadLinks()
+      logger.info("Finished processing expired road links")
     }
   }
 
   def handleExpiredRoadLinks(): Unit = {
-      val expiredRoadLinksWithExpireDates = roadLinkService.getAllExpiredRoadLinksWithExpiredDates()
-      val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
-      val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
-      val emptyExpiredLinks = expiredRoadLinks.filter(rl => {
-        val linkIdsWithExistingAssets = assetsOnExpiredLinks.map(_.linkId)
-        !linkIdsWithExistingAssets.contains(rl.linkId)
-      }).map(_.linkId).toSet
+    val expiredRoadLinksWithExpireDates = roadLinkService.getAllExpiredRoadLinksWithExpiredDates()
+    logger.info(s"Expired road links count: ${expiredRoadLinksWithExpireDates.size}")
+    val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
+    val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
+    val emptyExpiredLinks = expiredRoadLinks.filter(rl => {
+      val linkIdsWithExistingAssets = assetsOnExpiredLinks.map(_.linkId)
+      !linkIdsWithExistingAssets.contains(rl.linkId)
+    }).map(_.linkId).toSet
 
-    if(emptyExpiredLinks.nonEmpty) {
-      roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
+    logger.info(s"Empty expired links count: ${emptyExpiredLinks.size}")
+    logger.info(s"Assets on expired links count: ${assetsOnExpiredLinks.size}")
+
+    if (emptyExpiredLinks.nonEmpty) {
+      LogUtils.time(logger, "Delete and expire road links and properties") {
+        roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
+      }
+
     }
-    if(assetsOnExpiredLinks.nonEmpty){
-      assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
+    if (assetsOnExpiredLinks.nonEmpty) {
+      LogUtils.time(logger, s"Insert ${assetsOnExpiredLinks.size} assets to worklist") {
+        assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
+      }
     }
   }
 }
