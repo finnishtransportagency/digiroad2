@@ -1094,5 +1094,17 @@
         error: failure
       });
     };
+
+    this.deleteAssetsOnExpiredLinksWorkListItems = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/assetsOnExpiredLinksWorkList",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
   };
 }(this));

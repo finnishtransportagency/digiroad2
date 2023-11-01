@@ -91,14 +91,14 @@
             };
 
             var deleteBtn = function () {
-                return $('<button disabled/>').attr('id', 'deleteAssetOnExpiredLinkItem').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
+                return $('<button disabled/>').attr('id', 'deleteAssetOnExpiredLinkItem').addClass('delete btn btn-expired').text('Poista valitut kohteet').click(function () {
                     new GenericConfirmPopup("Haluatko varmasti poistaa valitut kohteet työlistasta?", {
                         container: '#work-list',
                         successCallback: function () {
                             $(".verificationCheckbox:checkbox:checked").each(function () {
                                 selectedToDelete.push(parseInt(($(this).attr('value'))));
                             });
-                            backend.deleteLaneWorkListItems(selectedToDelete, function () {
+                            backend.deleteAssetsOnExpiredLinksWorkListItems(selectedToDelete, function () {
                                 new GenericConfirmPopup("Valitut kohteet poistettu!", {
                                     container: '#work-list',
                                     type: "alert",

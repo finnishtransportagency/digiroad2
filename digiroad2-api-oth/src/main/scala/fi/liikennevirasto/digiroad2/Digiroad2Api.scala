@@ -1554,6 +1554,20 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     )
   }
 
+  delete("/assetsOnExpiredLinksWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val assetIdsToDeleteFromList = userHasRights match {
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(Forbidden("User not authorized to delete items from work list"))
+    }
+    assetIdsToDeleteFromList match {
+      case Some(assetIds) =>
+        assetsOnExpiredLinksService.deleteFromWorkList(assetIds, newTransaction = true)
+      case None => halt(BadRequest("No ids to delete provided"))
+    }
+  }
+
   get("/inaccurates") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
