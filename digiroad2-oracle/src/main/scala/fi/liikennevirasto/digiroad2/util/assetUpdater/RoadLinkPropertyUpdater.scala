@@ -253,15 +253,44 @@ class RoadLinkPropertyUpdater {
         logger.info(s"Started processing change set ${changeSet.key}")
         val changes = changeSet.changes
         val (addChanges, remaining) = changes.partition(_.changeType == Add)
-        val (_, otherChanges) = remaining.partition(_.changeType == Remove)
+        val (removeChanges, otherChanges) = remaining.partition(_.changeType == Remove)
 
+        val removeReports = createReportsForPropertiesToBeDeleted(removeChanges)
         val transferredProperties = transferOverriddenPropertiesAndPrivateRoadInfo(otherChanges)
         val createdProperties = transferOrGenerateFunctionalClassesAndLinkTypes(addChanges ++ otherChanges)
-        val changeReport = ChangeReport(RoadLinkProperties.typeId, transferredProperties ++ createdProperties)
+        val changeReport = ChangeReport(RoadLinkProperties.typeId, transferredProperties ++ createdProperties ++ removeReports)
         val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
         ChangeReporter.saveReportToS3("roadLinkProperties", changeSet.targetDate, reportBody, contentRowCount)
         Queries.updateLatestSuccessfulSamuutus(RoadLinkProperties.typeId, changeSet.targetDate)
       }
     })
   }
+
+  /**
+    *  Create ReportedChange objects for removed road link properties.
+    *  Expired road links and their properties are only deleted later after all samuutus-batches have completed
+    *  and the expired links have no assets left on them
+    * @param removeChanges RoadLinkChanges with changeType Remove
+    * @return created ReportedChange objects for report
+    */
+  def createReportsForPropertiesToBeDeleted(removeChanges: Seq[RoadLinkChange]): Seq[ReportedChange] = {
+    val groupedChanges = removeChanges.groupBy(_.oldLink.get.linkId)
+    val oldLinkIds = removeChanges.map(_.oldLink.get.linkId)
+    val deletedTrafficDirections = TrafficDirectionDao.getExistingValues(oldLinkIds).map(deletion =>
+      TrafficDirectionChange(deletion.linkId, roadLinkChangeToChangeType(groupedChanges(deletion.linkId).head.changeType), deletion.value.get, None))
+    val deletedAdministrativeClasses = AdministrativeClassDao.getExistingValues(oldLinkIds).map(deletion =>
+      AdministrativeClassChange(deletion.linkId, roadLinkChangeToChangeType(groupedChanges(deletion.linkId).head.changeType), deletion.value.get, None))
+    val deletedFunctionalClasses = FunctionalClassDao.getExistingValues(oldLinkIds).map(deletion =>
+      FunctionalClassChange(deletion.linkId, roadLinkChangeToChangeType(groupedChanges(deletion.linkId).head.changeType), deletion.value, None))
+    val deletedLinkTypes = LinkTypeDao.getExistingValues(oldLinkIds).map(deletion =>
+      LinkTypeChange(deletion.linkId, roadLinkChangeToChangeType(groupedChanges(deletion.linkId).head.changeType), deletion.value, None))
+    val deletedAttributes = oldLinkIds.map(linkId => {
+      val oldAttributes = LinkAttributesDao.getExistingValues(linkId)
+      RoadLinkAttributeChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), oldAttributes, Map())
+    })
+    val deletedProperties: Seq[ReportedChange] = deletedTrafficDirections ++ deletedAdministrativeClasses ++ deletedFunctionalClasses ++ deletedLinkTypes ++ deletedAttributes
+
+    deletedProperties
+  }
+
 }
