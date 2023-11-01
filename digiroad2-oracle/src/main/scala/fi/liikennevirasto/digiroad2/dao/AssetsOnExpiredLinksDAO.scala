@@ -77,7 +77,7 @@ class AssetsOnExpiredLinksDAO {
   }
 
   def deleteFromWorkList(assetIdsToDelete: Set[Long]): Unit = {
-    val assetIdFilter = s"(${assetIdsToDelete.asInstanceOf[Set[String]].map(t=>s"'$t'").mkString(",")})"
+    val assetIdFilter = s"(${assetIdsToDelete.mkString(",")})"
 
     sqlu"""DELETE FROM assets_on_expired_road_links
            WHERE asset_id IN #$assetIdFilter
