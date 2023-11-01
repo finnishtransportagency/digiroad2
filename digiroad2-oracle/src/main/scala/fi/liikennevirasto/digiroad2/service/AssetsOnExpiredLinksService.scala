@@ -27,10 +27,12 @@ class AssetsOnExpiredLinksService {
     else assets.foreach(asset => dao.insertToWorkList(asset))
   }
 
-  def deleteFromWorkList(assetIds: Set[Long], newTransaction: Boolean = false): Unit  = {
+  def deleteFromWorkList(assetIds: Set[Long], newTransaction: Boolean = false): Set[Long]  = {
     if(newTransaction) withDynTransaction{
       dao.deleteFromWorkList(assetIds)
     }
     else dao.deleteFromWorkList(assetIds)
+
+    assetIds
   }
 }
