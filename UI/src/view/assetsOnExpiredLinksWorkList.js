@@ -72,7 +72,7 @@
                         var cells = [
                             $('<td>').append(checkbox(item.id)),
                             $('<td>').text(item.id),
-                            $('<td>').append(assetLink(item)),
+                            $('<td>').text(item.linkId),
                             $('<td>').text(item.sideCode),
                             $('<td>').text(item.startMeasure),
                             $('<td>').text(item.endMeasure),
@@ -87,11 +87,6 @@
 
                 table.append(tbody);
                 return table;
-            };
-
-            var assetLink = function (item) {
-                var link = '#' + "linkProperty" + '/' + item.linkId;
-                return $('<a class="work-list-item"/>').attr('href', link).html(item.linkId);
             };
 
             var checkbox = function (itemId) {
