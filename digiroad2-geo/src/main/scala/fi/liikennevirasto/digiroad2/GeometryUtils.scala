@@ -43,7 +43,7 @@ object GeometryUtils {
   }
 
   def toWktPoint(lon: Double, lat: Double): GeometryString = {
-    val geometryWKT = "POINT (" + lon + " " + lat + ")"
+    val geometryWKT = "POINT (" + doubleToDefaultPrecision(lon) + " " + doubleToDefaultPrecision(lat) + ")"
     GeometryString( "geometryWKT", geometryWKT)
   }
   
