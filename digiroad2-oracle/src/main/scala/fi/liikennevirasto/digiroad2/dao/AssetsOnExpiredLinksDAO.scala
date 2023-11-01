@@ -60,7 +60,9 @@ class AssetsOnExpiredLinksDAO {
     val startMeasure = asset.startMeasure
     val endMeasure = asset.endMeasure
     val roadLinkExpiredDate = asset.roadLinkExpiredDate.toString
-    val geometryWKT = GeometryUtils.toWktLineString(asset.geometry).string
+    val geometryWKT = if(asset.geometry.length > 1) {
+      GeometryUtils.toWktLineString(asset.geometry).string
+    } else GeometryUtils.toWktPoint(asset.geometry.head.x, asset.geometry.head.y).string
 
     sqlu"""INSERT INTO assets_on_expired_road_links (asset_id, asset_type_id, link_id, side_code, start_measure, end_measure, road_link_expired_date, asset_geometry)
           VALUES ($assetId,

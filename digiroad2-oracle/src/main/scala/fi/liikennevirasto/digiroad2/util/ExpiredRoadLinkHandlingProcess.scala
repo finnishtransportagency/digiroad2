@@ -35,7 +35,11 @@ object ExpiredRoadLinkHandlingProcess {
     */
   def getAllExistingAssetsOnExpiredLinks(expiredRoadLinks: Seq[(RoadLink, DateTime)]): Seq[AssetOnExpiredLink] = {
     def enrichAssetLink(assetLink: AssetLinkWithMeasures, roadLinkWithExpiredDate: (RoadLink, DateTime)): AssetOnExpiredLink = {
-      val geometry = GeometryUtils.truncateGeometry3D(roadLinkWithExpiredDate._1.geometry, assetLink.startMeasure, assetLink.endMeasure)
+      val geometry = if(AssetTypeInfo.apply(assetLink.assetTypeId).geometryType == "linear") {
+        GeometryUtils.truncateGeometry3D(roadLinkWithExpiredDate._1.geometry, assetLink.startMeasure, assetLink.endMeasure)
+      } else {
+        Seq(GeometryUtils.calculatePointFromLinearReference(roadLinkWithExpiredDate._1.geometry, assetLink.startMeasure).get)
+      }
       val roadLinkExpiredDate = roadLinkWithExpiredDate._2
       AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate)
     }
@@ -67,8 +71,11 @@ object ExpiredRoadLinkHandlingProcess {
         !linkIdsWithExistingAssets.contains(rl.linkId)
       }).map(_.linkId).toSet
 
-
+    if(emptyExpiredLinks.nonEmpty) {
       roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
+    }
+    if(assetsOnExpiredLinks.nonEmpty){
       assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
+    }
   }
 }
