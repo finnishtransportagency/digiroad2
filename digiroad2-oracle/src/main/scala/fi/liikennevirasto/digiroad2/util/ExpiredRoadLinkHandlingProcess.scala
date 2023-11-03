@@ -38,7 +38,13 @@ object ExpiredRoadLinkHandlingProcess {
       val geometry = if(AssetTypeInfo.apply(assetLink.assetTypeId).geometryType == "linear") {
         GeometryUtils.truncateGeometry3D(roadLinkWithExpiredDate.roadLink.geometry, assetLink.startMeasure, assetLink.endMeasure)
       } else {
-        Seq(GeometryUtils.calculatePointFromLinearReference(roadLinkWithExpiredDate.roadLink.geometry, assetLink.startMeasure).get)
+        val pointGeom = GeometryUtils.calculatePointFromLinearReference(roadLinkWithExpiredDate.roadLink.geometry, assetLink.startMeasure)
+        if(pointGeom.nonEmpty) {
+          Seq(pointGeom.get)
+        } else {
+          logger.error(s"Could not calculate point on linkID: ${roadLinkWithExpiredDate.roadLink.linkId}, assetID: ${assetLink.id}")
+          Seq()
+        }
       }
       val roadLinkExpiredDate = roadLinkWithExpiredDate.expiredDate
       AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate)
