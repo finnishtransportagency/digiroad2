@@ -233,9 +233,10 @@ class PostGISLinearAssetDao() {
   }
 
   def fetchAssetsWithPositionByLinkIds(assetTypeId: Set[Int], linkIds: Seq[String], includeFloating: Boolean = false
-                                       , includeExpired: Boolean = false): Seq[AssetLinkWithMeasures] = {
+                                       , includeExpired: Boolean = false, includeTrAssets: Boolean = false): Seq[AssetLinkWithMeasures] = {
     val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
+    val filterTrAssets = if(includeTrAssets) "" else " and a.asset_type_id not in (370, 360, 350, 340, 330, 320, 310)"
     MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, a.asset_type_id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure
@@ -243,7 +244,7 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join #$idTableName i on i.id = pos.link_id
-          where a.asset_type_id in (#${assetTypeId.mkString(",")}) #$filterFloating #$filterExpired""".as[AssetLinkWithMeasures](getAssetLinkWithMeasures).list
+          where a.asset_type_id in (#${assetTypeId.mkString(",")}) #$filterFloating #$filterExpired #$filterTrAssets""".as[AssetLinkWithMeasures](getAssetLinkWithMeasures).list
     }
   }
 
