@@ -14,8 +14,7 @@ object ValidateAssets {
 
   private lazy val awsService = new AwsService
   private lazy val s3Service: awsService.S3.type = awsService.S3
-  private lazy val s3Bucket: String = ""
-  
+  private lazy val s3Bucket: String = Digiroad2Properties.validationReportsBucketName
   
   def validateAll (filter: Set[String]= Set()): Unit = {
     logger.info(s"Validation started")
@@ -28,8 +27,7 @@ object ValidateAssets {
   def validate(typeId: Int, filter: Set[String]= Set()): Unit = {
     val result = TopologyValidator.validate(typeId, filter)
     val passSet = result.map(_.pass).toSet
-      if (passSet.contains(false))
-        reportInvalidAssets(typeId, result)
+      if (passSet.contains(false)) reportInvalidAssets(typeId, result)
   }
   
   private def reportInvalidAssets( typeId: Int, result: Seq[ValidationResult]): Unit = {

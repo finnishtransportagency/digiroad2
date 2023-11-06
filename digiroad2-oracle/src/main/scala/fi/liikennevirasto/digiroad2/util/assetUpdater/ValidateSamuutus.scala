@@ -15,7 +15,6 @@ import java.nio.file.{Files, Paths}
 case class SamuutusFailled(msg:String) extends Exception(msg)
 
 object ValidateSamuutus {
-  val failSamuutus = false
   private lazy val awsService = new AwsService
   private lazy val s3Service: awsService.S3.type = awsService.S3
   private lazy val s3Bucket: String = Digiroad2Properties.samuutusReportsBucketName
@@ -23,15 +22,14 @@ object ValidateSamuutus {
     val newLinks = changeSet.changes.flatMap(_.newLinks.map(_.linkId)).toSet
     val result = SamuutusValidator.validate(typeId, newLinks)
     val passSet = result.map(_.pass).toSet
-   if (failSamuutus) {
-     if (passSet.contains(false)) 
-       reportInvalidAssets(logger, typeId, result) 
-     Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
-   }else {
+   if (Digiroad2Properties.failSamuutusOnFailedValidation) {
      if (passSet.contains(false)) {
        reportInvalidAssets(logger, typeId, result)
-       throw SamuutusFailled("")
+       throw SamuutusFailled(s"Validation error happened, see report in bucket ${s3Bucket}")
      } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+   }else {
+     if (passSet.contains(false)) reportInvalidAssets(logger, typeId, result)
+     Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
    }
   }
 
