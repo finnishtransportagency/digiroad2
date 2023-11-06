@@ -37,20 +37,20 @@ object ValidateSamuutus {
 
   private def reportInvalidAssets(logger: Logger, typeId: Int, result: Seq[ValidationResult]): Unit = {
     val report = SamuutusValidator.createCSV(result)
-    saveReportToLocalFile(AssetTypeInfo.apply(typeId).label, report)
+    saveReportToS3(AssetTypeInfo.apply(typeId).label, report,result.length)
     logger.error("Samuutus process failed")
   }
-  private def saveReportToS3(assetName: String, body: String): Unit = {
+  private def saveReportToS3(assetName: String, body: String,count:Int): Unit = {
     val date = DateTime.now().toString("YYYY-MM-dd")
-    val path = s"$date/${assetName}_invalidRows.csv"
+    val path = s"$date/${assetName}_invalidRow_${count}.csv"
     s3Service.saveFileToS3(s3Bucket, path, body, "csv")
   }
 
-  private def saveReportToLocalFile(assetName: String, body: String): Unit = {
+  private def saveReportToLocalFile(assetName: String, body: String,count:Int): Unit = {
     val localReportDirectoryName = "samuutus-reports-local-test"
     val date = DateTime.now().toString("YYYY-MM-dd")
     Files.createDirectories(Paths.get(localReportDirectoryName, date))
-    val path = s"$localReportDirectoryName/$date/${assetName}_invalidRows.csv"
+    val path = s"$localReportDirectoryName/$date/${assetName}_invalidRows_${count}.csv"
     new PrintWriter(path) {
       write(body)
       close()
