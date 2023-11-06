@@ -958,6 +958,13 @@ object AssetTypeInfo {
                     ParkingProhibition, CyclingAndWalking, Lanes, RoadLinkProperties,
                     UnknownAssetTypeId)
 
+  val validate: Set[AssetTypeInfo] = Set(MassTransitStopAsset, SpeedLimitAsset, TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
+    HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw, NumberOfLanes, MassTransitLane,
+    TrafficVolume, WinterSpeedLimit, Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
+    RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers, TrafficLights,
+    MaintenanceRoadAsset, TrafficSigns, StateSpeedLimit, Manoeuvres, CareClass, CarryingCapacity, RoadWorksAsset,
+    ParkingProhibition, CyclingAndWalking, Lanes)
+  
   /**
     * assets which use side code
     */

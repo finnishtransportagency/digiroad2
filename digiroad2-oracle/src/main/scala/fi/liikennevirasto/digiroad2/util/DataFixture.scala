@@ -1,40 +1,34 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.io.{BufferedWriter, File, FileWriter}
-import java.security.InvalidParameterException
-import java.sql.SQLIntegrityConstraintViolationException
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.util.{Date, NoSuchElementException, Properties}
-
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit, RoadLinkProperties => RoadLinkPropertiesAsset, _}
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
-import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
-import fi.liikennevirasto.digiroad2.dao.{PostGISUserProvider, _}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
-import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISTrafficSignDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PostGISTrafficSignDao}
+import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase._
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service._
-import fi.liikennevirasto.digiroad2.service.linearasset.{RoadWorkService, _}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
+import fi.liikennevirasto.digiroad2._
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
+import java.io.{BufferedWriter, File, FileWriter}
+import java.security.InvalidParameterException
+import java.sql.SQLIntegrityConstraintViolationException
 import scala.collection.mutable.ListBuffer
 import scala.sys.exit
 
@@ -2210,6 +2204,8 @@ object DataFixture {
         LaneEndDateExpirer.expireLanesByEndDates()
       case Some("resolving_frozen_links") =>
         ResolvingFrozenRoadLinks.process()
+      case Some("topology_validation") =>
+        ValidateAssets.validateAll()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +

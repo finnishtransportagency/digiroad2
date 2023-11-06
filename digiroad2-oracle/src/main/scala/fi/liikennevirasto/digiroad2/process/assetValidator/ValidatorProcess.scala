@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.process.assetValidator
 
 import com.github.tototoshi.csv.CSVWriter
-import fi.liikennevirasto.digiroad2.LinearReference
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Lanes}
 import fi.liikennevirasto.digiroad2.dao.LinearReferenceAsset
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -31,7 +30,7 @@ trait ValidatorProcess {
       val rows = a.invalidRows
       rows.map(asset => {
         val lrm = asset.lrm
-        val row = Seq(rule, asset.assetId, asset.laneCode.orNull, lrm.linkId, lrm.startMValue, lrm.endMValue, lrm.sideCode.orNull)
+        val row = Seq(rule, asset.assetId, asset.laneCode.getOrElse(null), lrm.linkId, lrm.startMValue, lrm.endMValue, lrm.sideCode.getOrElse(null))
         csvWriter.writeRow(row)
       })
     })
