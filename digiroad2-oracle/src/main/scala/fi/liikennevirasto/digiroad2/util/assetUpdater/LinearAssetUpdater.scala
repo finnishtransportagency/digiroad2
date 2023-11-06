@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.process.assetValidator.SamuutusValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils}
@@ -247,12 +246,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         val linkOld = relevantRoadLinkChange.oldLink.get
         val assetGeometry = GeometryUtils.truncateGeometry3D(linkOld.geometry, ol.startMeasure, ol.endMeasure)
         val measures = Measures(ol.startMeasure, ol.endMeasure).roundMeasures()
-        val linearReference = LinearReference(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, measures.length())
+        val linearReference = LinearReferenceForReport(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, measures.length())
         Some(Asset(ol.id, values, Some(linkOld.municipality), Some(assetGeometry), Some(linearReference)))
       case None =>
         val linkOld = relevantRoadLinkChange.oldLink
         if (linkOld.nonEmpty) {
-          val linearReference = LinearReference(linkOld.get.linkId, 0, None, None, None, 0)
+          val linearReference = LinearReferenceForReport(linkOld.get.linkId, 0, None, None, None, 0)
           Some(Asset(0, "", Some(linkOld.get.municipality), None, Some(linearReference)))
         } else None
     }
@@ -262,7 +261,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val values = compactJson(asset.toJson)
       val assetGeometry = GeometryUtils.truncateGeometry3D(newLink.geometry, asset.startMeasure, asset.endMeasure)
       val measures = Measures(asset.startMeasure, asset.endMeasure).roundMeasures()
-      val linearReference = LinearReference(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, measures.length())
+      val linearReference = LinearReferenceForReport(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, measures.length())
       Asset(asset.id, values, Some(newLink.municipality), Some(assetGeometry), Some(linearReference))
     })
     

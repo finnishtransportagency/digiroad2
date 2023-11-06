@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
-import fi.liikennevirasto.digiroad2.util.assetUpdater._
+import fi.liikennevirasto.digiroad2.util.assetUpdater.{Asset, ChangeReport, ChangeReporter, ChangeType, ChangedAsset, LinearReferenceForReport, SamuutusFailled, ValidateSamuutus}
 import org.joda.time.DateTime
 import org.json4s.JsonDSL._
 import org.json4s.jackson.compactJson
@@ -87,7 +87,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
   
   def reportChange(oldPersistedAsset: PersistedPointAsset, newPersistedAsset: PersistedPointAsset,
                    changeType: ChangeType, roadLinkChange: RoadLinkChange, assetUpdate: AssetUpdate): ChangedAsset = {
-    val oldLinearReference = LinearReference(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, 0.0)
+    val oldLinearReference = LinearReferenceForReport(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, 0.0)
     val oldValues = compactJson(oldPersistedAsset.propertyData.map(_.toJson))
     val oldAsset = Asset(oldPersistedAsset.id, oldValues, Some(oldPersistedAsset.municipalityCode),
       Some(Seq(Point(oldPersistedAsset.lon, oldPersistedAsset.lat))), Some(oldLinearReference), true, None)
@@ -98,7 +98,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
         Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode), None, None, true, assetUpdate.floatingReason)
       case _ =>
         val newLink = roadLinkChange.newLinks.find(_.linkId == newPersistedAsset.linkId).get
-        val newLinearReference = LinearReference(newLink.linkId, newPersistedAsset.mValue, None, None, assetUpdate.validityDirection, 0.0)
+        val newLinearReference = LinearReferenceForReport(newLink.linkId, newPersistedAsset.mValue, None, None, assetUpdate.validityDirection, 0.0)
         Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode),
           Some(Seq(Point(newPersistedAsset.lon, newPersistedAsset.lat))), Some(newLinearReference), true, None)
     }
