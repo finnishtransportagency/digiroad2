@@ -63,8 +63,8 @@ trait Validators {
   private type linkIds = Set[String]
   type returnResult = Option[ValidationResult]
   type ValidatorFunction = (assetType, linkIds) => returnResult
-  val forTopology:Seq[ValidatorFunction] = ???
-  val forSamuutus:Seq[ValidatorFunction] = ???
+  def forTopology:Seq[ValidatorFunction] = ???
+  def forSamuutus:Seq[ValidatorFunction] = ???
 }
 
 object Validators extends Validators{

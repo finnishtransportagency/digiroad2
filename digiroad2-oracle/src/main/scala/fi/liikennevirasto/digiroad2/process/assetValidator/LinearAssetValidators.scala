@@ -4,8 +4,8 @@ import fi.liikennevirasto.digiroad2.asset.AssetTypeInfo
 import fi.liikennevirasto.digiroad2.dao.ValidatorLinearDao
 
 object LinearAssetValidators extends Validators{
-  override val forSamuutus: Seq[ValidatorFunction] = Seq(assetFitIntoLink, assetDoesNotOverlap, assetPartsFullLenthIsSameAsLink)
-  override val forTopology: Seq[ValidatorFunction] = Seq(assetFitIntoLink, assetDoesNotOverlap, assetsIsNotTooShort, assetPartsFullLenthIsSameAsLink)
+  override def forSamuutus: Seq[ValidatorFunction] = Seq(assetFitIntoLink, assetDoesNotOverlap, assetPartsFullLenthIsSameAsLink)
+  override def forTopology: Seq[ValidatorFunction] = Seq(assetFitIntoLink, assetDoesNotOverlap, assetsIsNotTooShort, assetPartsFullLenthIsSameAsLink)
   //1
   //a)
   private def assetFitIntoLink(assetType: Int, linkIds: Set[String]): returnResult = {
