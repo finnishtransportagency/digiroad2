@@ -7,7 +7,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 sealed case class LinearReferenceAsset(assetId:Long,lrm:LinearReference,laneCode:Option[Int]=None)
 
 trait ValidatorDao {
-  val filterLink = (column: String, links: Set[String]) => if (links.nonEmpty) s" and ${column} in (${${links.map(t => s"'$t'").mkString(",")}})" else ""
+  val filterLink = (column: String, links: Set[String]) => if (links.nonEmpty) s" and ${column} in (${links.map(t => s"'${t}'").mkString(",")})" else ""
 
   implicit val getResult: GetResult[LinearReferenceAsset] = new GetResult[LinearReferenceAsset] {
     def apply(r: PositionedResult): LinearReferenceAsset = {
