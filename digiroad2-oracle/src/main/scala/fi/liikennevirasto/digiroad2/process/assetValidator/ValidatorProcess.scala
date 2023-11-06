@@ -30,7 +30,7 @@ trait ValidatorProcess {
       val rows = a.invalidRows
       rows.map(asset => {
         val lrm = asset.lrm
-        val row = Seq(rule, asset.assetId, asset.laneCode.getOrElse(null), lrm.linkId, lrm.startMValue, lrm.endMValue, lrm.sideCode.getOrElse(null))
+        val row = Seq(rule, asset.assetId, asset.laneCode.getOrElse(null), lrm.linkId, lrm.startMValue, lrm.endMValue.getOrElse(null), lrm.sideCode.getOrElse(null))
         csvWriter.writeRow(row)
       })
     })
