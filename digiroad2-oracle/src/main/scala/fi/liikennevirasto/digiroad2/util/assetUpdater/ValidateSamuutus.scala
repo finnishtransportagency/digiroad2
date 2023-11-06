@@ -25,7 +25,7 @@ object ValidateSamuutus {
    if (Digiroad2Properties.failSamuutusOnFailedValidation) {
      if (passSet.contains(false)) {
        reportInvalidAssets(logger, typeId, result)
-       throw SamuutusFailled(s"Validation error happened, see report in bucket ${s3Bucket}")
+       throw SamuutusFailled("")
      } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
    }else {
      if (passSet.contains(false)) reportInvalidAssets(logger, typeId, result)
@@ -36,7 +36,7 @@ object ValidateSamuutus {
   private def reportInvalidAssets(logger: Logger, typeId: Int, result: Seq[ValidationResult]): Unit = {
     val report = SamuutusValidator.createCSV(result)
     saveReportToS3(AssetTypeInfo.apply(typeId).label, report,result.length)
-    logger.error("Samuutus process failed")
+    logger.error(s"Validation error happened, see report in bucket ${s3Bucket}")
   }
   private def saveReportToS3(assetName: String, body: String,count:Int): Unit = {
     val date = DateTime.now().toString("YYYY-MM-dd")
