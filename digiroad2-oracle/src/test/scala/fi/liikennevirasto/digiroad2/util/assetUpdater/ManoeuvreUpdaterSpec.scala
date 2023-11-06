@@ -73,7 +73,7 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
       assetsBefore.exists(p => p.id == id) should be(true)
       assetsBefore.find(p=>p.id ==id).get.id should be(id)
 
-      val changed =  TestManoeuvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
+      val changed =  TestManoeuvreUpdater.updateByRoadLinks(Manoeuvres.typeId, Seq(change))
       val assetsAfter = Service.getByRoadLinkIdsNoValidation(roadLink3.map(_.linkId).toSet, false)
 
       assetsAfter.exists(p => p.id == id) should be(true)
@@ -95,6 +95,26 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
       changed.isEmpty should be(true)
     }
   }
+
+  test("test version upgrade separation logic"){
+    val linkId = generateRandomLinkId(); val linkId2 = generateRandomKmtkId()
+    val change = changeReplaceShortenedFromEnd(linkId)
+    val linkId1 = generateRandomKmtkId()
+    val linkIdVersion1 = s"$linkId1:1";    val linkIdVersion2 = s"$linkId1:2";
+    val change1 = changeReplaceNewVersion(linkIdVersion1, linkIdVersion2)
+    val linkIdVersion3 = s"$linkId2:1";    val linkIdVersion4 = s"$linkId2:2";
+    val change2 = changeReplaceNewVersion(linkIdVersion3, linkIdVersion4)
+
+    val (upgrade, other) = TestManoeuvreUpdater.separateVersionUpgradeAndOther(Seq(change))
+    upgrade.size should be(0);     other.size should be(1)
+    val (upgrade1, other1) = TestManoeuvreUpdater.separateVersionUpgradeAndOther(Seq(change,change1,change2))
+    upgrade1.size should be(2);    other1.size should be(1)
+    val (upgrade2, other2) = TestManoeuvreUpdater.separateVersionUpgradeAndOther(Seq(change1, change2))
+    upgrade2.size should be(2);    other2.size should be(0)
+    val (upgrade3, other3) = TestManoeuvreUpdater.separateVersionUpgradeAndOther(Seq(change2))
+    upgrade3.size should be(1);    other3.size should be(0)
+  }
+  
   test("Link under manoeuvre asset changed, add into worklist ") {
     val linkId = generateRandomLinkId()
     val geometry = generateGeometry(0, 10)
@@ -119,7 +139,7 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
       assetsBefore.exists(p => p.id == id) should be(true)
       assetsBefore.find(p => p.id == id).get.id should be(id)
 
-      val changed =  TestManoeuvreUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
+      val changed =  TestManoeuvreUpdater.updateByRoadLinks(Manoeuvres.typeId, Seq(change))
       val assetsAfter = Service.getByRoadLinkIdsNoValidation(roadLink2.map(_.linkId).toSet, newTransaction = false)
 
       assetsAfter.exists(p => p.id == id) should be(true)
