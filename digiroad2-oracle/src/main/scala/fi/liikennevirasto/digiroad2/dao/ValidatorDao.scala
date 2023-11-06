@@ -248,7 +248,7 @@ object PointAssetValidatorDao extends ValidatorDao{
                 WHERE ${assetTypeFilter} and aty.geometry_type = 'point' 
                 AND a.floating = FALSE
                 AND (a.valid_to > current_timestamp OR a.valid_to IS NULL)
-                AND (lp.start_measure < 0.0 OR lp.start_measure > kr.geometrylength) ${assetTypeFilter} 
+                AND (lp.start_measure < 0.0 OR lp.start_measure > kr.geometrylength)
                 ${filterLink("lp.link_id", links)}
                 """.stripMargin
     StaticQuery.queryNA[LinearReferenceAsset](sql)(getResult).iterator.toSeq

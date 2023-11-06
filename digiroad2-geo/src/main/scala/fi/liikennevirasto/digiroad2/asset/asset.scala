@@ -962,7 +962,7 @@ object AssetTypeInfo {
     HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw, NumberOfLanes, MassTransitLane,
     TrafficVolume, WinterSpeedLimit, Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers, TrafficLights,
-    MaintenanceRoadAsset, TrafficSigns, StateSpeedLimit, Manoeuvres, CareClass, CarryingCapacity, RoadWorksAsset,
+    MaintenanceRoadAsset, TrafficSigns, StateSpeedLimit, CareClass, CarryingCapacity, RoadWorksAsset,
     ParkingProhibition, CyclingAndWalking, Lanes)
   
   /**
