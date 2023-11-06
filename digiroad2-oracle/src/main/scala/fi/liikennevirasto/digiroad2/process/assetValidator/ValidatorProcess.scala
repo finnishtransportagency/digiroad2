@@ -51,8 +51,8 @@ object SamuutusValidator extends ValidatorProcess {
 object TopologyValidator extends ValidatorProcess {
   override protected def process(assetType: Int, linkFilter: Set[String]): Seq[ValidationResult] = {
     AssetTypeInfo.apply(assetType) match {
-      case Lanes => runValidation(LaneValidators.forSamuutus, assetType, linkFilter)
-      case a if a.geometryType == "point" => runValidation(PointAssetValidators.forSamuutus, assetType, linkFilter)
+      case Lanes => runValidation(LaneValidators.forTopology, assetType, linkFilter)
+      case a if a.geometryType == "point" => runValidation(PointAssetValidators.forTopology, assetType, linkFilter)
       case _ => runValidation(LinearAssetValidators.forTopology, assetType, linkFilter)
     }
   }
