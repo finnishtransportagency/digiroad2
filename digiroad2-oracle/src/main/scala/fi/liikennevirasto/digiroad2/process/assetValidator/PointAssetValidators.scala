@@ -1,14 +1,18 @@
 package fi.liikennevirasto.digiroad2.process.assetValidator
 
 import fi.liikennevirasto.digiroad2.dao.PointAssetValidatorDao
+import fi.liikennevirasto.digiroad2.util.LogUtils
+import org.slf4j.LoggerFactory
 
 object PointAssetValidators extends Validators{
+  private val logger = LoggerFactory.getLogger(getClass)
   override def forSamuutus: Seq[ValidatorFunction] = Seq(pointLikeAssetFitIntoLink)
   override def forTopology: Seq[ValidatorFunction] = Seq(pointLikeAssetFitIntoLink)
 
-  //Pistemäinen asset ei asetu linkille
-
   private def pointLikeAssetFitIntoLink(assetType: Int, linkIds: Set[String]): returnResult = {
-    Validators.returnValidationResult(0,PointAssetValidatorDao.assetWhichDoesNotFallInToLink(assetType,linkIds))
+    LogUtils.time(logger,s"pointLikeAssetFitIntoLink, asset type: $assetType"){
+      Validators.returnValidationResult("pointLikeAssetDoesNotFallInToLink",PointAssetValidatorDao.assetWhichDoesNotFallInToLink(assetType,linkIds))
+    }
+    
   }
 }

@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 import java.io.StringWriter
 
-case class ValidationResult(rule: Int, pass: Boolean, invalidRows: Seq[LinearReferenceAsset])
+case class ValidationResult(rule: String, pass: Boolean, invalidRows: Seq[LinearReferenceAsset])
 
 trait ValidatorProcess {
   protected def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -71,7 +71,7 @@ object Validators extends Validators{
   def getDefined(runValidation: Seq[returnResult]): Seq[ValidationResult] = {
     runValidation.filter(_.isDefined).map(_.get)
   }
-  def returnValidationResult(rule: Int, invalidRows: Seq[LinearReferenceAsset]): Option[ValidationResult] = {
+  def returnValidationResult(rule: String, invalidRows: Seq[LinearReferenceAsset]): Option[ValidationResult] = {
     if (invalidRows.nonEmpty) Some(ValidationResult(rule, false, invalidRows)) else Some(ValidationResult(rule, true, Seq()))
   }
 }
