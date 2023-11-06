@@ -40,10 +40,10 @@ object ValidateAssets {
       result.foreach(a => {
         val rule = a.rule
         val invalidRows = a.invalidRows
-        invalidRows.map(a => {
-          val line = s"validation: ${rule}, assetId: ${a.assetId}, laneCode: ${a.laneCode.getOrElse("")}, sideCode: ${a.lrm.sideCode}, linkId: ${a.lrm.linkId}, startMValue: ${a.lrm.startMValue}, endMValue: ${a.lrm.endMValue}"
-          logger.info(line)
+        val lines = invalidRows.map(a => {
+         s"validation: ${rule}, assetId: ${a.assetId}, laneCode: ${a.laneCode.getOrElse("")}, sideCode: ${a.lrm.sideCode}, linkId: ${a.lrm.linkId}, startMValue: ${a.lrm.startMValue}, endMValue: ${a.lrm.endMValue}"
         })
+        logger.info(lines.toString())
       })
     }
   }
