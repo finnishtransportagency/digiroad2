@@ -29,11 +29,23 @@ object ValidateAssets {
     val passSet = result.map(_.pass).toSet
       if (passSet.contains(false)) reportInvalidAssets(typeId, result)
   }
-  
-  private def reportInvalidAssets( typeId: Int, result: Seq[ValidationResult]): Unit = {
-    val report = TopologyValidator.createCSV(result)
-    saveReportToS3(AssetTypeInfo.apply(typeId).label, report,result.length)
+
+  private def reportInvalidAssets(typeId: Int, result: Seq[ValidationResult]): Unit = {
     logger.info(s"Validation returned invalid assets :$typeId")
+    val report = TopologyValidator.createCSV(result)
+    if (s3Bucket != null || s3Bucket != "" || s3Bucket.nonEmpty) {
+      saveReportToS3(AssetTypeInfo.apply(typeId).label, report, result.length)
+    } else {
+      logger.info("s3 bucket is not defined")
+      result.foreach(a => {
+        val rule = a.rule
+        val invalidRows = a.invalidRows
+        invalidRows.map(a => {
+          val line = s"validation: ${rule}, assetId: ${a.assetId}, laneCode: ${a.laneCode.getOrElse("")}, sideCode: ${a.lrm.sideCode}, linkId: ${a.lrm.linkId}, startMValue: ${a.lrm.startMValue}, endMValue: ${a.lrm.endMValue}"
+          logger.info(line)
+        })
+      })
+    }
   }
   
   private def saveReportToS3(assetName: String, body: String,count:Int): Unit = {
