@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
 import com.vividsolutions.jts.geom.Polygon
+import fi.liikennevirasto.digiroad2.GeometryUtils.isPointInsideGeometry
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.{ClientException, FeatureClass, Filter, HistoryRoadLink, IRoadLinkFetched, RoadLinkFetched}
@@ -64,26 +65,32 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
 
   val filter: Filter = FilterOgc
 
-  /**
-   * Fetches the Municipality that matches a location point
-   * @param point
-   * @return Municipality code
-   */
-  def fetchAllMunicipalityBorders(): Seq[(Int,Geometry)] = {
+  def fetchAllMunicipalities(): Seq[Municipality] = {
     val format = "f=application%2Fgeo%2Bjson"
     queryMunicipalityBorders(restApiEndPoint, serviceName, format)
     match {
-      case Right(features) => features.get.features.map(feature =>
-        (feature.properties.find(property => property._1 == "kuntanumer").get._1.toInt, feature.geometry))
+      case Right(features) => features.get.features.map {feature =>
+        val polygonFeature = feature.asInstanceOf[PolygonFeature]
+        Municipality(polygonFeature.properties("kuntanumer").toString.toInt, polygonFeature.polygonGeometry) }
       case Left(error) => throw new ClientException(error.toString)
     }
   }
 
-  /*def fetchAllMunicipalityBordersF(): Future[Seq[(Int,Geometry)]] = {
-    val format = "f=application%2Fgeo%2Bjson"
-    queryMunicipalityBorders(restApiEndPoint, serviceName, format)
-  }*/
+  def fetchAllMunicipalitiesF(): Future[Seq[Municipality]] = {
+    Future(fetchAllMunicipalities())
+  }
 
+  /**
+   * Fetches the Municipality that matches given location point
+   *
+   * @param point
+   * @param municipalities
+   * @return correct Municipality
+   *
+   */
+  def findMunicipalityForPoint(point: Point, municipalities: Seq[Municipality]): Option[Municipality] = {
+    municipalities.find(municipality => municipality.geometry.exists(geometry => isPointInsideGeometry(point, geometry)))
+  }
 }
 
 class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSourceValue:Option[LinkGeomSource] = None, extractor:ExtractorBase = new Extractor) extends KgvOperation(extractor) {
@@ -153,7 +160,7 @@ class ExtractHistory extends ExtractorBase {
 
   override type LinkType = HistoryRoadLink
 
-  override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
+  override def extractFeature(feature: LineFeature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
     val attributes = feature.properties
     val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
     val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
@@ -180,7 +187,7 @@ class ExtractHistory extends ExtractorBase {
 class ExtractKgvChange extends ExtractorBase {
   override type LinkType = ChangeKgv
 
-  override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
+  override def extractFeature(feature: LineFeature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
     val attributes = feature.properties.filter{case (key, value) => value != null}
 
     ChangeKgv(

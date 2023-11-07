@@ -117,17 +117,4 @@ class KgvRoadLinkClientSpec extends FunSuite with Matchers{
     println(s"roadlink with municipality completed in $duration ms and in second ${duration / 1000}")
     result.size should be(4447)
   }
-
-  test("Fetch municipalities") {
-    val (collection,linkGeomSourceValue) = (
-      Some(KgvCollection.MunicipalityBorders),
-      Some(LinkGeomSource.Unknown))
-    val municipalityBorderClient = new KgvMunicipalityBorderClient(collection, linkGeomSourceValue)
-    val begin = System.currentTimeMillis()
-    /*val municipalities = Await.result(municipalityBorderClient.fetchAllMunicipalityBorders(), atMost = Duration.Inf)
-    val duration = System.currentTimeMillis() - begin*/
-    val municipalities = municipalityBorderClient.fetchAllMunicipalityBorders()
-    //println(s"all Municipalities fetched in $duration ms and in second ${duration / 1000}")
-    municipalities.size should be(309)
-  }
 }

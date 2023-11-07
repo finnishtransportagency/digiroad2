@@ -23,13 +23,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
+import fi.liikennevirasto.digiroad2.{Geometry => UtilGeometry}
 
 sealed case class Link(title:String,`type`: String,rel:String,href:String)
-sealed case class FeatureCollection(`type`: String, features: List[Feature], 
-                                    crs: Option[Map[String, Any]] = None, numberReturned:Int=0,
-                                    nextPageLink:String="",previousPageLink:String="")
-sealed case class Feature(`type`: String, geometry: Geometry, properties: Map[String, Any])
+sealed case class FeatureCollection(`type`: String, features: List[BaseFeature], crs: Option[Map[String, Any]] = None, numberReturned: Int = 0, nextPageLink: String = "", previousPageLink: String = "")
+sealed class BaseFeature(`type`: String, properties: Map[String, Any])
+sealed case class LineFeature(`type`: String, geometry: Geometry, properties: Map[String, Any]) extends BaseFeature(`type`, properties)
+sealed case class PolygonFeature(`type`: String, polygonGeometry: List[UtilGeometry], properties: Map[String, Any]) extends BaseFeature(`type`, properties)
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
+sealed case class Municipality(municipalityCode: Int, geometry: List[UtilGeometry])
 
 trait KgvCollection {
   def value :String
@@ -124,7 +126,7 @@ class ExtractorBase {
   lazy val logger = LoggerFactory.getLogger(getClass)
   type LinkType
 
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
+  def extractFeature(feature: LineFeature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
   
   protected def featureClassCodeToFeatureClass(code: Int) = {
     KgvUtil.extractFeatureClass(code)
@@ -230,7 +232,7 @@ class Extractor extends ExtractorBase {
   
   override type LinkType = RoadLinkFetched
   
-  override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = {
+  override def extractFeature(feature: LineFeature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = {
     val attributes = feature.properties
     
     val lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
@@ -279,17 +281,35 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
-  private def convertToFeature(content: Map[String, Any]): Feature = {
-    val geometry = if( serviceName == Changes.value ) Geometry("", List())
-    else{
-      Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
-        coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]])
+  private def convertToFeature(content: Map[String, Any]): BaseFeature = {
+    if (serviceName == Changes.value) {
+        LineFeature(
+          `type` = content("type").toString,
+          geometry = Geometry("", List()),
+          properties = content("properties").asInstanceOf[Map[String, Any]]
+        )
     }
-    Feature(
-      `type` = content("type").toString,
-      geometry = geometry,
-      properties = content("properties").asInstanceOf[Map[String, Any]]
-    )
+    else {
+       val geometry = content("geometry").asInstanceOf[Map[String, Any]]
+        geometry("type").toString match {
+          case "Polygon" | "MultiPolygon" =>
+            val geometryCoordinates = geometry("coordinates").asInstanceOf[List[List[List[Double]]]].map(coords => UtilGeometry(`type` = geometry("type").toString,
+              coordinates = coords))
+            PolygonFeature(
+              `type` = content("type").toString,
+              polygonGeometry = geometryCoordinates,
+              properties = content("properties").asInstanceOf[Map[String, Any]]
+            )
+          case _ =>
+            val geometryCoordinates = Geometry (`type` = geometry("type").toString,
+            coordinates = geometry("coordinates").asInstanceOf[List[List[Double]]] )
+            LineFeature(
+              `type` = content("type").toString,
+              geometry = geometryCoordinates,
+              properties = content("properties").asInstanceOf[Map[String, Any]]
+            )
+        }
+    }
   }
 
   protected def encode(url: String): String = {
@@ -313,7 +333,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
   }
 
-  private def fetchFeatures(url: String): Either[LinkOperationError, Option[FeatureCollection]] = {
+  private def fetchFeatures(url: String, isPolygonFeature: Boolean = false): Either[LinkOperationError, Option[FeatureCollection]] = {
     val request = new HttpGet(url)
     addHeaders(request)
     
@@ -324,7 +344,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
                   .build()
     
     var response: CloseableHttpResponse = null
-    LogUtils.time(logger, s"fetch roadLink features",url = Some(url)) {
+    LogUtils.time(logger, s"fetch features",url = Some(url)) {
       try {
         response = client.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
@@ -339,28 +359,36 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
                   crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)))
               } else None
             case "FeatureCollection" =>
-              val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(link=>
-                Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String],
-                  link("rel").asInstanceOf[String], link("href").asInstanceOf[String])
-              )
+              isPolygonFeature match {
+                case true =>
+                  Some(FeatureCollection(
+                    `type` = "FeatureCollection",
+                    features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature),
+                    crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)
+                  ))
+                case false =>
+                  val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(link =>
+                    Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String],
+                      link("rel").asInstanceOf[String], link("href").asInstanceOf[String]))
 
-              val nextLink = Try(links.find(_.title=="Next page").get.href).getOrElse("")
-              val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
-              val features = if(serviceName == Changes.value){
-                feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
+                  val nextLink = Try(links.find(_.title == "Next page").get.href).getOrElse("")
+                  val previousLink = Try(links.find(_.title == "Previous page").get.href).getOrElse("")
+                  val features = if (serviceName == Changes.value) {
+                    feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
+                  }
+                  else {
+                    feature("features").asInstanceOf[List[Map[String, Any]]]
+                      .filter(roadLinkStatusFilter)
+                      .map(convertToFeature)
+                  }
+                  Some(FeatureCollection(
+                    `type` = "FeatureCollection",
+                    features = features,
+                    crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
+                    numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
+                    nextLink, previousLink
+                  ))
               }
-              else {
-                feature("features").asInstanceOf[List[Map[String, Any]]]
-                  .filter(roadLinkStatusFilter)
-                  .map(convertToFeature)
-              }
-              Some(FeatureCollection(
-                `type` = "FeatureCollection",
-                features = features,
-                crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
-                numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
-                nextLink,previousLink
-              ))
             case _ => None
           }
           Right(resort)
@@ -420,8 +448,8 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
       f3 <- Future {paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 3)}
     ) yield f1 ++ f2 ++ f3
 
-    val operations = resultF.map { t => t.flatMap(_.features.par.map(feature => 
-      extractor.extractFeature(feature, feature.geometry.coordinates, linkGeomSource)
+    val operations = resultF.map { t => t.flatMap(_.features.par.map(feature =>
+      extractor.extractFeature(feature.asInstanceOf[LineFeature], feature.asInstanceOf[LineFeature].geometry.coordinates, linkGeomSource)
         .asInstanceOf[LinkType]).toList).toSeq}
     try {
       Await.result(operations, Duration.Inf)
@@ -431,17 +459,6 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
         throw e
     }
   }
-
-  /**
-   * Fetches the Municipality that matches a location point
-   *
-   * @param point
-   * @return Municipality code
-   */
-  def queryMunicipalityBorders(restApiEndPoint: String, serviceName: String, format: String): Either[LinkOperationError, Option[FeatureCollection]] = {
-    fetchFeatures(s"$restApiEndPoint/$serviceName/items?$format&crs=$crs")
-  }
-
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
@@ -454,7 +471,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     fetchFeatures(s"$restApiEndPoint/${serviceName}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
     match {
       case Right(features) =>features.get.features.map(feature=>
-        extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        extractor.extractFeature(feature.asInstanceOf[LineFeature],feature.asInstanceOf[LineFeature].geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Left(error) => throw new ClientException(error.toString)
     }
   }
@@ -470,7 +487,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Right(features) =>features.get.features.map(t=>extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Right(features) =>features.get.features.map(t=>extractor.extractFeature(t.asInstanceOf[LineFeature],t.asInstanceOf[LineFeature].geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Left(error) => throw new ClientException(error.toString)
     }
   }
@@ -481,7 +498,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Right(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[String])
+      case Right(features) =>features.get.features.map(_.asInstanceOf[LineFeature].properties.get("id").asInstanceOf[String])
       case Left(error) => throw new ClientException(error.toString)
     }
   }
@@ -508,7 +525,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     if(!pagination){
       fetchFeatures(url) match {
         case Right(features) =>features.get.features.map(feature=>
-          extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+          extractor.extractFeature(feature.asInstanceOf[LineFeature],feature.asInstanceOf[LineFeature].geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
         case Left(error) => throw new ClientException(error.toString)
       }
     }else {
@@ -530,6 +547,18 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
+  }
+
+
+  /***
+   * Fetches all municipalities in a PolygonFeature collection
+   * @param restApiEndPoint
+   * @param serviceName
+   * @param format
+   * @return either Error or collection of PolygonFeatures
+   */
+  def queryMunicipalityBorders(restApiEndPoint: String, serviceName: String, format: String): Either[LinkOperationError, Option[FeatureCollection]] = {
+    fetchFeatures(s"$restApiEndPoint/$serviceName/items?$format&crs=$crs", isPolygonFeature = true)
   }
 
 }
