@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client
 import com.vividsolutions.jts.geom.GeometryFactory
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.client.kgv.{KgvCollection, KgvMunicipalityBorderClient, KgvRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.kgv.{KgvCollection, KgvRoadLinkClient}
 import org.geotools.geometry.jts.GeometryBuilder
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
