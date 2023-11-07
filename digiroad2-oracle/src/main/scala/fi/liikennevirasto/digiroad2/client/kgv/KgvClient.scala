@@ -4,7 +4,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils.isPointInsideGeometry
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.client.{ClientException, FeatureClass, Filter, HistoryRoadLink, IRoadLinkFetched, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{ClientException, FeatureClass, Filter, HistoryRoadLink, IRoadLinkFetched, LinkOperationError, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
@@ -14,6 +14,14 @@ import java.math.BigInteger
 import scala.concurrent.Future
 import scala.util.Try
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.apache.http.HttpStatus
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
+import org.apache.http.impl.client.HttpClients
+
+import fi.liikennevirasto.digiroad2.util.LogUtils
+import org.json4s.jackson.JsonMethods.parse
+import org.json4s.StreamInput
 
 case class ChangeKgv( id: Int, oldKmtkId: String, oldVersion: Int, newKmtkId: Option[String],
                       newVersion: Option[Int], `type`: String, ruleId: Option[String], cTime: DateTime,
@@ -64,6 +72,60 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
   protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
 
   val filter: Filter = FilterOgc
+
+  /** *
+   * Fetches all municipalities in a PolygonFeature collection
+   *
+   * @param restApiEndPoint
+   * @param serviceName
+   * @param format
+   * @return either Error or collection of PolygonFeatures
+   */
+  def queryMunicipalityBorders(restApiEndPoint: String, serviceName: String, format: String): Either[LinkOperationError, Option[FeatureCollection]] = {
+    fetchFeatures(s"$restApiEndPoint/$serviceName/items?$format&crs=$crs")
+  }
+
+  protected override def fetchFeatures(url: String): Either[LinkOperationError, Option[FeatureCollection]] = {
+    val request = new HttpGet(url)
+    addHeaders(request)
+
+    val client = HttpClients.custom()
+      .setDefaultRequestConfig(RequestConfig.custom()
+        .setCookieSpec(CookieSpecs.STANDARD)
+        .build())
+      .build()
+
+    var response: CloseableHttpResponse = null
+    LogUtils.time(logger, s"fetch PolygonFeatures", url = Some(url)) {
+      try {
+        response = client.execute(request)
+        val statusCode = response.getStatusLine.getStatusCode
+        if (statusCode == HttpStatus.SC_OK) {
+          val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+          val resort = feature("type").toString match {
+            case "FeatureCollection" =>
+              Some(FeatureCollection(
+                `type` = "FeatureCollection",
+                features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature),
+                crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)
+              ))
+            case _ => None
+          }
+          Right(resort)
+        } else {
+          Left(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString, url))
+        }
+      }
+      catch {
+        case e: Exception => Left(LinkOperationError(e.toString, ""))
+      }
+      finally {
+        if (response != null) {
+          response.close()
+        }
+      }
+    }
+  }
 
   def fetchAllMunicipalities(): Seq[Municipality] = {
     val format = "f=application%2Fgeo%2Bjson"

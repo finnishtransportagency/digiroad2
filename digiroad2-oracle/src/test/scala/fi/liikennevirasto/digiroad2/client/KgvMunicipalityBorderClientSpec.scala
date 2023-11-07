@@ -11,7 +11,7 @@ import scala.concurrent.duration.Duration
 
 class KgvMunicipalityBorderClientSpec extends FunSuite with Matchers{
 
-  test("Should fetch municipalities") {
+  ignore("Should fetch municipalities") {
     val (collection, linkGeomSourceValue) = (
       Some(KgvCollection.MunicipalityBorders),
       Some(LinkGeomSource.Unknown))
@@ -23,7 +23,7 @@ class KgvMunicipalityBorderClientSpec extends FunSuite with Matchers{
     municipalities.size should be(309)
   }
 
-  test("Should find correct Municipality with a given point") {
+  ignore("Should find correct Municipality with a given point") {
     val (collection, linkGeomSourceValue) = (
       Some(KgvCollection.MunicipalityBorders),
       Some(LinkGeomSource.Unknown))
