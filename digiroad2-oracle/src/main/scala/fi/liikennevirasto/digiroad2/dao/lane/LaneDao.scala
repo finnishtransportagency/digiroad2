@@ -23,7 +23,7 @@ case class LaneRow(id: Long, linkId: String, sideCode: Int, value: LanePropertyR
                    modifiedBy: Option[String], modifiedDate: Option[DateTime], expiredBy: Option[String], expiredDate: Option[DateTime],
                    expired: Boolean, timeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
 
-case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
+case class LanePropertyRow(publicId: String, propertyValue: Option[Any], createdDate: Option[DateTime], createdBy: Option[String], modifiedDate: Option[DateTime], modifiedBy: Option[String])
 case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
 
 
@@ -56,7 +56,11 @@ class LaneDao(){
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val atrrName = r.nextString()
       val atrrValue = r.nextStringOption()
-      val value = LanePropertyRow(atrrName, atrrValue)
+      val atrrCreatedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val atrrCreatedBy = r.nextStringOption()
+      val atrrModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val atrrModifiedBy = r.nextStringOption()
+      val value = LanePropertyRow(atrrName, atrrValue, atrrCreatedDate, atrrCreatedBy, atrrModifiedDate, atrrModifiedBy)
       val municipalityCode =  r.nextLong()
       val laneCode =  r.nextInt()
       val expiredBy = r.nextStringOption()
@@ -98,7 +102,7 @@ class LaneDao(){
     l.created_by, l.created_date, l.modified_by, l.modified_date,
     CASE WHEN l.valid_to <= current_timestamp THEN 1 ELSE 0 END AS expired,
     pos.adjusted_timestamp, pos.modified_date,
-    la.name, la.value, l.municipality_code, l.lane_code,
+    la.name, la.value, la.created_date, la.created_by, la.modified_date, la.modified_by, l.municipality_code, l.lane_code,
     l.expired_by, l.expired_date
     FROM lane l
        JOIN lane_link ll ON l.id = ll.lane_id
@@ -114,11 +118,13 @@ class LaneDao(){
 
     val query = s"""
                 SELECT id, link_id, side_code, start_measure, end_measure, created_by, created_date, modified_by,
-                modified_date, expired, adjusted_timestamp, "pos_modified_date", name, value, municipality_code,
+                modified_date, expired, adjusted_timestamp, "pos_modified_date", name, value,
+                "la_created_date", "la_created_by", "la_modified_date", "la_modified_by", municipality_code,
                 lane_code, expired_by, expired_date
                 FROM (SELECT l.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, l.created_by,
                 l.created_date, l.modified_by, l.modified_date, CASE WHEN l.valid_to <= current_timestamp THEN 1 ELSE 0 END AS expired,
-                pos.adjusted_timestamp, pos.modified_date "pos_modified_date", la.name, la.value, l.municipality_code, l.lane_code,
+                pos.adjusted_timestamp, pos.modified_date "pos_modified_date", la.name, la.value, la.created_date "la_created_date",
+                la.created_by "la_created_by", la.modified_date "la_modified_date", la.modified_by "la_modified_by", l.municipality_code, l.lane_code,
                 l.expired_by, l.expired_date
                 FROM lane l
                 JOIN lane_link ll ON l.id = ll.lane_id
@@ -254,7 +260,11 @@ class LaneDao(){
             case Some(value) => Some(LanePropertyValue(value))
             case _ => None
           }
-        ).toSeq
+        ).toSeq,
+        createdDate = row.value.createdDate,
+        createdBy = row.value.createdBy,
+        modifiedDate = row.value.modifiedDate,
+        modifiedBy = row.value.modifiedBy
       )
 
     }.toSeq

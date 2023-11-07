@@ -59,7 +59,8 @@ sealed trait LaneValue {
 case class LanePropertyValue(value: Any) {
   def toJson: JValue = JString(value.toString)
 }
-case class LaneProperty(publicId: String,  values: Seq[LanePropertyValue]) {
+case class LaneProperty(publicId: String,  values: Seq[LanePropertyValue], createdDate: Option[DateTime] = None,
+                        createdBy: Option[String] = None, modifiedDate: Option[DateTime] = None, modifiedBy: Option[String] = None) {
   def toJson = List(JField("publicId", JString(publicId)), JField("values", JArray(values.map(_.toJson).toList)))
 }
 
