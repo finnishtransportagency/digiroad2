@@ -34,8 +34,8 @@ object ValidateSamuutus {
   }
 
   private def reportInvalidAssets(logger: Logger, typeId: Int, result: Seq[ValidationResult]): Unit = {
-    val report = SamuutusValidator.createCSV(result)
-    saveReportToS3(AssetTypeInfo.apply(typeId).label, report,result.length)
+    val report = SamuutusValidator.createCSV(typeId,result)
+    saveReportToS3(AssetTypeInfo.apply(typeId).label,report._1,report._2)
     logger.error(s"Validation error happened, see report in bucket ${s3Bucket}")
   }
   private def saveReportToS3(assetName: String, body: String,count:Int): Unit = {

@@ -19,22 +19,23 @@ trait ValidatorProcess {
     if (newTransaction) withDynTransaction {process(assetType, linkFilter)} else process(assetType, linkFilter)
   }
   protected def process(assetType: Int, linkFilter: Set[String]): Seq[ValidationResult] = ???
-  def createCSV(rows: Seq[ValidationResult]): String = {
+  def createCSV(assetType: Int,rows: Seq[ValidationResult]): (String,Int) = {
     val stringWriter = new StringWriter()
     val csvWriter = new CSVWriter(stringWriter)
     csvWriter.writeRow(Seq("sep=,"))
-    val labels = Seq("invalidReason", "assetId", "laneCode", "linkId", "startMValue", "endMValue", "sideCode")
+    val labels = Seq("invalidReason","assetType", "assetId", "laneCode", "linkId", "startMValue", "endMValue", "sideCode")
     csvWriter.writeRow(labels)
-    rows.map(a => {
+    val sumRows = rows.map(a => {
       val rule = a.rule
       val rows = a.invalidRows
-      rows.map(asset => {
+      rows.foreach(asset => {
         val lrm = asset.lrm
-        val row = Seq(rule, asset.assetId, asset.laneCode.getOrElse(null), lrm.linkId, lrm.startMValue, lrm.endMValue.getOrElse(null), lrm.sideCode.getOrElse(null))
+        val row = Seq(rule,assetType, asset.assetId, asset.laneCode.getOrElse(null), lrm.linkId, lrm.startMValue, lrm.endMValue.getOrElse(null), lrm.sideCode.getOrElse(null))
         csvWriter.writeRow(row)
       })
-    })
-    stringWriter.toString
+      rows.size
+    }).sum
+    (stringWriter.toString,sumRows)
   }
 }
 

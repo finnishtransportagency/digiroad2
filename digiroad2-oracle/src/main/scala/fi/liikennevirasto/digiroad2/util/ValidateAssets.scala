@@ -18,9 +18,7 @@ object ValidateAssets {
   
   def validateAll (filter: Set[String]= Set()): Unit = {
     logger.info(s"Validation started")
-    new Parallel().operation(AssetTypeInfo.validate.grouped(10).toList.par,4){
-      _.foreach(_.foreach(a1=>validate(a1.typeId,filter)))
-    }
+    AssetTypeInfo.validate.foreach(a=>{validate(a.typeId, filter)})
     logger.info(s"Validation ended")
   }
   
@@ -32,18 +30,17 @@ object ValidateAssets {
 
   private def reportInvalidAssets(typeId: Int, result: Seq[ValidationResult]): Unit = {
     logger.info(s"Validation returned invalid assets :$typeId")
-    val report = TopologyValidator.createCSV(result)
-    if (s3Bucket != null || s3Bucket != "" || s3Bucket.nonEmpty) {
-      saveReportToS3(AssetTypeInfo.apply(typeId).label, report, result.length)
+    val report = TopologyValidator.createCSV(typeId,result)
+    if (s3Bucket != null && s3Bucket != "" && s3Bucket.nonEmpty) {
+      saveReportToS3(AssetTypeInfo.apply(typeId).label, report._1, report._2)
     } else {
       logger.info("s3 bucket is not defined")
       result.foreach(a => {
         val rule = a.rule
         val invalidRows = a.invalidRows
-        val lines = invalidRows.map(a => {
-         s"validation: ${rule}, assetId: ${a.assetId}, laneCode: ${a.laneCode.getOrElse("")}, sideCode: ${a.lrm.sideCode}, linkId: ${a.lrm.linkId}, startMValue: ${a.lrm.startMValue}, endMValue: ${a.lrm.endMValue}"
+        invalidRows.map(a => {
+          logger.info(s"validation: ${rule}, assetType: ${typeId}, assetId: ${a.assetId}, laneCode: ${a.laneCode.getOrElse("")}, sideCode: ${a.lrm.sideCode}, linkId: ${a.lrm.linkId}, startMValue: ${a.lrm.startMValue}, endMValue: ${a.lrm.endMValue}")
         })
-        logger.info(lines.toString())
       })
     }
   }
@@ -54,11 +51,11 @@ object ValidateAssets {
     s3Service.saveFileToS3(s3Bucket, path, body, "csv")
   }
 
-  private def saveReportToLocalFile(assetName: String, body: String): Unit = {
+  private def saveReportToLocalFile(assetName: String, body: String, count: Int): Unit = {
     val localReportDirectoryName = "validation-reports-local-test"
     val date = DateTime.now().toString("YYYY-MM-dd")
     Files.createDirectories(Paths.get(localReportDirectoryName, date))
-    val path = s"$localReportDirectoryName/$date/${assetName}_invalidRows.csv"
+    val path = s"$localReportDirectoryName/$date/${assetName}_invalidRows_${count}.csv"
     new PrintWriter(path) {
       write(body)
       close()
