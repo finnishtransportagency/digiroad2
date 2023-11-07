@@ -39,31 +39,30 @@ class ManoeuvreUpdater() {
       }
     })
   }
-  
-  def recognizeVersionUpgrade(change: (RoadLinkChangeType, Seq[RoadLinkChange])): Boolean = {
-    change._1 == RoadLinkChangeType.Replace && change._2.size == 1 && kmtkIdAreSame(change._2.head)
+  def recognizeVersionUpgrade(change:RoadLinkChange ): Boolean = {
+    change.changeType == RoadLinkChangeType.Replace && change.replaceInfo.size == 1 && kmtkIdAreSame(change.replaceInfo.head)
   }
-
   def splitLinkId(linkId: String): (String, Int) = {
     val split = linkId.split(":")
     (split(0), split(1).toInt)
   }
   
-  def kmtkIdAreSame(change: RoadLinkChange): Boolean = {
-    val oldId = splitLinkId(change.oldLink.get.linkId)._1
-    val newId = splitLinkId(change.newLinks.head.linkId)._1
+  def kmtkIdAreSame(change: ReplaceInfo): Boolean = {
+    val oldId = splitLinkId(change.oldLinkId.get)._1
+    val newId = splitLinkId(change.newLinkId.get)._1
     oldId == newId 
   }
 
+  def separateVersionUpgradeAndOther(changesAll: Seq[RoadLinkChange]): (Seq[RoadLinkChange], Seq[RoadLinkChange]) = {
+    val (replace, other) = changesAll.partition(_.changeType == RoadLinkChangeType.Replace)
+    val (versionUpgrade, other2) = replace.partition(recognizeVersionUpgrade)
+    (versionUpgrade, other ++ other2)
+  }
+  
   case class VersionUpgrade(oldId:String, newId:String)
   def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]):Seq[ChangedManoeuvre] = {
-
-    def partition: (Seq[RoadLinkChange], Seq[RoadLinkChange]) = {
-      val (versionUpgrade2, other2) = changesAll.groupBy(_.changeType).partition(recognizeVersionUpgrade)
-      (versionUpgrade2.values.flatten.toSeq, other2.values.flatten.toSeq)
-    }
-
-    val (versionUpgrade, other) = partition
+    
+    val (versionUpgrade, other) = separateVersionUpgradeAndOther(changesAll)
     val versionUpgradeIds = versionUpgrade.groupBy(_.oldLink.get.linkId).keySet
     val pairs = versionUpgrade.map(a=> (a.oldLink.get.linkId, a.newLinks.map(_.linkId).distinct)).filter(a=>{a._2.size==1}).map(a=>{VersionUpgrade(a._1,a._2.head)})
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(versionUpgradeIds, newTransaction = false)
