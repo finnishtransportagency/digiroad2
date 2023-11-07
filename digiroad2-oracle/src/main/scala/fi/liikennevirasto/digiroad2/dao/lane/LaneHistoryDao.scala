@@ -42,7 +42,11 @@ class LaneHistoryDao() {
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val atrrName = r.nextString()
       val atrrValue = r.nextStringOption()
-      val value = LanePropertyRow(atrrName, atrrValue)
+      val atrrCreatedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val atrrCreatedBy = r.nextStringOption()
+      val atrrModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val atrrModifiedBy = r.nextStringOption()
+      val value = LanePropertyRow(atrrName, atrrValue, atrrCreatedDate, atrrCreatedBy, atrrModifiedDate, atrrModifiedBy)
       val municipalityCode = r.nextLong()
       val laneCode = r.nextInt()
       val historyCreatedDate = new DateTime(r.nextTimestamp())
@@ -63,7 +67,7 @@ class LaneHistoryDao() {
     l.created_by, l.created_date, l.modified_by, l.modified_date,
     CASE WHEN l.valid_to <= current_timestamp THEN 1 ELSE 0 END AS expired,
     pos.adjusted_timestamp, pos.modified_date,
-    la.name, la.value, l.municipality_code, l.lane_code,
+    la.name, la.value, la.created_date, la.created_by, la.modified_date, la.modified_by, l.municipality_code, l.lane_code,
     l.history_created_date, l.history_created_by, l.event_order_number
     FROM LANE_HISTORY l
        JOIN LANE_HISTORY_LINK ll ON l.id = ll.lane_id
@@ -202,16 +206,31 @@ class LaneHistoryDao() {
       })
     }
 
-    //TODO If historizing attributes too slow, refactor code so that SELECT sub query is not needed
     val insertLaneHistoryAttribute =
       s"""insert into lane_history_attribute
-         |  select nextval('primary_key_seq'), (?), name, value, required, created_date, created_by,
-         |  modified_date, modified_by from lane_attribute where lane_id = (?)""".stripMargin
+         |values (nextval('primary_key_seq'), (?), (?), (?), (?), (?), (?), (?), (?))
+         |""".stripMargin
     MassQuery.executeBatch(insertLaneHistoryAttribute) { statement =>
       oldLanesWithHistory.foreach(lane => {
-        statement.setLong(1, lane.laneHistoryId)
-        statement.setLong(2, lane.oldLane.id)
-        statement.addBatch()
+        lane.oldLane.attributes.filterNot(_.publicId == "lane_code").foreach(attribute => {
+          statement.setLong(1, lane.laneHistoryId)
+          statement.setString(2, attribute.publicId)
+          statement.setString(3, attribute.values.head.value.toString)
+          statement.setBoolean(4, false)
+          if(attribute.createdDate.nonEmpty) {
+            statement.setTimestamp(5, new Timestamp(attribute.createdDate.get.getMillis))
+          } else statement.setNull(5, java.sql.Types.TIMESTAMP)
+          if(attribute.createdBy.nonEmpty) {
+            statement.setString(6, attribute.createdBy.get)
+          } else statement.setNull(6, java.sql.Types.VARCHAR)
+          if(attribute.modifiedDate.nonEmpty) {
+            statement.setTimestamp(7, new Timestamp(attribute.modifiedDate.get.getMillis))
+          } else statement.setNull(7, java.sql.Types.TIMESTAMP)
+          if(attribute.modifiedBy.nonEmpty) {
+            statement.setString(8, attribute.modifiedBy.get)
+          } else statement.setNull(8, java.sql.Types.VARCHAR)
+          statement.addBatch()
+        })
       })
     }
 
@@ -302,7 +321,11 @@ class LaneHistoryDao() {
             case Some(value) => Some(LanePropertyValue(value))
             case _ => None
           }
-        ).toSeq
+        ).toSeq,
+        createdDate = row.value.createdDate,
+        createdBy = row.value.createdBy,
+        modifiedDate = row.value.modifiedDate,
+        modifiedBy = row.value.modifiedBy
       )
     }.toSeq
 
