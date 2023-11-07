@@ -388,7 +388,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       try {
         withDynTransaction {
           updateByRoadLinks(typeId, changeSet.changes)
-          ValidateSamuutus.validate(logger, typeId, changeSet)
+          ValidateSamuutus.validate(typeId, changeSet)
           generateAndSaveReport(typeId, changeSet.targetDate)
         } 
       } catch {

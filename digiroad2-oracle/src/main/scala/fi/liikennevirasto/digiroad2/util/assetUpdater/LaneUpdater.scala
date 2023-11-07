@@ -251,7 +251,7 @@ object LaneUpdater {
       try {
         PostGISDatabase.withDynTransaction {
           changes = updateByRoadLinks(roadLinkChangeSet)
-          ValidateSamuutus.validate(logger, Lanes.typeId, roadLinkChangeSet)
+          ValidateSamuutus.validate(Lanes.typeId, roadLinkChangeSet)
           generateAndSaveReport(roadLinkChangeSet.targetDate)
         }
       } catch {
@@ -281,6 +281,9 @@ object LaneUpdater {
     }
     changedLanes
   }
+  /**
+    * Each report saving array [[LaneUpdater.changes]] is erased.
+    */
   def generateAndSaveReport(processedTo: DateTime): Unit = {
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(Lanes.typeId, changes))
     ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBody, contentRowCount)

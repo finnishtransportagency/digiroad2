@@ -41,7 +41,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
       try {
         PostGISDatabase.withDynTransaction {
           updateByRoadLinks(typeId, changeSet)
-          ValidateSamuutus.validate(logger, typeId, changeSet)
+          ValidateSamuutus.validate(typeId, changeSet)
           generateAndSaveReport(typeId, changeSet)
         }
       } catch {
@@ -62,6 +62,9 @@ class PointAssetUpdater(service: PointAssetOperations) {
     logger.info("Starting to process changes")
     reportedChanges = LogUtils.time(logger, s"Samuuting logic finished: "){processChanges(changedAssets,linkChanges)}
   }
+  /**
+    * Each report saving array [[PointAssetUpdater.reportedChanges]] is erased.
+    */
   private def generateAndSaveReport(typeId: Int, changeSet: RoadLinkChangeSet): Unit = {
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
     ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBody, contentRowCount)
