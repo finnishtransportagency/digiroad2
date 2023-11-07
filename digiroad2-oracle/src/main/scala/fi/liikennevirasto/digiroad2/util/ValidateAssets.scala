@@ -29,7 +29,7 @@ object ValidateAssets {
   }
 
   private def reportInvalidAssets(typeId: Int, result: Seq[ValidationResult]): Unit = {
-    logger.info(s"Validation returned invalid assets :$typeId")
+    logger.info(s"Validation returned invalid assets: $typeId")
     val report = TopologyValidator.createCSV(typeId,result)
     if (s3Bucket != null && s3Bucket != "" && s3Bucket.nonEmpty) {
       saveReportToS3(AssetTypeInfo.apply(typeId).label, report._1, report._2)
@@ -38,7 +38,8 @@ object ValidateAssets {
       result.foreach(a => {
         val rule = a.rule
         val invalidRows = a.invalidRows
-        invalidRows.map(a => {
+        logger.info(s"$rule:${invalidRows.size}")
+        invalidRows.foreach(a => {
           logger.info(s"validation: ${rule}, assetType: ${typeId}, assetId: ${a.assetId}, laneCode: ${a.laneCode.getOrElse("")}, sideCode: ${a.lrm.sideCode}, linkId: ${a.lrm.linkId}, startMValue: ${a.lrm.startMValue}, endMValue: ${a.lrm.endMValue}")
         })
       })
