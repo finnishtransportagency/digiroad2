@@ -11,7 +11,7 @@ import org.joda.time.DateTime
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
 
-case class SamuraisFailed(msg:String) extends Exception(msg)
+case class SamuutusFailed(msg:String) extends Exception(msg)
 
 object ValidateSamuutus {
   private lazy val awsService = new AwsService
@@ -24,7 +24,7 @@ object ValidateSamuutus {
    if (Digiroad2Properties.failSamuutusOnFailedValidation) {
      if (passSet.contains(false)) {
        reportInvalidAssets(typeId, result)
-       throw SamuraisFailed(s"Validation error happened, see report in bucket ${s3Bucket}")
+       throw SamuutusFailed(s"Validation error happened, see report in bucket ${s3Bucket}")
      } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
    }else {
      if (passSet.contains(false)) reportInvalidAssets(typeId, result)

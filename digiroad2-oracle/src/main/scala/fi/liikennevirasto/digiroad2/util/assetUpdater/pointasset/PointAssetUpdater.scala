@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
-import fi.liikennevirasto.digiroad2.util.assetUpdater.{Asset, ChangeReport, ChangeReporter, ChangeType, ChangedAsset, LinearReferenceForReport, SamuraisFailed, ValidateSamuutus}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.{Asset, ChangeReport, ChangeReporter, ChangeType, ChangedAsset, LinearReferenceForReport, SamuutusFailed, ValidateSamuutus}
 import org.joda.time.DateTime
 import org.json4s.JsonDSL._
 import org.json4s.jackson.compactJson
@@ -45,7 +45,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
           generateAndSaveReport(typeId, changeSet)
         }
       } catch {
-        case e: SamuraisFailed =>
+        case e: SamuutusFailed =>
           generateAndSaveReport(typeId, changeSet)
           throw e
       }
