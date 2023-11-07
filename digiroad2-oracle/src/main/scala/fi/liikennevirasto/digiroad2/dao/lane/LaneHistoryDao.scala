@@ -7,7 +7,9 @@ import fi.liikennevirasto.digiroad2.asset.Decode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, OldLaneWithNewId, PersistedHistoryLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import org.joda.time.DateTime
+import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
@@ -23,7 +25,7 @@ case class laneToHistoryLane(oldId: Long, historyId: Long, historyPositionId: Lo
 case class HistoryLaneWithIds(newLaneId: Long, laneHistoryId: Long, positionHistoryId: Long, historyEventOrderNumber: Long, oldLane: PersistedLane)
 
 class LaneHistoryDao() {
-
+  val logger: Logger = LoggerFactory.getLogger(getClass)
   implicit val getLaneHistoryAsset: GetResult[LaneHistoryRow] = new GetResult[LaneHistoryRow] {
     def apply(r: PositionedResult): LaneHistoryRow = {
       val id = r.nextLong()
@@ -152,86 +154,98 @@ class LaneHistoryDao() {
       s"""insert into lane_history
          |  values( (?), (?), (?), (?), (?), (?), (?), (?), current_timestamp, '$username', null,  current_timestamp, (?), current_timestamp, '$username', (?) )
          |  """.stripMargin
-    MassQuery.executeBatch(insertLaneHistory) { statement =>
-      oldLanesWithHistory.foreach(lane => {
-        val createdTimeStamp = new Timestamp(lane.oldLane.createdDateTime.get.getMillis)
 
-        statement.setLong(1, lane.laneHistoryId)
-        statement.setLong(2, lane.newLaneId)
-        statement.setLong(3, lane.oldLane.id)
-        statement.setInt(4, lane.oldLane.laneCode)
-        statement.setTimestamp(5, createdTimeStamp)
-        if(lane.oldLane.createdBy.nonEmpty) {
-          statement.setString(6, lane.oldLane.createdBy.get)
-        } else statement.setNull(6, java.sql.Types.VARCHAR)
-        if(lane.oldLane.modifiedDateTime.nonEmpty) {
-          statement.setTimestamp(7, new Timestamp(lane.oldLane.modifiedDateTime.get.getMillis))
-        } else statement.setNull(7, java.sql.Types.TIMESTAMP)
-        if(lane.oldLane.modifiedBy.nonEmpty) {
-          statement.setString(8, lane.oldLane.modifiedBy.get)
-        } else statement.setNull(8, java.sql.Types.VARCHAR)
-        statement.setLong(9, lane.oldLane.municipalityCode)
-        statement.setLong(10, lane.historyEventOrderNumber)
-        statement.addBatch()
-      })
+    LogUtils.time(logger, "MassQuery insert to lane_history") {
+      MassQuery.executeBatch(insertLaneHistory) { statement =>
+        oldLanesWithHistory.foreach(lane => {
+          val createdTimeStamp = new Timestamp(lane.oldLane.createdDateTime.get.getMillis)
+
+          statement.setLong(1, lane.laneHistoryId)
+          statement.setLong(2, lane.newLaneId)
+          statement.setLong(3, lane.oldLane.id)
+          statement.setInt(4, lane.oldLane.laneCode)
+          statement.setTimestamp(5, createdTimeStamp)
+          if(lane.oldLane.createdBy.nonEmpty) {
+            statement.setString(6, lane.oldLane.createdBy.get)
+          } else statement.setNull(6, java.sql.Types.VARCHAR)
+          if(lane.oldLane.modifiedDateTime.nonEmpty) {
+            statement.setTimestamp(7, new Timestamp(lane.oldLane.modifiedDateTime.get.getMillis))
+          } else statement.setNull(7, java.sql.Types.TIMESTAMP)
+          if(lane.oldLane.modifiedBy.nonEmpty) {
+            statement.setString(8, lane.oldLane.modifiedBy.get)
+          } else statement.setNull(8, java.sql.Types.VARCHAR)
+          statement.setLong(9, lane.oldLane.municipalityCode)
+          statement.setLong(10, lane.historyEventOrderNumber)
+          statement.addBatch()
+        })
+      }
     }
 
     val insertHistoryPosition =
       s"""insert into lane_history_position
          |  values( (?), (?), (?), (?), (?), (?), (?), null)""".stripMargin
-    MassQuery.executeBatch(insertHistoryPosition) { statement =>
-      oldLanesWithHistory.foreach(lane => {
-        statement.setLong(1, lane.positionHistoryId)
-        statement.setLong(2, lane.oldLane.sideCode)
-        statement.setDouble(3, lane.oldLane.startMeasure)
-        statement.setDouble(4, lane.oldLane.endMeasure)
-        statement.setString(5, lane.oldLane.linkId)
-        statement.setLong(6, lane.oldLane.timeStamp)
-        if(lane.oldLane.geomModifiedDate.nonEmpty) {
-          statement.setTimestamp(7, new Timestamp(lane.oldLane.geomModifiedDate.get.getMillis))
-        } else statement.setNull(7, java.sql.Types.TIMESTAMP)
 
-        statement.addBatch()
-      })
+    LogUtils.time(logger, "MassQuery insert to lane_history_position") {
+      MassQuery.executeBatch(insertHistoryPosition) { statement =>
+        oldLanesWithHistory.foreach(lane => {
+          statement.setLong(1, lane.positionHistoryId)
+          statement.setLong(2, lane.oldLane.sideCode)
+          statement.setDouble(3, lane.oldLane.startMeasure)
+          statement.setDouble(4, lane.oldLane.endMeasure)
+          statement.setString(5, lane.oldLane.linkId)
+          statement.setLong(6, lane.oldLane.timeStamp)
+          if(lane.oldLane.geomModifiedDate.nonEmpty) {
+            statement.setTimestamp(7, new Timestamp(lane.oldLane.geomModifiedDate.get.getMillis))
+          } else statement.setNull(7, java.sql.Types.TIMESTAMP)
+
+          statement.addBatch()
+        })
+      }
     }
 
     val insertLaneHistoryLink =
       s"""insert into lane_history_link (lane_id, lane_position_id)
          |values ((?), (?))""".stripMargin
-    MassQuery.executeBatch(insertLaneHistoryLink) { statement =>
-      oldLanesWithHistory.foreach(lane => {
-        statement.setLong(1, lane.laneHistoryId)
-        statement.setLong(2, lane.positionHistoryId)
-        statement.addBatch()
-      })
+
+    LogUtils.time(logger, "MassQuery insert to lane_history_link") {
+      MassQuery.executeBatch(insertLaneHistoryLink) { statement =>
+        oldLanesWithHistory.foreach(lane => {
+          statement.setLong(1, lane.laneHistoryId)
+          statement.setLong(2, lane.positionHistoryId)
+          statement.addBatch()
+        })
+      }
     }
 
     val insertLaneHistoryAttribute =
       s"""insert into lane_history_attribute
          |values (nextval('primary_key_seq'), (?), (?), (?), (?), (?), (?), (?), (?))
          |""".stripMargin
-    MassQuery.executeBatch(insertLaneHistoryAttribute) { statement =>
-      oldLanesWithHistory.foreach(lane => {
-        lane.oldLane.attributes.filterNot(_.publicId == "lane_code").foreach(attribute => {
-          statement.setLong(1, lane.laneHistoryId)
-          statement.setString(2, attribute.publicId)
-          statement.setString(3, attribute.values.head.value.toString)
-          statement.setBoolean(4, false)
-          if(attribute.createdDate.nonEmpty) {
-            statement.setTimestamp(5, new Timestamp(attribute.createdDate.get.getMillis))
-          } else statement.setNull(5, java.sql.Types.TIMESTAMP)
-          if(attribute.createdBy.nonEmpty) {
-            statement.setString(6, attribute.createdBy.get)
-          } else statement.setNull(6, java.sql.Types.VARCHAR)
-          if(attribute.modifiedDate.nonEmpty) {
-            statement.setTimestamp(7, new Timestamp(attribute.modifiedDate.get.getMillis))
-          } else statement.setNull(7, java.sql.Types.TIMESTAMP)
-          if(attribute.modifiedBy.nonEmpty) {
-            statement.setString(8, attribute.modifiedBy.get)
-          } else statement.setNull(8, java.sql.Types.VARCHAR)
-          statement.addBatch()
+
+    LogUtils.time(logger, "MassQuery insert to lane_history_attribute") {
+      MassQuery.executeBatch(insertLaneHistoryAttribute) { statement =>
+        oldLanesWithHistory.foreach(lane => {
+          lane.oldLane.attributes.filterNot(_.publicId == "lane_code").foreach(attribute => {
+            statement.setLong(1, lane.laneHistoryId)
+            statement.setString(2, attribute.publicId)
+            statement.setString(3, attribute.values.head.value.toString)
+            statement.setBoolean(4, false)
+            if (attribute.createdDate.nonEmpty) {
+              statement.setTimestamp(5, new Timestamp(attribute.createdDate.get.getMillis))
+            } else statement.setNull(5, java.sql.Types.TIMESTAMP)
+            if (attribute.createdBy.nonEmpty) {
+              statement.setString(6, attribute.createdBy.get)
+            } else statement.setNull(6, java.sql.Types.VARCHAR)
+            if (attribute.modifiedDate.nonEmpty) {
+              statement.setTimestamp(7, new Timestamp(attribute.modifiedDate.get.getMillis))
+            } else statement.setNull(7, java.sql.Types.TIMESTAMP)
+            if (attribute.modifiedBy.nonEmpty) {
+              statement.setString(8, attribute.modifiedBy.get)
+            } else statement.setNull(8, java.sql.Types.VARCHAR)
+            statement.addBatch()
+          })
         })
-      })
+      }
     }
 
     laneHistoryIds
