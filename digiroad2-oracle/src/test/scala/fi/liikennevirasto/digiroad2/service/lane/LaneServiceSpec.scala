@@ -220,7 +220,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       oldLaneData.oldId should be(newLane1.head)
       oldLaneData.expired should be(false)
       oldLaneData.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
     }
   }
@@ -260,13 +260,13 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane11 = currentLanes.filter(_.id == newMainLaneid).head
       lane11.id should be(newMainLaneid)
       lane11.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane12 = currentLanes.filter(_.id == newSubLaneId).head
       lane12.id should be(newSubLaneId)
       lane12.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -282,7 +282,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane11AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneid).head
       lane11AfterDelete.id should be(newMainLaneid)
       lane11AfterDelete.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Verify the presence of the deleted lane on histories tables
@@ -293,7 +293,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12AfterDelete.oldId should be(newSubLaneId)
       lane12AfterDelete.expired should be(true)
       lane12AfterDelete.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
     }
   }
@@ -318,7 +318,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane12 = currentLanes.filter(_.id == newSubLane2Id).head
@@ -326,7 +326,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12.startMeasure should be(0)
       lane12.endMeasure should be(500)
       lane12.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -340,7 +340,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane11AfterSplit = lanesAfterSplit.filter(_.id == mainLane1Id).head
       lane11AfterSplit.id should be(mainLane1Id)
       lane11AfterSplit.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane12AfterSplit = lanesAfterSplit.filter(_.laneCode == 2).head
@@ -348,7 +348,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12AfterSplit.startMeasure should be(0)
       lane12AfterSplit.endMeasure should be(250)
       lane12AfterSplit.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -364,7 +364,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historyLane12.endMeasure should be(500)
       historyLane12.expired should be(true)
       historyLane12.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
 
       }
     }
@@ -385,7 +385,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2 = currentLanes.filter(_.id == subLane2SplitedId).head
@@ -393,7 +393,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2.startMeasure should be(0)
       lane2.endMeasure should be(250.0)
       lane2.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
     }
   }
@@ -415,7 +415,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2A = currentLanes.filter(_.id == subLane2SplitedAId).head
@@ -423,7 +423,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2A.startMeasure should be(0)
       lane2A.endMeasure should be(250.0)
       lane2A.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2B = currentLanes.filter(_.id == subLane2SplitedBId).head
@@ -431,7 +431,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2B.startMeasure should be(250.0)
       lane2B.endMeasure should be(500.0)
       lane2B.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
     }
   }
@@ -462,7 +462,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2 = currentLanes.filter(_.id == newSubLane2Id).head
@@ -470,7 +470,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2.startMeasure should be(0)
       lane2.endMeasure should be(500.0)
       lane2.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -484,7 +484,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane11AfterSplit = lanesAfterSplit.filter(_.id == mainLane1Id).head
       lane11AfterSplit.id should be(mainLane1Id)
       lane11AfterSplit.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       lanesAfterSplit.count(_.laneCode == 2) should be(2)
@@ -493,7 +493,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12A.startMeasure should be(0)
       lane12A.endMeasure should be(250.0)
       lane12A.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2B = lanesAfterSplit.filter(l => l.startMeasure == 250.0).head
@@ -501,7 +501,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2B.startMeasure should be(250.0)
       lane2B.endMeasure should be(500.0)
       lane2B.attributes.foreach { laneProp =>
-        lanePropertiesSubLaneSplit2WithStartDate.contains(laneProp) should be(true)
+        lanePropertiesSubLaneSplit2WithStartDate.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -516,7 +516,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         historyLane2.endMeasure should be(500)
         historyLane2.expired should be(true)
         historyLane2.attributes.foreach { laneProp =>
-          lanePropertiesValues2.contains(laneProp) should be(true)
+          lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
         }
       }
 
@@ -551,7 +551,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2A = currentLanes.filter(_.id == newSubLane2SplitAId).head
@@ -559,7 +559,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2A.startMeasure should be(0)
       lane2A.endMeasure should be(250.0)
       lane2A.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -569,7 +569,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2B.startMeasure should be(250.0)
       lane2B.endMeasure should be(500.0)
       lane2B.attributes.foreach { laneProp =>
-        lanePropertiesSubLaneSplit2WithStartDate.contains(laneProp) should be(true)
+        lanePropertiesSubLaneSplit2WithStartDate.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -586,7 +586,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1AfterSplit = lanesAfterSplit.filter(_.id == mainLane1Id).head
       lane1AfterSplit.id should be(mainLane1Id)
       lane1AfterSplit.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2AfterSplit = lanesAfterSplit.filter(_.laneCode == 2).head
@@ -594,7 +594,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2AfterSplit.endMeasure should be(500)
       lane2AfterSplit.expired should be(false)
       lane2AfterSplit.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -609,7 +609,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historylane2A.endMeasure should be(250.0)
       historylane2A.expired should be(true)
       historylane2A.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val historylane2B = historyLanes.filter(_.oldId == newSubLane2SplitBId).head
@@ -619,7 +619,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historylane2B.endMeasure should be(500.0)
       historylane2B.expired should be(true)
       historylane2B.attributes.foreach { laneProp =>
-        lanePropertiesSubLaneSplit2.contains(laneProp) should be(true)
+        lanePropertiesSubLaneSplit2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
     }
@@ -662,7 +662,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2A = currentLanes.filter(_.id == newSubLane2SplitAId).head
@@ -670,7 +670,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2A.startMeasure should be(0)
       lane2A.endMeasure should be(250.0)
       lane2A.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2B = currentLanes.filter(_.id == newSubLane2SplitBId).head
@@ -678,7 +678,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2B.startMeasure should be(250.0)
       lane2B.endMeasure should be(500.0)
       lane2B.attributes.foreach { laneProp =>
-        modifiedLaneProperties1WithStartDate.contains(laneProp) should be(true)
+        modifiedLaneProperties1WithStartDate.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -694,7 +694,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1AfterUpdate = lanesAfterSplit.filter(_.id == mainLane1Id).head
       lane1AfterUpdate.id should be(mainLane1Id)
       lane1AfterUpdate.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val laneA2AfterUpdate = lanesAfterSplit.filter(_.id == newSubLane2SplitAId).head
@@ -703,7 +703,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       laneA2AfterUpdate.endMeasure should be(250.0)
       laneA2AfterUpdate.expired should be(false)
       laneA2AfterUpdate.attributes.foreach { laneProp =>
-        modifiedLaneProperties1WithStartDate.contains(laneProp) should be(true)
+        modifiedLaneProperties1WithStartDate.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val laneB2AfterUpdate = lanesAfterSplit.filter(_.id == newSubLane2SplitBId).head
@@ -712,7 +712,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       laneB2AfterUpdate.endMeasure should be(500.0)
       laneB2AfterUpdate.expired should be(false)
       laneB2AfterUpdate.attributes.foreach { laneProp =>
-        modifiedLaneProperties2WithStartDate.contains(laneProp) should be(true)
+        modifiedLaneProperties2WithStartDate.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Verify the presence of the old splitted lanes attributes on histories tables
@@ -725,7 +725,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historylane2A.endMeasure should be(250.0)
       historylane2A.expired should be(false)
       historylane2A.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val historylane2B = historyLanes.filter(_.oldId == newSubLane2SplitBId).head
@@ -734,7 +734,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historylane2B.endMeasure should be(500.0)
       historylane2B.expired should be(false)
       historylane2B.attributes.foreach { laneProp =>
-        modifiedLaneProperties1.contains(laneProp) should be(true)
+        modifiedLaneProperties1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
     }
   }
@@ -773,7 +773,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val newSubLane2 = lanes.find(_.id == newSubLane4Id).head
       newSubLane2.attributes.foreach { laneProp =>
-        updatedSubLane4.properties.contains(laneProp) should be(true)
+        updatedSubLane4.properties.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       newSubLane2.startMeasure should be(0.0)
       newSubLane2.endMeasure should be(500.0)
@@ -786,7 +786,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val deletedSubLane2 = historyLanes.find(_.oldId == newSubLane2Id).head
       deletedSubLane2.newId should be(newSubLane4Id)
       deletedSubLane2.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       deletedSubLane2.startMeasure should be(0.0)
       deletedSubLane2.endMeasure should be(500.0)
@@ -795,7 +795,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val oldDataSubLane4 = historyLanes.find(_.oldId == newSubLane4Id).head
       oldDataSubLane4.newId should be(0)
       oldDataSubLane4.attributes.foreach { laneProp =>
-        lanePropertiesValues4.contains(laneProp) should be(true)
+        lanePropertiesValues4.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       oldDataSubLane4.expired should be(false)
       oldDataSubLane4.startMeasure should be(0.0)
@@ -822,12 +822,12 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane1 = currentLanes.filter(_.id == newMainLaneId).head
       lane1.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2 = currentLanes.filter(_.id == newSubLaneId).head
       lane2.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -842,12 +842,12 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane1After = currentLanesAfterProcess.filter(_.id == newMainLaneId).head
       lane1After.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2After = currentLanesAfterProcess.filter(_.id == newSubLaneId).head
       lane2After.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Nothing changed so nothing will be in history
@@ -882,12 +882,12 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane1 = currentLanes.filter(_.id == newMainLaneId).head
       lane1.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2 = currentLanes.filter(_.id == newSubLaneId).head
       lane2.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
 
@@ -902,12 +902,12 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane1After = currentLanesAfterProcess.filter(_.id == newMainLaneId).head
       lane1After.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2After = currentLanesAfterProcess.filter(_.id == newSubLaneId).head
       lane2After.attributes.foreach{ laneProp =>
-        newLanePropertiesValues2.contains(laneProp) should be(true)
+        newLanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Verify history for old properties of lane 12
@@ -917,7 +917,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val oldSubLane2 = historyLanes.find(_.oldId == newSubLaneId).head
       oldSubLane2.newId should be(0)
       oldSubLane2.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       oldSubLane2.expired should be(false)
 
@@ -947,22 +947,22 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane1Link100 = currentLanes.filter(_.id == newMainLaneIdLink100).head
       lane1Link100.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2Link100 = currentLanes.filter(_.id == newSubLaneIdLink100).head
       lane2Link100.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane1Link101 = currentLanes.filter(_.id == newMainLaneIdLink101).head
       lane1Link101.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2Link101 = currentLanes.filter(_.id == newSubLaneIdLink101).head
       lane2Link101.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Delete sublane 12 and verify the movement to history tables
@@ -977,12 +977,12 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane1Link100AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneIdLink100).head
       lane1Link100AfterDelete.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane1Link101AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneIdLink101).head
       lane1Link101AfterDelete.attributes.foreach{ laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Verify the presence of the deleted lane on histories tables
@@ -994,7 +994,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2Link100AfterDelete.newId should be(0)
       lane2Link100AfterDelete.expired should be(true)
       lane2Link100AfterDelete.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2Link101AfterDelete = historyLanes.filter(_.oldId == newSubLaneIdLink101).head
@@ -1002,7 +1002,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane2Link101AfterDelete.newId should be(0)
       lane2Link101AfterDelete.expired should be(true)
       lane2Link101AfterDelete.attributes.foreach{ laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
     }
   }
@@ -1047,14 +1047,14 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val newSubLane2Link100 = lanes.find(_.id == newSubLane4IdLink100).head
       newSubLane2Link100.attributes.foreach { laneProp =>
-        updatedSubLane4.properties.contains(laneProp) should be(true)
+        updatedSubLane4.properties.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       newSubLane2Link100.startMeasure should be(0.0)
       newSubLane2Link100.endMeasure should be(500.0)
 
       val newSubLane2Link101 = lanes.find(_.id == newSubLane4IdLink101).head
       newSubLane2Link101.attributes.foreach { laneProp =>
-        updatedSubLane4.properties.contains(laneProp) should be(true)
+        updatedSubLane4.properties.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       newSubLane2Link101.startMeasure should be(0.0)
       newSubLane2Link101.endMeasure should be(500.0)
@@ -1068,7 +1068,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       deletedSubLane2Link100.linkId should be(linkId1)
       deletedSubLane2Link100.newId should be(newSubLane4IdLink100)
       deletedSubLane2Link100.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       deletedSubLane2Link100.startMeasure should be(0.0)
       deletedSubLane2Link100.endMeasure should be(500.0)
@@ -1078,7 +1078,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       deletedSubLane4Link100.linkId should be(linkId1)
       deletedSubLane4Link100.newId should be(0)
       deletedSubLane4Link100.attributes.foreach { laneProp =>
-        lanePropertiesValues4.contains(laneProp) should be(true)
+        lanePropertiesValues4.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       deletedSubLane4Link100.expired should be(false)
       deletedSubLane4Link100.startMeasure should be(0.0)
@@ -1088,7 +1088,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       deletedSubLane2Link101.linkId should be(linkId2)
       deletedSubLane2Link101.newId should be(newSubLane4IdLink101)
       deletedSubLane2Link101.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       deletedSubLane2Link101.startMeasure should be(0.0)
       deletedSubLane2Link101.endMeasure should be(500.0)
@@ -1098,7 +1098,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       deletedSubLane4Link101.linkId should be(linkId2)
       deletedSubLane4Link101.newId should be(0)
       deletedSubLane4Link101.attributes.foreach { laneProp =>
-        lanePropertiesValues4.contains(laneProp) should be(true)
+        lanePropertiesValues4.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
       deletedSubLane4Link101.expired should be(false)
       deletedSubLane4Link101.startMeasure should be(0.0)
@@ -1457,7 +1457,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
@@ -1473,7 +1473,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       splitLanes.foreach { lane =>
         lane.attributes.foreach {
           laneProp =>
-            lanePropertiesValues2.contains(laneProp) should be(true)
+            lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
         }
       }
 
@@ -1518,7 +1518,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
@@ -1534,7 +1534,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       splitLanes.foreach { lane =>
         lane.attributes.foreach {
           laneProp =>
-            lanePropertiesValues2.contains(laneProp) should be(true)
+            lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
         }
       }
 
@@ -1666,27 +1666,27 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       splitLanes(0).attributes.foreach {
         laneProp =>
-          lanePropertiesValues2.contains(laneProp) should be(true)
+          lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       splitLanes(1).attributes.foreach {
         laneProp =>
-          newPropertyValues1.contains(laneProp) should be(true)
+          newPropertyValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       splitLanes(2).attributes.foreach {
         laneProp =>
-          newPropertyValues2.contains(laneProp) should be(true)
+          newPropertyValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       splitLanes(3).attributes.foreach {
         laneProp =>
-          lanePropertiesValues2.contains(laneProp) should be(true)
+          lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       splitLanes(4).attributes.foreach {
         laneProp =>
-          newPropertyValues2.contains(laneProp) should be(true)
+          newPropertyValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
@@ -1711,11 +1711,11 @@ class LaneServiceSpec extends LaneTestSupporter {
       attributesChanged.map(_.lane.endMeasure) should be(Seq(200, 300, 500))
 
       attributesChanged.foreach{change =>
-        change.oldLane.get.attributes.foreach(laneProp => lanePropertiesValues2.contains(laneProp) should be(true))}
+        change.oldLane.get.attributes.foreach(laneProp => lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true))}
 
-      attributesChanged(0).lane.attributes.foreach(laneProp => newPropertyValues1.contains(laneProp) should be(true))
-      attributesChanged(1).lane.attributes.foreach(laneProp => newPropertyValues2.contains(laneProp) should be(true))
-      attributesChanged(2).lane.attributes.foreach(laneProp => newPropertyValues2.contains(laneProp) should be(true))
+      attributesChanged(0).lane.attributes.foreach(laneProp => newPropertyValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true))
+      attributesChanged(1).lane.attributes.foreach(laneProp => newPropertyValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true))
+      attributesChanged(2).lane.attributes.foreach(laneProp => newPropertyValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true))
     }
   }
 
@@ -1808,7 +1808,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
@@ -1822,7 +1822,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       splitLanes.foreach { lane =>
         lane.attributes.foreach {
           laneProp =>
-            lanePropertiesValues2.contains(laneProp) should be(true)
+            lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
         }
       }
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
@@ -1886,7 +1886,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
@@ -1900,7 +1900,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       splitLanes.foreach { lane =>
         lane.attributes.foreach {
           laneProp =>
-            lanePropertiesValues2.contains(laneProp) should be(true)
+            lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
         }
       }
 
@@ -1956,7 +1956,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Send created main lane and new lane 2 which has passed end date
@@ -1969,7 +1969,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1After = lanesAfterLane2CreationAndExpire.filter(_.id == mainLane1Id).head
       lane1After.id should be(mainLane1Id)
       lane1After.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Verify that lane2 was created and moved to history
@@ -1982,7 +1982,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historyLane2.endMeasure should be(500)
       historyLane2.expired should be(true)
       historyLane2.attributes.foreach { laneProp =>
-        lanePropertiesPassedEndDate.contains(laneProp) should be(true)
+        lanePropertiesPassedEndDate.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
 
       }
     }
@@ -2007,13 +2007,13 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
       lane1.id should be(mainLane1Id)
       lane1.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       val lane2 = currentLanes.filter(_.id == subLane2Id).head
       lane2.id should be(subLane2Id)
       lane2.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Send created main lane and updated lane 2 which has passed end date
@@ -2027,7 +2027,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane1After = lanesAfterLane2CreationAndExpire.filter(_.id == mainLane1Id).head
       lane1After.id should be(mainLane1Id)
       lane1After.attributes.foreach { laneProp =>
-        lanePropertiesValues1.contains(laneProp) should be(true)
+        lanePropertiesValues1.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       //Verify that lane2 was created and moved to history
@@ -2043,7 +2043,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historyLane2Update.endMeasure should be(500)
       historyLane2Update.expired should be(false)
       historyLane2Update.attributes.foreach { laneProp =>
-        lanePropertiesValues2.contains(laneProp) should be(true)
+        lanePropertiesValues2.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
       historyLane2Expire.newId should be (0)
@@ -2051,7 +2051,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historyLane2Expire.endMeasure should be(500)
       historyLane2Expire.expired should be(true)
       historyLane2Expire.attributes.foreach { laneProp =>
-        lanePropertiesPassedEndDate.contains(laneProp) should be(true)
+        lanePropertiesPassedEndDate.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
     }
