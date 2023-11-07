@@ -257,6 +257,7 @@ object LaneUpdater {
       } catch {
         case e: SamuraisFailed =>
           generateAndSaveReport(roadLinkChangeSet.targetDate)
+          throw e
       }
     })
   }

@@ -47,6 +47,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
       } catch {
         case e: SamuraisFailed =>
           generateAndSaveReport(typeId, changeSet)
+          throw e
       }
     })
   }

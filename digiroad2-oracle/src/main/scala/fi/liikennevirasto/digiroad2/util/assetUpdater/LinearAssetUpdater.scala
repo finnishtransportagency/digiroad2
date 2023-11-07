@@ -394,6 +394,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       } catch {
         case e:SamuraisFailed => 
           generateAndSaveReport(typeId, changeSet.targetDate)
+          throw e
       }
     })
   }
