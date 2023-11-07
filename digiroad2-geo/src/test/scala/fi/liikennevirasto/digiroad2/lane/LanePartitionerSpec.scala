@@ -61,16 +61,12 @@ class LanePartitionerSpec extends FunSuite with Matchers {
 
     val roadLinksMapped = Seq(roadLink1, roadLink2, roadLink3).groupBy(_.linkId).mapValues(_.head)
     val lanes = createLanesWithGeometry()
+    val lanesGroupedById = lanes.groupBy(_.id)
 
     val result = partition(lanes, roadLinksMapped)
     result.size should equal(2)
-    result(0).contains(lanes(1)) should equal(true)
-    result(0).contains(lanes(2)) should equal(true)
-    result(0).contains(lanes(5)) should equal(true)
-
-    result(1).contains(lanes(3)) should equal(true)
-    result(1).contains(lanes(0)) should equal(true)
-    result(1).contains(lanes(4)) should equal(true)
+    result.exists(group => group.contains(lanesGroupedById(1)) && group.contains(lanesGroupedById(2)) && group.contains(lanesGroupedById(5)))
+    result.exists(group => group.contains(lanesGroupedById(3)) && group.contains(lanesGroupedById(0)) && group.contains(lanesGroupedById(4)))
   }
 
   test("startingLane should be either one of the last lanes") {
