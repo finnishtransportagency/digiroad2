@@ -136,19 +136,18 @@ object ValidatorLinearDao extends ValidatorDao{
       WHERE ${assetTypeFilter}
       AND a.floating = false
       AND (a.valid_to > current_timestamp OR a.valid_to IS NULL)
-      AND (lp.side_code = 2 OR lp.side_code = 3 OR(lp.side_code = 1 AND NOT EXISTS(SELECT 1
-          FROM asset a4
-          JOIN asset_link al4 ON a4.id = al4.asset_id
-          JOIN lrm_position lp4 ON al4.position_id = lp4.id
-          WHERE a4.asset_type_id = a.asset_type_id
-          AND lp4.link_id = lp.link_id
-          AND a4.id != a.id
-          AND a4.floating = false
-          AND (a4.valid_to > current_timestamp OR a4.valid_to IS NULL)
-          AND lp4.side_code != lp.side_code ${filterLink("lp4.link_id", links)}
-          )
-          )
-      )
+      AND (lp.side_code = 2 OR lp.side_code = 3 OR
+        (
+          lp.side_code = 1 AND NOT EXISTS(
+              SELECT 1 FROM asset a4
+                JOIN asset_link al4 ON a4.id = al4.asset_id
+                JOIN lrm_position lp4 ON al4.position_id = lp4.id
+                WHERE a4.asset_type_id = a.asset_type_id
+                AND lp4.link_id = lp.link_id AND a4.id != a.id AND a4.floating = false
+                AND (a4.valid_to > current_timestamp OR a4.valid_to IS NULL) AND lp4.side_code != lp.side_code ${filterLink("lp4.link_id", links)}
+              )
+           )
+        ) ${filterLink("lp.link_id", links)}
       )
       SELECT DISTINCT id, link_id,side_code, start_measure, end_measure
       FROM result_set
