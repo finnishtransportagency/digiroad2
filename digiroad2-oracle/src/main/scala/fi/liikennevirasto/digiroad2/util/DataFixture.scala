@@ -1,5 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.io.{BufferedWriter, File, FileWriter}
+import java.security.InvalidParameterException
+import java.sql.SQLIntegrityConstraintViolationException
+
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit, RoadLinkProperties => RoadLinkPropertiesAsset, _}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
@@ -26,9 +30,6 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
-import java.io.{BufferedWriter, File, FileWriter}
-import java.security.InvalidParameterException
-import java.sql.SQLIntegrityConstraintViolationException
 import scala.collection.mutable.ListBuffer
 import scala.sys.exit
 
