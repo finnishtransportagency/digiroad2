@@ -12,7 +12,7 @@ import org.slf4j.Logger
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
 
-case class SamuutusFailled(msg:String) extends Exception(msg)
+case class SamuraisFailed(msg:String) extends Exception(msg)
 
 object ValidateSamuutus {
   private lazy val awsService = new AwsService
@@ -25,7 +25,7 @@ object ValidateSamuutus {
    if (Digiroad2Properties.failSamuutusOnFailedValidation) {
      if (passSet.contains(false)) {
        reportInvalidAssets(logger, typeId, result)
-       throw SamuutusFailled("")
+       throw SamuraisFailed("")
      } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
    }else {
      if (passSet.contains(false)) reportInvalidAssets(logger, typeId, result)
