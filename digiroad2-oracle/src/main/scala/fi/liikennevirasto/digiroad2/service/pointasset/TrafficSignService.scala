@@ -202,24 +202,26 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     val propertyData = persistedAsset.propertyData.map(prop =>
       prop.propertyType match {
         case "single_choice" if prop.values.head.asInstanceOf[PropertyValue].propertyValue.isEmpty =>
-          SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getSingleChoiceDefaultValueByPublicId(prop.publicId).toString)))
+          SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getSingleChoiceDefaultValueByPublicId(prop.publicId).toString)), prop.groupedId)
 
         case "checkbox" if prop.values.head.asInstanceOf[PropertyValue].propertyValue.isEmpty =>
           if (prop.publicId == "old_traffic_code" && persistedAsset.createdAt.get.isBefore(newTrafficCodeStartDate))
-            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue("1")))
+            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue("1")), prop.groupedId)
           else
-            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getDefaultMultiChoiceValue.toString)))
+            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getDefaultMultiChoiceValue.toString)), prop.groupedId)
 
         case "additional_panel_type" if prop.values.nonEmpty =>
-          val additionalPanelValues = prop.values.head.asInstanceOf[AdditionalPanel]
-          val pValues = additionalPanelValues.copy(
-            size = if (additionalPanelValues.size != 0) additionalPanelValues.size else AdditionalPanelSize.getDefault.value,
-            coating_type = if (additionalPanelValues.coating_type != 0) additionalPanelValues.coating_type else AdditionalPanelCoatingType.getDefault.value,
-            additional_panel_color = if (additionalPanelValues.additional_panel_color != 0) additionalPanelValues.additional_panel_color else AdditionalPanelColor.getDefault.value
-          )
-          SimplePointAssetProperty(prop.publicId, Seq(pValues))
+          val additionalPanelValues = prop.values.map { value =>
+            val apValue = value.asInstanceOf[AdditionalPanel]
+            apValue.copy(
+              size = if (apValue.size != 0) apValue.size else AdditionalPanelSize.getDefault.value,
+              coating_type = if (apValue.coating_type != 0) apValue.coating_type else AdditionalPanelCoatingType.getDefault.value,
+              additional_panel_color = if (apValue.additional_panel_color != 0) apValue.additional_panel_color else AdditionalPanelColor.getDefault.value
+            )
+          }
+          SimplePointAssetProperty(prop.publicId, additionalPanelValues, prop.groupedId)
 
-        case _ => SimplePointAssetProperty(prop.publicId, prop.values)
+        case _ => SimplePointAssetProperty(prop.publicId, prop.values, prop.groupedId)
       }).toSet
 
     val validityDirection = adjustment.validityDirection.getOrElse(persistedAsset.validityDirection)

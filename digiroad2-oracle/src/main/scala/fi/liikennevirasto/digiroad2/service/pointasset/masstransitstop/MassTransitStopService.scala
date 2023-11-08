@@ -600,7 +600,7 @@ trait MassTransitStopService extends PointAssetOperations {
         case ("vaikutussuunta", Some(validityDirection)) if property.values.nonEmpty =>
           val propertyValue = property.values.head.asInstanceOf[PropertyValue]
           if (propertyValue.propertyValue.toInt != validityDirection) {
-            SimplePointAssetProperty(property.publicId, Seq(PropertyValue(validityDirection.toString, Some(SideCode(validityDirection).toString), propertyValue.checked)))
+            SimplePointAssetProperty(property.publicId, Seq(PropertyValue(validityDirection.toString, Some(SideCode(validityDirection).toString), propertyValue.checked)), property.groupedId)
           } else {
             SimplePointAssetProperty(property.publicId, property.values, property.groupedId)
           }
