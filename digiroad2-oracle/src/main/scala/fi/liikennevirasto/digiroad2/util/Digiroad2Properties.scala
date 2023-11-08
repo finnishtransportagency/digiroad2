@@ -56,6 +56,8 @@ trait Digiroad2Properties {
   val awsConnectionEnabled: Boolean
   val roadLinkChangeS3BucketName: String
   val samuutusReportsBucketName: String
+  val failSamuutusOnFailedValidation: Boolean
+  val validationReportsBucketName: String
   val bonecpProperties: Properties
   val batchMode:Boolean
 }
@@ -103,7 +105,9 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val batchMode: Boolean = scala.util.Properties.envOrElse("batchMode", "false").toBoolean
   val roadLinkChangeS3BucketName: String = scala.util.Properties.envOrElse("roadLinkChangeS3BucketName", null)
   val samuutusReportsBucketName: String = scala.util.Properties.envOrElse("samuutusReportsBucketName", null)
-
+  val failSamuutusOnFailedValidation: Boolean = scala.util.Properties.envOrElse("failSamuutusOnFailedValidation", "false").toBoolean
+  val validationReportsBucketName: String = scala.util.Properties.envOrElse("validationReportsBucketName", null)
+  
   val cacheHostname: String = scala.util.Properties.envOrElse("cacheHostname", null)
   val cacheHostPort: String = scala.util.Properties.envOrElse("cacheHostPort", null)
   val caching: Boolean = scala.util.Properties.envOrElse("caching", "false").toBoolean
@@ -198,6 +202,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val roadLinkChangeS3BucketName: String = envOrProperties("roadLinkChangeS3BucketName")
   override val samuutusReportsBucketName: String = envOrProperties("samuutusReportsBucketName")
+  override val failSamuutusOnFailedValidation: Boolean = envProps.getProperty("failSamuutusOnFailedValidation", "false").toBoolean
+  override val validationReportsBucketName: String = envOrProperties("validationReportsBucketName")
   override val batchMode: Boolean =  envProps.getProperty("batchMode", "false").toBoolean
 
   override lazy val bonecpProperties: Properties = {
@@ -285,6 +291,11 @@ object Digiroad2Properties {
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
   lazy val roadLinkChangeS3BucketName: String = properties.roadLinkChangeS3BucketName
   lazy val samuutusReportsBucketName: String = properties.samuutusReportsBucketName
+  /**
+    * Defaul false
+    */
+  lazy val failSamuutusOnFailedValidation: Boolean = properties.failSamuutusOnFailedValidation
+  lazy val validationReportsBucketName: String = properties.validationReportsBucketName
   lazy val batchMode: Boolean = properties.batchMode
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties

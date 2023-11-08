@@ -958,6 +958,13 @@ object AssetTypeInfo {
                     ParkingProhibition, CyclingAndWalking, Lanes, RoadLinkProperties,
                     UnknownAssetTypeId)
 
+  val validate: Set[AssetTypeInfo] = Set(MassTransitStopAsset, SpeedLimitAsset, TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
+    HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw, NumberOfLanes, MassTransitLane,
+    TrafficVolume, WinterSpeedLimit, Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
+    RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers, TrafficLights,
+    MaintenanceRoadAsset, TrafficSigns, StateSpeedLimit, CareClass, CarryingCapacity, RoadWorksAsset,
+    ParkingProhibition, CyclingAndWalking, Lanes)
+  
   /**
     * assets which use side code
     */
@@ -968,6 +975,9 @@ object AssetTypeInfo {
     NumberOfLanes,
     HazmatTransportProhibition,Prohibition,CyclingAndWalking
   )
+
+  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
+    CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)

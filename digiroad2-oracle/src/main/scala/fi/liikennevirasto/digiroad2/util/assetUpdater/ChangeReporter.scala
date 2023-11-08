@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, RoadLinkProperties, Un
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType
 import fi.liikennevirasto.digiroad2.service.AwsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
-import fi.liikennevirasto.digiroad2.{FloatingReason, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{FloatingReason, GeometryUtils, ILinearReference, Point}
 import org.joda.time.DateTime
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats}
@@ -23,7 +23,7 @@ import java.nio.file.{Files, Paths}
   * @param validityDirection for point assets
   * @param length asset length, zero for point assets
   */
-sealed case class LinearReference(linkId: String, startMValue: Double, endMValue: Option[Double],sideCode: Option[Int] = None, validityDirection: Option[Int] = None, length: Double)
+sealed case class LinearReferenceForReport(linkId: String, startMValue: Double, endMValue: Option[Double], sideCode: Option[Int] = None, validityDirection: Option[Int] = None, length: Double) extends ILinearReference
 
 /**
   * 
@@ -35,7 +35,7 @@ sealed case class LinearReference(linkId: String, startMValue: Double, endMValue
   * @param isPointAsset
   */
 sealed case class Asset(assetId: Long, values: String, municipalityCode: Option[Int], geometry: Option[Seq[Point]],
-                        linearReference: Option[LinearReference], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None) {
+                        linearReference: Option[LinearReferenceForReport], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None) {
 
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -225,7 +225,7 @@ object ChangeReporter {
       val changedAsset = change.asInstanceOf[ChangedAsset]
       val assetBefore = changedAsset.before.get
       val (beforeLinkId, beforeStartMValue, beforeEndMValue, beforeValidityDirection, beforeLength) = assetBefore.linearReference match {
-        case Some(linearReference: LinearReference) =>
+        case Some(linearReference: LinearReferenceForReport) =>
           val linRefEndMValue = linearReference.endMValue match {
             case Some(value) => Some(value)
             case _ => None
@@ -238,7 +238,7 @@ object ChangeReporter {
       val beforeGeometry = assetBefore.geometryToString
       changedAsset.after.map { assetAfter =>
         val (afterLinkId, afterStartMValue, afterEndMValue, afterValidityDirection, afterLength) = assetAfter.linearReference match {
-          case Some(linearReference: LinearReference) =>
+          case Some(linearReference: LinearReferenceForReport) =>
             val linRefEndMValue = linearReference.endMValue match {
               case Some(value) => Some(value)
               case _ => None
