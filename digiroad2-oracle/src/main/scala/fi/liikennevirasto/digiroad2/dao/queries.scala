@@ -457,6 +457,7 @@ object Queries {
     sqlu"""UPDATE samuutus_success SET last_succesfull_samuutus = to_timestamp($latestSuccess, 'YYYY-MM-DD"T"HH24:MI:SS.FF') WHERE asset_type_id = $typeid""".execute
   }
 
+  // Used for performance reasons, remember to add back constraints after operation using method addLaneFKConstraints()
   def dropLaneFKConstraints(): Unit = {
     sqlu"ALTER TABLE LANE_ATTRIBUTE DROP CONSTRAINT fk_lane_attribute_lane".execute
     sqlu"ALTER TABLE LANE_LINK DROP CONSTRAINT fk_lane_link_lane".execute
