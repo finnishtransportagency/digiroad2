@@ -325,11 +325,18 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     SimplePointAssetProperty("sidecode", List(PropertyValue("2")), 2)
   )
 
+
+  val trafficSignProperties = Set(
+    SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("82"))),
+    SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+    SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))),
+    SimplePointAssetProperty("additional_panel", List(AdditionalPanel(61, "", "", 1, "test1", 99, 99, 99), AdditionalPanel(61, "", "", 1, "test2", 99, 99, 99)))
+  )
+
   def createTestAssets(x: Double, y: Double, roadLink: RoadLink, validityDirection: Option[Int], bearing: Option[Int], updateModifiedBy: Boolean = true) = {
     val dtsId = directionalTrafficSignService.create(IncomingDirectionalTrafficSign(x,y, roadLink.linkId, validityDirection.get, bearing, Set()), "testCreator", roadLink, false)
     val tlId = trafficLightService.create(IncomingTrafficLight(x,y, roadLink.linkId, trafficLightPropertySet1 ++ trafficLightPropertySet2, validityDirection), "testCreator", roadLink, false)
-    val tsId = trafficSignService.create(IncomingTrafficSign(x,y,roadLink.linkId, Set(SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("1"))),
-      SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("80")))), validityDirection.get, bearing),"testCreator", roadLink, false)
+    val tsId = trafficSignService.create(IncomingTrafficSign(x,y,roadLink.linkId, trafficSignProperties, validityDirection.get, bearing),"testCreator", roadLink, false)
 
     if (updateModifiedBy) {
       sqlu"""UPDATE ASSET
@@ -483,4 +490,22 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       }
     }
   }
+
+  test("traffic sign additional panels are all preserved") {
+    runWithRollback {
+      val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(367880.004, 6673884.307), Point(367824.646, 6674001.441)), 131.683, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+      val ids = createTestAssets(367880.004, 6673884.307, roadLink, Some(SideCode.TowardsDigitizing.value), Some(317))
+
+      val asset = trafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = trafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = trafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      val oldAssetAdditionalPanels = asset.propertyData.filter(_.publicId == "additional_panel").head.values.map(_.asInstanceOf[AdditionalPanel])
+      val newAssetAdditionalPanels = newAsset.propertyData.filter(_.publicId == "additional_panel").head.values.map(_.asInstanceOf[AdditionalPanel])
+      oldAssetAdditionalPanels.toString() should be(newAssetAdditionalPanels.toString())
+    }
+  }
+
 }
