@@ -165,10 +165,6 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
     municipalities.find(municipality => municipality.geometry.exists(geometry => isPointInsideGeometry(point, geometry)))
   }
 
-  override protected def encode(url: String): String = {
-    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
-  }
-
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
