@@ -19,7 +19,7 @@ object ValidateSamuutus {
   private lazy val s3Bucket: String = Digiroad2Properties.samuutusReportsBucketName
   def validate(typeId: Int, changeSet: RoadLinkChangeSet): Unit = {
     val newLinks = changeSet.changes.flatMap(_.newLinks.map(_.linkId)).toSet
-    val result = SamuutusValidator.validate(typeId, newLinks)
+    val result = SamuutusValidator.validate(typeId, newLinks,newTransaction = false)
     val passSet = result.map(_.pass).toSet
    if (Digiroad2Properties.failSamuutusOnFailedValidation) {
      if (passSet.contains(false)) {
