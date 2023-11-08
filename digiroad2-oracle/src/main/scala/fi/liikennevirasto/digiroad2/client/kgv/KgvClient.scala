@@ -4,7 +4,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils.isPointInsideGeometry
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.client.{ClientException, FeatureClass, Filter, HistoryRoadLink, IRoadLinkFetched, LinkOperationError, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{ClientException, Filter, HistoryRoadLink, LinkOperationError, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
@@ -16,12 +16,12 @@ import scala.util.Try
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
 import org.apache.http.impl.client.HttpClients
-
 import fi.liikennevirasto.digiroad2.util.LogUtils
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.StreamInput
+import fi.liikennevirasto.digiroad2.{Geometry => UtilGeometry}
 
 case class ChangeKgv( id: Int, oldKmtkId: String, oldVersion: Int, newKmtkId: Option[String],
                       newVersion: Option[Int], `type`: String, ruleId: Option[String], cTime: DateTime,
@@ -69,9 +69,24 @@ class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceV
 class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSourceValue: Option[LinkGeomSource] = None, extractor: ExtractorBase = new Extractor) extends KgvOperation(extractor) {
   override def restApiEndPoint: String = Digiroad2Properties.kgvEndpoint
   protected val serviceName:String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
-  protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
+  protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(LinkGeomSource.Unknown)
 
   val filter: Filter = FilterOgc
+
+  def fetchAllMunicipalities(): Seq[Municipality] = {
+    val format = "f=application%2Fgeo%2Bjson"
+    queryMunicipalityBorders(restApiEndPoint, serviceName, format)
+    match {
+      case Right(features) => features.get.features.map {feature =>
+        val polygonFeature = feature.asInstanceOf[PolygonFeature]
+        Municipality(polygonFeature.properties("kuntanumer").toString.toInt, polygonFeature.polygonGeometry) }
+      case Left(error) => throw new ClientException(error.toString)
+    }
+  }
+
+  def fetchAllMunicipalitiesF(): Future[Seq[Municipality]] = {
+    Future(fetchAllMunicipalities())
+  }
 
   /** *
    * Fetches all municipalities in a PolygonFeature collection
@@ -96,7 +111,7 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
       .build()
 
     var response: CloseableHttpResponse = null
-    LogUtils.time(logger, s"fetch PolygonFeatures", url = Some(url)) {
+    LogUtils.time(logger, s"fetch municipality borders", url = Some(url)) {
       try {
         response = client.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
@@ -127,23 +142,19 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
     }
   }
 
-  def fetchAllMunicipalities(): Seq[Municipality] = {
-    val format = "f=application%2Fgeo%2Bjson"
-    queryMunicipalityBorders(restApiEndPoint, serviceName, format)
-    match {
-      case Right(features) => features.get.features.map {feature =>
-        val polygonFeature = feature.asInstanceOf[PolygonFeature]
-        Municipality(polygonFeature.properties("kuntanumer").toString.toInt, polygonFeature.polygonGeometry) }
-      case Left(error) => throw new ClientException(error.toString)
-    }
-  }
-
-  def fetchAllMunicipalitiesF(): Future[Seq[Municipality]] = {
-    Future(fetchAllMunicipalities())
+  protected override def convertToFeature(content: Map[String, Any]): BaseFeature = {
+    val geometry = content("geometry").asInstanceOf[Map[String, Any]]
+    val geometryCoordinates = geometry("coordinates").asInstanceOf[List[List[List[Double]]]].map(coords => UtilGeometry(`type` = geometry("type").toString,
+      coordinates = coords))
+    PolygonFeature(
+      `type` = content("type").toString,
+      polygonGeometry = geometryCoordinates,
+      properties = content("properties").asInstanceOf[Map[String, Any]]
+    )
   }
 
   /**
-   * Fetches the Municipality that matches given location point
+   * Finds the Municipality that matches given location point
    *
    * @param point
    * @param municipalities
@@ -152,6 +163,59 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
    */
   def findMunicipalityForPoint(point: Point, municipalities: Seq[Municipality]): Option[Municipality] = {
     municipalities.find(municipality => municipality.geometry.exists(geometry => isPointInsideGeometry(point, geometry)))
+  }
+
+  override protected def encode(url: String): String = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def addHeaders(request: HttpRequestBase): Unit = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
+                                                        filter: Option[String]): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByIds[LinkType](idSet: Set[String], filter: Set[String] => String): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String], filter: Option[String]): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByFilter[LinkType](filter: Option[String], pagination: Boolean = false): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByDatetimeAndFilter[LinkType](lowerDate: DateTime, higherDate: DateTime, filter: Option[String] = None): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByLastEditedDate[LinkType](lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
+  }
+
+  override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
+    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
   }
 }
 

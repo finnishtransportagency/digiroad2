@@ -282,34 +282,16 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
   protected def convertToFeature(content: Map[String, Any]): BaseFeature = {
-    if (serviceName == Changes.value) {
-        LineFeature(
-          `type` = content("type").toString,
-          geometry = Geometry("", List()),
-          properties = content("properties").asInstanceOf[Map[String, Any]]
-        )
-    }
+    val geometry = if (serviceName == Changes.value) Geometry("", List())
     else {
-       val geometry = content("geometry").asInstanceOf[Map[String, Any]]
-        geometry("type").toString match {
-          case "Polygon" | "MultiPolygon" =>
-            val geometryCoordinates = geometry("coordinates").asInstanceOf[List[List[List[Double]]]].map(coords => UtilGeometry(`type` = geometry("type").toString,
-              coordinates = coords))
-            PolygonFeature(
-              `type` = content("type").toString,
-              polygonGeometry = geometryCoordinates,
-              properties = content("properties").asInstanceOf[Map[String, Any]]
-            )
-          case _ =>
-            val geometryCoordinates = Geometry (`type` = geometry("type").toString,
-            coordinates = geometry("coordinates").asInstanceOf[List[List[Double]]] )
-            LineFeature(
-              `type` = content("type").toString,
-              geometry = geometryCoordinates,
-              properties = content("properties").asInstanceOf[Map[String, Any]]
-            )
-        }
+      Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
+        coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]])
     }
+    LineFeature(
+      `type` = content("type").toString,
+      geometry = geometry,
+      properties = content("properties").asInstanceOf[Map[String, Any]]
+    )
   }
 
   protected def encode(url: String): String = {
@@ -327,7 +309,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     * Under Construction - 1
     * Planned - 3
     */
-  protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
+  private def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("properties").asInstanceOf[Map[String, Any]]
     val linkStatus = extractor.extractConstructionType(attributes)
     linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
