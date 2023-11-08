@@ -169,10 +169,6 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
     throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
   }
 
-  override protected def addHeaders(request: HttpRequestBase): Unit = {
-    throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
-  }
-
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     throw new NotImplementedError("Inherited method not implemented in KgvMunicipalityBorderClient")
