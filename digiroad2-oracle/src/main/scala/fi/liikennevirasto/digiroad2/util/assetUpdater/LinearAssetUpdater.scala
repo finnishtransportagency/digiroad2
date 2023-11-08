@@ -246,12 +246,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         val linkOld = relevantRoadLinkChange.oldLink.get
         val assetGeometry = GeometryUtils.truncateGeometry3D(linkOld.geometry, ol.startMeasure, ol.endMeasure)
         val measures = Measures(ol.startMeasure, ol.endMeasure).roundMeasures()
-        val linearReference = LinearReference(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, measures.length())
+        val linearReference = LinearReferenceForReport(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, measures.length())
         Some(Asset(ol.id, values, Some(linkOld.municipality), Some(assetGeometry), Some(linearReference)))
       case None =>
         val linkOld = relevantRoadLinkChange.oldLink
         if (linkOld.nonEmpty) {
-          val linearReference = LinearReference(linkOld.get.linkId, 0, None, None, None, 0)
+          val linearReference = LinearReferenceForReport(linkOld.get.linkId, 0, None, None, None, 0)
           Some(Asset(0, "", Some(linkOld.get.municipality), None, Some(linearReference)))
         } else None
     }
@@ -261,7 +261,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val values = compactJson(asset.toJson)
       val assetGeometry = GeometryUtils.truncateGeometry3D(newLink.geometry, asset.startMeasure, asset.endMeasure)
       val measures = Measures(asset.startMeasure, asset.endMeasure).roundMeasures()
-      val linearReference = LinearReference(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, measures.length())
+      val linearReference = LinearReferenceForReport(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, measures.length())
       Asset(asset.id, values, Some(newLink.municipality), Some(assetGeometry), Some(linearReference))
     })
     
@@ -384,11 +384,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"Processing ${changeSets.size}} road link changes set")
     changeSets.foreach(changeSet => {
       logger.info(s"Started processing change set ${changeSet.key}")
-      withDynTransaction {
-        updateByRoadLinks(typeId, changeSet.changes)
-        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+      
+      try {
+        withDynTransaction {
+          updateByRoadLinks(typeId, changeSet.changes)
+          ValidateSamuutus.validate(typeId, changeSet)
+          generateAndSaveReport(typeId, changeSet.targetDate)
+        } 
+      } catch {
+        case e:SamuutusFailed => 
+          generateAndSaveReport(typeId, changeSet.targetDate)
+          throw e
       }
-      generateAndSaveReport(typeId, changeSet.targetDate)
     })
   }
 
