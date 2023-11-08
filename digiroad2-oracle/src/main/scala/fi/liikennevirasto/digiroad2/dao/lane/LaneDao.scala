@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
@@ -444,7 +444,10 @@ class LaneDao(){
     sqlu"""DELETE FROM LANE_POSITION WHERE id = $lanePositionId""".execute
   }
 
-  def deleteEntryLanes(laneIds: Seq[Long]): Unit = {
+  def deleteLanesBatch(laneIds: Seq[Long]): Unit = {
+    LogUtils.time(logger, "Drop lane foreign key constraints") {
+      Queries.dropLaneFKConstraints()
+    }
     MassQuery.withIds(laneIds.toSet) { idTableName =>
       val lanePositionIds = sql"""SELECT lane_position_id FROM LANE_LINK WHERE LANE_ID IN (SELECT id FROM #$idTableName)""".as[Long].list
 
@@ -455,6 +458,9 @@ class LaneDao(){
       MassQuery.withIds(lanePositionIds.toSet) { lpIdTableName =>
         sqlu"""DELETE FROM LANE_POSITION WHERE id IN (SELECT id FROM #$lpIdTableName)""".execute
       }
+    }
+    LogUtils.time(logger, "Add lane foreign key constraints") {
+      Queries.addLaneFKConstraints()
     }
   }
 
