@@ -40,7 +40,7 @@ object ValidateAssets {
         val invalidRows = a.invalidRows
         logger.info(s"$rule:${invalidRows.size}")
         invalidRows.foreach(a => {
-          logger.info(s"validation: ${rule}, assetType: ${typeId}, assetId: ${a.assetId}, laneCode: ${a.laneCode.getOrElse("")}, sideCode: ${a.lrm.sideCode}, linkId: ${a.lrm.linkId}, startMValue: ${a.lrm.startMValue}, endMValue: ${a.lrm.endMValue}")
+          logger.info(s"validation: ${rule}, assetType: ${typeId}, assetId: ${a.assetId}, laneCode: ${a.laneCode.getOrElse("")}, sideCode: ${a.lrm.sideCode.getOrElse("")}, linkId: ${a.lrm.linkId}, startMValue: ${a.lrm.startMValue}, endMValue: ${a.lrm.endMValue.getOrElse("")}")
         })
       })
     }
