@@ -45,10 +45,8 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
-  val (collection, linkGeomSourceValue) = (
-    Some(KgvCollection.MunicipalityBorders),
-    Some(LinkGeomSource.Unknown))
-  val municipalityBorderClient = new KgvMunicipalityBorderClient(collection, linkGeomSourceValue)
+  val collection = Some(KgvCollection.MunicipalityBorders)
+  val municipalityBorderClient = new KgvMunicipalityBorderClient(collection)
 
   def mandatoryFields: Set[String] = coordinateMappings.keySet
   def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
