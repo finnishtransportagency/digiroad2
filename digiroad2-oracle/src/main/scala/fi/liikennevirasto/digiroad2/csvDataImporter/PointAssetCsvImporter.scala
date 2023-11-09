@@ -249,7 +249,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
           val isServicePoint = csvRow.exists(property => property._1 == "palvelun tyyppi")
           val municipalityCode = isServicePoint match {
             case true =>
-              Some(getPointLocation(properties, municipalityBorders))
+              Some(getLocationFromProperties(properties, municipalityBorders))
             case false =>
               None
           }
@@ -284,7 +284,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def getPointLocation(parsedRow: ParsedProperties, municipalityBorders: Seq[Municipality]): Int = {
+  def getLocationFromProperties(parsedRow: ParsedProperties, municipalityBorders: Seq[Municipality]): Int = {
     val lon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]].get
     val lat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]].get
 
