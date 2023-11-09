@@ -69,7 +69,7 @@ class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceV
 class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSourceValue: Option[LinkGeomSource] = None, extractor: ExtractorBase = new Extractor) extends KgvOperation(extractor) {
   override def restApiEndPoint: String = Digiroad2Properties.kgvEndpoint
   protected val serviceName:String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
-  protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(LinkGeomSource.Unknown)
+  protected val linkGeomSource: LinkGeomSource = LinkGeomSource.Unknown
 
   val filter: Filter = FilterOgc
 
