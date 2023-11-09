@@ -456,5 +456,18 @@ object Queries {
   def updateLatestSuccessfulSamuutus(typeid: Int, latestSuccess: DateTime): Unit = {
     sqlu"""UPDATE samuutus_success SET last_succesfull_samuutus = to_timestamp($latestSuccess, 'YYYY-MM-DD"T"HH24:MI:SS.FF') WHERE asset_type_id = $typeid""".execute
   }
+
+  // Used for performance reasons, remember to add back constraints after operation using method addLaneFKConstraints()
+  def dropLaneFKConstraints(): Unit = {
+    sqlu"ALTER TABLE LANE_ATTRIBUTE DROP CONSTRAINT fk_lane_attribute_lane".execute
+    sqlu"ALTER TABLE LANE_LINK DROP CONSTRAINT fk_lane_link_lane".execute
+    sqlu"ALTER TABLE LANE_LINK DROP CONSTRAINT fk_lane_link_lane_position".execute
+  }
+
+  def addLaneFKConstraints(): Unit = {
+    sqlu"ALTER TABLE lane_attribute ADD CONSTRAINT fk_lane_attribute_lane FOREIGN KEY (lane_id) REFERENCES lane(id) ON DELETE NO ACTION NOT DEFERRABLE INITIALLY IMMEDIATE".execute
+    sqlu"ALTER TABLE LANE_LINK ADD CONSTRAINT fk_lane_link_lane_position FOREIGN KEY (lane_position_id) REFERENCES lane_position(id) ON DELETE NO ACTION NOT DEFERRABLE INITIALLY IMMEDIATE".execute
+    sqlu"ALTER TABLE LANE_LINK ADD CONSTRAINT fk_lane_link_lane FOREIGN KEY (lane_id) REFERENCES lane(id) ON DELETE NO ACTION NOT DEFERRABLE INITIALLY IMMEDIATE".execute
+  }
  
 }
