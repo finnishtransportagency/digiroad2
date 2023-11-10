@@ -586,6 +586,10 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     }
   }
 
+  def updateExpirations(ids: Set[Long]) = {
+     sqlu"update asset set valid_to = current_timestamp where id in (${ids.mkString(",")})".execute
+  }
+
   /**
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
     */

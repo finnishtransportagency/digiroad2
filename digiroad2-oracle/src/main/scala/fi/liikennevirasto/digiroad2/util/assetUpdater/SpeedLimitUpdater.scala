@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewLinearAssetMassOperation, SpeedLimitService}
 
 class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUpdater(service) {
 
@@ -69,6 +69,14 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
         limit.modifiedDateTime, limit.linkSource)
     }
     service.purgeUnknown(newLinearAssets.map(_.linkId).toSet, Seq(), newTransaction = false)
+  }
+
+  override protected def adjustedSideCodes(adjustedSideCodes: Seq[SideCodeAdjustment]): Unit = {
+    val assets = service.getPersistedAssetsByIds(adjustedSideCodes.head.typeId, adjustedSideCodes.map(_.assetId).toSet, newTransaction = false)
+    val roadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(assets.map(_.linkId).toSet, newTransaction = false)
+    adjustedSideCodes.foreach { adjustment =>
+      adjustedSideCode(adjustment, assets, roadLinks, Seq())
+    }
   }
   
   protected override def adjustedSideCode(adjustment: SideCodeAdjustment, oldAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], adjustedSideCodes: Seq[SideCodeAdjustment]): Unit = {
