@@ -19,10 +19,10 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
     } else Seq()
     filterChanges ++ remove
   }
-  override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset]): Unit = {
+  protected override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
     val (toInsert, toUpdate) = newMaintenanceAssets.partition(_.id == 0L)
-    val roadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newMaintenanceAssets.map(_.linkId).toSet, newTransaction = false)
-    if (toUpdate.nonEmpty) {
+  
+   if (toUpdate.nonEmpty) {
       val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
       updateProjected(toUpdate, persisted)
       if (newMaintenanceAssets.nonEmpty)

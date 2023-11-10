@@ -429,7 +429,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     logger.info("Starting to save generated or updated")
     LogUtils.time(logger, s"Saving generated or updated took: ") {
-      persistProjectedLinearAssets(projectedAssets.filterNot(_.id == removePart).filter(_.id == 0L))
+      persistProjectedLinearAssets(projectedAssets.filterNot(_.id == removePart).filter(_.id == 0L),newRoadLinks)
     }
   }
   /**
@@ -702,7 +702,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  protected def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
+  protected def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
     if (newLinearAssets.nonEmpty)
       logger.info(s"Saving projected linear assets, count: ${newLinearAssets.size}")
 
@@ -719,8 +719,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     logger.info(s"insert assets count: ${toInsert.size}")
     logger.info(s"update assets count: ${toUpdate.size}")
-
-    val roadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
+    
     if (toUpdate.nonEmpty) {
       val toUpdateText = toUpdate.filter(a =>
         Set(EuropeanRoads.typeId, ExitNumbers.typeId).contains(a.typeId))

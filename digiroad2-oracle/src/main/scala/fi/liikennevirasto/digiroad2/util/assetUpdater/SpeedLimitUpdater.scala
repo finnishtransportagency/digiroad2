@@ -60,7 +60,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
    assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
   }
 
-  override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
+  protected override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
     val (newlimits, changedlimits) = newLinearAssets.partition(_.id <= 0)
     newlimits.foreach { limit =>
       // TODO remove this get creating one by one

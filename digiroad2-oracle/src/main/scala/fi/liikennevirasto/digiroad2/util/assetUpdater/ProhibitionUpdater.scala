@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, ProhibitionSe
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater(service) {
-  override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
+  protected override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     val roadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
     if (toUpdate.nonEmpty) {
