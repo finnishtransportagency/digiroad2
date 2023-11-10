@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstr
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, LogUtils, Point}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -840,13 +840,16 @@ class AssetFiller {
 
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
     // if links does not have any asset filter it away 
-    topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+    val onlyRightLinks =LogUtils.time(logger, "Remove unrelated links") { topology.filter(p => linearAssets.keySet.contains(p.linkId))}
+
+    onlyRightLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
-      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+      val (adjustedAssets, assetAdjustments) = LogUtils.time(logger, s"Looping over link: ${roadLink.linkId}") {
+        operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
-      }
+      }}
       val filterExpiredAway = assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p => assetAdjustments.expiredAssetIds.contains(p.assetId)))
 
       val noDuplicate = filterExpiredAway.copy(
