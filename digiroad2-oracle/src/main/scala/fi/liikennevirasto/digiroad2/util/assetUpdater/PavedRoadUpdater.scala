@@ -45,7 +45,9 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         if (asset.id != 0) {
           operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
-          val originalAsset = operatio.assetsBefore.find(_.id == asset.oldId).getOrElse(throw new NoSuchElementException(s"Could not find original asset for reporting, asset.oldId: ${asset.oldId}"))
+          val originalAsset = operatio.assetsBefore.find(_.id == asset.oldId)
+            .getOrElse(throw new NoSuchElementException(s"Could not find original asset for reporting," +
+              s" asset.id: ${asset.id}, asset.oldId: ${asset.oldId}, asset.linkId: ${asset.linkId}"))
           reportAssetChanges(Some(originalAsset), None, changes,  operatio.copy(assetsAfter = Seq()), Some(ChangeTypeReport.Deletion))
         }
     }).foldLeft(OperationStep(assetsAll.filterNot(a => changesRemovePavement.contains(a.linkId)), Some(changeSets)))((a, b) => {
