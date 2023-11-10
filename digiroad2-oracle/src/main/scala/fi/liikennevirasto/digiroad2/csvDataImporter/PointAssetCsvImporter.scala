@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.asset.{DateParser, LinkGeomSource, PropertyValue, SimplePointAssetProperty}
-import fi.liikennevirasto.digiroad2.client.kgv.{KgvCollection, KgvMunicipalityBorderClient, Municipality}
+import fi.liikennevirasto.digiroad2.client.kgv.{KgvCollection, KgvMunicipalityBorderClient, MunicipalityBorders}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
@@ -281,7 +281,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def getLocationFromProperties(parsedRow: ParsedProperties, municipalityBorders: Seq[Municipality]): Int = {
+  def getLocationFromProperties(parsedRow: ParsedProperties, municipalityBorders: Seq[MunicipalityBorders]): Int = {
     val lon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]].get
     val lat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]].get
 

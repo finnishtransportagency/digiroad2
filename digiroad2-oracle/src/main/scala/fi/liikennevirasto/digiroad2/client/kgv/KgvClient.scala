@@ -73,18 +73,18 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
 
   val filter: Filter = FilterOgc
 
-  def fetchAllMunicipalities(): Seq[Municipality] = {
+  def fetchAllMunicipalities(): Seq[MunicipalityBorders] = {
     val format = "f=application%2Fgeo%2Bjson"
     queryMunicipalityBorders(restApiEndPoint, serviceName, format)
     match {
       case Right(features) => features.get.features.map {feature =>
         val polygonFeature = feature.asInstanceOf[PolygonFeature]
-        Municipality(polygonFeature.properties("kuntanumer").toString.toInt, polygonFeature.polygonGeometry) }
+        MunicipalityBorders(polygonFeature.properties("kuntanumer").toString.toInt, polygonFeature.polygonGeometry) }
       case Left(error) => throw new ClientException(error.toString)
     }
   }
 
-  def fetchAllMunicipalitiesF(): Future[Seq[Municipality]] = {
+  def fetchAllMunicipalitiesF(): Future[Seq[MunicipalityBorders]] = {
     Future(fetchAllMunicipalities())
   }
 
@@ -161,7 +161,7 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
    * @return correct Municipality
    *
    */
-  def findMunicipalityForPoint(point: Point, municipalities: Seq[Municipality]): Option[Municipality] = {
+  def findMunicipalityForPoint(point: Point, municipalities: Seq[MunicipalityBorders]): Option[MunicipalityBorders] = {
     municipalities.find(municipality => municipality.geometry.exists(geometry => isPointInsideGeometry(point, geometry)))
   }
 

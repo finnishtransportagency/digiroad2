@@ -31,7 +31,7 @@ sealed class BaseFeature(`type`: String, properties: Map[String, Any])
 sealed case class LineFeature(`type`: String, geometry: Geometry, properties: Map[String, Any]) extends BaseFeature(`type`, properties)
 sealed case class PolygonFeature(`type`: String, polygonGeometry: List[UtilGeometry], properties: Map[String, Any]) extends BaseFeature(`type`, properties)
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
-sealed case class Municipality(municipalityCode: Int, geometry: List[UtilGeometry])
+sealed case class MunicipalityBorders(municipalityCode: Int, geometry: List[UtilGeometry])
 
 trait KgvCollection {
   def value :String
