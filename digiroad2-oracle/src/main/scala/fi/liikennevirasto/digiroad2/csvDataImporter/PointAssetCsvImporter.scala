@@ -2,7 +2,8 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.asset.{DateParser, PropertyValue, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{DateParser, LinkGeomSource, PropertyValue, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.client.kgv.{KgvCollection, KgvMunicipalityBorderClient, Municipality}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
@@ -13,7 +14,7 @@ import org.apache.commons.lang3.StringUtils.isBlank
 import scala.util.Try
 
 trait PointAssetCsvImporter extends CsvDataImporterOperations {
-  case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[RoadLink])
+  case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[RoadLink], municipalityCode: Option[Int] = None)
 
   case class NotImportedData(reason: String, csvRow: String)
   case class ImportResultPointAsset(incompleteRows: List[IncompleteRow] = Nil,
@@ -44,6 +45,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
+  val municipalityBorderClient = new KgvMunicipalityBorderClient(Some(KgvCollection.MunicipalityBorders))
 
   def mandatoryFields: Set[String] = coordinateMappings.keySet
   def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
@@ -234,12 +236,20 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
       override val delimiter: Char = ';'
     })
     withDynTransaction {
+      val municipalityBorders = municipalityBorderClient.fetchAllMunicipalities()
       val result = csvReader.allWithHeaders().foldLeft(ImportResultPointAsset()) {
         (result, row) =>
           val csvRow = row.map(r => (r._1.toLowerCase(), r._2))
           val missingParameters = findMissingParameters(csvRow)
           val (malformedParameters, properties) = assetRowToProperties(csvRow)
           val (notImportedParameters, parsedRowAndRoadLink) = verifyData(properties, user)
+          val isServicePoint = csvRow.exists(property => property._1 == "palvelun tyyppi")
+          val municipalityCode = isServicePoint match {
+            case true =>
+              Some(getLocationFromProperties(properties, municipalityBorders))
+            case false =>
+              None
+          }
 
           if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
             result.copy(
@@ -263,12 +273,19 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
               createdData = parsedRowAndRoadLink match {
                 case Nil => result.createdData
                 case parameters =>
-                  CsvAssetRowAndRoadLink(properties = parameters.head.properties, roadLink = parameters.head.roadLink) :: result.createdData
+                  CsvAssetRowAndRoadLink(properties = parameters.head.properties, roadLink = parameters.head.roadLink, municipalityCode = municipalityCode) :: result.createdData
               })
           }
       }
       createAsset(result.createdData, user, result)
     }
+  }
+
+  def getLocationFromProperties(parsedRow: ParsedProperties, municipalityBorders: Seq[Municipality]): Int = {
+    val lon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]].get
+    val lat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]].get
+
+    municipalityBorderClient.findMunicipalityForPoint(Point(lon.toDouble, lat.toDouble), municipalityBorders).get.municipalityCode
   }
 
 }
