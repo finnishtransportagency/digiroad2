@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.{NewLinearAssetsDB, PostGISLinearAssetDao}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -51,6 +51,14 @@ case class Measures(startMeasure: Double, endMeasure: Double){
     Math.round((endMeasure - startMeasure) * exponentOfTen).toDouble / exponentOfTen
   }
 }
+
+case class NewLinearAssetMassOperation(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, timeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+                                       createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
+                                       modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), 
+                                       verifiedBy: Option[String] = None ,verifiedDateFromUpdate : Option[DateTime] = None, informationSource: Option[Int] = None,
+                                       geometry: Seq[Point] = Seq(),
+                                       expired :Boolean=false,linkSource: Option[Int]
+                                      )
 
 trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -435,6 +443,12 @@ trait LinearAssetOperations {
       dao.updateExpiration(id, expired, username)
   }
 
+  def expireAssets(ids: Seq[Long], expired: Boolean,newTransaction: Boolean = true):Unit = {
+    if (newTransaction)
+      withDynTransaction {dao.updateExpirations(ids, expired)}
+    else dao.updateExpirations(ids, expired)
+  }
+
   /**
     * Sets the linear asset value to None for numeric value properies.
     * Used by Digiroad2Api /linearassets POST endpoint.
@@ -584,6 +598,17 @@ trait LinearAssetOperations {
       case _ => None
     }
     id
+  }
+  def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
+    val assetsSaved = dao.createMultipleLinearAssets(list)
+    assetsSaved.foreach(a=>{
+      val value = a.asset.value
+      value match {
+        case NumericValue(intValue) =>
+          dao.insertValue(a.id, LinearAssetTypes.numericValuePropertyId, intValue)
+        case _ => None
+      }
+    })
   }
 
 

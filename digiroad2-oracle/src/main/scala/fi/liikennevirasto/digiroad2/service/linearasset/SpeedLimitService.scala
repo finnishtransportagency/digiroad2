@@ -92,6 +92,15 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
 
+  override def expireAssets(ids: Seq[Long], expired: Boolean,newTransaction: Boolean = true): Unit = {
+    if (newTransaction) // TODO FIXME
+      withDynTransaction {
+        //speedLimitDao.updateExpiration(id, expired, username)
+      }
+    else
+      //speedLimitDao.updateExpiration(id, expired, username)
+  }
+
   /**
     * Returns speed limits history for Digiroad2Api /history speedlimits GET endpoint.
     */

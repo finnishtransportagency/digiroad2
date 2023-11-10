@@ -158,6 +158,23 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     id
   }
 
+  override def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
+    val assetsSaved = dao.createMultipleLinearAssets(list)
+    assetsSaved.foreach(a=>{
+      val value = a.asset.value
+      value match {
+        case DynamicValue(multiTypeProps) =>
+          val properties = setPropertiesDefaultValues(multiTypeProps.properties, a.asset.roadLink)
+          val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(a.asset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+          val props = properties ++ defaultValues.toSet
+          validateRequiredProperties(a.asset.typeId, props)
+          dynamicLinearAssetDao.updateAssetProperties(a.id, props, a.asset.typeId)
+        case _ => None
+      }
+    })
+    0
+  }
+
   def setPropertiesDefaultValues(properties: Seq[DynamicProperty], roadLink: Option[RoadLinkLike]): Seq[DynamicProperty] = {
     //To add Properties with Default Values we need to add the public ID to the Seq below
     val defaultPropertiesPublicId = Seq()

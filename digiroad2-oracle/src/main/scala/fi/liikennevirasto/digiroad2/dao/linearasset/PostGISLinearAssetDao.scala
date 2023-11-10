@@ -11,13 +11,20 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.Measures
+import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewLinearAssetMassOperation}
+import fi.liikennevirasto.digiroad2.util.DataFixture.linearAssetService.getLinkSource
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+import java.sql.PreparedStatement
+import scala.collection.Seq
 import scala.language.implicitConversions
+//TODO remove duplicate fields
 
+case class NewLinearAssetsDB(asset:NewLinearAssetMassOperation, expired: Boolean,
+                              geometry: Seq[Point] = Seq())
+case class NewLinearAssetWithId(asset:NewLinearAssetMassOperation, id:Long)
 case class ProhibitionsRow(id: Long, linkId: String, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
                            startHour: Option[Int], endHour: Option[Int], exceptionType: Option[Int], startMeasure: Double,
                            endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedDate: Option[DateTime],
@@ -27,6 +34,8 @@ case class ProhibitionsRow(id: Long, linkId: String, sideCode: Int, prohibitionI
 case class AssetLastModification(id: Long, linkId: String, modifiedBy: Option[String], modifiedDate: Option[DateTime])
 case class AssetLink(id: Long, linkId: String, assetTypeId: Int)
 case class AssetLinkWithMeasures(id: Long, assetTypeId: Int, linkId: String, sideCode: Int, startMeasure: Double, endMeasure: Double)
+
+case class MValueUpdate(id: Long, linkId: String, linkMeasures: Measures, timeStamp: Long)
 
 class PostGISLinearAssetDao() {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
@@ -642,7 +651,6 @@ class PostGISLinearAssetDao() {
     * Updates from Change Info in db.
     */
   def updateMValuesChangeInfo(id: Long,linkId:String, linkMeasures: Measures, timeStamp: Long): Unit = {
-    println("asset_id -> " + id)
     sqlu"""
       update LRM_POSITION
       set
@@ -658,6 +666,35 @@ class PostGISLinearAssetDao() {
           join lrm_position lrm on lrm.id = al.POSITION_ID
           where a.id = $id)
     """.execute
+  }
+
+  def updateMValuesChangeInfos(list: Seq[MValueUpdate]): Unit = {
+    val statement =
+      """
+      update LRM_POSITION
+      set
+        link_id = (?),
+        start_measure = (?),
+        end_measure = (?),
+        modified_date = current_timestamp,
+        adjusted_timestamp = (?)
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = (?))
+    """
+    MassQuery.executeBatch(statement){ ps => 
+      list.foreach(a => {
+        ps.setString(1, a.linkId)
+        ps.setDouble(2, a.linkMeasures.startMeasure)
+        ps.setDouble(3, a.linkMeasures.endMeasure)
+        ps.setLong(4, a.timeStamp)
+        ps.setLong(5, a.id)
+        ps.addBatch()
+      })
+    }
   }
 
   /**
@@ -713,6 +750,17 @@ class PostGISLinearAssetDao() {
   }
 
   /**
+    * Updates validity of asset in db. Used by LinearAssetService.expire, LinearAssetService.split and LinearAssetService.separate.
+    */
+  def updateExpirations(ids: Seq[Long], expired: Boolean): Unit = {
+    if (expired) {
+      sqlu"update asset set valid_to = current_timestamp where id in (${ids.mkString(",")})".execute
+    } else {
+      sqlu"update asset set valid_to = null where id in (${ids.mkString(",")})".execute
+    }
+  }
+
+  /**
     * Updates validity of asset in db.
     */
   def updateExpiration(id: Long): Option[Long] = {
@@ -726,7 +774,7 @@ class PostGISLinearAssetDao() {
       None
     }
   }
-
+  
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
@@ -740,26 +788,23 @@ class PostGISLinearAssetDao() {
     val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "current_timestamp"
     val modifiedBy = modifiedByFromUpdate.getOrElse(username)
 
-    val geom: String = if (geometry.nonEmpty) {
-      val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
-
-      //TODO This IF clause it's to be removed when VIITE finally stops using frozen VVH because besides we have different road links, we can have different or empty geometries between them too. In that case we don't want to store that.
-      if (geom.nonEmpty) {
-        val assetLength = measures.endMeasure - measures.startMeasure
-        val line = Queries.linearGeometry(Point(geom.head.x,geom.head.y),Point(geom.last.x,geom.last.y), assetLength)
-        s"""ST_GeomFromText('$line', 3067)"""
-      } else {
-        "null"
-      }
-
-    } else {
-      "null"
-    }
+    val geom: String = addGeometry(measures, geometry)
 
     if (fromUpdate) {
       verifiedDateFromUpdate match {
-        case Some(value) => sqlu"""
+        case Some(value) =>
+          verified(typeId, linkId, sideCode, measures, timeStamp, linkSource, createdByFromUpdate, createdDateTimeFromUpdate, modifiedDateTimeFromUpdate, verifiedBy, verifiedDateFromUpdate, informationSource, id, lrmPositionId, validTo, modifiedBy, geom)
+        case None => 
+          notVerified(typeId, linkId, sideCode, measures, timeStamp, linkSource, createdByFromUpdate, createdDateTimeFromUpdate, modifiedDateTimeFromUpdate, verifiedBy, informationSource, id, lrmPositionId, validTo, verifiedDate, modifiedBy, geom)
+      }
+    } else {
+      nonUpdateCreate(typeId, linkId, sideCode, measures, username, timeStamp, linkSource, verifiedBy, informationSource, id, lrmPositionId, validTo, verifiedDate, geom)
+    }
 
+    id
+  }
+  private def verified(typeId: Int, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int], createdByFromUpdate: Option[String], createdDateTimeFromUpdate: Option[DateTime], modifiedDateTimeFromUpdate: Option[DateTime], verifiedBy: Option[String], verifiedDateFromUpdate: Option[DateTime], informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, modifiedBy: String, geom: String): Unit = {
+    sqlu"""
       insert  into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $modifiedBy, $modifiedDateTimeFromUpdate, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom);
 
@@ -769,7 +814,9 @@ class PostGISLinearAssetDao() {
      insert   into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
     """.execute
-        case None => sqlu"""
+  }
+  private def notVerified(typeId: Int, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int], createdByFromUpdate: Option[String], createdDateTimeFromUpdate: Option[DateTime], modifiedDateTimeFromUpdate: Option[DateTime], verifiedBy: Option[String], informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, verifiedDate: String, modifiedBy: String, geom: String): Unit = {
+    sqlu"""
        insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $modifiedBy, $modifiedDateTimeFromUpdate, $verifiedBy, #$verifiedDate, $informationSource, #$geom);
 
@@ -779,9 +826,10 @@ class PostGISLinearAssetDao() {
       insert  into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
     """.execute
-      }
-    } else {
-      sqlu"""
+  }
+
+  private def nonUpdateCreate(typeId: Int, linkId: String, sideCode: Int, measures: Measures, username: String, timeStamp: Long, linkSource: Option[Int], verifiedBy: Option[String], informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, verifiedDate: String, geom: String): Unit = {
+    sqlu"""
      insert into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source, geometry)
       values ($id, $typeId, $username, current_timestamp, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource, #$geom);
 
@@ -791,11 +839,216 @@ class PostGISLinearAssetDao() {
       insert into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId);
         """.execute
-    }
-
-    id
   }
 
+  private def verifiedStatement(ps: PreparedStatement, typeId: Int, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int],
+                                createdByFromUpdate: Option[String], createdDateTimeFromUpdate: Option[DateTime], modifiedDateTimeFromUpdate: Option[DateTime], verifiedBy: Option[String],
+                                verifiedDateFromUpdate: Option[DateTime], informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, modifiedBy: String, geom: String): Unit = {
+    ps.setLong(1, id)
+    ps.setInt(2, typeId)
+
+    if (createdByFromUpdate.nonEmpty) {
+      ps.setString(3, createdByFromUpdate.get)
+    } else ps.setNull(3, java.sql.Types.VARCHAR)
+
+    if (createdDateTimeFromUpdate.nonEmpty) ps.setString(4, createdDateTimeFromUpdate.get.toString)
+    else ps.setNull(4, java.sql.Types.TIMESTAMP)
+
+    ps.setString(5, validTo)
+    ps.setString(6, modifiedBy)
+
+    if (modifiedDateTimeFromUpdate.nonEmpty) ps.setString(7, modifiedDateTimeFromUpdate.get.toString)
+    else ps.setNull(7, java.sql.Types.TIMESTAMP)
+
+    if (verifiedBy.nonEmpty) ps.setString(8, verifiedBy.get)
+    else ps.setNull(8, java.sql.Types.VARCHAR)
+
+    if (verifiedDateFromUpdate.nonEmpty) ps.setString(9, verifiedDateFromUpdate.toString)
+    else ps.setNull(9, java.sql.Types.VARCHAR)
+
+    if (informationSource.nonEmpty) ps.setInt(10, informationSource.get)
+    else ps.setNull(10, java.sql.Types.VARCHAR)
+
+    ps.setString(11, geom)
+    ps.setLong(12, lrmPositionId)
+    ps.setDouble(13, measures.startMeasure)
+    ps.setDouble(14, measures.endMeasure)
+    ps.setString(15, linkId)
+    ps.setInt(16, sideCode)
+    ps.setLong(17, timeStamp)
+    if (linkSource.nonEmpty) ps.setInt(18, linkSource.get)
+    else ps.setNull(18, java.sql.Types.VARCHAR)
+    ps.setLong(19, id)
+    ps.setLong(20, lrmPositionId)
+    ps.addBatch()
+  }
+  
+  private def notVerifiedStatement(ps:PreparedStatement,typeId: Int, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long,
+                       linkSource: Option[Int], createdByFromUpdate: Option[String], 
+                       createdDateTimeFromUpdate: Option[DateTime], modifiedDateTimeFromUpdate: Option[DateTime], 
+                       verifiedBy: Option[String], informationSource: Option[Int], 
+                       id: Long, lrmPositionId: Long, validTo: String, verifiedDate: String, modifiedBy: String, geom: String): Unit = {
+    ps.setLong(1, id)
+    ps.setInt(2, typeId)
+
+    if (createdByFromUpdate.nonEmpty) {
+      ps.setString(3, createdByFromUpdate.get)
+    } else ps.setNull(3, java.sql.Types.VARCHAR)
+
+    if (createdDateTimeFromUpdate.nonEmpty) ps.setString(4, createdDateTimeFromUpdate.get.toString)
+    else ps.setNull(4, java.sql.Types.TIMESTAMP)
+
+    ps.setString(5, validTo)
+    ps.setString(6, modifiedBy)
+
+    if (modifiedDateTimeFromUpdate.nonEmpty) ps.setString(7, modifiedDateTimeFromUpdate.get.toString)
+    else ps.setNull(7, java.sql.Types.TIMESTAMP)
+
+    if (verifiedBy.nonEmpty) ps.setString(8, verifiedBy.get)
+    else ps.setNull(8, java.sql.Types.VARCHAR)
+
+    ps.setString(9, verifiedDate)
+    
+    if (informationSource.nonEmpty) ps.setInt(10, informationSource.get)
+    else ps.setNull(10, java.sql.Types.VARCHAR)
+
+    ps.setString(11, geom) // check this one
+    ps.setLong(12, lrmPositionId)
+    ps.setDouble(13, measures.startMeasure)
+    ps.setDouble(14, measures.endMeasure)
+    ps.setString(15, linkId)
+    ps.setInt(16, sideCode)
+    ps.setLong(17, timeStamp)
+    
+    if (linkSource.nonEmpty) ps.setInt(18, linkSource.get)
+    else ps.setNull(18, java.sql.Types.VARCHAR)
+    
+    ps.setLong(19, id)
+    ps.setLong(20, lrmPositionId)
+    ps.addBatch()
+  }
+
+  private def nonUpdateCreateStatement(ps: PreparedStatement, typeId: Int, linkId: String, sideCode: Int, measures: Measures, username: String,
+                                       timeStamp: Long, linkSource: Option[Int], verifiedBy: Option[String],
+                                       informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, verifiedDate: String, geom: String): Unit = {
+
+    ps.setLong(1, id)
+    ps.setInt(2, typeId)
+
+    ps.setString(3, username)
+
+    ps.setString(4, validTo)
+
+    if (verifiedBy.nonEmpty) ps.setString(5, verifiedBy.get)
+    else ps.setNull(5, java.sql.Types.VARCHAR)
+
+    ps.setString(6, verifiedDate)
+
+    if (informationSource.nonEmpty) ps.setInt(7, informationSource.get)
+    else ps.setNull(7, java.sql.Types.VARCHAR)
+
+    ps.setString(8, geom)
+    ps.setLong(9, lrmPositionId)
+    ps.setDouble(10, measures.startMeasure)
+    ps.setDouble(11, measures.endMeasure)
+    ps.setString(12, linkId)
+    ps.setInt(13, sideCode)
+    ps.setLong(14, timeStamp)
+
+    if (linkSource.nonEmpty) ps.setInt(15, linkSource.get)
+    else ps.setNull(16, java.sql.Types.VARCHAR)
+
+    ps.setLong(17, id)
+    ps.setLong(18, lrmPositionId)
+    ps.addBatch()
+  }
+
+  /**
+    * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
+    */
+  def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Seq[NewLinearAssetWithId] = {
+    val ids = Sequences.nextPrimaryKeySeqValues(list.size)
+    def selectVerifiedDate(a: NewLinearAssetWithId) = { if (a.asset.verifiedBy.getOrElse("") == "") "null" else "current_timestamp"}
+
+    def selectValidTo(a: NewLinearAssetWithId) = {if (a.asset.expired) "current_timestamp" else "null"}
+    
+    val assetsWithNewIds = list.zipWithIndex.map { case (a, index) => NewLinearAssetWithId(a, ids(index))}
+
+    val (fromUpdate, notFromUpdate) = assetsWithNewIds.partition(_.asset.fromUpdate)
+    val verifiedStatementSql =
+      s""" insert  into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry) 
+            values ((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?));
+            insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source) 
+            values ((?), (?), (?), (?), (?), current_timestamp, (?), (?));
+            insert   into asset_link(asset_id, position_id) 
+            values ((?), (?));""".stripMargin
+    val (verifiedDateFromUpdateYes, verifiedDateFromUpdateNo) = fromUpdate.partition(_.asset.verifiedDateFromUpdate.isDefined)
+    MassQuery.executeBatch(verifiedStatementSql) { ps => {
+      verifiedDateFromUpdateYes.foreach(a => {
+        val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+        verifiedStatement(ps, a.asset.typeId, a.asset.linkId, a.asset.sideCode, a.asset.measures, a.asset.timeStamp,a.asset.linkSource ,
+          a.asset.createdByFromUpdate, a.asset.createdDateTimeFromUpdate, a.asset.modifiedDateTimeFromUpdate, a.asset.verifiedBy,
+          a.asset.verifiedDateFromUpdate, a.asset.informationSource, a.id, lrmPositionId, 
+          selectValidTo(a), a.asset.modifiedByFromUpdate.getOrElse(a.asset.username), addGeometry(a.asset.measures, a.asset.geometry))
+      })
+    }}
+
+    val notVerifiedStatementSql =
+      s"""
+       insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
+        values ((?), (?), (?), (?), (?), (?), (?), (?), (?), (?), (?));
+       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ((?), (?), (?), (?), (?), current_timestamp, (?), (?));
+      insert  into asset_link(asset_id, position_id)
+        values ((?), (?));
+    """.stripMargin
+    MassQuery.executeBatch(notVerifiedStatementSql) { ps => {
+      verifiedDateFromUpdateNo.foreach(a => {
+        val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+        notVerifiedStatement(ps, a.asset.typeId, a.asset.linkId, a.asset.sideCode, a.asset.measures, a.asset.timeStamp,
+          a.asset.linkSource, a.asset.createdByFromUpdate,
+          a.asset.createdDateTimeFromUpdate, a.asset.modifiedDateTimeFromUpdate,
+          a.asset.verifiedBy, a.asset.informationSource,
+          a.id, lrmPositionId, selectValidTo(a), selectVerifiedDate(a), 
+          a.asset.modifiedByFromUpdate.getOrElse(a.asset.username), addGeometry(a.asset.measures, a.asset.geometry))
+      })
+    }}
+
+    val nonUpdateCreateStatementSql =
+      s"""
+     insert into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source, geometry)
+      values ((?), (?), (?), current_timestamp, (?), (?), (?), (?), (?));
+
+      insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+      values ((?), (?), (?),(?), (?), current_timestamp, (?), (?));
+
+      insert into asset_link(asset_id, position_id)
+      values ((?), (?));
+        """.stripMargin
+    
+    MassQuery.executeBatch(nonUpdateCreateStatementSql) { ps => {
+      notFromUpdate.foreach(a => {
+        val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+        nonUpdateCreateStatement(ps, a.asset.typeId, a.asset.linkId, a.asset.sideCode, a.asset.measures, a.asset.username,
+          a.asset.timeStamp, a.asset.linkSource, a.asset.verifiedBy,
+          a.asset.informationSource, 
+          a.id, lrmPositionId, selectValidTo(a), selectVerifiedDate(a), addGeometry(a.asset.measures, a.asset.geometry))
+      })
+    }}
+    assetsWithNewIds
+  }
+
+  private def addGeometry(measures: Measures, geometry: Seq[Point]): String = {
+    if (geometry.nonEmpty) {
+      val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
+      //TODO This IF clause it's to be removed when VIITE finally stops using frozen VVH because besides we have different road links, we can have different or empty geometries between them too. In that case we don't want to store that.
+      if (geom.nonEmpty) {
+        val assetLength = measures.endMeasure - measures.startMeasure
+        val line = Queries.linearGeometry(Point(geom.head.x, geom.head.y), Point(geom.last.x, geom.last.y), assetLength)
+        s"""ST_GeomFromText('$line', 3067)"""
+      } else {"null"}
+    } else {"null"}
+  }
   def insertConnectedAsset(linearId: Long, pointId : Long) : Unit =
     sqlu"""insert into connected_asset(linear_asset_id, point_asset_id) values ($linearId, $pointId)""".execute
 

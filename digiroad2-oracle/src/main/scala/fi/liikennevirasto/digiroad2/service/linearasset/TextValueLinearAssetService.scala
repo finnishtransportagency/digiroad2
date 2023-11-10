@@ -100,6 +100,18 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
     id
   }
 
+  override def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
+    val assetsSaved = dao.createMultipleLinearAssets(list)
+    assetsSaved.foreach(a=>{
+      val value = a.asset.value
+      value match {
+        case TextualValue(textValue) =>
+          dao.insertValue(a.id, LinearAssetTypes.getValuePropertyId(a.asset.typeId), textValue)
+        case _ => None
+      }
+    })
+  }
+
   override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
