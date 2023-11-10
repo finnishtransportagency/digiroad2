@@ -115,7 +115,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
       updateProjected(toUpdate, persisted)
 
       if (newLinearAssets.nonEmpty)
-        logger.info(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
+        logger.debug(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
     }
 
     toInsert.foreach { linearAsset =>
@@ -146,7 +146,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
       }
     }
     if (newLinearAssets.nonEmpty)
-      logger.info(s"Added assets for linkids ${toInsert.map(_.linkId)}")
+      logger.debug(s"Added assets for linkids ${toInsert.map(_.linkId)}")
   }
 
 }

@@ -79,7 +79,7 @@ class ManoeuvreUpdater() {
       ChangedManoeuvre(manoeuvreId = a.id,linkIds=(elementA++elementB).filter(_!=null).toSet)
     })
 
-    logger.info(s"Number of manoeuvre ${forLogging.size} which has been updated automatically updated to new version.")
+    logger.info(s"Number of manoeuvre ${forLogging.size} which has been updated automatically to new version.")
     logger.info(s"Assets: ${forLogging.map(_.id).mkString(",")}")
     logger.info(s"Number of manoeuvre ${rows.size} which need manual adjustments.")
     LogUtils.time(logger, s"Inserting into worklist took: ") {

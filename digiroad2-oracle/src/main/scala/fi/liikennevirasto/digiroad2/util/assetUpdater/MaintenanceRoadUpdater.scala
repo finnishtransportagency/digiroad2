@@ -24,7 +24,7 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
       val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
       updateProjected(toUpdate, persisted)
       if (newMaintenanceAssets.nonEmpty)
-        logger.info(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
+        logger.debug(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
     }
     toInsert.foreach { linearAsset =>
       val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
@@ -50,6 +50,6 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
       }
     }
     if (newMaintenanceAssets.nonEmpty)
-      logger.info(s"Added assets for linkids ${toInsert.map(_.linkId)}")
+      logger.debug(s"Added assets for linkids ${toInsert.map(_.linkId)}")
   }
 }
