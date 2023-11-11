@@ -443,10 +443,9 @@ trait LinearAssetOperations {
       dao.updateExpiration(id, expired, username)
   }
 
-  def expireAssets(ids: Seq[Long], expired: Boolean,newTransaction: Boolean = true):Unit = {
-    if (newTransaction)
-      withDynTransaction {dao.updateExpirations(ids, expired)}
-    else dao.updateExpirations(ids, expired)
+  def expireAssets(ids: Seq[Long], expired: Boolean,username: String,newTransaction: Boolean = true):Unit = {
+    if (newTransaction) withDynTransaction {dao.updateExpirations(ids, expired,username)}
+    else dao.updateExpirations(ids, expired,username)
   }
 
   /**
