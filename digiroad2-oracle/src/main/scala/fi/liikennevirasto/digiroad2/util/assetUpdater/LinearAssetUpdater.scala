@@ -448,8 +448,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"Projecting ${assetsAll.size} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
       //TODO Fix performance
-      changes.map(goThroughChanges(assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
-        .filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty)
+      val rawData = changes.map(goThroughChanges(assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
+      LogUtils.time(logger, "Filter empty and empty afters away from projected") {
+        rawData.filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty) //double check for possibility of empty assetsAfter
+      }
     }
 
     logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
@@ -471,24 +473,27 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   
   private def goThroughChanges(assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet,
                                initStep: OperationStep, change: RoadLinkChange,initStepSplit:OperationStepSplit): Option[OperationStep] = {
+
     nonAssetUpdate(change, Seq(), null)
-    change.changeType match {
-      case RoadLinkChangeType.Add =>
-        val operation = operationForNewLink(change, assetsAll, changeSets).getOrElse(initStep)
-        Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
-      case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
-      case _ =>
-        val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
-        if (assets.nonEmpty) {
-          change.changeType match {
-            case RoadLinkChangeType.Replace =>
-              assets.map(a => projecting(changeSets, change, a, a)).
-                filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)
-            case RoadLinkChangeType.Split =>
-              handleSplits(changeSets, initStepSplit, change, assets)
-            case _ => None
-          }
-        } else None
+    LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
+      change.changeType match {
+        case RoadLinkChangeType.Add =>
+          val operation = operationForNewLink(change, assetsAll, changeSets).getOrElse(initStep)
+          Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
+        case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
+        case _ =>
+          val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
+          if (assets.nonEmpty) {
+            change.changeType match {
+              case RoadLinkChangeType.Replace =>
+                assets.map(a => projecting(changeSets, change, a, a)).
+                  filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)
+              case RoadLinkChangeType.Split =>
+                handleSplits(changeSets, initStepSplit, change, assets)
+              case _ => None
+            }
+          } else None
+      } 
     }
   }
   private def adjustAndReport(typeId: Int, links: Seq[RoadLink],
