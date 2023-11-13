@@ -1004,7 +1004,7 @@ class PostGISLinearAssetDao() {
     val notVerifiedStatementSql =
       s"""
         insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
-        values (          (?),  (?),            (?),    ${timestamp},   ${timestamp},      (?),          ${timestamp}, (?),        (?),     (?), (?));
+        values ((?),(?),(?),${timestamp},${timestamp},(?),${timestamp},(?),(?),(?),(?));
     """.stripMargin
     if (verifiedDateFromUpdateNo.nonEmpty){
       MassQuery.executeBatch(notVerifiedStatementSql) { ps =>
