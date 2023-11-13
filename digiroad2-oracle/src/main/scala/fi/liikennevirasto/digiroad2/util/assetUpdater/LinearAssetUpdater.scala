@@ -11,13 +11,16 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures, NewLinearAssetMassOperation}
+import fi.liikennevirasto.digiroad2.util.CustomIterableOperations.IterableOperation
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
 import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
+import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
+import scala.collection.parallel.immutable
 import scala.collection.{Seq, mutable}
 
 /**
@@ -381,7 +384,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def updateLinearAssets(typeId: Int): Unit = {
     val latestSuccess = PostGISDatabase.withDynSession(Queries.getLatestSuccessfulSamuutus(typeId))
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(latestSuccess)
-    logger.info(s"Processing ${changeSets.size}} road link changes set")
+    logger.info(s"Processing ${changeSets.size} road link changes set")
     changeSets.foreach(changeSet => {
       logger.info(s"Started processing change set ${changeSet.key}")
       
@@ -432,6 +435,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       persistProjectedLinearAssets(projectedAssets.filterNot(_.id == removePart).filter(_.id == 0L),newRoadLinks)
     }
   }
+  
   /**
     * 4) Start projecting everything into new links based on replace info.
     * @param typeId
@@ -447,10 +451,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val initStep = OperationStep(Seq(), Some(changeSet))
     logger.info(s"Projecting ${assetsAll.size} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
-      //TODO Fix performance
-      val rawData = changes.map(goThroughChanges(assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
+      //TODO Fix performance, 
+      // paraller run if 1000 changes ?, split into four thread
+      
+      val assetsGroup= IterableOperation.groupByHashMap(assetsAll)
+      val rawData = changes.map(goThroughChanges(assetsGroup,assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
       LogUtils.time(logger, "Filter empty and empty afters away from projected") {
-        rawData.filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty) //double check for possibility of empty assetsAfter
+        rawData.filter(a=>  a.nonEmpty && a.get.assetsAfter.nonEmpty) //double check for possibility of empty assetsAfter
       }
     }
 
@@ -471,8 +478,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     (assetsOperated, changeInfo.get)
   }
   
-  private def goThroughChanges(assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet,
-                               initStep: OperationStep, change: RoadLinkChange,initStepSplit:OperationStepSplit): Option[OperationStep] = {
+  private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet,
+                               initStep: OperationStep, change: RoadLinkChange, initStepSplit:OperationStepSplit): Option[OperationStep] = {
 
     nonAssetUpdate(change, Seq(), null)
     LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
@@ -482,12 +489,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ =>
-          val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
+          val assets = assetsAllG(change.oldLink.get.linkId).toSeq
           if (assets.nonEmpty) {
             change.changeType match {
               case RoadLinkChangeType.Replace =>
-                assets.map(a => projecting(changeSets, change, a, a)).
-                  filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)
+                val projected = assets.map(a => projecting(changeSets, change, a, a))
+                LogUtils.time(logger, "Merging steps after projecting") {
+                  projected.filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)}
               case RoadLinkChangeType.Split =>
                 handleSplits(changeSets, initStepSplit, change, assets)
               case _ => None
@@ -498,7 +506,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
   private def adjustAndReport(typeId: Int, links: Seq[RoadLink],
                               assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep,changes: Seq[RoadLinkChange]): Option[OperationStep] = {
-    val merged = assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations)
+    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations)}
+
+    // paraller run if 1000 changes ?, split into four thread
     val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, links, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(initStep, adjusted,changes)}
   }
