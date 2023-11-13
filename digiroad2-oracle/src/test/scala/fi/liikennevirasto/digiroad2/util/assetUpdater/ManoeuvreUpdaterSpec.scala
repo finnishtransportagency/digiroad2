@@ -95,12 +95,6 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
       changed.isEmpty should be(true)
     }
   }
-
-  test("dummy"){
-    
-    
-    AssetTypeInfo.validate.map(a=>println(s"Tietolaji: ${a.typeId}, nimi: ${a.nameFI}, kokolinkin pituinen ${AssetTypeInfo.roadLinkLongAssets.contains(a.typeId)}"))
-  }
   
   test("test version upgrade separation logic"){
     val linkId = generateRandomLinkId(); val linkId2 = generateRandomKmtkId()
