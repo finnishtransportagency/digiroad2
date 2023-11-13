@@ -166,15 +166,16 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 //TODO Fixme
   override def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
     val assetsSaved = dao.createMultipleLinearAssets(list)
-    assetsSaved.foreach(a=>{
-      val value = a.asset.value
-      value match {
-        case prohibitions: Prohibitions =>
-          dao.insertProhibitionValue(a.id, a.asset.typeId, prohibitions)
-        case _ => None
-      }
-    })
-    0
+    LogUtils.time(logger,"Saving assets properties"){
+      assetsSaved.foreach(a => {
+        val value = a.asset.value
+        value match {
+          case prohibitions: Prohibitions =>
+            dao.insertProhibitionValue(a.id, a.asset.typeId, prohibitions)
+          case _ => None
+        }
+      })
+    }
   }
 
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit,adjust:Boolean = true): Seq[Long] = {

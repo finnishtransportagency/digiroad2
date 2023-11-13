@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -110,14 +110,16 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
   }
   override def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
     val assetsSaved = dao.createMultipleLinearAssets(list)
-    assetsSaved.foreach(a=>{
-      val value = a.asset.value
-      value match {
-        case NumericValue(intValue) =>
-          dao.insertValue(a.id, LinearAssetTypes.numericValuePropertyId, intValue)
-        case _ => None
-      }
-    })
+    LogUtils.time(logger,"Saving assets properties"){
+      assetsSaved.foreach(a => {
+        val value = a.asset.value
+        value match {
+          case NumericValue(intValue) =>
+            dao.insertValue(a.id, LinearAssetTypes.numericValuePropertyId, intValue)
+          case _ => None
+        }
+      })
+    }
   }
 
 }

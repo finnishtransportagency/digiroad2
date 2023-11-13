@@ -600,14 +600,17 @@ trait LinearAssetOperations {
   }
   def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
     val assetsSaved = dao.createMultipleLinearAssets(list)
-    assetsSaved.foreach(a=>{
-      val value = a.asset.value
-      value match {
-        case NumericValue(intValue) =>
-          dao.insertValue(a.id, LinearAssetTypes.numericValuePropertyId, intValue)
-        case _ => None
-      }
-    })
+    LogUtils.time(logger,"Saving assets properties"){
+      assetsSaved.foreach(a => {
+        val value = a.asset.value
+        value match {
+          case NumericValue(intValue) =>
+            dao.insertValue(a.id, LinearAssetTypes.numericValuePropertyId, intValue)
+          case _ => None
+        }
+      }) 
+    }
+    
   }
 
 
