@@ -102,7 +102,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       TestPavedRoadUpdater.getReport().head.changeType should be(ChangeTypeReport.Creation)
     }
   }
-  test("case 6 links version and no pavement, expire") {
+  test("case 6 links version and no pavement, move pavedRoad asset to new link") {
     val linkId = generateRandomKmtkId()
     val linkIdVersion1 = s"$linkId:1"
     val linkIdVersion2 = s"$linkId:2"
@@ -122,11 +122,11 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       TestPavedRoadUpdaterMock.updateByRoadLinks(PavedRoad.typeId, Seq(change))
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
-      assetsAfter.size should be(0)
+      assetsAfter.size should be(1)
       
       val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
-      TestPavedRoadUpdaterMock.getReport().head.changeType should be(ChangeTypeReport.Deletion)
+      TestPavedRoadUpdaterMock.getReport().head.changeType should be(ChangeTypeReport.Replaced)
 
     }
   }
@@ -228,9 +228,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
     }
   }
 
-  test("Split, road link is split into two links, other has SurfaceType None. " +
-    "PavedRoad asset should not be moved to SurfaceType None link" +
-    "Report should have 1 Divided and 1 Deletion for asset"){
+  test("Split, road link is split into two links, other has SurfaceType None. Divide asset to two links"){
     val oldLinkId = "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1"
     val newLinkId1 = "4a9f1948-8bae-4cc9-9f11-218079aac595:1"
     val newLinkId2 = "254ed5a2-bc16-440a-88f1-23868011975b:1"
@@ -243,12 +241,51 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       val oldLinkReports = changeReport.changes.filter(_.linkId == oldLinkId)
       oldLinkReports.size should equal(2)
       oldLinkReports.exists(_.changeType == Divided) should equal (true)
-      oldLinkReports.exists(_.changeType == Deletion) should equal (true)
+      oldLinkReports.exists(_.changeType == Divided) should equal (true)
 
       val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId1, newLinkId2), newTransaction = false)
-      assetsAfter.size should equal (1)
-      assetsAfter.head.startMeasure should equal(23.65)
-      assetsAfter.head.endMeasure should equal(89.351)
+      assetsAfter.size should equal (2)
+      val assetOnLink1 = assetsAfter.find(_.linkId == newLinkId1).get
+      val assetOnLink2 = assetsAfter.find(_.linkId == newLinkId2).get
+
+      assetOnLink1.startMeasure should equal(0.0)
+      assetOnLink1.endMeasure should equal(68.417)
+      assetOnLink2.startMeasure should equal(23.65)
+      assetOnLink2.endMeasure should equal(89.351)
+    }
+  }
+
+  test("Split. RoadLink with SurfaceType 1 is split into three links. PavedRoad asset should be split into three new ones") {
+    runWithRollback {
+      val oldLinkId = "84ae7d02-2354-401e-bbd3-7d1bea68075f:1"
+      val newLinkId1 = "f20a8c8f-2247-45dc-a94a-47262397f80f:1"
+      val newLinkId2 = "7928a63d-fdaf-45ea-90f6-f612e4d8f99b:1"
+      val newLinkId3 = "2430073c-1e2a-43d8-b4d2-e173c124f8f1:1"
+
+      val newLinkIds = Seq(newLinkId1, newLinkId2, newLinkId3)
+
+      val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId).get
+      val newLinks = roadLinkService.getRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
+      val id = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 462.673), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+      val changeReport = ChangeReport(PavedRoad.typeId, TestPavedRoadUpdater.getReport())
+      val oldLinkReports = changeReport.changes.filter(_.linkId == oldLinkId).asInstanceOf[Seq[ChangedAsset]]
+
+      oldLinkReports.size should equal(3)
+      oldLinkReports.foreach(report => {
+        report.changeType should equal(Divided)
+        report.assetId should equal(id)
+      })
+
+      val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, newLinkIds, false)
+      assetsAfter.size should equal(3)
+      assetsAfter.foreach(asset => {
+        asset.sideCode should equal(1)
+        asset.startMeasure should equal(0)
+        asset.endMeasure should equal(newLinks.find(_.linkId == asset.linkId).get.length)
+      })
     }
   }
 }
