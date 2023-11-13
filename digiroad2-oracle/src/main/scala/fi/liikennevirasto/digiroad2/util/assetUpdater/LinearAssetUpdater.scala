@@ -558,7 +558,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw new NoSuchElementException(s"Replace info for asset ${asset.id} on link ${asset.linkId} not found from change ${change}"))
 
       val shorted = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
-      val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = asset.id)
+      val oldId = if(asset.id != 0) asset.id else asset.oldId
+      val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId)
 
       val shortedLength = shorted.endMeasure - shorted.startMeasure
       val newPartLength = newPart.endMeasure - newPart.startMeasure
