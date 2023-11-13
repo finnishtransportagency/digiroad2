@@ -562,7 +562,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     if (assetsWithNewIds.nonEmpty) {
       MassQuery.executeBatch(insertSql) { ps =>
         assetsWithNewIds.foreach(a => insertSpeedLimitStatement(ps, a.asset.typeId,
-          Some(a.asset.creator),  Some(a.asset.createdDate.getOrElse(Some(DateTime.now()))),
+          Some(a.asset.creator),  Some(a.asset.createdDate.getOrElse(DateTime.now())),
           a.asset.modifiedAt, a.id,  a.asset.modifiedBy)
         )
       }
