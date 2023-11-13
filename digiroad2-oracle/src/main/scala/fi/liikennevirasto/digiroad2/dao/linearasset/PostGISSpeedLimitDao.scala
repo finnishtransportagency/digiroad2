@@ -674,7 +674,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
 
   def updateExpirations(ids: Set[Long],username:String) = {
     Queries.updateAssestModified(ids.toSeq, username)
-     sqlu"update asset set valid_to = current_timestamp where id in (${ids.mkString(",")})".execute
+     sqlu"update asset set valid_to = current_timestamp where id in (#${ids.mkString(",")})".execute
   }
 
   /**
