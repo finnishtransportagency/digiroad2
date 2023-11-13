@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, getDefaultEpsilon}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
@@ -22,6 +22,7 @@ import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.immutable
 import scala.collection.{Seq, mutable}
+import scala.util.{Failure, Success, Try}
 
 /**
   *  This act as state object. Keep record of samuutus process.
@@ -494,7 +495,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ =>
-          val assets = assetsAllG(change.oldLink.get.linkId).toSeq
+          val assets = Try(assetsAllG(change.oldLink.get.linkId)) match {
+            case Success(value) => value.toSeq
+            case Failure(_) => Seq()
+          }
           if (assets.nonEmpty) {
             change.changeType match {
               case RoadLinkChangeType.Replace =>
