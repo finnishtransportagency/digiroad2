@@ -470,15 +470,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       //TODO Fix performance
       adjustAndReport(typeId, links, projectedToNewLinks, initStep,changes).get
     }
-
-    changeInfo.get.expiredAssetIds.map(asset => {
-      val alreadyReported = changesForReport.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
-      if (!alreadyReported.contains(asset)) {
-        val expiringAsset = assetsAll.find(_.id == asset)
-        reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, Some(ChangeTypeReport.Deletion))
-      }
-    })
-
+    LogUtils.time(logger, "Reporting removed") {
+      changeInfo.get.expiredAssetIds.map(asset => {
+        val alreadyReported = changesForReport.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
+        if (!alreadyReported.contains(asset)) {
+          val expiringAsset = assetsAll.find(_.id == asset)
+          reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, Some(ChangeTypeReport.Deletion))
+        }
+      })
+    }
+    
     (assetsOperated, changeInfo.get)
   }
   
