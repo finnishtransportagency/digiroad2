@@ -513,7 +513,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                               assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep,changes: Seq[RoadLinkChange]): Option[OperationStep] = {
     val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations)}
 
-    // paraller run if 1000 changes ?, split into four thread
+    //TODO paraller run if 1000 changes ?, split into four thread
     val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, links, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(initStep, adjusted,changes)}
   }

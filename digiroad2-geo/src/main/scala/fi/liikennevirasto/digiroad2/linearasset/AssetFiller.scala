@@ -840,8 +840,10 @@ class AssetFiller {
 
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
     // if links does not have any asset filter it away 
-    val onlyRightLinks =LogUtils.time(logger, "Remove unrelated links") { topology.filter(p => linearAssets.keySet.contains(p.linkId))}
+    val onlyRightLinks =LogUtils.time(logger, s"Remove unrelated links, links: ${topology.length}, assets: ${linearAssets.size}") { topology.filter(p => linearAssets.keySet.contains(p.linkId))}
 
+    logger.info(s"Filtered list size: ${onlyRightLinks.size}")
+    
     onlyRightLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
@@ -852,11 +854,11 @@ class AssetFiller {
       }}
       val filterExpiredAway = assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p => assetAdjustments.expiredAssetIds.contains(p.assetId)))
 
-      val noDuplicate = filterExpiredAway.copy(
+      val noDuplicate = LogUtils.time(logger, s"Remove duplicates") { filterExpiredAway.copy(
         adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
         adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
         valueAdjustments = filterExpiredAway.valueAdjustments.distinct
-      )
+      )}
 
       (existingAssets ++ adjustedAssets, noDuplicate)
     }
