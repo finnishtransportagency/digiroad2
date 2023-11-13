@@ -9,7 +9,7 @@ import scala.collection.{Seq, TraversableLike, mutable}
 import scala.collection.parallel.immutable
 
 object IterableOperation {
-  //TODO generalise when there three more different list types
+  //TODO generalise when there are three more different list types
   def groupByHashMap(assetsAll: Seq[PersistedLinearAsset]): mutable.HashMap[String, Set[PersistedLinearAsset]] = {
     val map = new mutable.HashMap[String, Set[PersistedLinearAsset]]()
     for (elem <- assetsAll) { // for loop is often faster than map
