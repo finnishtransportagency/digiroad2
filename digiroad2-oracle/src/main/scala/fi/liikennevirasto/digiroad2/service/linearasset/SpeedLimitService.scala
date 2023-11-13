@@ -90,16 +90,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     else
       speedLimitDao.updateExpiration(id, expired, username)
   }
-
-
-  override def expireAssets(ids: Seq[Long], expired: Boolean,newTransaction: Boolean = true): Unit = {
-    if (newTransaction) // TODO FIXME
-      withDynTransaction {
-        speedLimitDao.updateExpirations(ids.toSet)
-      }
-    else
-      speedLimitDao.updateExpirations(ids.toSet)
-      
+  
+  override def expireAssets(ids: Seq[Long], expired: Boolean,username: String,newTransaction: Boolean = true): Unit = {
+    if (newTransaction) 
+      withDynTransaction {speedLimitDao.updateExpirations(ids.toSet,username)}
+    else speedLimitDao.updateExpirations(ids.toSet,username)
   }
 
   /**
