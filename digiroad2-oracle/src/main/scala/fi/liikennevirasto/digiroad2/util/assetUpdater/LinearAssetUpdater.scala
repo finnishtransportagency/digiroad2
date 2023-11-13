@@ -298,10 +298,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val newLinks = changes.filter(isNew).flatMap(_.newLinks).map(_.linkId)
     val (assetsOnNew,assetsWhichAreMoved) = assetsInNewLink.assetsAfter.partition(a=>newLinks.contains(a.linkId))
     val pairs = assetsWhichAreMoved.flatMap(asset => createPair(Some(asset), assetsInNewLink.assetsBefore)).distinct
-    val report = pairs.filter(_.newAsset.isDefined).map(pair => {
-      if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
-        Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
-      } else Some(assetsInNewLink)
+    val report = pairs.map(pair => {
+      pair.newAsset match {
+        case Some(_) => 
+          if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
+          Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
+        } else Some(assetsInNewLink)
+        case None => None
+      }
     }).foldLeft(Some(initStep))(mergerOperations)
     Some(report.get.copy(assetsAfter = report.get.assetsAfter ++ assetsOnNew))
   }
@@ -432,7 +436,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     logger.info("Starting to save generated or updated")
     LogUtils.time(logger, s"Saving generated or updated took: ") {
-      persistProjectedLinearAssets(projectedAssets.filterNot(_.id == removePart).filter(_.id == 0L),newRoadLinks)
+      persistProjectedLinearAssets(projectedAssets.filter(_.id == 0L),newRoadLinks)
     }
   }
   
