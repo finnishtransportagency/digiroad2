@@ -16,7 +16,7 @@ object IterableOperation {
       val key = elem.linkId
       val elements = map.getOrElseUpdate(key, Set(elem)) //insert if first elements
       map.update(key, elements ++ Set(elem)) // if not first element merge element which are already in list and update list
-    } // test that this works
+    }
     map
   }
 
