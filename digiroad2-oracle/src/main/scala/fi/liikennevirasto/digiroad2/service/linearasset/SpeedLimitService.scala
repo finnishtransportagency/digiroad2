@@ -21,6 +21,10 @@ import org.postgresql.util.PSQLException
 import java.util.NoSuchElementException
 import scala.util.Try
 
+case class NewSpeedLimitMassOperation(creator: String, typeId: Int, linkId: String, linkMeasures: Measures, sideCode: SideCode, 
+                                      value: Option[SpeedLimitValue], timeStamp: Option[Long],
+                                      createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource)
+
 
 class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) extends DynamicLinearAssetService(roadLinkService, eventbus) {
   val speedLimitDao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(roadLinkService)
@@ -544,6 +548,18 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitDao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, createTimeStamp(), (_, _) => Unit)
     }
   }
+   def createMultipleLinearAssetsSpeedLimit(list: Seq[NewSpeedLimitMassOperation]): Unit = {
+    val assetsSaved = speedLimitDao.createMultipleLinearAssets(list)
+    LogUtils.time(logger, "Saving assets properties") {
+      assetsSaved.foreach(a => {
+          a.asset.value match {
+          case Some(x) => speedLimitDao.insertProperties(a.id,x)
+          case None => None
+        }
+      })
+    }
+  }
+  
 
   override def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, timeStamp: Long = createTimeStamp(), roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                         createdByFromUpdate: Option[String] = Some(""),
