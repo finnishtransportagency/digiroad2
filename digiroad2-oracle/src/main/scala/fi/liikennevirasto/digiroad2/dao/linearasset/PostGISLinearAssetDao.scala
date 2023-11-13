@@ -23,10 +23,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import java.sql.PreparedStatement
 import scala.collection.Seq
 import scala.language.implicitConversions
-//TODO remove duplicate fields
-
-case class NewLinearAssetsDB(asset:NewLinearAssetMassOperation, expired: Boolean,
-                              geometry: Seq[Point] = Seq())
+ 
 case class NewLinearAssetWithId(asset:NewLinearAssetMassOperation, id:Long, positionId:Long)
 case class ProhibitionsRow(id: Long, linkId: String, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
                            startHour: Option[Int], endHour: Option[Int], exceptionType: Option[Int], startMeasure: Double,
