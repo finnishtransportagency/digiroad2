@@ -797,17 +797,23 @@ class PostGISLinearAssetDao() {
     if (fromUpdate) {
       verifiedDateFromUpdate match {
         case Some(value) =>
-          verified(typeId, linkId, sideCode, measures, timeStamp, linkSource, createdByFromUpdate, createdDateTimeFromUpdate, modifiedDateTimeFromUpdate, verifiedBy, verifiedDateFromUpdate, informationSource, id, lrmPositionId, validTo, modifiedBy, geom)
+          verified(typeId, linkId, sideCode, measures, timeStamp, linkSource, createdByFromUpdate, createdDateTimeFromUpdate, 
+            modifiedDateTimeFromUpdate, verifiedBy, verifiedDateFromUpdate, informationSource, id, lrmPositionId, validTo, modifiedBy, geom)
         case None => 
-          notVerified(typeId, linkId, sideCode, measures, timeStamp, linkSource, createdByFromUpdate, createdDateTimeFromUpdate, modifiedDateTimeFromUpdate, verifiedBy, informationSource, id, lrmPositionId, validTo, verifiedDate, modifiedBy, geom)
+          notVerified(typeId, linkId, sideCode, measures, timeStamp, linkSource, createdByFromUpdate, createdDateTimeFromUpdate,
+            modifiedDateTimeFromUpdate, verifiedBy, informationSource, id, lrmPositionId, validTo, verifiedDate, modifiedBy, geom)
       }
     } else {
-      nonUpdateCreate(typeId, linkId, sideCode, measures, username, timeStamp, linkSource, verifiedBy, informationSource, id, lrmPositionId, validTo, verifiedDate, geom)
+      nonUpdateCreate(typeId, linkId, sideCode, measures, username, timeStamp, linkSource, verifiedBy,
+        informationSource, id, lrmPositionId, validTo, verifiedDate, geom)
     }
 
     id
   }
-  private def verified(typeId: Int, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int], createdByFromUpdate: Option[String], createdDateTimeFromUpdate: Option[DateTime], modifiedDateTimeFromUpdate: Option[DateTime], verifiedBy: Option[String], verifiedDateFromUpdate: Option[DateTime], informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, modifiedBy: String, geom: String): Unit = {
+  private def verified(typeId: Int, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int], 
+                       createdByFromUpdate: Option[String], createdDateTimeFromUpdate: Option[DateTime], modifiedDateTimeFromUpdate: Option[DateTime],
+                       verifiedBy: Option[String], verifiedDateFromUpdate: Option[DateTime], informationSource: Option[Int], 
+                       id: Long, lrmPositionId: Long, validTo: String, modifiedBy: String, geom: String): Unit = {
     sqlu"""
       insert  into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $modifiedBy, $modifiedDateTimeFromUpdate, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom);
@@ -819,7 +825,9 @@ class PostGISLinearAssetDao() {
         values ($id, $lrmPositionId);
     """.execute
   }
-  private def notVerified(typeId: Int, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int], createdByFromUpdate: Option[String], createdDateTimeFromUpdate: Option[DateTime], modifiedDateTimeFromUpdate: Option[DateTime], verifiedBy: Option[String], informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, verifiedDate: String, modifiedBy: String, geom: String): Unit = {
+  private def notVerified(typeId: Int, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int],
+                          createdByFromUpdate: Option[String], createdDateTimeFromUpdate: Option[DateTime], modifiedDateTimeFromUpdate: Option[DateTime],
+                          verifiedBy: Option[String], informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, verifiedDate: String, modifiedBy: String, geom: String): Unit = {
     sqlu"""
        insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $modifiedBy, $modifiedDateTimeFromUpdate, $verifiedBy, #$verifiedDate, $informationSource, #$geom);
@@ -832,7 +840,9 @@ class PostGISLinearAssetDao() {
     """.execute
   }
 
-  private def nonUpdateCreate(typeId: Int, linkId: String, sideCode: Int, measures: Measures, username: String, timeStamp: Long, linkSource: Option[Int], verifiedBy: Option[String], informationSource: Option[Int], id: Long, lrmPositionId: Long, validTo: String, verifiedDate: String, geom: String): Unit = {
+  private def nonUpdateCreate(typeId: Int, linkId: String, sideCode: Int, measures: Measures, username: String, timeStamp: Long, 
+                              linkSource: Option[Int], verifiedBy: Option[String], informationSource: Option[Int], 
+                              id: Long, lrmPositionId: Long, validTo: String, verifiedDate: String, geom: String): Unit = {
     sqlu"""
      insert into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source, geometry)
       values ($id, $typeId, $username, current_timestamp, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource, #$geom);
