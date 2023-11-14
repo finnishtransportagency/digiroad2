@@ -459,7 +459,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       //TODO Fix performance, 
       // paraller run if 1000 changes ?, split into four thread
       
-      val assetsGroup= IterableOperation.groupByLinkIdHashMap(assetsAll)
+      val assetsGroup= IterableOperation.groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
       val rawData = changes.map(goThroughChanges(assetsGroup,assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
       LogUtils.time(logger, "Filter empty and empty afters away from projected") {
         rawData.filter(a=>  a.nonEmpty && a.get.assetsAfter.nonEmpty) //double check for possibility of empty assetsAfter

@@ -34,7 +34,7 @@ class IterableOperationTest extends FunSuite with Matchers {
 
 
   test("Make sure that grouping is actually working") {
-    val grouped = IterableOperation.groupByLinkIdHashMap(dummyAssets)
+    val grouped = IterableOperation.groupByPropertyHashMap(dummyAssets, (elem: PersistedLinearAsset) => elem.linkId)
     grouped("link1").size should be(5)
     grouped("link2").size should be(3)
     grouped("link3").size should be(2)
