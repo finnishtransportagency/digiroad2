@@ -1,28 +1,22 @@
 package fi.liikennevirasto.digiroad2.util.CustomIterableOperations
 
-import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
-
-import scala.collection.immutable.HashMap
-import scala.collection.mutable.ListBuffer
-import scala.collection.parallel.immutable
-import scala.collection.{Seq, TraversableLike, mutable}
-import scala.collection.parallel.immutable
+import scala.collection.mutable
 
 object IterableOperation {
+  
   /**
     * 
-    * @param list
-    * @param getKey
+    * @param list [[Iterable]] collection where [[T]] is element in list 
+    * @param keyAccessor method which provide key, for example groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
     * @tparam T object which is in list.
-    * @tparam A method which provide key, for example groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
-    * @return
+    * @tparam A is key which field of [[T]]
+    * @return `mutable.HashMap[A, Set[T]]`
     */
-  def groupByPropertyHashMap[T, A](list: Iterable[T], getKey: T => A): mutable.HashMap[A, Set[T]] = {
+  def groupByPropertyHashMap[T, A](list: Iterable[T], keyAccessor: T => A): mutable.HashMap[A, Set[T]] = {
     val map = new mutable.HashMap[A, Set[T]]()
     for (elem <- list) {
-      val key = getKey(elem)
-      val elements = map.getOrElseUpdate(key, Set(elem))
-      map.update(key, elements ++ Set(elem))
+      val elements = map.getOrElseUpdate(keyAccessor(elem), Set(elem))
+      map.update(keyAccessor(elem), elements ++ Set(elem))
     }
     map
   }
