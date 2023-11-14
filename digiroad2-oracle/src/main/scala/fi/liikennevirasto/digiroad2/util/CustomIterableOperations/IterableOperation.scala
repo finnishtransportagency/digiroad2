@@ -17,7 +17,7 @@ object IterableOperation {
     * @tparam A method which provide key, for example groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
     * @return
     */
-  def groupByPropertyHashMap[T, A](list: Seq[T], getKey: T => A): mutable.HashMap[A, Set[T]] = {
+  def groupByPropertyHashMap[T, A](list: Iterable[T], getKey: T => A): mutable.HashMap[A, Set[T]] = {
     val map = new mutable.HashMap[A, Set[T]]()
     for (elem <- list) {
       val key = getKey(elem)
