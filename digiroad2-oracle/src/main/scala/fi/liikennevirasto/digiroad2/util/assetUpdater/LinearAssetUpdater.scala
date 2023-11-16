@@ -210,6 +210,32 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val assetInherit = oldAsset.isDefined && newAsset.isDefined && oldAsset.get.id == newAsset.get.oldId
       assetInherit && !oldAsset.get.value.get.equals(newAsset.get.value.get)
     }
+
+    def findRelevantRoadLinkChange(tryToMatchNewAndOldLinkId: Boolean): Option[RoadLinkChange] = {
+      roadLinkChanges.find(change => {
+        val roadLinkChangeOldLinkId = change.oldLink match {
+          case Some(oldLink) => Some(oldLink.linkId)
+          case None => None
+        }
+        val assetOldLinkId = oldAsset match {
+          case Some(asset) => Some(asset.linkId)
+          case None => None
+        }
+        val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId).sorted
+
+        val checkByOldAsset = (roadLinkChangeOldLinkId.nonEmpty && assetOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == assetOldLinkId
+
+        if(tryToMatchNewAndOldLinkId){
+          if(newAsset.isDefined){
+            checkByOldAsset && roadLinkChangeNewLinkIds.contains(newAsset.get.linkId)
+          }
+          else checkByOldAsset
+        }
+        else if (newAsset.isDefined) checkByOldAsset || roadLinkChangeNewLinkIds.contains(newAsset.get.linkId)
+        else checkByOldAsset
+
+      })
+    }
     
     if (oldAsset.isEmpty && newAsset.isEmpty) return operationSteps
 
@@ -218,31 +244,22 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     val relevantRoadLinkChange = if (useGivenChange) {
       roadLinkChanges.head
-    } else roadLinkChanges.find(change => {
-      val roadLinkChangeOldLinkId = change.oldLink match {
-        case Some(oldLink) => Some(oldLink.linkId)
-        case None => None
-      }
-      val assetOldLinkId = oldAsset match {
-        case Some(asset) => Some(asset.linkId)
-        case None => None
-      }
-      val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId).sorted
-      val checkByOldAsset = (roadLinkChangeOldLinkId.nonEmpty && assetOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == assetOldLinkId
-      if (newAsset.isDefined) checkByOldAsset || roadLinkChangeNewLinkIds.contains(newAsset.get.linkId)
-      else checkByOldAsset
-     
-    }).getOrElse({
-      val oldAssetLinkId = oldAsset match {
-        case Some(asset) => asset.linkId
-        case _ => "Old asset not defined"
-      }
-      val newAssetLinkId = newAsset match {
-        case Some(asset) => asset.linkId
-        case _ => "New asset not defined"
-      }
-      throw new NoSuchElementException(s"Could not find relevant road link change. Asset old linkId: $oldAssetLinkId Asset new linkId: $newAssetLinkId")
-    })
+    } else {
+      val fullMatch = findRelevantRoadLinkChange(tryToMatchNewAndOldLinkId = true)
+      val result = if(fullMatch.isEmpty) findRelevantRoadLinkChange(tryToMatchNewAndOldLinkId = false)
+      else fullMatch
+      result.getOrElse({
+        val oldAssetLinkId = oldAsset match {
+          case Some(asset) => asset.linkId
+          case _ => "Old asset not defined"
+        }
+        val newAssetLinkId = newAsset match {
+          case Some(asset) => asset.linkId
+          case _ => "New asset not defined"
+        }
+        throw new NoSuchElementException(s"Could not find relevant road link change. Asset old linkId: $oldAssetLinkId Asset new linkId: $newAssetLinkId")
+      })
+    }
 
     val before = oldAsset match {
       case Some(ol) =>
@@ -587,7 +604,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw new NoSuchElementException(s"Replace info for asset ${asset.id} on link ${asset.linkId} not found from change ${change}"))
 
       val shorted = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
-      val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = asset.id)
+      val oldId = if(asset.id != 0) asset.id else asset.oldId
+      val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId)
 
       val shortedLength = shorted.endMeasure - shorted.startMeasure
       val newPartLength = newPart.endMeasure - newPart.startMeasure
