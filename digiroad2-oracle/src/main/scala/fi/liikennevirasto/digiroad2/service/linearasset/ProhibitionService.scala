@@ -163,7 +163,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
     id
   }
-//TODO Fixme
   override def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
     val assetsSaved = dao.createMultipleLinearAssets(list)
     LogUtils.time(logger,"Saving assets properties"){
