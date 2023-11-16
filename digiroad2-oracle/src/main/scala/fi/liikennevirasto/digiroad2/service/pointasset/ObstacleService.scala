@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 
-case class IncomingObstacle(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingObstacle(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], mValue: Option[Double] = None) extends IncomingPointAsset
 
 case class IncomingObstacleAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
 
@@ -88,7 +88,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   override def update(id: Long, updatedAsset: IncomingObstacle, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, roadLink, username, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink, username, updatedAsset.mValue, None)
     }
   }
 
@@ -106,7 +106,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
         PostGISObstacleDao.create(setAssetPosition(updatedAsset, linkGeom, value), value, username, linkMunicipality,
           timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
-        PostGISObstacleDao.update(id, setAssetPosition(updatedAsset, linkGeom, value), value, username, linkMunicipality,
+        PostGISObstacleDao.update(id, updatedAsset, value, username, linkMunicipality,
           Some(timeStamp.getOrElse(createTimeStamp())), linkSource, fromPointAssetUpdater)
     }
   }

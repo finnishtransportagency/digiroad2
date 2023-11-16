@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
-case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: String, validityDirection: Int, bearing: Option[Int], propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: String, validityDirection: Int, bearing: Option[Int], propertyData: Set[SimplePointAssetProperty], mValue: Option[Double] = None) extends IncomingPointAsset
 
 
 class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
@@ -88,7 +88,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
   }
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingDirectionalTrafficSign, roadLink: RoadLink,  username: String): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry)
+    val mValue = updatedAsset.mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry))
     updateWithoutTransaction(id, updatedAsset, Some(mValue), roadLink.geometry, roadLink.municipalityCode, username)
   }
 
@@ -101,7 +101,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
         PostGISDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, linkGeom, value), value,
           linkMunicipality, username, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
-        PostGISDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, linkGeom, value), value,
+        PostGISDirectionalTrafficSignDao.update(id, updatedAsset, value,
           linkMunicipality, username, fromPointAssetUpdater)
     }
   }

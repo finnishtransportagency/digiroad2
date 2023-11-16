@@ -98,6 +98,8 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       adjustedAsset1.nationalId should be(createdStop1.nationalId)
       adjustedAsset1.floating should be(false)
       adjustedAsset1.validityDirection should be(Some(SideCode.TowardsDigitizing.value))
+      adjustedAsset1.lon should be(corrected1.lon)
+      adjustedAsset1.lat should be(corrected1.lat)
       distanceToOldLocation1 should be < updater.MaxDistanceDiffAllowed
       adjustedAsset1.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = createdStop1.propertyData.find(_.publicId == property.publicId).get
@@ -111,6 +113,8 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       adjustedAsset2.nationalId should be(createdStop2.nationalId)
       adjustedAsset2.floating should be(false)
       adjustedAsset2.validityDirection should be(Some(SideCode.AgainstDigitizing.value))
+      adjustedAsset2.lon should be(corrected2.lon)
+      adjustedAsset2.lat should be(corrected2.lat)
       distanceToOldLocation2 should be < updater.MaxDistanceDiffAllowed
       adjustedAsset2.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = createdStop2.propertyData.find(_.publicId == property.publicId).get

@@ -362,7 +362,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
       val roadLink = RoadLink(oldLinkId, Seq(Point(367880.004, 6673884.307), Point(367824.646, 6674001.441)), 131.683, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
 
-      val ids = createTestAssets(367880.004, 6673884.307, roadLink, Some(SideCode.TowardsDigitizing.value), Some(317))
+      val ids = createTestAssets(367865.403, 6673891.022, roadLink, Some(SideCode.TowardsDigitizing.value), Some(317))
       val asset = directionalTrafficSignService.getPersistedAssetsByIds(ids).head
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
@@ -508,4 +508,70 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
+  test("adjustmentOperation does not change the geometry when saving a version change") {
+
+    runWithRollback {
+      val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(367880.004, 6673884.307), Point(367824.646, 6674001.441)), 131.683, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+
+      val ids = createTestAssets(367865.403, 6673891.022, roadLink, Some(SideCode.TowardsDigitizing.value), Some(317))
+      val asset = directionalTrafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = directionalTrafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.lon should be(corrected.lon)
+      newAsset.lat should be(corrected.lat)
+
+      val asset2 = trafficLightService.getPersistedAssetsByIds(ids).head
+      val corrected2 = updater.correctPersistedAsset(asset2, change)
+      val newId2 = trafficLightService.adjustmentOperation(asset2, corrected2, change.newLinks.find(_.linkId == corrected2.linkId).get)
+      val newAsset2 = trafficLightService.getPersistedAssetsByIds(Set(newId2)).head
+      newAsset2.lon should be(corrected2.lon)
+      newAsset2.lat should be(corrected2.lat)
+
+      val asset3 = trafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected3 = updater.correctPersistedAsset(asset3, change)
+      val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
+      val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
+      newAsset3.lon should be(corrected3.lon)
+      newAsset3.lat should be(corrected3.lat)
+    }
+  }
+
+  test("when saving a relocated asset, the update method does not change the geometry") {
+
+    runWithRollback {
+      val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(370276.441, 6670348.945), Point(370276.441, 6670367.114)), 45.317, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+      val ids = createTestAssets(370276.441, 6670349.045, roadLink, Some(SideCode.TowardsDigitizing.value), Some(289), false)
+      val asset = directionalTrafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = directionalTrafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      corrected.lon should not be asset.lon
+      corrected.lat should not be asset.lat
+      newAsset.lon should be(corrected.lon)
+      newAsset.lat should be(corrected.lat)
+
+      val asset2 = trafficLightService.getPersistedAssetsByIds(ids).head
+      val corrected2 = updater.correctPersistedAsset(asset2, change)
+      val newId2 = trafficLightService.adjustmentOperation(asset2, corrected2, change.newLinks.find(_.linkId == corrected2.linkId).get)
+      val newAsset2 = trafficLightService.getPersistedAssetsByIds(Set(newId2)).head
+      corrected2.lon should not be asset2.lon
+      corrected2.lat should not be asset2.lat
+      newAsset2.lon should be(corrected2.lon)
+      newAsset2.lat should be(corrected2.lat)
+
+      val asset3 = trafficSignService.getPersistedAssetsByIds(ids).head
+      val corrected3 = updater.correctPersistedAsset(asset3, change)
+      val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
+      val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
+      corrected3.lon should not be asset3.lon
+      corrected3.lat should not be asset3.lat
+      newAsset3.lon should be(corrected3.lon)
+      newAsset3.lat should be(corrected3.lat)
+    }
+  }
 }
