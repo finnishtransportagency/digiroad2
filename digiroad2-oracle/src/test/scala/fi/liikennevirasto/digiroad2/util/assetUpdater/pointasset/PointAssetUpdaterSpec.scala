@@ -341,4 +341,58 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       newAsset.modifiedAt.get.toString().startsWith("2022-05-10") should be(true)
     }
   }
+
+  test("adjustmentOperation does not change the geometry when saving a version change") {
+    val services = Seq(pedestrianCrossingService, obstacleService)
+
+    runWithRollback {
+      val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(367880.004, 6673884.307), Point(367824.646, 6674001.441)), 131.683, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+
+      val ids = createTestAssets(367865.403, 6673891.022, roadLink)
+      Seq(pedestrianCrossingService, obstacleService).foreach { service =>
+        val asset = service.getPersistedAssetsByIds(ids).head
+        val corrected = updater.correctPersistedAsset(asset, change)
+        val newId = service.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+        val newAsset = service.getPersistedAssetsByIds(Set(newId)).head.asInstanceOf[PersistedPoint]
+        newAsset.lon should be(corrected.lon)
+        newAsset.lat should be(corrected.lat)
+      }
+      val asset = railwayCrossingService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = railwayCrossingService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = railwayCrossingService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.lon should be(corrected.lon)
+      newAsset.lat should be(corrected.lat)
+    }
+  }
+
+  test("when saving a relocated asset, the update method does not change the geometry") {
+    runWithRollback {
+      val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(370276.441, 6670348.945), Point(370276.441, 6670367.114)), 45.317, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+      val ids = createTestAssets(370276.441, 6670349.045, roadLink)
+
+      Seq(pedestrianCrossingService, obstacleService).foreach { service =>
+        val asset = service.getPersistedAssetsByIds(ids).head
+        val corrected = updater.correctPersistedAsset(asset, change)
+        val newId = service.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+        val newAsset = service.getPersistedAssetsByIds(Set(newId)).head.asInstanceOf[PersistedPoint]
+        corrected.lon should not be asset.lon
+        corrected.lat should not be asset.lat
+        newAsset.lon should be(corrected.lon)
+        newAsset.lat should be(corrected.lat)
+      }
+      val asset = railwayCrossingService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = railwayCrossingService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = railwayCrossingService.getPersistedAssetsByIds(Set(newId)).head
+      corrected.lon should not be asset.lon
+      corrected.lat should not be asset.lat
+      newAsset.lon should be(corrected.lon)
+      newAsset.lat should be(corrected.lat)
+    }
+  }
 }

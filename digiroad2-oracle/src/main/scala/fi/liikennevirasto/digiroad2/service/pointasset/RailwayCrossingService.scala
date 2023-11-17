@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], mValue: Option[Double] = None) extends IncomingPointAsset
 case class IncomingRailwayCrossingtAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
 
 class RailwayCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
@@ -104,7 +104,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   override def update(id: Long, updatedAsset: IncomingRailwayCrossing, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, roadLink, username, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink, username, updatedAsset.mValue, None)
     }
   }
 
@@ -122,7 +122,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
         PostGISRailwayCrossingDao.create(setAssetPosition(updatedAsset, linkGeom, value), value, linkMunicipality, username,
           timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
-        PostGISRailwayCrossingDao.update(id, setAssetPosition(updatedAsset, linkGeom, value), value, linkMunicipality, username,
+        PostGISRailwayCrossingDao.update(id, updatedAsset, value, linkMunicipality, username,
           Some(timeStamp.getOrElse(createTimeStamp())), linkSource, fromPointAssetUpdater)
     }
   }
