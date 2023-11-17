@@ -954,7 +954,7 @@ class PostGISLinearAssetDao() {
     ps.addBatch()
   }
 
-  private def LRMRelationInser(ps: PreparedStatement, id: Long, lrmPositionId: Long): Unit = {
+  private def LRMRelationInsert(ps: PreparedStatement, id: Long, lrmPositionId: Long): Unit = {
     ps.setLong(1, id)
     ps.setLong(2, lrmPositionId)
     ps.addBatch()
@@ -973,7 +973,7 @@ class PostGISLinearAssetDao() {
     ps.addBatch()
   }
   /**
-    * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
+    * Creates multiple new linear asset. Return ids of new asset. Used by LinearAssetService.createMultipleLinearAssets
     */
   def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Seq[NewLinearAssetWithId] = {
     val ids = Sequences.nextPrimaryKeySeqValues(list.size)
@@ -1041,7 +1041,7 @@ class PostGISLinearAssetDao() {
       })
     }
     MassQuery.executeBatch(lrmSql2) { ps =>
-      list.foreach(a => LRMRelationInser(ps, a.id, a.positionId))
+      list.foreach(a => LRMRelationInsert(ps, a.id, a.positionId))
     }
   }
   private def addGeometry(measures: Measures, geometry: Seq[Point]): String = {
