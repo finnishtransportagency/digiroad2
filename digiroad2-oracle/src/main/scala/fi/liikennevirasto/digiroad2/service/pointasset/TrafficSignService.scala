@@ -16,7 +16,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 
-case class IncomingTrafficSign(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingTrafficSign(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Option[Double] = None) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: String, validityDirection: Int, signType: Int, roadLink: RoadLink)
 case class TrafficSignInfoUpdate(newSign: TrafficSignInfo, oldSign: PersistedTrafficSign)
@@ -116,7 +116,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   override def update(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, roadLink, username, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink, username, updatedAsset.mValue, None)
     }
   }
 
@@ -163,7 +163,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
         PostGISTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode,
           timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
-        PostGISTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource, fromPointAssetUpdater)
+        PostGISTrafficSignDao.update(id, updatedAsset, value, roadLink.municipalityCode, username, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource, fromPointAssetUpdater)
     }
     eventBus.publish("trafficSign:update", TrafficSignInfoUpdate(TrafficSignInfo(updatedId, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, roadLink), oldAsset))
     updatedId

@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingTrafficLight(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Option[Int] = None, bearing: Option[Int] = None) extends IncomingPointAsset
+case class IncomingTrafficLight(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Option[Int] = None, bearing: Option[Int] = None, mValue: Option[Double] = None) extends IncomingPointAsset
 case class IncomingTrafficLightAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
 
 class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
@@ -29,7 +29,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   override def update(id: Long, updatedAsset: IncomingTrafficLight, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, roadLink, username, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink, username, updatedAsset.mValue, None)
     }
   }
 
@@ -48,7 +48,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
         PostGISTrafficLightDao.create(setAssetPosition(updatedAsset, linkGeometry, value), value, username, municipality,
           timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
-        PostGISTrafficLightDao.update(id, setAssetPosition(updatedAsset, linkGeometry, value), value, username, municipality,
+        PostGISTrafficLightDao.update(id, updatedAsset, value, username, municipality,
           Some(timeStamp.getOrElse(createTimeStamp())), linkSource, fromPointAssetUpdater)
     }
   }

@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 
-case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], mValue: Option[Double] = None) extends IncomingPointAsset
 case class IncomingPedestrianCrossingAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
 
 class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) extends PointAssetOperations {
@@ -86,7 +86,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   override def update(id: Long, updatedAsset: IncomingPedestrianCrossing, roadLink: RoadLink, username: String): Long = {
     val pedestrianIdUpdated =
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, roadLink, username, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink, username, updatedAsset.mValue, None)
     }
     pedestrianCrossingValidatorActor(Set(id, pedestrianIdUpdated))
     pedestrianIdUpdated
@@ -106,7 +106,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
         dao.create(setAssetPosition(updatedAsset, linkGeom, value), value, username, linkMunicipality,
           timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
-        dao.update(id, setAssetPosition(updatedAsset, linkGeom, value), value, username, linkMunicipality,
+        dao.update(id, updatedAsset, value, username, linkMunicipality,
           Some(timeStamp.getOrElse(createTimeStamp())), linkSource, fromPointAssetUpdater)
     }
   }
