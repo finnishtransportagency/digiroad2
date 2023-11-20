@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.PolygonTools
+import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 
@@ -156,6 +156,24 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       case _ => None
     }
     id
+  }
+
+  override def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
+    val assetsSaved = dao.createMultipleLinearAssets(list)
+    LogUtils.time(logger,"Saving assets properties"){
+      assetsSaved.foreach(a => {
+        val value = a.asset.value
+        value match {
+          case DynamicValue(multiTypeProps) =>
+            val properties = setPropertiesDefaultValues(multiTypeProps.properties, a.asset.roadLink)
+            val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(a.asset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+            val props = properties ++ defaultValues.toSet
+            validateRequiredProperties(a.asset.typeId, props)
+            dynamicLinearAssetDao.updateAssetProperties(a.id, props, a.asset.typeId)
+          case _ => None
+        }
+      })
+    }
   }
 
   def setPropertiesDefaultValues(properties: Seq[DynamicProperty], roadLink: Option[RoadLinkLike]): Seq[DynamicProperty] = {

@@ -96,6 +96,10 @@ object Queries {
     sqlu"""
       update asset set modified_by = $updater, modified_date = current_timestamp where id = $assetId
     """
+  def updateAssestModified(assetIds: Seq[Long], updater: String) = {
+    sqlu"""update asset set modified_by = $updater, modified_date = current_timestamp where id in(#${assetIds.mkString(",")})""".execute
+  }
+  
 
   def updateAssetGeometry(id: Long, point: Point): Unit = {
     val x = point.x
