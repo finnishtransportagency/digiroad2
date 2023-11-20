@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstr
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, LogUtils, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, LogUtilsGeo, Point}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -840,7 +840,7 @@ class AssetFiller {
 
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
     // if links does not have any asset filter it away 
-    val onlyRightLinks =LogUtils.time(logger, s"Remove unrelated links, links: ${topology.length}, assets: ${linearAssets.size}") { topology.filter(p => linearAssets.keySet.contains(p.linkId))}
+    val onlyRightLinks =LogUtilsGeo.time(logger, s"Remove unrelated links, links: ${topology.length}, assets: ${linearAssets.size}") { topology.filter(p => linearAssets.keySet.contains(p.linkId))}
 
     logger.info(s"Filtered list size: ${onlyRightLinks.size}")
     
@@ -848,13 +848,13 @@ class AssetFiller {
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
-      val (adjustedAssets, assetAdjustments) = LogUtils.time(logger, s"Looping over link: ${roadLink.linkId}") {
+      val (adjustedAssets, assetAdjustments) = LogUtilsGeo.time(logger, s"Looping over link: ${roadLink.linkId}") {
         operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }}
       val filterExpiredAway = assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p => assetAdjustments.expiredAssetIds.contains(p.assetId)))
 
-      val noDuplicate = LogUtils.time(logger, s"Remove duplicates") { filterExpiredAway.copy(
+      val noDuplicate = LogUtilsGeo.time(logger, s"Remove duplicates") { filterExpiredAway.copy(
         adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
         adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
         valueAdjustments = filterExpiredAway.valueAdjustments.distinct
