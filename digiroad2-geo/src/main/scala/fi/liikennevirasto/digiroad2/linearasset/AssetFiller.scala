@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstr
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, LogUtils, LogUtilsGeo, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, LogUtilsGeo, Point}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
