@@ -553,7 +553,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     val ids = Sequences.nextPrimaryKeySeqValues(list.size)
     val lrmPositions = Sequences.nextLRMPositionIdsSeqValues(list.size)
     val assetsWithNewIds = list.zipWithIndex.map { case (a, index) => NewSpeedLimitWithId(a, ids(index), lrmPositions(index)) }
-    val timestamp = s"""TO_TIMESTAMP((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+    val timestamp = s"""TO_TIMESTAMP((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3')"""
     val insertSql =
       s""" insert into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
               values ((?), (?), (?), ${timestamp}, (?), ${timestamp});
