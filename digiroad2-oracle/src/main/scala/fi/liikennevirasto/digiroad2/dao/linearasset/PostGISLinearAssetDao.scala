@@ -983,7 +983,7 @@ class PostGISLinearAssetDao() {
     def selectValidTo(a: NewLinearAssetWithId) = {if (a.asset.expired) Some("current_timestamp") else None}
     
     val assetsWithNewIds = list.zipWithIndex.map { case (a, index) => NewLinearAssetWithId(a, ids(index),lrmPositions(index))}
-    val timestamp = s"""TO_TIMESTAMP((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+    val timestamp = s"""TO_TIMESTAMP((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3')"""
     val (fromUpdate, notFromUpdate) = assetsWithNewIds.partition(_.asset.fromUpdate)
     val (verifiedDateFromUpdateYes, verifiedDateFromUpdateNo) = fromUpdate.partition(_.asset.verifiedDateFromUpdate.isDefined)
     val verifiedStatementSql =
