@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import org.slf4j.Logger
 
-object LogUtils {
+object LogUtilsGeo {
   val timeLoggingThresholdInMs = 100
 
   def time[R](logger: Logger, operationName: String, noFilter: Boolean = false, url :Option[String] = None)(f: => R): R = {
