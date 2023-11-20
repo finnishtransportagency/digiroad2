@@ -52,6 +52,14 @@ case class Measures(startMeasure: Double, endMeasure: Double){
   }
 }
 
+case class NewLinearAssetMassOperation(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, timeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+                                       createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
+                                       modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), 
+                                       verifiedBy: Option[String] = None ,verifiedDateFromUpdate : Option[DateTime] = None, informationSource: Option[Int] = None,
+                                       geometry: Seq[Point] = Seq(),
+                                       expired :Boolean=false,linkSource: Option[Int]
+                                      )
+
 trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
@@ -435,6 +443,11 @@ trait LinearAssetOperations {
       dao.updateExpiration(id, expired, username)
   }
 
+  def expireAssets(ids: Seq[Long], expired: Boolean,username: String,newTransaction: Boolean = true):Unit = {
+    if (newTransaction) withDynTransaction {dao.updateExpirations(ids, expired,username)}
+    else dao.updateExpirations(ids, expired,username)
+  }
+
   /**
     * Sets the linear asset value to None for numeric value properies.
     * Used by Digiroad2Api /linearassets POST endpoint.
@@ -584,6 +597,20 @@ trait LinearAssetOperations {
       case _ => None
     }
     id
+  }
+  def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
+    val assetsSaved = dao.createMultipleLinearAssets(list)
+    LogUtils.time(logger,"Saving assets properties"){
+      assetsSaved.foreach(a => {
+        val value = a.asset.value
+        value match {
+          case NumericValue(intValue) =>
+            dao.insertValue(a.id, LinearAssetTypes.numericValuePropertyId, intValue)
+          case _ => None
+        }
+      }) 
+    }
+    
   }
 
 

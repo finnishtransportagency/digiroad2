@@ -95,7 +95,7 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
       changed.isEmpty should be(true)
     }
   }
-
+  
   test("test version upgrade separation logic"){
     val linkId = generateRandomLinkId(); val linkId2 = generateRandomKmtkId()
     val change = changeReplaceShortenedFromEnd(linkId)

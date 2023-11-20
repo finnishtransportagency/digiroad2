@@ -1,24 +1,28 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, getDefaultEpsilon}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.{MValueUpdate, PostGISLinearAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures}
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures, NewLinearAssetMassOperation}
+import fi.liikennevirasto.digiroad2.util.CustomIterableOperations.IterableOperation
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
 import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
+import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
+import scala.collection.parallel.immutable
 import scala.collection.{Seq, mutable}
+import scala.util.{Failure, Success, Try}
 
 /**
   *  This act as state object. Keep record of samuutus process.
@@ -312,10 +316,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val newLinks = changes.filter(isNew).flatMap(_.newLinks).map(_.linkId)
     val (assetsOnNew,assetsWhichAreMoved) = assetsInNewLink.assetsAfter.partition(a=>newLinks.contains(a.linkId))
     val pairs = assetsWhichAreMoved.flatMap(asset => createPair(Some(asset), assetsInNewLink.assetsBefore)).distinct
-    val report = pairs.filter(_.newAsset.isDefined).map(pair => {
-      if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
-        Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
-      } else Some(assetsInNewLink)
+    val report = pairs.map(pair => {
+      pair.newAsset match {
+        case Some(_) => 
+          if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
+          Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
+        } else Some(assetsInNewLink)
+        case None => None
+      }
     }).foldLeft(Some(initStep))(mergerOperations)
     Some(report.get.copy(assetsAfter = report.get.assetsAfter ++ assetsOnNew))
   }
@@ -398,7 +406,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def updateLinearAssets(typeId: Int): Unit = {
     val latestSuccess = PostGISDatabase.withDynSession(Queries.getLatestSuccessfulSamuutus(typeId))
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(latestSuccess)
-    logger.info(s"Processing ${changeSets.size}} road link changes set")
+    logger.info(s"Processing ${changeSets.size} road link changes set")
     changeSets.foreach(changeSet => {
       logger.info(s"Started processing change set ${changeSet.key}")
       
@@ -446,9 +454,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     logger.info("Starting to save generated or updated")
     LogUtils.time(logger, s"Saving generated or updated took: ") {
-      persistProjectedLinearAssets(projectedAssets.filterNot(_.id == removePart).filter(_.id == 0L))
+      persistProjectedLinearAssets(projectedAssets.filter(_.id == 0L),newRoadLinks)
     }
   }
+  
   /**
     * 4) Start projecting everything into new links based on replace info.
     * @param typeId
@@ -464,53 +473,70 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val initStep = OperationStep(Seq(), Some(changeSet))
     logger.info(s"Projecting ${assetsAll.size} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
-      changes.map(goThroughChanges(assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
-        .filter(_.nonEmpty).filter(_.get.assetsAfter.nonEmpty)
+      //TODO Fix performance, 
+      // paraller run if 1000 changes ?, split into four thread
+      
+      val assetsGroup= IterableOperation.groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
+      val rawData = changes.map(goThroughChanges(assetsGroup,assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
+      LogUtils.time(logger, "Filter empty and empty afters away from projected") {
+        rawData.filter(a=>  a.nonEmpty && a.get.assetsAfter.nonEmpty) //double check for possibility of empty assetsAfter
+      }
     }
 
     logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
-    val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting projected assets") {
+    val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
+      //TODO Fix performance
       adjustAndReport(typeId, links, projectedToNewLinks, initStep,changes).get
     }
-
-    changeInfo.get.expiredAssetIds.map(asset => {
-      val alreadyReported = changesForReport.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
-      if (!alreadyReported.contains(asset)) {
-        val expiringAsset = assetsAll.find(_.id == asset)
-        reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, Some(ChangeTypeReport.Deletion))
-      }
-    })
-
+    LogUtils.time(logger, "Reporting removed") {
+      changeInfo.get.expiredAssetIds.map(asset => {
+        val alreadyReported = changesForReport.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
+        if (!alreadyReported.contains(asset)) {
+          val expiringAsset = assetsAll.find(_.id == asset)
+          reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, Some(ChangeTypeReport.Deletion))
+        }
+      })
+    }
+    
     (assetsOperated, changeInfo.get)
   }
   
-  private def goThroughChanges(assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet,
-                               initStep: OperationStep, change: RoadLinkChange,initStepSplit:OperationStepSplit): Option[OperationStep] = {
+  private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet,
+                               initStep: OperationStep, change: RoadLinkChange, initStepSplit:OperationStepSplit): Option[OperationStep] = {
+
     nonAssetUpdate(change, Seq(), null)
-    change.changeType match {
-      case RoadLinkChangeType.Add =>
-        val operation = operationForNewLink(change, assetsAll, changeSets).getOrElse(initStep)
-        Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
-      case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
-      case _ =>
-        val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
-        if (assets.nonEmpty) {
-          change.changeType match {
-            case RoadLinkChangeType.Replace =>
-              assets.map(a => projecting(changeSets, change, a, a)).
-                filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)
-            case RoadLinkChangeType.Split =>
-              handleSplits(changeSets, initStepSplit, change, assets)
-            case _ => None
+    LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
+      change.changeType match {
+        case RoadLinkChangeType.Add =>
+          val operation = operationForNewLink(change, assetsAll, changeSets).getOrElse(initStep)
+          Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
+        case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
+        case _ =>
+          val assets = Try(assetsAllG(change.oldLink.get.linkId)) match {
+            case Success(value) => value.toSeq
+            case Failure(_) => Seq()
           }
-        } else None
+          if (assets.nonEmpty) {
+            change.changeType match {
+              case RoadLinkChangeType.Replace =>
+                val projected = assets.map(a => projecting(changeSets, change, a, a))
+                LogUtils.time(logger, "Merging steps after projecting") {
+                  projected.filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)}
+              case RoadLinkChangeType.Split =>
+                handleSplits(changeSets, initStepSplit, change, assets)
+              case _ => None
+            }
+          } else None
+      } 
     }
   }
   private def adjustAndReport(typeId: Int, links: Seq[RoadLink],
                               assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep,changes: Seq[RoadLinkChange]): Option[OperationStep] = {
-    val merged = assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations)
-    val adjusted = adjustAndAdditionalOperations(typeId, links, merged,changes)
-    reportingAdjusted(initStep, adjusted,changes)
+    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations)}
+
+    //TODO paraller run if 1000 changes ?, split into four thread
+    val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, links, merged,changes)}
+    LogUtils.time(logger, "Reporting assets") {reportingAdjusted(initStep, adjusted,changes)}
   }
 
   private def adjustAndAdditionalOperations(typeId: Int, links: Seq[RoadLink],
@@ -529,9 +555,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def adjustAssets(typeId: Int, links: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
     val OperationStep(assetsAfter,changeSetFromOperation,assetsBefore) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
-    val convert = links.map(toRoadLinkForFillTopology)
-    val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(assetsOperated, convert).groupBy(_.linkId)
-    val (adjusted, changeSet) = adjustLinearAssets(typeId,convert, groupedAssets, changeSetFromOperation)
+    val (convert,groupedAssets) =  LogUtils.time(logger, "Convert to right format") {
+      val convert = links.map(toRoadLinkForFillTopology)
+      val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(assetsOperated, convert).groupBy(_.linkId)
+      (convert,groupedAssets)
+    }
+    val (adjusted, changeSet) = LogUtils.time(logger, "Run fillTopology") {adjustLinearAssets(typeId,convert, groupedAssets, changeSetFromOperation)}
     OperationStep(adjusted.map(convertToPersisted), Some(changeSet), assetsBefore)
   }
   /**
@@ -683,35 +712,37 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   def updateChangeSet(changeSet: ChangeSet): Unit = {
-
-    if (changeSet.adjustedMValues.nonEmpty)
-      logger.info(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.map(a => s"${a.assetId}/${a.linkId}").mkString(", ")}")
+    
+    if (changeSet.adjustedMValues.nonEmpty) {
       logger.debug(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
-    changeSet.adjustedMValues.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, adjustment.linkId, Measures(adjustment.startMeasure, adjustment.endMeasure).roundMeasures(), LinearAssetUtils.createTimeStamp())
+      dao.updateMValuesChangeInfos(changeSet.adjustedMValues.map(a => MValueUpdate(a.assetId, a.linkId, Measures(a.startMeasure, a.endMeasure).roundMeasures(), LinearAssetUtils.createTimeStamp())))
     }
-
+    
     val ids = changeSet.expiredAssetIds.toSeq
-
-    if (ids.nonEmpty)
-      logger.info(s"Expiring ids ${ids.mkString(", ")}")
-    ids.foreach(dao.updateExpiration(_, expired = true, AutoGeneratedUsername.generatedInUpdate))
-
-    if (changeSet.adjustedSideCodes.nonEmpty)
-      logger.info(s"Saving SideCode adjustments for asset/link ids=${changeSet.adjustedSideCodes.map(a => "" + a.assetId).mkString(", ")}")
-
-    changeSet.adjustedSideCodes.foreach { adjustment =>
-      adjustedSideCode(adjustment)
+    if (ids.nonEmpty) {
+      logger.debug(s"Expiring ids ${ids.mkString(", ")}")
+      dao.updateExpirations(ids,expired = true,AutoGeneratedUsername.generatedInUpdate)
     }
-
-    if (changeSet.valueAdjustments.nonEmpty)
-      logger.info(s"Saving value adjustments for assets: ${changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", ")}")
-    changeSet.valueAdjustments.foreach { adjustment =>
-      service.updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
+    
+    if (changeSet.adjustedSideCodes.nonEmpty) {
+      logger.debug(s"Saving SideCode adjustments for asset/link ids=${changeSet.adjustedSideCodes.map(a => s"${a.assetId}").mkString(", ")}")
+      adjustedSideCodes(changeSet.adjustedSideCodes)
+    }
+    
+    if (changeSet.valueAdjustments.nonEmpty) {
+      logger.debug(s"Saving value adjustments for assets: ${changeSet.valueAdjustments.map(a => s"${a.asset.id}").mkString(", ")}")
+      changeSet.valueAdjustments.foreach { adjustment =>
+        service.updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
+      }
     }
   }
+  protected def adjustedSideCodes(adjustedSideCodes: Seq[SideCodeAdjustment]): Unit = {
+    val assets = service.getPersistedAssetsByIds(adjustedSideCodes.head.typeId, adjustedSideCodes.map(_.assetId).toSet, newTransaction = false)
+    val roadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(assets.map(_.linkId).toSet, newTransaction = false)
+    adjustedSideCode(adjustedSideCodes, assets, roadLinks)
+  }
 
-  protected def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
+  protected def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
     if (newLinearAssets.nonEmpty)
       logger.info(s"Saving projected linear assets, count: ${newLinearAssets.size}")
 
@@ -728,8 +759,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     logger.info(s"insert assets count: ${toInsert.size}")
     logger.info(s"update assets count: ${toUpdate.size}")
-
-    val roadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
+    
     if (toUpdate.nonEmpty) {
       val toUpdateText = toUpdate.filter(a =>
         Set(EuropeanRoads.typeId, ExitNumbers.typeId).contains(a.typeId))
@@ -742,7 +772,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
       updateProjected(toUpdate, persisted)
       if (newLinearAssets.nonEmpty)
-        logger.info(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
+        logger.debug(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
     }
     toInsert.foreach { linearAsset =>
       val roadlink = roadLinks.find(_.linkId == linearAsset.linkId)
@@ -767,7 +797,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       }
     }
     if (toInsert.nonEmpty)
-      logger.info(s"Added assets for linkids ${newLinearAssets.map(_.linkId)}")
+      logger.debug(s"Added assets for linkids ${newLinearAssets.map(_.linkId)}")
   }
 
   protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]): Unit = {
@@ -789,22 +819,24 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       }
     }
   }
-
-  protected def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
-    val oldAsset = service.getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).headOption
-      .getOrElse(throw new IllegalStateException(s"Old asset ${adjustment.assetId} of type ${adjustment.typeId} no longer available"))
-
-    val roadLink = roadLinkService.getExistingOrExpiredRoadLinkByLinkId(oldAsset.linkId, newTransaction = false)
-      .getOrElse(throw new IllegalStateException(s"Road link ${oldAsset.linkId} no longer available"))
-
-    service.expireAsset(oldAsset.typeId, oldAsset.id, AutoGeneratedUsername.generatedInUpdate, expired = true, newTransaction = false)
-
-    val oldAssetValue = oldAsset.value.getOrElse(throw new IllegalStateException(s"Value of the old asset ${oldAsset.id} of type ${oldAsset.typeId} is not available"))
-
-    service.createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAssetValue, adjustment.sideCode.value,
-      Measures(oldAsset.startMeasure, oldAsset.endMeasure).roundMeasures(), AutoGeneratedUsername.generatedInUpdate, LinearAssetUtils.createTimeStamp(),
-      Some(roadLink), true, oldAsset.createdBy, oldAsset.createdDateTime, oldAsset.modifiedBy, oldAsset.modifiedDateTime, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
-
+  
+  protected def adjustedSideCode(adjustedSideCodes: Seq[SideCodeAdjustment] = Seq(), oldAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
+    service.expireAssets(oldAssets.map(_.id),expired = true, AutoGeneratedUsername.generatedInUpdate,newTransaction = false)
+    val adjusted= adjustedSideCodes.map(_.assetId)
+    val assets = oldAssets.filter(a=>adjusted.contains(a.id)).map(a=>
+      {
+        val oldAssetValue = a.value.getOrElse(throw new IllegalStateException(s"Value of the old asset ${a.id} of type ${a.typeId} is not available"))
+        val roadLink = roadLinks.find(_.linkId == a.linkId).getOrElse(throw new IllegalStateException(s"Road link ${a.linkId} no longer available"))
+        NewLinearAssetMassOperation(
+          a.typeId, a.linkId, oldAssetValue, adjustedSideCodes.find(_.assetId== a.id).get.sideCode.value,
+          Measures(a.startMeasure, a.endMeasure).roundMeasures(), AutoGeneratedUsername.generatedInUpdate, LinearAssetUtils.createTimeStamp(),
+          Some(roadLink), fromUpdate = true, a.createdBy, a.createdDateTime, a.modifiedBy, a.modifiedDateTime, a.verifiedBy,a.verifiedDate, a.informationSource.map(_.value),
+            linkSource = service.getLinkSource(Some(roadLink)),
+              geometry = service.getGeometry(Some(roadLink)),expired = false
+        )
+      }
+    )
+    service.createMultipleLinearAssets(assets)
   }
 
   /**

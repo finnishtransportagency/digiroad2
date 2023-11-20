@@ -49,7 +49,7 @@ sealed case class Asset(assetId: Long, values: String, municipalityCode: Option[
       }
 
     } else {
-      logger.warn("Asset does not have geometry")
+      logger.debug("Asset does not have geometry")
       ""
     }
   }
