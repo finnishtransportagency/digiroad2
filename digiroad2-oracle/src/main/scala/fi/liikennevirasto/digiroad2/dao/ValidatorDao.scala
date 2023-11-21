@@ -8,8 +8,7 @@ sealed case class LinearReferenceAsset(assetId:Long,lrm:LinearReference,laneCode
 
 trait ValidatorDao {
   val filterLink = (column: String, links: Set[String]) => if (links.nonEmpty) s"JOIN ( VALUES ${links.map(t => s"('${t}')").mkString(",")} ) links(link) ON (${column} = link) " else ""
-  val filterLink2 = (column: String, links: Set[String]) => if (links.nonEmpty) s" and ${column} in (${links.map(t => s"'${t}'").mkString(",")})" else ""
-
+  
   implicit val getResult: GetResult[LinearReferenceAsset] = new GetResult[LinearReferenceAsset] {
     def apply(r: PositionedResult): LinearReferenceAsset = {
       val assetId = r.nextLong()
