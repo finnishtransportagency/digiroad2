@@ -403,18 +403,18 @@ class AssetFiller {
   def mapLinkAndAssets(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): mutable.HashMap[String, LinkAndAssets] = {
     val mapForParallelRun = new mutable.HashMap[String, LinkAndAssets]()
 
-    def update(elem: PersistedLinearAsset, link: RoadLinkForFillTopology): Unit = {
-      val assets = toLinearAsset(Seq(elem), link).toSet
-      val elements = mapForParallelRun.getOrElseUpdate(elem.linkId, LinkAndAssets(assets, link))
-      mapForParallelRun.update(elem.linkId, LinkAndAssets(assets ++ elements.assets, link))
+    def update(asset: PersistedLinearAsset, link: RoadLinkForFillTopology): Unit = {
+      val assets = toLinearAsset(Seq(asset), link).toSet
+      val linkAndAssets = mapForParallelRun.getOrElseUpdate(asset.linkId, LinkAndAssets(assets, link))
+      mapForParallelRun.update(asset.linkId, LinkAndAssets(assets ++ linkAndAssets.assets, link))
     }
 
-    for (elem <- persistedLinearAssets) {
-      mapForParallelRun.get(elem.linkId) match {
-        case Some(a) => update(elem, a.link)
+    for (asset <- persistedLinearAssets) {
+      mapForParallelRun.get(asset.linkId) match {
+        case Some(a) => update(asset, a.link)
         case None => // find link if not already in hashmap
-          roadLinks.find(_.linkId == elem.linkId).getOrElse(None) match {
-            case link: RoadLink => update(elem, toRoadLinkForFillTopology(link))
+          roadLinks.find(_.linkId == asset.linkId).getOrElse(None) match {
+            case link: RoadLink => update(asset, toRoadLinkForFillTopology(link))
             case _ => None
           }
       }
