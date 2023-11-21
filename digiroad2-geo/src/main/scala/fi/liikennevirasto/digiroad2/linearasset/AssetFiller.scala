@@ -863,12 +863,8 @@ class AssetFiller {
     )
 
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
-    // if links does not have any asset filter it away 
-    logger.info(s"Before filtering list size: ${topology.size}")
-    val onlyRightLinks =LogUtilsGeo.time(logger, s"Remove unrelated links, links: ${topology.length}, assets: ${linearAssets.size}") { topology.filter(p => linearAssets.keySet.contains(p.linkId))}
-    logger.info(s"Filtered list size: ${onlyRightLinks.size}")
     
-    onlyRightLinks.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
