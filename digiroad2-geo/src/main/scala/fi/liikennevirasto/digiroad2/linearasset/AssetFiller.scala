@@ -398,20 +398,26 @@ class AssetFiller {
     }).toSeq
     assets.collect{case asset: PieceWiseLinearAsset => asset}
   }
-  def toLinearAssetsOnMultipleLinksParallelPrepare(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]):  mutable.HashMap[String,LinkAndAssetsFillTopology]= {
-    val newMap = new mutable.HashMap[String,LinkAndAssetsFillTopology]()
+  def toLinearAssetsOnMultipleLinksParallelPrepare(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): mutable.HashMap[String, LinkAndAssetsFillTopology] = {
+    val mapForParallelRun = new mutable.HashMap[String, LinkAndAssetsFillTopology]()
+
+    def update(elem: PersistedLinearAsset, link: RoadLinkForFillTopology): Unit = {
+      val assets = toLinearAsset(Seq(elem), link).toSet
+      val elements = mapForParallelRun.getOrElseUpdate(elem.linkId, LinkAndAssetsFillTopology(assets, link))
+      mapForParallelRun.update(elem.linkId, LinkAndAssetsFillTopology(assets ++ elements.assets, link))
+    }
+
     for (elem <- persistedLinearAssets) {
-      val linkOpt = roadLinks.find(_.linkId == elem.linkId).getOrElse(None)
-      linkOpt match {
-        case link: RoadLink => 
-          val linkC= toRoadLinkForFillTopology(link)
-          val assets = toLinearAsset(Seq(elem), toRoadLinkForFillTopology(link)).toSet
-          val elements = newMap.getOrElseUpdate(elem.linkId, LinkAndAssetsFillTopology(assets, linkC))
-          newMap.update(elem.linkId, LinkAndAssetsFillTopology(assets++elements.assets, linkC))
-        case _ => None
+      mapForParallelRun.get(elem.linkId) match {
+        case Some(a) => update(elem, a.link)
+        case None => // insert if new link
+          roadLinks.find(_.linkId == elem.linkId).getOrElse(None) match {
+            case link: RoadLink => update(elem, toRoadLinkForFillTopology(link))
+            case _ => None
+          }
       }
     }
-    newMap
+    mapForParallelRun
   }
   
   private def toSegment(PieceWiseLinearAsset: PieceWiseLinearAsset) = {
