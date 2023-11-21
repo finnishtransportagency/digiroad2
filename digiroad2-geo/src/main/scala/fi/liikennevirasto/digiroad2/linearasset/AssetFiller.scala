@@ -876,19 +876,18 @@ class AssetFiller {
         }
       }
 
-      (existingAssets ++ adjustedAssets, cleanChangeSet(assetAdjustments))
+      val filterExpiredAway: ChangeSet = LinearAssetFiller.removeExpiredMValuesAdjustments(assetAdjustments)
+
+      val noDuplicate = filterExpiredAway.copy(
+        adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
+        adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
+        valueAdjustments = filterExpiredAway.valueAdjustments.distinct
+      )
+      
+      (existingAssets ++ adjustedAssets, noDuplicate)
     }
   }
-  def cleanChangeSet(assetAdjustments: ChangeSet): ChangeSet = {
-    val filterExpiredAway: ChangeSet = LinearAssetFiller.removeExpiredMValuesAdjustments(assetAdjustments)
-
-    val noDuplicate = filterExpiredAway.copy(
-      adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
-      adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
-      valueAdjustments = filterExpiredAway.valueAdjustments.distinct
-    )
-    noDuplicate
-  }
+  
   def adjustSideCodes(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
 
