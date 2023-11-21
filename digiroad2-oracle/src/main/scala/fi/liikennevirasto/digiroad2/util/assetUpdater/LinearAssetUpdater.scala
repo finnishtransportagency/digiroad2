@@ -305,33 +305,32 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     passThroughStep
   }
-  
-  private def partitionAndAddPairs(assets:  Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], newLinks: Seq[String]): ( Seq[PersistedLinearAsset],  Seq[Pair]) = {
+
+  private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], newLinks: Seq[String]): (Seq[PersistedLinearAsset], Seq[Pair]) = {
     val assetsBuffer = new ListBuffer[PersistedLinearAsset]
     val pairList = new ListBuffer[Seq[Pair]]
-    LogUtils.time(logger,"Loop and partition or create pair"){
+    LogUtils.time(logger, "Loop and partition or create pair") {
       for (asset <- assets) {
         if (newLinks.contains(asset.linkId)) assetsBuffer.append(asset)
         else pairList.append(createPair(Some(asset), assetsBefore))
       }
     }
-    val flatted = LogUtils.time(logger,"Flatten list"){
+    val flatted = LogUtils.time(logger, "Flatten list") {
       pairList.flatten.distinct
     }
-    (assetsBuffer,flatted)
+    (assetsBuffer, flatted)
   }
 
   private def newIdList(changes: Seq[RoadLinkChange]): Seq[String] = {
     val newLink = new ListBuffer[Seq[String]]
-    LogUtils.time(logger,"Loop and add to new links list"){
+    LogUtils.time(logger, "Loop and add to new links list") {
       for (change <- changes) {
         if (isNew(change)) newLink.append(change.newLinks.map(_.linkId))
       }
     }
-    val flatted = LogUtils.time(logger,"Flatten list"){
+    LogUtils.time(logger, "Flatten list") {
       newLink.flatten
     }
-      flatted
   }
   
   
