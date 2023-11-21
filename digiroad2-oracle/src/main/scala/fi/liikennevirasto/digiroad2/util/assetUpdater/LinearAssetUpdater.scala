@@ -306,7 +306,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     passThroughStep
   }
 
-  private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], newLinks: Seq[String]): (Seq[PersistedLinearAsset], Seq[Pair]) = {
+  private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): (Seq[PersistedLinearAsset], Seq[Pair]) = {
+    val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
     val assetsBuffer = new ListBuffer[PersistedLinearAsset]
     val pairList = new ListBuffer[Seq[Pair]]
     LogUtils.time(logger, "Loop and partition or create pair") {
@@ -333,7 +334,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
   
-  
   /**
     * 9) start creating report row
     * @param initStep
@@ -342,10 +342,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @return
     */
   private def reportingAdjusted(initStep: OperationStep, assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
-    val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
     // Assets on totally new links is already reported.
-    val (assetsOnNew,pairs)= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,newLinks)}
-    
+    val (assetsOnNew,pairs)= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
     val report1 = LogUtils.time(logger,"Adding to changesForReport"){pairs.map(pair => {
       LogUtils.time(logger,"Creating reporting rows"){
         pair.newAsset match {
