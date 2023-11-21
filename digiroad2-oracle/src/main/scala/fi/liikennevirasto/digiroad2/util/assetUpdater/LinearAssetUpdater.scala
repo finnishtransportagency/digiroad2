@@ -306,20 +306,24 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     passThroughStep
   }
 
-  private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): (Seq[PersistedLinearAsset], Seq[Pair]) = {
+  private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): (Seq[PersistedLinearAsset], Set[Pair]) = {
     val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
     val assetsBuffer = new ListBuffer[PersistedLinearAsset]
-    val pairList = new ListBuffer[Seq[Pair]]
+    val pairList = new ListBuffer[Set[Pair]]
     LogUtils.time(logger, "Loop and partition or create pair") {
       for (asset <- assets) {
         if (newLinks.contains(asset.linkId)) assetsBuffer.append(asset)
         else pairList.append(createPair(Some(asset), assetsBefore))
       }
     }
-    val flatted = LogUtils.time(logger, "Flatten pair list") {
-      pairList.flatten.distinct
+    val distinct = LogUtils.time(logger, "Remove duplicate in pair list") {
+      pairList.toSet
     }
-    (assetsBuffer, flatted)
+
+    val flatten = LogUtils.time(logger, "Flatten pair list") {
+      distinct.flatten
+    }
+    (assetsBuffer, flatten)
   }
 
   private def newIdList(changes: Seq[RoadLinkChange]): Seq[String] = {
@@ -365,18 +369,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param oldAssets assets before samuutus
     * @return
     */
-  private def createPair(updatedAsset: Option[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]): Seq[Pair] = {
-    def findByOldId(updatedAssets: Option[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]): Seq[Pair] = {
+  private def createPair(updatedAsset: Option[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]): Set[Pair] = {
+    def findByOldId(updatedAssets: Option[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]): Set[Pair] = {
       val oldAssetByOldId = oldAssets.find(_.id == updatedAssets.get.oldId)
-      if (oldAssetByOldId.isDefined) Seq(Pair(oldAssetByOldId, updatedAssets)) else useGivenIfPossible(updatedAssets, oldAssets)
+      if (oldAssetByOldId.isDefined) Set(Pair(oldAssetByOldId, updatedAssets)) else useGivenIfPossible(updatedAssets, oldAssets)
     }
 
-    def useGivenIfPossible(updatedAssets: Option[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]): Seq[Pair] = {
-      if (oldAssets.size == 1) Seq(Pair(oldAssets.headOption, updatedAssets)) else Seq(Pair(None, updatedAssets))
+    def useGivenIfPossible(updatedAssets: Option[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset]): Set[Pair] = {
+      if (oldAssets.size == 1) Set(Pair(oldAssets.headOption, updatedAssets)) else Set(Pair(None, updatedAssets))
     }
 
     val oldAsset = oldAssets.find(_.id == updatedAsset.get.id)
-    if (oldAsset.isDefined) Seq(Pair(oldAsset, updatedAsset)) else findByOldId(updatedAsset, oldAssets)
+    if (oldAsset.isDefined) Set(Pair(oldAsset, updatedAsset)) else findByOldId(updatedAsset, oldAssets)
   }
 
 
