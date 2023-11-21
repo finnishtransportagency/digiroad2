@@ -342,7 +342,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @return
     */
   private def reportingAdjusted(initStep: OperationStep, assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
-    val newLinks = LogUtils.time(logger,"Create id list"){newIdList(changes)}
+    val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
     // Assets on totally new links is already reported.
     val (assetsOnNew,pairs)= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,newLinks)}
     
