@@ -17,7 +17,7 @@ class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends Line
       updateProjected(toUpdate, persisted, roadLinks)
 
       if (newLinearAssets.nonEmpty)
-        logger.info(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
+        logger.debug(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
     }
 
     toInsert.foreach { linearAsset =>
@@ -43,7 +43,7 @@ class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends Line
       }
     }
     if (newLinearAssets.nonEmpty)
-      logger.info(s"Added assets for linkids ${toInsert.map(_.linkId)}")
+      logger.debug(s"Added assets for linkids ${toInsert.map(_.linkId)}")
   }
 
   protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]], roadLinks: Seq[RoadLink]) : Unit = {
