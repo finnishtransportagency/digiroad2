@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.{Seq, mutable}
 import scala.util.Try
 
-case class LinkAndAssetsFillTopology (assets:Set[PieceWiseLinearAsset],link:RoadLinkForFillTopology)
+case class LinkAndAssets(assets:Set[PieceWiseLinearAsset], link:RoadLinkForFillTopology)
 
 case class RoadLinkForFillTopology(linkId: String, length:Double, trafficDirection:TrafficDirection, administrativeClass:AdministrativeClass, linkSource:LinkGeomSource,
                                    linkType:LinkType, constructionType:ConstructionType, geometry: Seq[Point], municipalityCode:Int){
@@ -400,13 +400,13 @@ class AssetFiller {
     }).toSeq
     assets.collect{case asset: PieceWiseLinearAsset => asset}
   }
-  def mapLinkAndAssets(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): mutable.HashMap[String, LinkAndAssetsFillTopology] = {
-    val mapForParallelRun = new mutable.HashMap[String, LinkAndAssetsFillTopology]()
+  def mapLinkAndAssets(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): mutable.HashMap[String, LinkAndAssets] = {
+    val mapForParallelRun = new mutable.HashMap[String, LinkAndAssets]()
 
     def update(elem: PersistedLinearAsset, link: RoadLinkForFillTopology): Unit = {
       val assets = toLinearAsset(Seq(elem), link).toSet
-      val elements = mapForParallelRun.getOrElseUpdate(elem.linkId, LinkAndAssetsFillTopology(assets, link))
-      mapForParallelRun.update(elem.linkId, LinkAndAssetsFillTopology(assets ++ elements.assets, link))
+      val elements = mapForParallelRun.getOrElseUpdate(elem.linkId, LinkAndAssets(assets, link))
+      mapForParallelRun.update(elem.linkId, LinkAndAssets(assets ++ elements.assets, link))
     }
 
     for (elem <- persistedLinearAssets) {
