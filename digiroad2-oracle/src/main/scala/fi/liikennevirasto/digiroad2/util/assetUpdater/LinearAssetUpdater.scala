@@ -796,6 +796,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"update assets count: ${toUpdate.size}")
     
     if (toUpdate.nonEmpty) {
+      // TODO this death code path, updateByRoadLinks has filter(_.id == 0L) so we will never reach this code
+      // TODO DELETE ME
       val toUpdateText = toUpdate.filter(a =>
         Set(EuropeanRoads.typeId, ExitNumbers.typeId).contains(a.typeId))
 
