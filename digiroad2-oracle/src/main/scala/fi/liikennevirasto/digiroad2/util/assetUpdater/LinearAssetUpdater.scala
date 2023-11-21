@@ -315,7 +315,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         else pairList.append(createPair(Some(asset), assetsBefore))
       }
     }
-    val flatted = LogUtils.time(logger, "Flatten list") {
+    val flatted = LogUtils.time(logger, "Flatten pair list") {
       pairList.flatten.distinct
     }
     (assetsBuffer, flatted)
@@ -328,7 +328,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         if (isNew(change)) newLink.append(change.newLinks.map(_.linkId))
       }
     }
-    LogUtils.time(logger, "Flatten list") {
+    LogUtils.time(logger, "Flatten new link id list") {
       newLink.flatten
     }
   }
