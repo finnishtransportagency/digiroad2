@@ -10,16 +10,7 @@ class HazMatTransportProhibitionUpdater(service: HazmatTransportProhibitionServi
     if (newLinearAssets.nonEmpty)
       logger.info("Saving projected prohibition assets")
 
-    val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
-   
-    if (toUpdate.nonEmpty) {
-      val prohibitions = toUpdate.filter(a => Set(HazmatTransportProhibition.typeId).contains(a.typeId))
-      val persisted = dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, prohibitions.map(_.id).toSet).groupBy(_.id)
-      updateProjected(toUpdate, persisted)
-      if (newLinearAssets.nonEmpty)
-        logger.debug("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
-    }
-    toInsert.foreach { linearAsset =>
+    newLinearAssets.foreach { linearAsset =>
       val id =
         (linearAsset.createdBy, linearAsset.createdDateTime) match {
           case (Some(createdBy), Some(createdDateTime)) =>
@@ -37,6 +28,6 @@ class HazMatTransportProhibitionUpdater(service: HazmatTransportProhibitionServi
       }
     }
     if (newLinearAssets.nonEmpty)
-      logger.debug("Added assets for linkids " + toInsert.map(_.linkId))
+      logger.debug("Added assets for linkids " + newLinearAssets.map(_.linkId))
   }
 }

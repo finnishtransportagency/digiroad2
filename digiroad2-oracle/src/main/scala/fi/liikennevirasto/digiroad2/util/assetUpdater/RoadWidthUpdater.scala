@@ -108,16 +108,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     noEdit || partOfConversion || changesOnlyUnderSamuutus
   }
   protected override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
-    val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
-    if (toUpdate.nonEmpty) {
-      val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
-      updateProjected(toUpdate, persisted)
-
-      if (newLinearAssets.nonEmpty)
-        logger.debug(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
-    }
-
-    toInsert.foreach { linearAsset =>
+    newLinearAssets.foreach { linearAsset =>
       val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
       val id = (linearAsset.createdBy, linearAsset.createdDateTime) match {
         case (Some(createdBy), Some(createdDateTime)) =>
@@ -145,7 +136,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
       }
     }
     if (newLinearAssets.nonEmpty)
-      logger.debug(s"Added assets for linkids ${toInsert.map(_.linkId)}")
+      logger.debug(s"Added assets for linkids ${newLinearAssets.map(_.linkId)}")
   }
 
 }
