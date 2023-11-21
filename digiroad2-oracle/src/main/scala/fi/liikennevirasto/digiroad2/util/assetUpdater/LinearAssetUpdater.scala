@@ -204,7 +204,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   def reportAssetChanges(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset],
                          roadLinkChanges: Seq[RoadLinkChange],
-                         operationSteps: OperationStep, rowType: Option[ChangeType] = None, useGivenChange: Boolean = false): OperationStep = {
+                         passThroughStep: OperationStep, rowType: Option[ChangeType] = None, useGivenChange: Boolean = false): OperationStep = {
 
     def propertyChange: Boolean = {
       val assetInherit = oldAsset.isDefined && newAsset.isDefined && oldAsset.get.id == newAsset.get.oldId
@@ -237,7 +237,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       })
     }
     
-    if (oldAsset.isEmpty && newAsset.isEmpty) return operationSteps
+    if (oldAsset.isEmpty && newAsset.isEmpty) return passThroughStep
 
     val linkId = if (oldAsset.nonEmpty) oldAsset.get.linkId else newAsset.head.linkId
     val assetId = if (oldAsset.nonEmpty) oldAsset.get.id else 0
@@ -303,8 +303,28 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         }
       }
     }
-    operationSteps
+    passThroughStep
   }
+  
+  private def partitionAndAddPairs(assets:  Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], newLinks: Seq[String]): ( Seq[PersistedLinearAsset],  Seq[Pair]) = {
+    val assetsBuffer = new ListBuffer[PersistedLinearAsset]
+    val pairList = new ListBuffer[Seq[Pair]]
+    for (asset <- assets) {
+      if (newLinks.contains(asset.linkId)) assetsBuffer.append(asset)
+      else pairList.append(createPair(Some(asset), assetsBefore))
+    }
+    (assetsBuffer,pairList.flatten.distinct)
+  }
+
+  private def newIdList(changes: Seq[RoadLinkChange]): Seq[String] = {
+    val newLink = new ListBuffer[Seq[String]]
+    for (change <- changes) {
+      if(isNew(change)) newLink.append(change.newLinks.map(_.linkId))
+    }
+    newLink.flatten
+  }
+  
+  
   /**
     * 9) start creating report row
     * @param initStep
@@ -313,18 +333,21 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @return
     */
   private def reportingAdjusted(initStep: OperationStep, assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
-    val newLinks = changes.filter(isNew).flatMap(_.newLinks).map(_.linkId)
-    val (assetsOnNew,assetsWhichAreMoved) = assetsInNewLink.assetsAfter.partition(a=>newLinks.contains(a.linkId))
-    val pairs = assetsWhichAreMoved.flatMap(asset => createPair(Some(asset), assetsInNewLink.assetsBefore)).distinct
-    val report = pairs.map(pair => {
-      pair.newAsset match {
-        case Some(_) => 
-          if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
-          Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
-        } else Some(assetsInNewLink)
-        case None => None
+    val newLinks = LogUtils.time(logger,"Create id list"){newIdList(changes)}
+    val (assetsOnNew,pairs)= partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,newLinks)
+    
+    val report1 = LogUtils.time(logger,"Adding to changesForReport"){pairs.map(pair => {
+      LogUtils.time(logger,"Create reporting rows"){
+        pair.newAsset match {
+          case Some(_) =>
+            if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
+              Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
+            } else Some(assetsInNewLink)
+          case None => None
+        }
       }
-    }).foldLeft(Some(initStep))(mergerOperations)
+    })}
+    val report = LogUtils.time(logger,"Merger reported"){report1.foldLeft(Some(initStep))(mergerOperations)}
     Some(report.get.copy(assetsAfter = report.get.assetsAfter ++ assetsOnNew))
   }
   
