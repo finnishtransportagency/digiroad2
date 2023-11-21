@@ -62,13 +62,10 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   }
 
   protected override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
-    val (newlimits, changedlimits) = newLinearAssets.partition(_.id <= 0)
-    val assets = newlimits.map(createMassOperationRow)
-    service.createMultipleLinearAssetsSpeedLimit(assets)
-    LogUtils.time(logger,s"purgeUnknown for newlimits ${newlimits.size}"){
+    service.createMultipleLinearAssetsSpeedLimit(newLinearAssets.map(createMassOperationRow))
+    LogUtils.time(logger,s"purgeUnknown for newlimits ${newLinearAssets.size}"){
       service.purgeUnknown(newLinearAssets.map(_.linkId).toSet, Seq(), newTransaction = false)
     }
-    
   }
   
   protected override def adjustedSideCode(adjustedSideCodes: Seq[SideCodeAdjustment], oldAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
