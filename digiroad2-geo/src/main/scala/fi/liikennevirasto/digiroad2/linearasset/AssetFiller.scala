@@ -410,7 +410,7 @@ class AssetFiller {
     for (elem <- persistedLinearAssets) {
       mapForParallelRun.get(elem.linkId) match {
         case Some(a) => update(elem, a.link)
-        case None => // insert if new link
+        case None => // find link if not already in hashmap
           roadLinks.find(_.linkId == elem.linkId).getOrElse(None) match {
             case link: RoadLink => update(elem, toRoadLinkForFillTopology(link))
             case _ => None
