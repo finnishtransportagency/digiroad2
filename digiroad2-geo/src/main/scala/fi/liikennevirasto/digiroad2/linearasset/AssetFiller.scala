@@ -400,7 +400,7 @@ class AssetFiller {
     }).toSeq
     assets.collect{case asset: PieceWiseLinearAsset => asset}
   }
-  def toLinearAssetsOnMultipleLinksParallelPrepare(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): mutable.HashMap[String, LinkAndAssetsFillTopology] = {
+  def mapLinkAndAssets(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): mutable.HashMap[String, LinkAndAssetsFillTopology] = {
     val mapForParallelRun = new mutable.HashMap[String, LinkAndAssetsFillTopology]()
 
     def update(elem: PersistedLinearAsset, link: RoadLinkForFillTopology): Unit = {

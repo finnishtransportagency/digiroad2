@@ -591,7 +591,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val OperationStep(assetsAfter, changeSetFromOperation, assetsBefore) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
     val groupedAssets = LogUtils.time(logger, "Convert to right format") {
-      assetFiller.toLinearAssetsOnMultipleLinksParallelPrepare(assetsOperated, links)
+      assetFiller.mapLinkAndAssets(assetsOperated, links)
     }
     val (adjusted, changeSet) = LogUtils.time(logger, "Run fillTopology") {
       adjustLinearAssetsLoop(typeId, groupedAssets, changeSetFromOperation)
