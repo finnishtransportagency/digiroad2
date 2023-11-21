@@ -309,19 +309,29 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def partitionAndAddPairs(assets:  Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], newLinks: Seq[String]): ( Seq[PersistedLinearAsset],  Seq[Pair]) = {
     val assetsBuffer = new ListBuffer[PersistedLinearAsset]
     val pairList = new ListBuffer[Seq[Pair]]
-    for (asset <- assets) {
-      if (newLinks.contains(asset.linkId)) assetsBuffer.append(asset)
-      else pairList.append(createPair(Some(asset), assetsBefore))
+    LogUtils.time(logger,"Loop and partition or create pair"){
+      for (asset <- assets) {
+        if (newLinks.contains(asset.linkId)) assetsBuffer.append(asset)
+        else pairList.append(createPair(Some(asset), assetsBefore))
+      }
     }
-    (assetsBuffer,pairList.flatten.distinct)
+    val flatted = LogUtils.time(logger,"Flatten list"){
+      pairList.flatten.distinct
+    }
+    (assetsBuffer,flatted)
   }
 
   private def newIdList(changes: Seq[RoadLinkChange]): Seq[String] = {
     val newLink = new ListBuffer[Seq[String]]
-    for (change <- changes) {
-      if(isNew(change)) newLink.append(change.newLinks.map(_.linkId))
+    LogUtils.time(logger,"Loop and add to new links list"){
+      for (change <- changes) {
+        if (isNew(change)) newLink.append(change.newLinks.map(_.linkId))
+      }
     }
-    newLink.flatten
+    val flatted = LogUtils.time(logger,"Flatten list"){
+      newLink.flatten
+    }
+      flatted
   }
   
   
@@ -334,10 +344,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     */
   private def reportingAdjusted(initStep: OperationStep, assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
     val newLinks = LogUtils.time(logger,"Create id list"){newIdList(changes)}
+    // Assets on totally new links is already reported.
     val (assetsOnNew,pairs)= partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,newLinks)
     
     val report1 = LogUtils.time(logger,"Adding to changesForReport"){pairs.map(pair => {
-      LogUtils.time(logger,"Create reporting rows"){
+      LogUtils.time(logger,"Creating reporting rows"){
         pair.newAsset match {
           case Some(_) =>
             if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
