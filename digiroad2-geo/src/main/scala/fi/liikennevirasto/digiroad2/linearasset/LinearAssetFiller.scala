@@ -55,7 +55,9 @@ object LinearAssetFiller {
     }
   }
   def removeExpiredMValuesAdjustments(assetAdjustments: ChangeSet): ChangeSet = {
-   assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p => assetAdjustments.expiredAssetIds.contains(p.assetId)))
+    assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p =>
+      assetAdjustments.droppedAssetIds.contains(p.assetId) ||
+        assetAdjustments.expiredAssetIds.contains(p.assetId)))
   }
   def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (a, z) => {
     a.copy(

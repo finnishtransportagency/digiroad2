@@ -35,6 +35,8 @@ class AssetFiller {
 
   val logger = LoggerFactory.getLogger(getClass)
 
+  type FillTopologyOperation = Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)]
+
   def getUpdateSideCodes: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     Seq(
       droppedSegmentWrongDirection,
@@ -805,7 +807,7 @@ class AssetFiller {
   def fillTopology(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                    changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
 
-    val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
+    val operations: FillTopologyOperation = Seq(
       combine,
       debugLogging("combine"),
       fuse,
@@ -841,9 +843,10 @@ class AssetFiller {
       (existingAssets ++ adjustedAssets, assetAdjustments)
     }
   }
+  
   def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                                   changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
+    val operations: FillTopologyOperation = Seq(
       debugLogging("operation start"),
       fuse,
       debugLogging("fuse"),
@@ -863,25 +866,28 @@ class AssetFiller {
     )
 
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
-    
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
       val (adjustedAssets, assetAdjustments) = LogUtilsGeo.time(logger, s"Looping over link: ${roadLink.linkId}") {
         operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-        operation(roadLink, currentSegments, currentAdjustments)
-      }}
-      val filterExpiredAway: ChangeSet = LinearAssetFiller.removeExpiredMValuesAdjustments(assetAdjustments)
+          operation(roadLink, currentSegments, currentAdjustments)
+        }
+      }
 
-      val noDuplicate = filterExpiredAway.copy(
-        adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
-        adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
-        valueAdjustments = filterExpiredAway.valueAdjustments.distinct
-      )
-
-      (existingAssets ++ adjustedAssets, noDuplicate)
+      (existingAssets ++ adjustedAssets, cleanChangeSet(assetAdjustments))
     }
+  }
+  def cleanChangeSet(assetAdjustments: ChangeSet): ChangeSet = {
+    val filterExpiredAway: ChangeSet = LinearAssetFiller.removeExpiredMValuesAdjustments(assetAdjustments)
+
+    val noDuplicate = filterExpiredAway.copy(
+      adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
+      adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
+      valueAdjustments = filterExpiredAway.valueAdjustments.distinct
+    )
+    noDuplicate
   }
   def adjustSideCodes(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
