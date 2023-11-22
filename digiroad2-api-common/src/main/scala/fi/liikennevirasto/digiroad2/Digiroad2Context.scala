@@ -194,11 +194,11 @@ class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSig
   }
 }
 
-class LaneWorkListInsertItem(laneWorkListService: LaneWorkListService) extends Actor {
+class RoadLinkPropertyChangedActor(laneService: LaneService) extends Actor {
   def receive = {
     case linkPropertyChange: LinkPropertyChange =>
-      laneWorkListService.insertToLaneWorkList(linkPropertyChange)
-    case _ => println("LaneWorkListInsertItem: Received unknown message")
+      laneService.processRoadLinkPropertyChange(linkPropertyChange)
+    case _ => println("RoadLinkPropertyChangedActor: Received unknown message")
   }
 }
 
@@ -284,8 +284,8 @@ object Digiroad2Context {
   val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignService, trafficSignManager), name = "trafficSignUpdate")
   eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
-  val laneWorkListInsert = system.actorOf(Props(classOf[LaneWorkListInsertItem], laneWorkListService), name = "laneWorkListInsert")
-  eventbus.subscribe(laneWorkListInsert, "laneWorkList:insert")
+  val roadLinkPropertyChanged = system.actorOf(Props(classOf[RoadLinkPropertyChangedActor], laneService), name = "roadLinkPropertyChanged")
+  eventbus.subscribe(roadLinkPropertyChanged, "roadLinkProperty:changed")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
@@ -522,10 +522,6 @@ object Digiroad2Context {
 
   lazy val trafficSignService: TrafficSignService = {
     new TrafficSignService(roadLinkService, eventbus)
-  }
-
-  lazy val laneWorkListService: LaneWorkListService = {
-    new LaneWorkListService()
   }
 
   lazy val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = {
