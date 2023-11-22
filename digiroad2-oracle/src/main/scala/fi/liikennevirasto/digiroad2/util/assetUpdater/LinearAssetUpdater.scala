@@ -599,7 +599,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     def adjusting(typeId: Int, changeSet: Option[ChangeSet], assetsByLink: mutable.HashMap[String, LinkAndAssets]): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       val assets = assetsByLink.flatMap(_._2.assets).toSeq.groupBy(_.linkId)
       val roadLinks = assetsByLink.map(_._2.link).toList
-      assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
+      adjustLinearAssets(typeId,roadLinks, assets, changeSet)
     }
 
     /**
