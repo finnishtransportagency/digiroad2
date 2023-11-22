@@ -111,7 +111,6 @@ object ValidatorLinearDao extends ValidatorDao{
            FROM asset a2
            JOIN asset_link al2 ON a2.id = al2.asset_id
            JOIN lrm_position lp2 ON al2.position_id = lp2.id
-           ${filterLink("lp2.link_id", links)}
            WHERE a2.asset_type_id = a.asset_type_id
            AND lp2.link_id = lp.link_id 
            AND a2.floating = FALSE
@@ -124,7 +123,6 @@ object ValidatorLinearDao extends ValidatorDao{
           FROM asset a3
           JOIN asset_link al3 ON a3.id = al3.asset_id
           JOIN lrm_position lp3 ON al3.position_id = lp3.id
-          ${filterLink("lp3.link_id", links)}
           WHERE a3.asset_type_id = a.asset_type_id
           AND lp3.link_id = lp.link_id 
           AND a3.floating = FALSE
@@ -136,6 +134,7 @@ object ValidatorLinearDao extends ValidatorDao{
       JOIN asset_link al ON a.id = al.asset_id
       JOIN lrm_position lp ON al.position_id = lp.id
       JOIN kgv_roadlink kr ON lp.link_id = kr.linkid
+      ${filterLink("lp.link_id", links)}
       WHERE ${assetTypeFilter}
       AND a.floating = false
       AND (a.valid_to > current_timestamp OR a.valid_to IS NULL)
@@ -145,7 +144,6 @@ object ValidatorLinearDao extends ValidatorDao{
               SELECT 1 FROM asset a4
                 JOIN asset_link al4 ON a4.id = al4.asset_id
                 JOIN lrm_position lp4 ON al4.position_id = lp4.id
-                ${filterLink("lp4.link_id", links)}
                 WHERE a4.asset_type_id = a.asset_type_id
                 AND lp4.link_id = lp.link_id AND a4.id != a.id AND a4.floating = false
                 AND (a4.valid_to > current_timestamp OR a4.valid_to IS NULL) AND lp4.side_code != lp.side_code
