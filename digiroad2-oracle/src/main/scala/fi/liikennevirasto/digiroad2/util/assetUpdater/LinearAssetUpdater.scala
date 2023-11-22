@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures, NewLinearAssetMassOperation}
 import fi.liikennevirasto.digiroad2.util.CustomIterableOperations.IterableOperation
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils, Parallel}
 import org.joda.time.DateTime
 import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
@@ -508,9 +508,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val initStep = OperationStep(Seq(), Some(changeSet))
     logger.info(s"Projecting ${assetsAll.size} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
-      //TODO Fix performance, 
-      // paraller run if 1000 changes ?, split into four thread
-      
       val assetsGroup= IterableOperation.groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
       val rawData = changes.map(goThroughChanges(assetsGroup,assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
       LogUtils.time(logger, "Filter empty and empty afters away from projected") {
@@ -520,7 +517,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
     val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
-      //TODO Fix performance
       adjustAndReport(typeId, links, projectedToNewLinks, initStep,changes).get
     }
     LogUtils.time(logger, "Reporting removed") {
@@ -568,8 +564,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def adjustAndReport(typeId: Int, links: Seq[RoadLink],
                               assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep,changes: Seq[RoadLinkChange]): Option[OperationStep] = {
     val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations)}
-
-    //TODO paraller run if 1000 changes ?, split into four thread
     val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, links, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(initStep, adjusted,changes)}
   }
@@ -588,18 +582,53 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @return
     */
   private def adjustAssets(typeId: Int, links: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
-    val OperationStep(assetsAfter,changeSetFromOperation,assetsBefore) = operationStep
+    val OperationStep(assetsAfter, changeSetFromOperation, assetsBefore) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
-    val (convert,groupedAssets) =  LogUtils.time(logger, "Convert to right format") {
-      val convert = links.map(toRoadLinkForFillTopology)
-      val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(assetsOperated, convert).groupBy(_.linkId)
-      (convert,groupedAssets)
+    val groupedAssets = LogUtils.time(logger, "Convert to right format") {
+      assetFiller.mapLinkAndAssets(assetsOperated, links)
     }
-    val (adjusted, changeSet) = LogUtils.time(logger, "Run fillTopology") {adjustLinearAssets(typeId,convert, groupedAssets, changeSetFromOperation)}
+    val (adjusted, changeSet) = LogUtils.time(logger, "Run fillTopology") {
+      adjustLinearAssetsLoop(typeId, groupedAssets, changeSetFromOperation)
+    }
     OperationStep(adjusted.map(convertToPersisted), Some(changeSet), assetsBefore)
   }
+
+  private def adjustLinearAssetsLoop(typeId: Int,
+                                     assetsByLink: mutable.HashMap[String, LinkAndAssets],
+                                     changeSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    def adjusting(typeId: Int, changeSet: Option[ChangeSet], assetsByLink: mutable.HashMap[String, LinkAndAssets]): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+      val assets = assetsByLink.flatMap(_._2.assets).toSeq.groupBy(_.linkId)
+      val roadLinks = assetsByLink.map(_._2.link).toList
+      adjustLinearAssets(typeId,roadLinks, assets, changeSet)
+    }
+
+    /**
+      * 
+      * @param level default five is arbitrary, adjust as needed
+      * @param groupSize if we assume one link will be operated in ~ 43ms then 1500 links will be operated about in one minute.
+      * @return
+      */
+    def parallelLoop(level: Int = 5,groupSize: Int=1500):List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
+      val grouped = assetsByLink.grouped(1500).toList.par
+      new Parallel().operation(grouped, level){_.map{adjusting(typeId, changeSet,_)}}.toList
+    }
+    
+    val linksCount = assetsByLink.size
+
+    val result = linksCount match {
+      case a if a >= 20000 => parallelLoop()
+      case _ => List(adjusting(typeId, changeSet, assetsByLink))
+    }
+    
+    val changeSetResult = result.map(_._2).foldLeft(LinearAssetFiller.useOrEmpty(changeSet)) { (a, b) =>
+      LinearAssetFiller.combineChangeSets(a, b)
+    }
+    (result.flatMap(_._1), LinearAssetFiller.removeExpiredMValuesAdjustments(changeSetResult))
+  }
+  
   /**
     * 7) Override if asset need totally different fillTopology implementation.
+    *
     * @param typeId
     * @param roadLinks
     * @param assets

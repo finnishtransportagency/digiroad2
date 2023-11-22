@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, LogUtilsGeo}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
@@ -130,49 +130,6 @@ object SpeedLimitFiller extends AssetFiller {
         operation(roadLink, currentSegments, currentAdjustments)
       }
       (existingSegments ++ adjustedSegments, segmentAdjustments)
-    }
-  }
-
-  override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
-                                           changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      debugLogging("operation start"),
-      fuse,
-      debugLogging("fuse"),
-      dropShortSegments,
-      debugLogging("dropShortSegments"),
-      adjustAssets,
-      debugLogging("adjustAssets"),
-      expireOverlappingSegments,
-      debugLogging("expireOverlappingSegments"),
-      droppedSegmentWrongDirection,
-      debugLogging("droppedSegmentWrongDirection"),
-      adjustSegmentSideCodes,
-      debugLogging("adjustSegmentSideCodes"),
-      fillHoles,
-      debugLogging("fillHoles"),
-      clean
-    )
-    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
-    // if links does not have any asset filter it away
-    topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
-      val (existingAssets, changeSet) = acc
-      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
-
-      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-        operation(roadLink, currentSegments, currentAdjustments)
-      }
-      val filterExpiredAway = assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p =>
-        assetAdjustments.droppedAssetIds.contains(p.assetId) ||
-          assetAdjustments.expiredAssetIds.contains(p.assetId)))
-
-      val noDuplicate = filterExpiredAway.copy(
-        adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
-        adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
-        valueAdjustments = filterExpiredAway.valueAdjustments.distinct
-      )
-
-      (existingAssets ++ adjustedAssets, noDuplicate)
     }
   }
   override def adjustSideCodes(roadLinks: Seq[RoadLinkForFillTopology], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
