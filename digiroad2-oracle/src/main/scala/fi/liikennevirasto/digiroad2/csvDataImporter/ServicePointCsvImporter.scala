@@ -61,7 +61,7 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
       val weightLimit = getPropertyValueOption(csvProperties, "weight limit").map(_.toString.toInt)
 
       val validatedServiceType = serviceTypeConverter(serviceType)
-      val validatedTypeExtension = ServicePointsClass.getTypeExtensionValue(typeExtension.getOrElse(""), validatedServiceType)
+      val validatedTypeExtension = typeExtension match { case Some(string) => ServicePointsClass.getTypeExtensionValue(string, validatedServiceType) case None => None }
       val validatedAuthorityData = authorityDataConverter(isAuthorityData)
 
       val incomingService = IncomingService(validatedServiceType, name, additionalInfo, validatedTypeExtension, parkingPlaceCount, validatedAuthorityData, weightLimit)
@@ -71,7 +71,7 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
       } else {
         Seq()
       }
-      val typeExtensionInfo = if (validatedTypeExtension.isEmpty) {
+      val typeExtensionInfo = if (typeExtension.nonEmpty && validatedTypeExtension.isEmpty) {
         Seq(NotImportedData(reason = s"Service Point type extension ${typeExtension.getOrElse("")} does not exist.", csvRow = rowToString(csvProperties.flatMap { x => Map(x.columnName -> x.value) }.toMap)))
       } else {
         Seq()
