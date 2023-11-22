@@ -524,6 +524,10 @@ object Digiroad2Context {
     new TrafficSignService(roadLinkService, eventbus)
   }
 
+  lazy val laneWorkListService: LaneWorkListService = {
+    new LaneWorkListService()
+  }
+
   lazy val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = {
     new AssetsOnExpiredLinksService()
   }
