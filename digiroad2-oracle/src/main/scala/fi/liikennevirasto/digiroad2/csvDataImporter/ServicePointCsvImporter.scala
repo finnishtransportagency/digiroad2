@@ -23,9 +23,9 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
   override val nonMandatoryFieldsMapping: Map[String, String] = Map(
     "tarkenne" -> "type extension",
     "palvelun nimi" -> "name",
-    "palvelun lisätieto" -> "additional info",
+    "palvelun lisatieto" -> "additional info",
     "viranomaisdataa" -> "is authority data",
-    "pysäkköintipaikkojen lukumäärä" -> "parking place count",
+    "pysakointipaikkojen lukumaara" -> "parking place count",
     "painorajoitus" -> "weight limit"
   )
   override val mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ stringValueFieldsMapping
@@ -61,18 +61,27 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
       val weightLimit = getPropertyValueOption(csvProperties, "weight limit").map(_.toString.toInt)
 
       val validatedServiceType = serviceTypeConverter(serviceType)
-      val validatedTypeExtension = ServicePointsClass.getTypeExtensionValue(typeExtension.getOrElse(""), validatedServiceType)
+      val validatedTypeExtension = typeExtension match {
+        case Some(string) => ServicePointsClass.getTypeExtensionValue(string, validatedServiceType)
+        case None => None
+      }
       val validatedAuthorityData = authorityDataConverter(isAuthorityData)
 
       val incomingService = IncomingService(validatedServiceType, name, additionalInfo, validatedTypeExtension, parkingPlaceCount, validatedAuthorityData, weightLimit)
 
-      val servicePointInfo =
-        if(validatedServiceType == ServicePointsClass.Unknown.value)
-          Seq(NotImportedData(reason = s"Service Point type $serviceType does not exist.", csvRow = rowToString(csvProperties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
-        else
-          Seq()
+      val servicePointInfo = if (validatedServiceType == ServicePointsClass.Unknown.value) {
+        Seq(NotImportedData(reason = s"Service Point type $serviceType does not exist.", csvRow = rowToString(csvProperties.flatMap { x => Map(x.columnName -> x.value) }.toMap)))
+      } else {
+        Seq()
+      }
+      val typeExtensionInfo = if (typeExtension.nonEmpty && validatedTypeExtension.isEmpty) {
+        Seq(NotImportedData(reason = s"Service Point type extension ${typeExtension.getOrElse("")} does not exist.", csvRow = rowToString(csvProperties.flatMap { x => Map(x.columnName -> x.value) }.toMap)))
+      } else {
+        Seq()
+      }
+
       val municipalityCode = servicePointAttribute.municipalityCode.get
-      CsvServicePoint(position, incomingService, municipalityCode, servicePointInfo)
+      CsvServicePoint(position, incomingService, municipalityCode, servicePointInfo ++ typeExtensionInfo)
     }
 
     val (validServicePoints, nonValidServicePoints) = incomingServicePoint.partition(servicePoint => servicePoint.importInformation.isEmpty)
