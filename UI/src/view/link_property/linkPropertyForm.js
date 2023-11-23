@@ -259,8 +259,12 @@
 
     var trafficDirectionChangePopUpConditional = function(originalValue, selectedValue) {
       return (
-          (originalValue === "BothDirections" && (selectedValue === "AgainstDigitizing" || selectedValue === "TowardsDigitizing")) ||
-          ((originalValue === "AgainstDigitizing" || originalValue === "TowardsDigitizing") && selectedValue === "BothDirections")
+          (originalValue === enumerations.trafficDirections.BothDirections.stringValue &&
+              (selectedValue === enumerations.trafficDirections.AgainstDigitizing.stringValue ||
+                  selectedValue === enumerations.trafficDirections.TowardsDigitizing.stringValue)) ||
+          ((originalValue === enumerations.trafficDirections.AgainstDigitizing.stringValue ||
+              originalValue === enumerations.trafficDirections.TowardsDigitizing.stringValue) &&
+              selectedValue === enumerations.trafficDirections.BothDirections.stringValue)
       );
     };
 
