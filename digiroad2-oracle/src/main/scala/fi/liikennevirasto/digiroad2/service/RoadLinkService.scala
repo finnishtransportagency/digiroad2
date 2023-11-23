@@ -698,16 +698,16 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     val optionalExistingValue: Option[Int] = RoadLinkOverrideDAO.get(propertyName, linkProperty.linkId)
     (optionalExistingValue, RoadLinkOverrideDAO.getMasterDataValue(propertyName, roadLinkFetched)) match {
       case (Some(existingValue), _) =>
-        eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+        eventbus.publish("roadLinkProperty:changed", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
         updateSideCodes(Seq(roadLinkFetched))
         RoadLinkOverrideDAO.update(propertyName, linkProperty, roadLinkFetched, username, existingValue, checkMMLId(roadLinkFetched))
       case (None, None) =>
-        eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+        eventbus.publish("roadLinkProperty:changed", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
         updateSideCodes(Seq(roadLinkFetched))
         insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
       case (None, Some(masterDataValue)) =>
         if (masterDataValue != RoadLinkOverrideDAO.getValue(propertyName, linkProperty)) { // only save if it overrides master data value
-          eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+          eventbus.publish("roadLinkProperty:changed", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
           updateSideCodes(Seq(roadLinkFetched))
           insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
         }

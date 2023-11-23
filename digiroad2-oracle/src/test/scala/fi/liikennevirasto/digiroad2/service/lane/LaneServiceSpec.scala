@@ -1,14 +1,16 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched, VKMClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertyChange, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.persistedLanesTwoDigitLaneCode
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -28,6 +30,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockVKMClient = MockitoSugar.mock[VKMClient]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockLaneService = MockitoSugar.mock[LaneService]
+  val mockLaneWorkListService = MockitoSugar.mock[LaneWorkListService]
 
   val laneDao = new LaneDao()
   val laneHistoryDao = new LaneHistoryDao()
@@ -88,6 +91,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def vkmClient: VKMClient = mockVKMClient
     override def roadAddressService: RoadAddressService = mockRoadAddressService
+    override def laneWorkListService: LaneWorkListService = mockLaneWorkListService
 
   }
 
@@ -2054,6 +2058,66 @@ class LaneServiceSpec extends LaneTestSupporter {
         lanePropertiesPassedEndDate.map(prop => (prop.publicId, prop.values)).contains((laneProp.publicId, laneProp.values)) should be(true)
       }
 
+    }
+  }
+
+  test("RoadLink link_type changed to TractorRoad from Motorway, expire all lanes on link") {
+    val linkProperty = LinkProperties(linkId1, 5, TractorRoad, BothDirections, Private)
+    val fetchedRoadLink = RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val enrichedRoadLink = RoadLink(linkId = linkId1, geometry = Nil, length = 500, administrativeClass = Municipality,
+      functionalClass = FunctionalClass1.value, trafficDirection = TrafficDirection.BothDirections,
+      linkType = TractorRoad, modifiedAt = None, modifiedBy = None, attributes = Map(), constructionType = InUse)
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
+
+      //MainLane towards
+      ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 2, usernameTest).head
+      //MainLane against
+      ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 3, usernameTest).head
+      //AdditionalLane towards
+      ServiceWithDao.create(Seq(subLane2), Set(linkId1), 2, usernameTest).head
+
+      val lanesBefore = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesBefore.size should equal(3)
+
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(fetchedRoadLink))).thenReturn(Seq(enrichedRoadLink))
+      ServiceWithDao.processRoadLinkPropertyChange(LinkPropertyChange("link_type", Some(Motorway.value), linkProperty,
+        fetchedRoadLink, Some(usernameTest)), newTransaction = false)
+
+      val lanesAfter = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesAfter.size should equal(0)
+
+      val historyLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(linkId1), includeExpired = true)
+      historyLanes.size should equal(3)
+      historyLanes.foreach(historyLane => {
+        historyLane.expired should equal(true)
+        historyLane.historyCreatedBy should equal(usernameTest)
+      })
+    }
+  }
+
+  test("BothDirections RoadLink link_type changed from TractorRoad to Motorway, generate two main lanes"){
+    val linkProperty = LinkProperties(linkId1, 5, Motorway, BothDirections, Private)
+    val fetchedRoadLink = RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val enrichedRoadLink = RoadLink(linkId = linkId1, geometry = Nil, length = 500, administrativeClass = Municipality,
+      functionalClass = FunctionalClass1.value, trafficDirection = TrafficDirection.BothDirections,
+      linkType = Motorway, modifiedAt = None, modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(123)), constructionType = InUse)
+    runWithRollback {
+      val lanesBefore = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesBefore.size should equal(0)
+
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(fetchedRoadLink))).thenReturn(Seq(enrichedRoadLink))
+      ServiceWithDao.processRoadLinkPropertyChange(LinkPropertyChange("link_type", Some(TractorRoad.value), linkProperty,
+        fetchedRoadLink, Some(usernameTest)), newTransaction = false)
+
+      val lanesAfter = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesAfter.size should equal(2)
+      lanesAfter.foreach(generatedLane => {
+        generatedLane.createdBy should equal(Some(AutoGeneratedUsername.autoGeneratedLane))
+        generatedLane.startMeasure should equal(0.0)
+        generatedLane.endMeasure should equal(enrichedRoadLink.length)
+      })
     }
   }
 

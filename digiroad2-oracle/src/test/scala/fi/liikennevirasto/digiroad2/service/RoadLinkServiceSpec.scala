@@ -809,7 +809,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linkProperty = LinkProperties("1l", 99, BidirectionalLaneCarriageWay, TrafficDirection.BothDirections, State, None, None, None)
       val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       verify(mockEventBus, times(2)).publish(
-        org.mockito.ArgumentMatchers.eq("laneWorkList:insert"),
+        org.mockito.ArgumentMatchers.eq("roadLinkProperty:changed"),
         org.mockito.ArgumentMatchers.any[LinkPropertyChange])
     }
   }

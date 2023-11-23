@@ -6,15 +6,16 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
-import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao, LaneWorkListItem}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery.logger
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{LinkPropertyChange, RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
+import fi.liikennevirasto.digiroad2.util.MainLanePopulationProcess.twoWayLanes
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
 import org.joda.time.DateTime
@@ -32,6 +33,7 @@ class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEv
   override def polygonTools: PolygonTools = new PolygonTools()
   override def vkmClient: VKMClient = new VKMClient
   override def roadAddressService: RoadAddressService = roadAddressServiceImpl
+  override def laneWorkListService: LaneWorkListService = new LaneWorkListService
 
 }
 
@@ -48,6 +50,7 @@ trait LaneOperations {
   def laneFiller: LaneFiller = new LaneFiller
   def vkmClient: VKMClient
   def roadAddressService: RoadAddressService
+  def laneWorkListService: LaneWorkListService
 
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -1193,6 +1196,13 @@ trait LaneOperations {
     }
   }
 
+  def expireAllLanesOnRoadLink(linkId: String, username: String): Unit = {
+    val existingLanesOnLink = fetchAllLanesByLinkIds(Seq(linkId), newTransaction = false)
+    existingLanesOnLink.foreach(lane => {
+      moveToHistory(lane.id, None, expireHistoryLane = true, deleteFromLanes = true, username)
+    })
+  }
+
   def expireAllAdditionalLanes(username: String): Unit = {
     dao.expireAdditionalLanes(username)
   }
@@ -1207,6 +1217,55 @@ trait LaneOperations {
       dao.deleteLanesBatch(laneIds)
     }
   }
+
+  def processRoadLinkPropertyChange(linkPropertyChange: LinkPropertyChange, newTransaction: Boolean = true): Unit = {
+    if(newTransaction) {
+      withDynTransaction(handleRoadLinkPropertyChange(linkPropertyChange))
+    } else handleRoadLinkPropertyChange(linkPropertyChange)
+  }
+
+  /**
+    * Processes messages coming from RoadLinkPropertyChangedActor actor when roadlink properties are changed
+    * Rules:
+    * 1. TD changed on link: insert to worklist
+    * 2. link_type changed to or from twowaylane type: insert to worklist
+    * 3. link_type changed to TractorRoad: Expire all lanes
+    * 4. link_type changed from TractorRoad: Generate main lanes on link according to rules
+    * @param linkPropertyChange Event info on link property change
+    */
+    def handleRoadLinkPropertyChange(linkPropertyChange: LinkPropertyChange): Unit = {
+      val linkId = linkPropertyChange.roadLinkFetched.linkId
+      val timeStamp = DateTime.now()
+      val username = linkPropertyChange.username.getOrElse("")
+      val itemToInsert = linkPropertyChange.propertyName match {
+        case "traffic_direction" =>
+          val newValue = linkPropertyChange.linkProperty.trafficDirection.value
+          val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(linkPropertyChange.roadLinkFetched.trafficDirection.value)
+          val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timeStamp, username)
+          if (newValue != oldValue) Some(itemToInsert)
+          else None
+        case "link_type" =>
+          val newValue = linkPropertyChange.linkProperty.linkType.value
+          val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(99)
+          val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timeStamp, username)
+
+          val twoWayLaneLinkTypeChange = twoWayLanes.map(_.value).contains(newValue) || twoWayLanes.map(_.value).contains(oldValue)
+          if (oldValue == TractorRoad.value && newValue != TractorRoad.value) {
+            val roadLink = roadLinkService.enrichFetchedRoadLinks(Seq(linkPropertyChange.roadLinkFetched))
+            MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
+            None
+          }
+          else if (newValue == TractorRoad.value && oldValue != TractorRoad.value) {
+            expireAllLanesOnRoadLink(linkId, username)
+            None
+          }
+          else if (twoWayLaneLinkTypeChange && (newValue != oldValue)) Some(itemToInsert)
+          else None
+        case _ => None
+      }
+
+      if (itemToInsert.isDefined) laneWorkListService.insertToLaneWorkList(itemToInsert.get, newTransaction = false)
+    }
 
   //Deletes all lane info, only to be used in MainLanePopulation initial process
   def deleteAllPreviousLaneData(): Unit = {

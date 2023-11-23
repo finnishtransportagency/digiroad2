@@ -22,6 +22,15 @@
       Unknown: {value: 99, text: 'Tuntematon'}
     };
 
+    this.twoWayLaneLinkTypes = [
+      this.linkTypes.SpecialTransportWithoutGate,
+      this.linkTypes.SpecialTransportWithGate,
+      this.linkTypes.ServiceAccess,
+      this.linkTypes.CycleOrPedestrianPath,
+      this.linkTypes.BidirectionalLaneCarriageWay,
+      this.linkTypes.RestArea
+  ];
+
     this.constructionTypes = {
       Planned: {value: 1, text: 'Suunnitteilla', visibleInLegend: true, legendText: 'Suunnitteilla' },
       UnderConstruction: {value: 2, text: 'Rakenteilla', visibleInLegend: true, legendText: 'Rakenteilla'},

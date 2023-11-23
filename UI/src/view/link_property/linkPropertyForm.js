@@ -35,17 +35,38 @@
       [2, 'Täydentävä geometria']
     ];
 
-    var laneConfirmationPopUp = function (target, selectedValue) {
+    var laneWorkListTDConfirmationPopUp = function (target, selectedValue) {
       return {
-        message: "Tielinkki nousee kaistojen tarkastuslistalle.",
+        message: "Tielinkki nousee kaistojen tarkastuslistalle liikennevirran suunnan muutoksen myötä.",
         type: "confirm",
-        yesButtonLbl: 'Kyllä',
-        noButtonLbl: 'Ei',
+        yesButtonLbl: 'Jatka',
+        noButtonLbl: 'Peruuta',
         successCallback: function() {
           selectedLinkProperty.setTrafficDirection(selectedValue);
         },
         closeCallback: function() {
           selectedLinkProperty.cancelDirectionChange();
+        },
+        container: '.container'
+      };
+    };
+
+    var laneWorkListLinkTypeConfirmationPopUp = function (target, originalValue, selectedValue) {
+      var messageText;
+      if (originalValue === enumerations.linkTypes.TractorRoad.value) messageText = "Olet muuttamassa tielinkin tyyppiä pois ajopolusta. Linkille generoidaan pääkaistat";
+      else if (selectedValue === enumerations.linkTypes.TractorRoad.value) messageText = "Olet muuttamassa tielinkin tyypiksi ajopolku. Linkillä olevat kaistat päätetään.";
+      else messageText = "Tielinkki nousee kaistojen tarkastuslistalle tielinkin tyypin muutoksen myötä.";
+
+      return {
+        message: messageText,
+        type: "confirm",
+        yesButtonLbl: 'Jatka',
+        noButtonLbl: 'Peruuta',
+        successCallback: function() {
+          selectedLinkProperty.setLinkType(selectedValue);
+        },
+        closeCallback: function() {
+          selectedLinkProperty.cancel();
         },
         container: '.container'
       };
@@ -236,6 +257,28 @@
           '<li><button id="work-list-link-assts-on-expired-links" class="assets-on-expired-links-work-list btn btn-tertiary" onclick=location.href="#work-list/assetsOnExpiredLinks">Poistuneilla tielinkeillä olevat kohteet</button></li>');
     };
 
+    var trafficDirectionChangePopUpConditional = function(originalValue, selectedValue) {
+      return (
+          (originalValue === enumerations.trafficDirections.BothDirections.stringValue &&
+              (selectedValue === enumerations.trafficDirections.AgainstDigitizing.stringValue ||
+                  selectedValue === enumerations.trafficDirections.TowardsDigitizing.stringValue)) ||
+          ((originalValue === enumerations.trafficDirections.AgainstDigitizing.stringValue ||
+              originalValue === enumerations.trafficDirections.TowardsDigitizing.stringValue) &&
+              selectedValue === enumerations.trafficDirections.BothDirections.stringValue)
+      );
+    };
+
+    var linkTypeChangePopUpConditional = function(originalValue, selectedValue) {
+      var twoWayLinkTypeValues = enumerations.twoWayLaneLinkTypes.map(function(linkType) {
+        return linkType.value;
+      });
+      return (
+          (twoWayLinkTypeValues.includes(originalValue) && !twoWayLinkTypeValues.includes(selectedValue)) ||
+          (twoWayLinkTypeValues.includes(selectedValue) && !twoWayLinkTypeValues.includes(originalValue)) ||
+          (originalValue === enumerations.linkTypes.TractorRoad.value || selectedValue === enumerations.linkTypes.TractorRoad.value)
+      );
+    };
+
     var addressNumberString = function (minAddressNumber, maxAddressNumber) {
       if (selectedLinkProperty.count() > 1) {
         return "[useita eri arvoja]";
@@ -360,10 +403,11 @@
         rootElement.find('#feature-attributes-footer').html(footer());
 
         rootElement.find('.traffic-direction').change(function(event) {
+          var originalDirection = selectedLinkProperty.get()[0].trafficDirection;
           var selectedDirection = $(event.currentTarget).find(':selected').attr('value');
-          var laneConfirmationOptions = laneConfirmationPopUp(event, selectedDirection);
-          if (selectedDirection === "AgainstDigitizing" || selectedDirection === "TowardsDigitizing")
-            GenericConfirmPopup(laneConfirmationOptions.message, laneConfirmationOptions);
+          var laneTDConfirmationOptions = laneWorkListTDConfirmationPopUp(event, selectedDirection);
+          if (trafficDirectionChangePopUpConditional(originalDirection, selectedDirection))
+            GenericConfirmPopup(laneTDConfirmationOptions.message, laneTDConfirmationOptions);
           else
             selectedLinkProperty.setTrafficDirection(selectedDirection);
         });
@@ -371,7 +415,13 @@
           selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         rootElement.find('.link-types').change(function(event) {
-          selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          var originalType = selectedLinkProperty.get()[0].linkType;
+          var selectedType = parseInt($(event.currentTarget).find(':selected').attr('value'), 10);
+          var laneLinkTypeConfirmationOptions = laneWorkListLinkTypeConfirmationPopUp(event, originalType, selectedType);
+          if(linkTypeChangePopUpConditional(originalType, selectedType))
+            GenericConfirmPopup(laneLinkTypeConfirmationOptions.message, laneLinkTypeConfirmationOptions);
+          else
+            selectedLinkProperty.setLinkType(selectedType);
         });
         rootElement.find('.administrative-class').change(function(event) {
           var administrativeClass = $(event.currentTarget).find(':selected').attr('value');
