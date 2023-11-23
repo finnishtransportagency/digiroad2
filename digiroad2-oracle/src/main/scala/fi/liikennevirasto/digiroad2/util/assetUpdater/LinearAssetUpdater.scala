@@ -306,24 +306,21 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     passThroughStep
   }
  
-  private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): (Seq[PersistedLinearAsset], Set[Pair]) = {
+  private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): Set[Pair] = {
     val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
-    val assetsBuffer = new ListBuffer[PersistedLinearAsset]
     val pairList = new ListBuffer[Set[Pair]]
-    LogUtils.time(logger, "Loop and partition or create pair") {
+    LogUtils.time(logger, "Loop and create pair") {
       for (asset <- assets) {
-        if (newLinks.contains(asset.linkId)) assetsBuffer.append(asset)
-        else pairList.append(createPair(Some(asset), assetsBefore))
+        if (!newLinks.contains(asset.linkId)) pairList.append(createPair(Some(asset), assetsBefore))
       }
     }
     val distinct = LogUtils.time(logger, "Remove duplicate in pair list") {
       pairList.toSet
     }
 
-    val flatten = LogUtils.time(logger, "Flatten pair list") {
+    LogUtils.time(logger, "Flatten pair list") {
       distinct.flatten
     }
-    (assetsBuffer, flatten)
   }
 
   private def newIdList(changes: Seq[RoadLinkChange]): Seq[String] = {
@@ -347,24 +344,20 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     */
   private def reportingAdjusted(initStep: OperationStep, assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
     // Assets on totally new links is already reported.
-    val (assetsOnNew,pairs)= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
-    //TODO if this does not work add parallel looping
-    val newList = new ListBuffer[Option[OperationStep]]
+    val pairs= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
     LogUtils.time(logger,"Adding to changesForReport"){
-    for (pair <- pairs) {newList.append(createRow(assetsInNewLink, changes, pair))}
+    for (pair <- pairs) {createRow(assetsInNewLink.changeInfo, changes, pair)}
     }
     
-    val report = LogUtils.time(logger,"Merger reported"){newList.foldLeft(Some(initStep))(mergerOperations)}
-    Some(report.get.copy(assetsAfter = report.get.assetsAfter ++ assetsOnNew))
+    Some(assetsInNewLink)
   }
 
-  private def createRow(assetsInNewLink: OperationStep, changes: Seq[RoadLinkChange], pair: Pair): Option[OperationStep] = {
+  private def createRow(changSet: Option[ChangeSet], changes: Seq[RoadLinkChange], pair: Pair)= {
     LogUtils.time(logger, "Creating reporting rows") {
       pair.newAsset match {
         case Some(_) =>
-          if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
-            Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
-          } else Some(assetsInNewLink)
+          if (!changSet.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
+            Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, null))}
         case None => None
       }
     }
