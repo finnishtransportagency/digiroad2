@@ -348,23 +348,30 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def reportingAdjusted(initStep: OperationStep, assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
     // Assets on totally new links is already reported.
     val (assetsOnNew,pairs)= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
-    val report1 = LogUtils.time(logger,"Adding to changesForReport"){pairs.map(pair => {
-      LogUtils.time(logger,"Creating reporting rows"){
-        pair.newAsset match {
-          case Some(_) =>
-            if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
-              Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
-            } else Some(assetsInNewLink)
-          case None => None
-        }
-      }
-    })}
-    val report = LogUtils.time(logger,"Merger reported"){report1.foldLeft(Some(initStep))(mergerOperations)}
+    //TODO if this does not work add parallel looping
+    val newList = new ListBuffer[Option[OperationStep]]
+    LogUtils.time(logger,"Adding to changesForReport"){
+    for (pair <- pairs) {newList.append(createRow(assetsInNewLink, changes, pair))}
+    }
+    
+    val report = LogUtils.time(logger,"Merger reported"){newList.foldLeft(Some(initStep))(mergerOperations)}
     Some(report.get.copy(assetsAfter = report.get.assetsAfter ++ assetsOnNew))
   }
-  
+
+  private def createRow(assetsInNewLink: OperationStep, changes: Seq[RoadLinkChange], pair: Pair): Option[OperationStep] = {
+    LogUtils.time(logger, "Creating reporting rows") {
+      pair.newAsset match {
+        case Some(_) =>
+          if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
+            Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
+          } else Some(assetsInNewLink)
+        case None => None
+      }
+    }
+  }
   /**
     * Create pair by using asset id or old asset id when id is 0.
+ *
     * @param updatedAsset asset after samuutus
     * @param oldAssets assets before samuutus
     * @return
