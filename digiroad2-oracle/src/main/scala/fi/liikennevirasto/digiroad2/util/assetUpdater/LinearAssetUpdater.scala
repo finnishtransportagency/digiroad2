@@ -305,7 +305,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     passThroughStep
   }
-
+ 
   private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): (Seq[PersistedLinearAsset], Set[Pair]) = {
     val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
     val assetsBuffer = new ListBuffer[PersistedLinearAsset]
@@ -371,7 +371,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
   /**
     * Create pair by using asset id or old asset id when id is 0.
- *
     * @param updatedAsset asset after samuutus
     * @param oldAssets assets before samuutus
     * @return
@@ -785,7 +784,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def updateChangeSet(changeSet: ChangeSet): Unit = {
     
     if (changeSet.adjustedMValues.nonEmpty) {
-      logger.debug(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
+      //TODO remove after finding what looking for
+      logger.info(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.sortBy(_.linkId).map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
       dao.updateMValuesChangeInfos(changeSet.adjustedMValues.map(a => MValueUpdate(a.assetId, a.linkId, Measures(a.startMeasure, a.endMeasure).roundMeasures(), LinearAssetUtils.createTimeStamp())))
     }
     

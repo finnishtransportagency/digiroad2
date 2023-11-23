@@ -400,6 +400,12 @@ class AssetFiller {
     }).toSeq
     assets.collect{case asset: PieceWiseLinearAsset => asset}
   }
+  /**
+    * Method is optimize for large dataset.
+    * @param persistedLinearAssets
+    * @param roadLinks
+    * @return
+    */
   def mapLinkAndAssets(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): mutable.HashMap[String, LinkAndAssets] = {
     val mapForParallelRun = new mutable.HashMap[String, LinkAndAssets]()
 
