@@ -832,7 +832,7 @@ class AssetFiller {
       (existingAssets ++ adjustedAssets, assetAdjustments)
     }
   }
-  
+
   def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                                   changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations: FillTopologyOperation = Seq(
@@ -864,15 +864,16 @@ class AssetFiller {
           operation(roadLink, currentSegments, currentAdjustments)
         }
       }
+      val filterExpiredAway = LinearAssetFiller.removeExpiredMValuesAdjustments2(assetAdjustments)
 
-      val filterExpiredAway: ChangeSet = LinearAssetFiller.removeExpiredMValuesAdjustments(assetAdjustments)
+      val noDuplicate = LogUtilsGeo.time(logger, s"Remove duplicates") {
+        filterExpiredAway.copy(
+          adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
+          adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
+          valueAdjustments = filterExpiredAway.valueAdjustments.distinct
+        )
+      }
 
-      val noDuplicate = filterExpiredAway.copy(
-        adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
-        adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
-        valueAdjustments = filterExpiredAway.valueAdjustments.distinct
-      )
-      
       (existingAssets ++ adjustedAssets, noDuplicate)
     }
   }
