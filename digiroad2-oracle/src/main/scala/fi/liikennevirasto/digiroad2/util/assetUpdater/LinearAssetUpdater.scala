@@ -305,25 +305,22 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     passThroughStep
   }
-
-  private def partitionAndAddPairs(assets: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): (Seq[PersistedLinearAsset], Set[Pair]) = {
+ 
+  private def partitionAndAddPairs(assetsAfter: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): Set[Pair] = {
     val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
-    val assetsBuffer = new ListBuffer[PersistedLinearAsset]
     val pairList = new ListBuffer[Set[Pair]]
-    LogUtils.time(logger, "Loop and partition or create pair") {
-      for (asset <- assets) {
-        if (newLinks.contains(asset.linkId)) assetsBuffer.append(asset)
-        else pairList.append(createPair(Some(asset), assetsBefore))
+    LogUtils.time(logger, "Loop and create pair") {
+      for (asset <- assetsAfter) {
+        if (!newLinks.contains(asset.linkId)) pairList.append(createPair(Some(asset), assetsBefore))
       }
     }
     val distinct = LogUtils.time(logger, "Remove duplicate in pair list") {
       pairList.toSet
     }
 
-    val flatten = LogUtils.time(logger, "Flatten pair list") {
+    LogUtils.time(logger, "Flatten pair list") {
       distinct.flatten
     }
-    (assetsBuffer, flatten)
   }
 
   private def newIdList(changes: Seq[RoadLinkChange]): Seq[String] = {
@@ -340,29 +337,30 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   
   /**
     * 9) start creating report row
-    * @param initStep
     * @param assetsInNewLink
     * @param changes
     * @return
     */
-  private def reportingAdjusted(initStep: OperationStep, assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
+  private def reportingAdjusted( assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
     // Assets on totally new links is already reported.
-    val (assetsOnNew,pairs)= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
-    val report1 = LogUtils.time(logger,"Adding to changesForReport"){pairs.map(pair => {
-      LogUtils.time(logger,"Creating reporting rows"){
-        pair.newAsset match {
-          case Some(_) =>
-            if (!assetsInNewLink.changeInfo.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
-              Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, assetsInNewLink))
-            } else Some(assetsInNewLink)
-          case None => None
-        }
-      }
-    })}
-    val report = LogUtils.time(logger,"Merger reported"){report1.foldLeft(Some(initStep))(mergerOperations)}
-    Some(report.get.copy(assetsAfter = report.get.assetsAfter ++ assetsOnNew))
+    val pairs= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
+    LogUtils.time(logger,"Adding to changesForReport"){
+    for (pair <- pairs) {createRow(assetsInNewLink.changeInfo, changes, pair)}
+    }
+    
+    Some(assetsInNewLink)
   }
-  
+
+  private def createRow(changSet: Option[ChangeSet], changes: Seq[RoadLinkChange], pair: Pair)= {
+    LogUtils.time(logger, "Creating reporting rows") {
+      pair.newAsset match {
+        case Some(_) =>
+          if (!changSet.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
+            Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, null))}
+        case None => None
+      }
+    }
+  }
   /**
     * Create pair by using asset id or old asset id when id is 0.
     * @param updatedAsset asset after samuutus
@@ -517,7 +515,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
     val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
-      adjustAndReport(typeId, links, projectedToNewLinks, initStep,changes).get
+      adjustAndReport(typeId, links, projectedToNewLinks,changes,changeSet).get
     }
     LogUtils.time(logger, "Reporting removed") {
       changeInfo.get.expiredAssetIds.map(asset => {
@@ -562,10 +560,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
   private def adjustAndReport(typeId: Int, links: Seq[RoadLink],
-                              assetUnderReplace: Seq[Option[OperationStep]], initStep: OperationStep,changes: Seq[RoadLinkChange]): Option[OperationStep] = {
-    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations)}
+                              assetUnderReplace: Seq[Option[OperationStep]], changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
+    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(initChangeSet))))(mergerOperations)}
     val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, links, merged,changes)}
-    LogUtils.time(logger, "Reporting assets") {reportingAdjusted(initStep, adjusted,changes)}
+    LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
 
   private def adjustAndAdditionalOperations(typeId: Int, links: Seq[RoadLink],
@@ -778,7 +776,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def updateChangeSet(changeSet: ChangeSet): Unit = {
     
     if (changeSet.adjustedMValues.nonEmpty) {
-      logger.debug(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
+      //TODO remove after finding what looking for
+      logger.info(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.sortBy(_.linkId).map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
       dao.updateMValuesChangeInfos(changeSet.adjustedMValues.map(a => MValueUpdate(a.assetId, a.linkId, Measures(a.startMeasure, a.endMeasure).roundMeasures(), LinearAssetUtils.createTimeStamp())))
     }
     
