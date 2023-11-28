@@ -515,7 +515,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
     val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
-      adjustAndReport(typeId, links, projectedToNewLinks,changes).get
+      adjustAndReport(typeId, links, projectedToNewLinks,changes,changeSet).get
     }
     LogUtils.time(logger, "Reporting removed") {
       changeInfo.get.expiredAssetIds.map(asset => {
@@ -560,8 +560,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
   private def adjustAndReport(typeId: Int, links: Seq[RoadLink],
-                              assetUnderReplace: Seq[Option[OperationStep]],changes: Seq[RoadLinkChange]): Option[OperationStep] = {
-    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(LinearAssetFiller.emptyChangeSet))))(mergerOperations)}
+                              assetUnderReplace: Seq[Option[OperationStep]], changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
+    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(initChangeSet))))(mergerOperations)}
     val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, links, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
