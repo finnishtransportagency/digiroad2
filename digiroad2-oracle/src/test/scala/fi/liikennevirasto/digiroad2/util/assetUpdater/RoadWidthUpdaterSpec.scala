@@ -416,7 +416,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       assetsBefore.head.expired should be(false)
 
       TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
-      val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(newSplitLinkId1, newSplitLinkId2, newReplacedLinkId), false) //650
+      val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(newSplitLinkId1, newSplitLinkId2, newReplacedLinkId), false)
       assetsAfter.size should equal(3)
       val assetsOnSharedNewLink = assetsAfter.filter(_.linkId == newReplacedLinkId)
       assetsOnSharedNewLink.size should equal(2)
