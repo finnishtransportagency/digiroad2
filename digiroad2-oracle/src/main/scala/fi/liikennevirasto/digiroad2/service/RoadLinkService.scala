@@ -6,11 +6,11 @@ import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo}
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{IncompleteLinkDao, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.user.User
@@ -20,13 +20,10 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult}
 
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.concurrent.TimeUnit
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -716,8 +713,8 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  private def fetchOverrides(idTableName: String): Map[String, (Option[(String, Int, DateTime, String)],
-    Option[(String, Int, DateTime, String)], Option[(String, Int, DateTime, String)], Option[(String, Int, DateTime, String)])] = {
+  private def fetchOverrides(idTableName: String): Map[String, (Option[RoadLinkPropertyRow],
+    Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow])] = {
     sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
           f.link_id, f.functional_class, f.modified_date, f.modified_by,
           l.link_id, l.link_type, l.modified_date, l.modified_by,
@@ -733,19 +730,19 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       Option[String], Option[Int], Option[DateTime], Option[String])].list.map(row =>
     {
       val td = (row._2, row._3, row._4, row._5) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, Some(modBy)))
         case _ => None
       }
       val fc = (row._6, row._7, row._8, row._9) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, Some(modBy)))
         case _ => None
       }
       val lt = (row._10, row._11, row._12, row._13) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, Some(modBy)))
         case _ => None
       }
       val ac = (row._14, row._15, row._16, row._17) match{
-        case (Some(linkId), Some(value), Some(createdDate), Some(createdBy)) => Option((linkId, value, createdDate, createdBy))
+        case (Some(linkId), Some(value), Some(createdDate), createdByOption) => Option((linkId, value, createdDate, createdByOption))
         case _ => None
       }
       row._1 ->(td, fc, lt, ac)
@@ -926,6 +923,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * Passes fetched road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichFetchedRoadLinks and UpdateIncompleteLinkList.
     */
   def getRoadLinkDataByLinkIds(roadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
+    val link = roadLinks.find(roadlink => roadlink.linkId == "04967aa7-484a-4ad8-86f9-54c6369b43c8:2")
     adjustedRoadLinks(roadLinks)
   }
 
@@ -949,12 +947,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   private def fetchRoadLinkPropertyRows(linkIds: Set[String]): RoadLinkPropertyRows = {
-    def cleanMap(parameterMap: Map[String, Option[(String, Int, DateTime, String)]]): Map[RoadLinkId, RoadLinkPropertyRow] = {
+    def cleanMap(parameterMap: Map[String, Option[RoadLinkPropertyRow]]): Map[RoadLinkId, RoadLinkPropertyRow] = {
       parameterMap.filter(i => i._2.nonEmpty).mapValues(i => i.get)
     }
-    def splitMap(parameterMap: Map[String, (Option[(String, Int, DateTime, String)],
-      Option[(String, Int, DateTime, String)], Option[(String, Int, DateTime, String)],
-      Option[(String, Int, DateTime, String)] )]) = {
+    def splitMap(parameterMap: Map[String, (Option[RoadLinkPropertyRow],
+      Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow],
+      Option[RoadLinkPropertyRow])] ) = {
       (cleanMap(parameterMap.map(i => i._1 -> i._2._1)),
         cleanMap(parameterMap.map(i => i._1 -> i._2._2)),
         cleanMap(parameterMap.map(i => i._1 -> i._2._3)),
@@ -974,7 +972,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   type RoadLinkId = String
-  type RoadLinkPropertyRow = (String, Int, DateTime, String)
+  type RoadLinkPropertyRow = (String, Int, DateTime, Option[String])
   type RoadLinkAtributes = Seq[(String, String)]
 
   case class RoadLinkPropertyRows(trafficDirectionRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
@@ -1017,7 +1015,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
 
       val modifications = List(functionalClassRowOption, trafficDirectionRowOption, linkTypeRowOption, administrativeRowOption).map {
-        case Some((_, _, at, by)) => Some((at, by))
+        case Some((_, _, at, Some(by))) => Some((at, by))
         case _ => None
       } :+ optionalModification
       modifications.reduce(calculateLatestModifications)
