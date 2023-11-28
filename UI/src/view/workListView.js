@@ -25,7 +25,7 @@
 
       $('#work-list').on('click', ':checkbox', function () {
         var checkedBoxes = $(".verificationCheckbox:checkbox:checked");
-        $('#deleteUnknownSpeedLimits').prop('disabled', _.isEmpty(checkedBoxes));
+        $('#deleteWorkListItems').prop('disabled', _.isEmpty(checkedBoxes));
       });
     };
 
@@ -92,7 +92,7 @@
       var deleteBtn = function(){
       if(showDeleteCheckboxes && numberOfLimits === 0) {
         numberOfLimits++;
-          return $('<button disabled/>').attr('id', 'deleteUnknownSpeedLimits').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
+          return $('<button disabled/>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
             new GenericConfirmPopup("Haluatko varmasti poistaa valitut tuntemattomat nopeusrajoitukset?", {
               container: '#work-list',
               successCallback: function () {
@@ -160,7 +160,9 @@
         trailerTruckWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'trailerTruckWeightLimit'},
         widthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'widthLimit'},
         pedestrianCrossingsErrors: {Title: 'Laatuvirhelista', SourceLayer: 'pedestrianCrossings'},
-        lanes: {Title: 'Kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', ShowDeleteCheckboxes: true}
+        lanes: {Title: 'Kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', ShowDeleteCheckboxes: true},
+        assetsOnExpiredLinks: {Title: 'Kohteet päättyneillä tielinkeillä', SourceLayer: 'linkProperty', ShowDeleteCheckboxes: true},
+        manoeuvreSamuutusWorkList: {Title: 'Kääntymisrajoituksien samuutuksen tarkistuslista', SourceLayer: 'manoeuvre'}
       };
 
       var sourceLayer = (layerInfo[layerName].SourceLayer) ? layerInfo[layerName].SourceLayer : layerName;

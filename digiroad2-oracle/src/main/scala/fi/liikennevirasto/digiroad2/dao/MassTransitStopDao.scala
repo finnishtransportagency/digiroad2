@@ -33,22 +33,22 @@ class MassTransitStopDao {
   }
 
   def queryFetchPointAssets() : String = {
-    """ select a.id, a.national_id, a.asset_type_id, a.bearing, lrm.side_code,
+    """ select a.id, a.national_id, a.asset_type_id, a.bearing, pos.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
-        lrm.adjusted_timestamp, p.id as p_id, p.public_id, p.property_type, p.required, p.max_value_length, e.value,
+        pos.adjusted_timestamp, p.id as p_id, p.public_id, p.property_type, p.required, p.max_value_length, e.value,
         case
           when e.name_fi is not null then e.name_fi
           when tp.value_fi is not null then tp.value_fi
           when np.value is not null then cast(np.value as text)
           else null
         end as display_value,
-        lrm.id as lrm_id, lrm.start_measure, lrm.link_id,
+        pos.id as lrm_id, pos.start_measure, pos.link_id,
         a.created_date, a.created_by, a.modified_date, a.modified_by,
-        ST_Transform(a.geometry, 4326) AS position_wgs84, lrm.link_source,
+        ST_Transform(a.geometry, 4326) AS position_wgs84, pos.link_source,
         tbs.terminal_asset_id as terminal_asset_id
         from asset a
           join asset_link al on a.id = al.asset_id
-          join lrm_position lrm on al.position_id = lrm.id
+          join lrm_position pos on al.position_id = pos.id
           join property p on a.asset_type_id = p.asset_type_id
           left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
@@ -484,10 +484,10 @@ class MassTransitStopDao {
             link_source = ${linkSource.value},
             adjusted_timestamp = ${adjustedTimeStamp}
            where id = (
-            select lrm.id
+            select pos.id
             from asset a
             join asset_link al on al.asset_id = a.id
-            join lrm_position lrm on lrm.id = al.position_id
+            join lrm_position pos on pos.id = al.position_id
             where a.id = $id)
       """.execute
       case _ =>
@@ -495,10 +495,10 @@ class MassTransitStopDao {
            update lrm_position
            set start_measure = $mValue, link_id = $linkId, link_source = ${linkSource.value}
            where id = (
-            select lrm.id
+            select pos.id
             from asset a
             join asset_link al on al.asset_id = a.id
-            join lrm_position lrm on lrm.id = al.position_id
+            join lrm_position pos on pos.id = al.position_id
             where a.id = $id)
       """.execute
     }
@@ -625,6 +625,9 @@ class MassTransitStopDao {
   def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
   }
+  def withIds(ids: Seq[Long])(query: String): String = {
+    query + s" where a.id in (${ids.mkString(",")})"
+  }
 
   def withTerminalId(terminalId: Long)(query: String): String = {
     query + s" where terminal_asset_id = $terminalId and (a.valid_to is null or a.valid_to > current_timestamp)"
@@ -651,10 +654,10 @@ class MassTransitStopDao {
   }
 
   def fetchTerminalFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String)] ={
-    val query = s"""select a.$idField, lrm.link_id
+    val query = s"""select a.$idField, pos.link_id
           from asset a
           join asset_link al on a.id = al.asset_id
-          join lrm_position lrm on al.position_id = lrm.id
+          join lrm_position pos on al.position_id = pos.id
           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'pysakin_tyyppi'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'

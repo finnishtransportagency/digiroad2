@@ -192,12 +192,17 @@ object PostGISObstacleDao {
   }
 
   def create(obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource,
-             createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String]): Long = {
+             createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String],
+             fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+    val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
+    val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
+
     sqlu"""
     insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, ${Obstacles.typeId}, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp);
+        values ($id, $externalIdFromUpdate, ${Obstacles.typeId}, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $modifiedBy, $modifiedAt);
 
     insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
         values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value}, current_timestamp);
@@ -212,9 +217,9 @@ object PostGISObstacleDao {
     id
   }
 
-  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource): Long = {
+  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource, fromPointAssetUpdater: Boolean = false): Long = {
     sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
-    updateAssetModified(id, username).execute
+    if (!fromPointAssetUpdater) updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
 
     createOrUpdateObstacle(obstacle, id)

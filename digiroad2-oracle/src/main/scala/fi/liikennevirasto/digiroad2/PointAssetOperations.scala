@@ -275,6 +275,15 @@ trait  PointAssetOperations{
     }
   }
 
+  protected def getByMunicipality(withFilter: String => String, newTransaction: Boolean = true): Seq[PersistedAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        fetchPointAssets(withFilter).toList
+      }
+    else fetchPointAssets(withFilter).toList
+
+  }
+
   def getById(id: Long): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkByLinkId(x.linkId) }

@@ -6,13 +6,15 @@ import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
-import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
+import java.sql.Timestamp
 import scala.language.implicitConversions
 
 
@@ -21,11 +23,12 @@ case class LaneRow(id: Long, linkId: String, sideCode: Int, value: LanePropertyR
                    modifiedBy: Option[String], modifiedDate: Option[DateTime], expiredBy: Option[String], expiredDate: Option[DateTime],
                    expired: Boolean, timeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
 
-case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
+case class LanePropertyRow(publicId: String, propertyValue: Option[Any], createdDate: Option[DateTime], createdBy: Option[String], modifiedDate: Option[DateTime], modifiedBy: Option[String])
 case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
 
 
 class LaneDao(){
+  val logger = LoggerFactory.getLogger(getClass)
 
   implicit val getLightLane = new GetResult[LightLane] {
     def apply(r: PositionedResult) = {
@@ -53,7 +56,11 @@ class LaneDao(){
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val atrrName = r.nextString()
       val atrrValue = r.nextStringOption()
-      val value = LanePropertyRow(atrrName, atrrValue)
+      val atrrCreatedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val atrrCreatedBy = r.nextStringOption()
+      val atrrModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val atrrModifiedBy = r.nextStringOption()
+      val value = LanePropertyRow(atrrName, atrrValue, atrrCreatedDate, atrrCreatedBy, atrrModifiedDate, atrrModifiedBy)
       val municipalityCode =  r.nextLong()
       val laneCode =  r.nextInt()
       val expiredBy = r.nextStringOption()
@@ -95,7 +102,7 @@ class LaneDao(){
     l.created_by, l.created_date, l.modified_by, l.modified_date,
     CASE WHEN l.valid_to <= current_timestamp THEN 1 ELSE 0 END AS expired,
     pos.adjusted_timestamp, pos.modified_date,
-    la.name, la.value, l.municipality_code, l.lane_code,
+    la.name, la.value, la.created_date, la.created_by, la.modified_date, la.modified_by, l.municipality_code, l.lane_code,
     l.expired_by, l.expired_date
     FROM lane l
        JOIN lane_link ll ON l.id = ll.lane_id
@@ -111,11 +118,13 @@ class LaneDao(){
 
     val query = s"""
                 SELECT id, link_id, side_code, start_measure, end_measure, created_by, created_date, modified_by,
-                modified_date, expired, adjusted_timestamp, "pos_modified_date", name, value, municipality_code,
+                modified_date, expired, adjusted_timestamp, "pos_modified_date", name, value,
+                "la_created_date", "la_created_by", "la_modified_date", "la_modified_by", municipality_code,
                 lane_code, expired_by, expired_date
                 FROM (SELECT l.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, l.created_by,
                 l.created_date, l.modified_by, l.modified_date, CASE WHEN l.valid_to <= current_timestamp THEN 1 ELSE 0 END AS expired,
-                pos.adjusted_timestamp, pos.modified_date "pos_modified_date", la.name, la.value, l.municipality_code, l.lane_code,
+                pos.adjusted_timestamp, pos.modified_date "pos_modified_date", la.name, la.value, la.created_date "la_created_date",
+                la.created_by "la_created_by", la.modified_date "la_modified_date", la.modified_by "la_modified_by", l.municipality_code, l.lane_code,
                 l.expired_by, l.expired_date
                 FROM lane l
                 JOIN lane_link ll ON l.id = ll.lane_id
@@ -153,6 +162,8 @@ class LaneDao(){
   }
 
   def fetchAllLanesByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedLane] = {
+    if (linkIds.isEmpty) return Seq.empty[PersistedLane]
+   
     val filterExpired = s" (l.valid_to > current_timestamp OR l.valid_to IS NULL ) "
     val laneCodeClause = s" l.lane_code in (${laneCodeFilter.mkString(",")})"
 
@@ -162,11 +173,23 @@ class LaneDao(){
       case (false, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
       case _ => " ORDER BY l.lane_code ASC"
     }
-
-    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
-      val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
-
-      getLanesFilterQuery(withFilter(filter))
+    
+    if (linkIds.size > 1000) {
+      MassQuery.withStringIds(linkIds.toSet) { idTableName =>
+        val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
+        getLanesFilterQuery(withFilter(filter))
+      }
+    }else {
+      LogUtils.time(logger, s"TEST LOG fetch lane by linkIds, count: ${linkIds.size}"){
+        val linkIdFilter = s"pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")})"
+        val filter = (includeExpired, laneCodeFilter.nonEmpty) match {
+          case (false, true) => s" WHERE $filterExpired AND $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
+          case (_, true) => s" WHERE $laneCodeClause and $linkIdFilter ORDER BY l.lane_code ASC"
+          case (false, _) => s" WHERE $filterExpired and $linkIdFilter ORDER BY l.lane_code ASC"
+          case _ => s"WHERE pos.link_id in (${linkIds.map(t => s"'$t'").mkString(",")}) ORDER BY l.lane_code ASC"
+        }
+        getLanesFilterQuery(withFilter(filter))
+      }
     }
   }
 
@@ -188,11 +211,20 @@ class LaneDao(){
     * laneService.split and laneService.separate.
     */
   def fetchLanesByIds(ids: Set[Long] ): Seq[PersistedLane] = {
+    if (ids.isEmpty) return Seq.empty[PersistedLane]
+    
+    if (ids.size > 1000) {
+      MassQuery.withIds(ids) { idTableName =>
+        val filter = s" JOIN $idTableName i ON i.id = l.id "
+        getLanesFilterQuery(withFilter(filter))
+      }
+    } else {
 
-    MassQuery.withIds(ids) { idTableName =>
-      val filter = s" JOIN $idTableName i ON i.id = l.id "
-
-      getLanesFilterQuery( withFilter(filter))
+      LogUtils.time(logger, s"TEST LOG fetch lane by ids, count: ${ids.size}"){
+        val filter = s" where l.id in (${ids.mkString(",")}) "
+        getLanesFilterQuery(withFilter(filter))
+      }
+      
     }
   }
 
@@ -228,7 +260,11 @@ class LaneDao(){
             case Some(value) => Some(LanePropertyValue(value))
             case _ => None
           }
-        ).toSeq
+        ).toSeq,
+        createdDate = row.value.createdDate,
+        createdBy = row.value.createdBy,
+        modifiedDate = row.value.modifiedDate,
+        modifiedBy = row.value.modifiedBy
       )
 
     }.toSeq
@@ -256,14 +292,22 @@ class LaneDao(){
   }
 
 
-  def createLane ( newIncomeLane: PersistedLane, username: String): Long = {
+  def createLane (newIncomeLane: PersistedLane, createdBy: String): Long = {
 
     val laneId = Sequences.nextPrimaryKeySeqValue
     val lanePositionId = Sequences.nextPrimaryKeySeqValue
 
+    val createdDate = newIncomeLane.createdDateTime.getOrElse(DateTime.now()).toString()
+    val modifiedBy = newIncomeLane.modifiedBy.getOrElse(null)
+    val modifiedDate = newIncomeLane.modifiedDateTime match {
+      case Some(datetime) => datetime.toString()
+      case None => null
+    }
+
     sqlu"""
-        INSERT  INTO LANE (id, lane_code, created_date, created_by, municipality_code)
-          VALUES ($laneId, ${newIncomeLane.laneCode}, current_timestamp, $username, ${newIncomeLane.municipalityCode} );
+        INSERT  INTO LANE (id, lane_code, created_date, created_by, modified_date, modified_by, municipality_code)
+          VALUES ($laneId, ${newIncomeLane.laneCode}, to_timestamp($createdDate, 'YYYY-MM-DD"T"HH24:MI:SS.FF3'), $createdBy,
+                  to_timestamp($modifiedDate, 'YYYY-MM-DD"T"HH24:MI:SS.FF3'), $modifiedBy, ${newIncomeLane.municipalityCode} );
          INSERT INTO LANE_POSITION (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
           VALUES ( $lanePositionId, ${newIncomeLane.sideCode}, ${newIncomeLane.startMeasure}, ${newIncomeLane.endMeasure},
                    ${newIncomeLane.linkId}, ${newIncomeLane.timeStamp});
@@ -281,21 +325,32 @@ class LaneDao(){
     }
 
     val insertLane =
-      s"""insert into lane (id, lane_code, created_date, created_by, municipality_code)
-         |values ((?), (?), current_timestamp, '$username', (?))""".stripMargin
+      s"""insert into lane (id, lane_code, created_date, created_by, modified_date, modified_by, municipality_code)
+         |values ((?), (?), (?), (?), (?), (?), (?))""".stripMargin
     val createdLanes = MassQuery.executeBatch(insertLane) { statement =>
       lanesToCreate.map { newLane =>
+        val createdDate = new Timestamp(newLane.lane.createdDateTime.getOrElse(DateTime.now()).getMillis)
         statement.setLong(1, newLane.laneId)
         statement.setInt(2, newLane.lane.laneCode)
-        statement.setLong(3, newLane.lane.municipalityCode)
+        statement.setTimestamp(3, createdDate)
+        if(newLane.lane.createdBy.nonEmpty) {
+          statement.setString(4, newLane.lane.createdBy.get)
+        } else statement.setNull(4, java.sql.Types.VARCHAR)
+        if(newLane.lane.modifiedDateTime.nonEmpty){
+          statement.setTimestamp(5, new Timestamp(newLane.lane.modifiedDateTime.get.getMillis))
+        } else statement.setNull(5, java.sql.Types.TIMESTAMP)
+        if(newLane.lane.modifiedBy.nonEmpty) {
+          statement.setString(6, newLane.lane.modifiedBy.get)
+        } else statement.setNull(6, java.sql.Types.VARCHAR)
+        statement.setLong(7, newLane.lane.municipalityCode)
         statement.addBatch()
         newLane.lane.copy(id = newLane.laneId)
       }
     }
 
     val insertLanePosition =
-      s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
-         |values ((?), (?), (?), (?), (?), (?))""".stripMargin
+      s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, modified_date)
+         |values ((?), (?), (?), (?), (?), current_timestamp)""".stripMargin
     MassQuery.executeBatch(insertLanePosition) { statement =>
       lanesToCreate.foreach { newLane =>
         statement.setLong(1, newLane.positionId)
@@ -303,7 +358,6 @@ class LaneDao(){
         statement.setDouble(3, newLane.lane.startMeasure)
         statement.setDouble(4, newLane.lane.endMeasure)
         statement.setString(5, newLane.lane.linkId)
-        statement.setLong(6, newLane.lane.timeStamp)
         statement.addBatch()
       }
     }
@@ -390,7 +444,10 @@ class LaneDao(){
     sqlu"""DELETE FROM LANE_POSITION WHERE id = $lanePositionId""".execute
   }
 
-  def deleteEntryLanes(laneIds: Seq[Long]): Unit = {
+  def deleteLanesBatch(laneIds: Seq[Long]): Unit = {
+    LogUtils.time(logger, "Drop lane foreign key constraints") {
+      Queries.dropLaneFKConstraints()
+    }
     MassQuery.withIds(laneIds.toSet) { idTableName =>
       val lanePositionIds = sql"""SELECT lane_position_id FROM LANE_LINK WHERE LANE_ID IN (SELECT id FROM #$idTableName)""".as[Long].list
 
@@ -401,6 +458,9 @@ class LaneDao(){
       MassQuery.withIds(lanePositionIds.toSet) { lpIdTableName =>
         sqlu"""DELETE FROM LANE_POSITION WHERE id IN (SELECT id FROM #$lpIdTableName)""".execute
       }
+    }
+    LogUtils.time(logger, "Add lane foreign key constraints") {
+      Queries.addLaneFKConstraints()
     }
   }
 

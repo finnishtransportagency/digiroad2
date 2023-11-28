@@ -1251,5 +1251,60 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       getLiviIdValue(livi._1.get.propertyData) should be (None)
     }
   }
+
+  test("a stop without tram type can not be against traffic direction") {
+    runWithRollback {
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val exception = intercept[Exception] {
+        RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, linkId, 2,
+          Seq(
+            SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+            SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+            SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3")))
+          )), "test", roadLink)
+      }
+      exception.getMessage should be("Invalid Mass Transit Stop direction")
+    }
+  }
+
+  test("a stop with tram type can be against traffic direction") {
+    runWithRollback {
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, linkId, 2,
+        Seq(
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3")))
+        )), "test", roadLink)
+    }
+  }
+
+  test("removing tram type from a stop against traffic direction throws exception") {
+    runWithRollback {
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val properties = Seq(
+        SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("1"))),
+        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+        SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3")))
+      )
+      val stopId = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, linkId, 2, properties
+        ), "test", roadLink)
+      val newProperties = Set(
+        SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+        SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3")))
+      )
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(roadLink))
+      val exception = intercept[Exception] {
+        RollbackMassTransitStopService.updateExistingById(stopId, None, newProperties, "test", { (_, _) => Unit })
+      }
+      exception.getMessage should be("Invalid Mass Transit Stop direction")
+    }
+  }
 }
 

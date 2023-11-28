@@ -47,6 +47,22 @@ object LinearAssetFiller {
     adjustedMValues = Seq.empty[MValueAdjustment],
     adjustedSideCodes = Seq.empty[SideCodeAdjustment],
     valueAdjustments = Seq.empty[ValueAdjustment])
+
+   def useOrEmpty(changedSet: Option[ChangeSet]): ChangeSet = {
+    changedSet match {
+      case Some(change) => change
+      case None => LinearAssetFiller.emptyChangeSet
+    }
+  }
+  def removeExpiredMValuesAdjustments(assetAdjustments: ChangeSet): ChangeSet = {
+    assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p =>
+      assetAdjustments.droppedAssetIds.contains(p.assetId) ||
+        assetAdjustments.expiredAssetIds.contains(p.assetId)))
+  }
+
+  def removeExpiredMValuesAdjustments2(assetAdjustments: ChangeSet): ChangeSet = {
+    assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p => assetAdjustments.expiredAssetIds.contains(p.assetId)))
+  }
   def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (a, z) => {
     a.copy(
       droppedAssetIds = a.droppedAssetIds ++ z.droppedAssetIds,

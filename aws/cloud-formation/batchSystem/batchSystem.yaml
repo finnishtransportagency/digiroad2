@@ -199,6 +199,7 @@ Resources:
                 Action:
                   # Allow batch to get objects from S3, used for main lane start date import
                   - 's3:GetObject'
+                  - 's3:PutObject'
                 Resource: '*'
       Tags:
         - Key: Name

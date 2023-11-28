@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.MTKClassWidth.CarRoad_IIIa
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, MTKClassWidth}
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, RoadWidthService}
+import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
@@ -88,7 +89,8 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
 
       val id = roadWidthService.createWithoutTransaction(RoadWidth.typeId, linkId,
-        valueDynamic, SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
+        valueDynamic, SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), true, Some("testCreator"),
+        Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2022-01-01")))
       val assetsBefore = roadWidthService.getPersistedAssetsByIds(RoadWidth.typeId, Set(id), false)
       
       assetsBefore.size should be(1)
@@ -97,6 +99,10 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
       val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, newLinks, false)
       assetsAfter.size should be(3)
+      assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
+      assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
+      assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
+      assetsAfter.forall(_.modifiedDateTime.get.toString().startsWith("2022-01-01")) should be(true)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9.334)
@@ -382,5 +388,56 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       assetsAfter.head.linkId should be(newLinkID)
       assetLength should be(newRoadLink.length)
     }
+  }
+
+  test("New Roadlink is referenced in Split and Replace change, correct RoadWidth assets should cover correct parts of new links") {
+    val oldSplitLinkId = "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1"
+    val newSplitLinkId1 = "4a9f1948-8bae-4cc9-9f11-218079aac595:1"
+    val newSplitLinkId2 = "254ed5a2-bc16-440a-88f1-23868011975b:1"
+
+    val oldReplacedLinkId = "45887aef-cb0f-4542-b738-cf44e76709ac:1"
+    val newReplacedLinkId = "4a9f1948-8bae-4cc9-9f11-218079aac595:1"
+
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLinkSplit = roadLinkService.getExpiredRoadLinkByLinkId(oldSplitLinkId).get
+      val oldRoadLinkReplaced = roadLinkService.getExpiredRoadLinkByLinkId(oldReplacedLinkId).get
+      val id1 = roadWidthService.createWithoutTransaction(RoadWidth.typeId, oldSplitLinkId, valueDynamic,
+        SideCode.BothDirections.value, Measures(0.0, oldRoadLinkSplit.length), "testuser",
+        0L, Some(oldRoadLinkSplit), false, None, None) // Width 400 on old Split link
+      val id2 = roadWidthService.createWithoutTransaction(RoadWidth.typeId, oldReplacedLinkId, valueDynamic2,
+        SideCode.BothDirections.value, Measures(0.0, oldRoadLinkReplaced.length), "testuser",
+        0L, Some(oldRoadLinkReplaced), false, None, None) // Width 650 on old Replaced link
+
+
+      val assetsBefore = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(oldSplitLinkId, oldReplacedLinkId), false)
+      assetsBefore.size should be(2)
+      assetsBefore.head.expired should be(false)
+
+      TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
+      val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(newSplitLinkId1, newSplitLinkId2, newReplacedLinkId), false)
+      assetsAfter.size should equal(3)
+      val assetsOnSharedNewLink = assetsAfter.filter(_.linkId == newReplacedLinkId)
+      assetsOnSharedNewLink.size should equal(2)
+      assetsOnSharedNewLink.exists(asset => {
+        val props = asset.value.get.asInstanceOf[DynamicValue].value.properties
+        val widthValue = props.filter(_.publicId == "width").head.values.head.value
+        asset.startMeasure == 0.0 && asset.endMeasure == 68.417 && widthValue == "400"
+      }) should equal (true)
+      assetsOnSharedNewLink.exists(asset => {
+        val props = asset.value.get.asInstanceOf[DynamicValue].value.properties
+        val widthValue = props.filter(_.publicId == "width").head.values.head.value
+        asset.startMeasure == 68.417 && asset.endMeasure == 132.982 && widthValue == "650"
+      }) should equal (true)
+
+
+      val assetOnSplitLink = assetsAfter.find(_.linkId == newSplitLinkId2).get
+      assetOnSplitLink.startMeasure should equal(0.0)
+      assetOnSplitLink.endMeasure should equal(89.351)
+      val assetOnSplitLinkProperties = assetOnSplitLink.value.get.asInstanceOf[DynamicValue].value.properties
+      assetOnSplitLinkProperties.filter(_.publicId=="width").head.values.head.value should be("400")
+    }
+
   }
 }

@@ -1552,7 +1552,7 @@ Liittym&auml;numeron viivageometrialle voi antaa muokkaustilassa tietoja. Liitty
 
 Muokattava tielinkki valitaan napauttamalla sen geometriaa. Kerran napauttamalla tulee valituksi koko tielinkkiketju, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie).  Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplanapauttamalla kohdetta. Syötekenttään voidaan p&auml;ivitt&auml;&auml; liittym&auml;numero (2).
 
-Tielinkit, joilla ei ole liittym&auml;numeroa on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi liittym&auml;numero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan liittym&auml;numero(t) ja syötekenttään (2) kirjoitetaan liittym&auml;n numero. Yhdell&auml; tielinkill&auml; on yleens&auml; yksi liittym&auml;numero, mutta niit&auml; voi olla my&ouml;s kaksi tai useampi. Ne eritell&auml;&auml;n rivinvaihdolla (enter) syötekentässä (2).
+Tielinkit, joilla ei ole liittym&auml;numeroa on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi liittym&auml;numero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan liittym&auml;numero(t) ja syötekenttään (2) kirjoitetaan liittym&auml;n numero. Yhdell&auml; tielinkill&auml; on yleens&auml; yksi liittym&auml;numero, mutta niit&auml; voi olla my&ouml;s kaksi tai useampi. Ne eritell&auml;&auml;n pilkulla ja välilyönnillä syötekentässä (2).
 
 ![Muokkaus.](ln3.png)
 

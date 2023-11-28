@@ -3,16 +3,17 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, MValueCalculator}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
+import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{FunSuite, Matchers}
 
 class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite {
-  val speedLimitDao = new PostGISLinearAssetDao()
+  val speedLimitDao = new PostGISSpeedLimitDao(roadLinkService)
   val speedLimitService = new SpeedLimitService(mockEventBus,mockRoadLinkService)
   val speedLimitServiceNoMock = new SpeedLimitService(mockEventBus,roadLinkService)
 
@@ -112,8 +113,8 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       val oldRoadLinkRaw = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(linkId)
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(oldRoadLinkRaw)
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
-      val id = speedLimitService.createWithoutTransaction(SpeedLimitAsset.typeId, linkId,
-        SpeedLimitValue(30), SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id = speedLimitDao.createSpeedLimit("testCreator", linkId, Measures(0, 56.061), SideCode.BothDirections,
+        SpeedLimitValue(30), Some(0L), Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2022-01-01")), LinkGeomSource.NormalLinkInterface).get
       val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       
       assetsBefore.size should be(1)
@@ -122,6 +123,10 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val assetsAfter = speedLimitService.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, newLinks, false)
       assetsAfter.size should be(3)
+      assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
+      assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
+      assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
+      assetsAfter.forall(_.modifiedDateTime.get.toString().startsWith("2022-01-01")) should be(true)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9.334)
@@ -293,7 +298,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false)
+      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false).sortBy(_.startMeasure)
       assetsAfter.size should be(2)
 
       val startAsset = assetsAfter.head

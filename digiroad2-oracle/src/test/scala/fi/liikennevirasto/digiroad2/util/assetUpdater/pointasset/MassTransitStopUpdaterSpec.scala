@@ -98,6 +98,8 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       adjustedAsset1.nationalId should be(createdStop1.nationalId)
       adjustedAsset1.floating should be(false)
       adjustedAsset1.validityDirection should be(Some(SideCode.TowardsDigitizing.value))
+      adjustedAsset1.lon should be(corrected1.lon)
+      adjustedAsset1.lat should be(corrected1.lat)
       distanceToOldLocation1 should be < updater.MaxDistanceDiffAllowed
       adjustedAsset1.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = createdStop1.propertyData.find(_.publicId == property.publicId).get
@@ -111,6 +113,8 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       adjustedAsset2.nationalId should be(createdStop2.nationalId)
       adjustedAsset2.floating should be(false)
       adjustedAsset2.validityDirection should be(Some(SideCode.AgainstDigitizing.value))
+      adjustedAsset2.lon should be(corrected2.lon)
+      adjustedAsset2.lat should be(corrected2.lat)
       distanceToOldLocation2 should be < updater.MaxDistanceDiffAllowed
       adjustedAsset2.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = createdStop2.propertyData.find(_.publicId == property.publicId).get
@@ -250,9 +254,21 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
         oldLinkInfo2.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
 
       val stopId1 = massTransitStopService.create(NewMassTransitStop(391922.1567866767, 6672845.986092816, oldLinkId1, 341,
-        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3"))))), "test", oldLink1, false)
+        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3"))))), "testCreator", oldLink1, false)
       val stopId2 = massTransitStopService.create(NewMassTransitStop(391942.45320008986, 6672844.827758611, oldLinkId2, 23,
-        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "test", oldLink2, false)
+        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "testCreator", oldLink2, false)
+
+      sqlu"""UPDATE ASSET
+          SET CREATED_DATE = to_timestamp('2021-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z'),
+              MODIFIED_BY = 'testModifier', MODIFIED_DATE = to_timestamp('2022-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
+          WHERE id = ${stopId1}
+      """.execute
+
+      sqlu"""UPDATE ASSET
+          SET CREATED_DATE = to_timestamp('2021-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
+          WHERE id = ${stopId2}
+      """.execute
+
       val createdStop1 = massTransitStopService.getPersistedAssetsByIds(Set(stopId1)).head
       val createdStop2 = massTransitStopService.getPersistedAssetsByIds(Set(stopId2)).head
 
@@ -264,6 +280,10 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       adjustedAsset1.nationalId should be(createdStop1.nationalId)
       adjustedAsset1.floating should be(false)
       adjustedAsset1.validityDirection should be(Some(SideCode.AgainstDigitizing.value))
+      adjustedAsset1.created.modifier.get should be("testCreator")
+      adjustedAsset1.created.modificationTime.get.toString().startsWith("2021-05-10") should be(true)
+      adjustedAsset1.modified.modifier.get should be("testModifier")
+      adjustedAsset1.modified.modificationTime.get.toString().startsWith("2022-05-10") should be(true)
       distanceToOldLocation1 should be < updater.MaxDistanceDiffAllowed
       adjustedAsset1.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = createdStop1.propertyData.find(_.publicId == property.publicId).get
@@ -278,6 +298,10 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       adjustedAsset2.nationalId should be(createdStop2.nationalId)
       adjustedAsset2.floating should be(false)
       adjustedAsset2.validityDirection should be(Some(SideCode.AgainstDigitizing.value))
+      adjustedAsset2.created.modifier.get should be("testCreator")
+      adjustedAsset2.created.modificationTime.get.toString().startsWith("2021-05-10") should be(true)
+      adjustedAsset2.modified.modifier should be(None)
+      adjustedAsset2.modified.modificationTime should be(None)
       distanceToOldLocation2 should be < updater.MaxDistanceDiffAllowed
       adjustedAsset2.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = createdStop2.propertyData.find(_.publicId == property.publicId).get

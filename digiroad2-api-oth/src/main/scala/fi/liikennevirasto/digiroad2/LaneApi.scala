@@ -125,7 +125,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
     val roadLinksFiltered = roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
     val roadLinksGrouped = roadLinksFiltered.groupBy(_.linkId).mapValues(_.head)
-    val lanes = laneService.getLanesByRoadLinks(roadLinksFiltered, adjust = false)
+    val lanes = laneService.getLanesByRoadLinks(roadLinksFiltered)
 
     val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(roadLink => {
       val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]

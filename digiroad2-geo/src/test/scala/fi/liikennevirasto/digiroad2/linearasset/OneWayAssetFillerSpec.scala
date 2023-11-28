@@ -66,7 +66,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
 
     val changeSet = LinearAssetFiller.emptyChangeSet
 
-    val filledTopology = oneWayAssetFiller.fillTopology(topology.map(oneWayAssetFiller.toRoadLinkForFillTopology), linearAssets, 110, Some(changeSet), geometryChanged = false)._1
+    val filledTopology = oneWayAssetFiller.generateUnknowns(topology.map(oneWayAssetFiller.toRoadLinkForFillTopology), linearAssets, 110)._1
 
     filledTopology should have size 2
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))

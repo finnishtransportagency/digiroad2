@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{DateTime, LocalDate}
-import org.json4s.{JArray, JBool, JField, JInt, JObject, JString}
+import org.json4s.{JArray, JBool, JField, JInt, JObject, JString, JValue}
 
 import scala.util.Try
 
@@ -17,7 +17,7 @@ trait LinearAsset extends PolyLine {
 }
 
 sealed trait Value {
-  def toJson: JObject
+  def toJson: JValue
 }
 case class EmptyValue() extends Value {
   def toJson: JObject = JObject()
@@ -27,10 +27,10 @@ case class SpeedLimitValue(value: Int, isSuggested: Boolean = false) extends Val
 }
 
 case class NumericValue(value: Int) extends Value {
-  override def toJson = JObject(JField("value", JInt(value)))
+  override def toJson = JInt(value)
 }
 case class TextualValue(value: String) extends Value {
-  override def toJson = JObject(JField("value", JString(value)))
+  override def toJson = JString(value)
 }
 
 case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolean = false) extends Value {

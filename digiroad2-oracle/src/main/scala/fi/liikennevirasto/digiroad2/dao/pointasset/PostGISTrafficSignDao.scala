@@ -293,12 +293,16 @@ object PostGISTrafficSignDao {
 
   def create(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long,
              linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""),
-             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String]): Long = {
+             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String],
+             fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+    val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
+    val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
     sqlu"""
         insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $username, current_timestamp);
+        values ($id, $externalIdFromUpdate, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $modifiedBy, $modifiedAt);
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code, modified_date)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection}, current_timestamp);
@@ -314,9 +318,9 @@ object PostGISTrafficSignDao {
   }
 
   def update(id: Long, trafficSign: IncomingTrafficSign, mValue: Double, municipality: Int,
-             username: String, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
+             username: String, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource, fromPointAssetUpdater: Boolean = false) = {
     sqlu""" update asset set municipality_code = $municipality, bearing=${trafficSign.bearing} where id = $id """.execute
-    updateAssetModified(id, username).execute
+    if (!fromPointAssetUpdater) updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
     createOrUpdateTrafficSign(trafficSign, id)
@@ -498,8 +502,8 @@ object PostGISTrafficSignDao {
           select a.id
           from asset a
           join asset_link al on al.asset_id = a.id
-          join lrm_position lrm on lrm.id = al.position_id
-          join  #$idTableName i on i.id = lrm.link_id
+          join lrm_position pos on pos.id = al.position_id
+          join  #$idTableName i on i.id = pos.link_id
           where a.asset_type_id = ${TrafficSigns.typeId}
           AND (a.valid_to IS NULL OR a.valid_to > current_timestamp )
           AND a.created_by = $username
@@ -528,8 +532,8 @@ object PostGISTrafficSignDao {
           select a.id
           from asset a
           join asset_link al on al.asset_id = a.id
-          join lrm_position lrm on lrm.id = al.position_id
-          join  #$idTableName i on i.id = lrm.link_id
+          join lrm_position pos on pos.id = al.position_id
+          join  #$idTableName i on i.id = pos.link_id
           join property p on a.asset_type_id = p.asset_type_id
           join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice' and public_id = 'trafficSigns_type'
           join enumerated_value ev on scv.enumerated_value_id = ev.id

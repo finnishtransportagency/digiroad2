@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue}
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
+import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{FunSuite, Matchers}
@@ -131,7 +132,8 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
 
       val id = serviceDynamic.createWithoutTransaction(CyclingAndWalking.typeId, oldLinkId,
-        cyclingAndWalkingValue, SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
+        cyclingAndWalkingValue, SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), true, Some("testCreator"),
+        Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2022-01-01")))
       val assetsBefore = serviceDynamic.getPersistedAssetsByIds(CyclingAndWalking.typeId, Set(id), false)
 
       assetsBefore.size should be(1)
@@ -141,6 +143,10 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, newLinkIds, false)
 
       assetsAfter.size should be(3)
+      assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
+      assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
+      assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
+      assetsAfter.forall(_.modifiedDateTime.get.toString().startsWith("2022-01-01")) should be(true)
       assetsAfter.map(a => a.value.get.toString should be(cyclingAndWalkingValue.toString))
       assetsAfter.map(_.startMeasure) should be(List(0.0, 0.0, 0.0))
       assetsAfter.map(_.endMeasure).sorted should be(List(9.334, 11.841, 34.906))

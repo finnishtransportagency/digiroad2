@@ -8,11 +8,12 @@ import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo}
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{IncompleteLinkDao, LinkAttributesDao}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, FunctionalClassDao, IncompleteLinkDao, LinkAttributesDao, LinkTypeDao, TrafficDirectionDao}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
+import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdateActor
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
@@ -42,6 +43,8 @@ case class LinkPropertiesEntries(propertyName: String, linkProperty: LinkPropert
 case class LinkPropertyChange(propertyName: String, optionalExistingValue: Option[Int], linkProperty: LinkProperties,
                               roadLinkFetched: RoadLinkFetched, username: Option[String])
 
+
+case class RoadLinkWithExpiredDate(roadLink: RoadLink, expiredDate: DateTime)
 
 sealed trait RoadLinkType {
   def value: Int
@@ -260,6 +263,16 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getExpiredRoadLinkByLinkIdNonEncrished(linkId: String, newTransaction: Boolean = true): Option[RoadLinkFetched] = {
    roadLinkDAO.fetchExpiredRoadLink(linkId).headOption
+  }
+
+  def getAllExpiredRoadLinksWithExpiredDates(): Seq[RoadLinkWithExpiredDate]= {
+    val fetchedExpiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+    val expiredDates = roadLinkDAO.getRoadLinkExpiredDateWithLinkIds(fetchedExpiredLinks.map(_.linkId).toSet)
+    val roadLinks = enrichFetchedRoadLinks(fetchedExpiredLinks)
+    roadLinks.map(roadLink => {
+      val expiredDate = expiredDates.find(_.linkId == roadLink.linkId).get
+      RoadLinkWithExpiredDate(roadLink, expiredDate.expiredDate)
+    })
   }
 
   /**
@@ -668,6 +681,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       }
     }
   }
+  
+  def updateSideCodes(roadLinks:Seq[RoadLinkLike] ): Unit = {
+    AssetTypeInfo.updateSideCodes.foreach(a=> {
+      eventbus.publish("linearAssetUpdater",AssetUpdateActor(roadLinks.map(_.linkId).toSet,a.typeId,roadLinkUpdate = true))
+    })
+  }
 
 
   protected def setLinkProperty(propertyName: String, linkProperty: LinkProperties, username: Option[String],
@@ -676,15 +695,17 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     val optionalExistingValue: Option[Int] = RoadLinkOverrideDAO.get(propertyName, linkProperty.linkId)
     (optionalExistingValue, RoadLinkOverrideDAO.getMasterDataValue(propertyName, roadLinkFetched)) match {
       case (Some(existingValue), _) =>
-        eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+        eventbus.publish("roadLinkProperty:changed", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+        updateSideCodes(Seq(roadLinkFetched))
         RoadLinkOverrideDAO.update(propertyName, linkProperty, roadLinkFetched, username, existingValue, checkMMLId(roadLinkFetched))
       case (None, None) =>
-        eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+        eventbus.publish("roadLinkProperty:changed", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+        updateSideCodes(Seq(roadLinkFetched))
         insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
-
       case (None, Some(masterDataValue)) =>
         if (masterDataValue != RoadLinkOverrideDAO.getValue(propertyName, linkProperty)) { // only save if it overrides master data value
-          eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+          eventbus.publish("roadLinkProperty:changed", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, roadLinkFetched, username))
+          updateSideCodes(Seq(roadLinkFetched))
           insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
         }
     }
@@ -1289,6 +1310,23 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getChangeInfoByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
     roadLinkClient.roadLinkChangeInfo.fetchByDates(since, until)
+  }
+
+  /**
+    * Delete or expire overwritten road link properties, link types and functional classes on given expired links
+    * @param expiredLinkIds Expired road link IDs
+    */
+  def deleteRoadLinksAndPropertiesByLinkIds(expiredLinkIds: Set[String]): Unit = {
+    LogUtils.time(logger, "TEST LOG Delete and expire road link properties and delete expired road links") {
+      expiredLinkIds.foreach { linkId =>
+        TrafficDirectionDao.deleteValues(linkId)
+        LinkTypeDao.deleteValues(linkId)
+        FunctionalClassDao.deleteValues(linkId)
+        AdministrativeClassDao.expireValues(linkId, Some(AutoGeneratedUsername.automaticAdjustment), Some(LinearAssetUtils.createTimeStamp()))
+        LinkAttributesDao.expireValues(linkId, Some(AutoGeneratedUsername.automaticAdjustment), Some(LinearAssetUtils.createTimeStamp()))
+      }
+      roadLinkDAO.deleteRoadLinksByIds(expiredLinkIds)
+    }
   }
 
 }

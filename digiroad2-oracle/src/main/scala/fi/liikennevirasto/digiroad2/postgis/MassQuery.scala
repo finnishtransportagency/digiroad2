@@ -8,6 +8,15 @@ import java.sql.PreparedStatement
 
 object MassQuery {
   val logger = LoggerFactory.getLogger(getClass)
+  
+  /**
+    * Remember to add check for size of list, golden rule more than 1000 in array some improvement can be found
+    * otherwise use normal id in () query. Till remember measure with or without massQuery.
+    * @param ids 
+    * @param f sql query function
+    * @tparam T
+    * @return
+    */
   def withIds[T](ids: Set[Long])(f: String => T): T = {
     LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.size}"){
       LogUtils.time(logger, "TEST LOG create TEMP_ID table"){
@@ -36,7 +45,15 @@ object MassQuery {
       }
     }
   }
-
+  
+  /**
+    * Remember to add check for size of list, golden rule more than 1000 in array some improvement can be found
+    * otherwise use normal id in () query. Till remember measure with or without massQuery.
+    * @param ids
+    * @param f sql query function
+    * @tparam T
+    * @return
+    */
   def withStringIds[T](ids: Set[String])(f: String => T): T = {
     LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.size}"){
       LogUtils.time(logger, "TEST LOG create TEMP_STRING_ID table"){

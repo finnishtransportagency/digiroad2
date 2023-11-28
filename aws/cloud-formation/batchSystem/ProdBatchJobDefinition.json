@@ -106,10 +106,6 @@
         "value": "digiroad"
       },
       {
-        "name": "oag.username",
-        "value": "svc_clouddr"
-      },
-      {
         "name": "batchMode",
         "value": "true"
       },
@@ -157,11 +153,6 @@
         "name": "kgv.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/kgv.apikey"
       },
-      {
-        "name": "oag.password",
-        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/authentication.oag.basic.password"
-      },
-      
       {
         "name": "viite.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/viite"
