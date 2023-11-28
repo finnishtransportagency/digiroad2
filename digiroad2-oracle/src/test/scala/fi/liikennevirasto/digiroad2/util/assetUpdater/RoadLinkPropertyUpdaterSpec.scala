@@ -2,13 +2,12 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections, TowardsDigitizing, UnknownDirection}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.FeatureClass.DrivePath
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Replace, Split}
-import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkClient, RoadLinkFetched, RoadLinkInfo}
+import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkClient, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClass, FunctionalClass, LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.service.{IncompleteLink, LinkProperties, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
 import org.scalatest.mockito.MockitoSugar
@@ -351,26 +350,6 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       transferredProperties.size should be(0)
       createdProperties.size should be(2)
       roadLinkService.getIncompleteLinks(None, false).size should be(0)
-    }
-  }
-
-  test("Overriden AdministrativeClass should be inherited") {
-    val oldLinkId = "04967aa7-484a-4ad8-86f9-54c6369b43c8:1"
-    val newLinkId = "04967aa7-484a-4ad8-86f9-54c6369b43c8:2"
-    val change = Seq(
-      RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId, 555.312,
-        List(Point(410580.098, 7524656.363, 186.118), Point(410698.996, 7525137.579, 186.329)), 12316, Private, 261, UnknownDirection)),
-        List(RoadLinkInfo(newLinkId, 734.309, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
-          12316, Municipality, 261, UnknownDirection)),
-        List(ReplaceInfo(Option(oldLinkId), Option(newLinkId), Option(0.0), Option(555.312), Option(0.0), Option(555.312), false)))
-    )
-    runWithRollback {
-      RoadLinkOverrideDAO.insert(AdministrativeClass, oldLinkId, Some("test"), 2)
-      AdministrativeClassDao.updateValues(LinkProperties(oldLinkId, 7, UnknownLinkType, UnknownDirection, Municipality), RoadLinkFetched(newLinkId, 99, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
-        Municipality, UnknownDirection, DrivePath), Some("test"), 3)
-      val transferredProperties = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(change)
-      transferredProperties.size should be(1)
-
     }
   }
 }

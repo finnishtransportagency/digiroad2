@@ -923,7 +923,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * Passes fetched road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichFetchedRoadLinks and UpdateIncompleteLinkList.
     */
   def getRoadLinkDataByLinkIds(roadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
-    val link = roadLinks.find(roadlink => roadlink.linkId == "04967aa7-484a-4ad8-86f9-54c6369b43c8:2")
     adjustedRoadLinks(roadLinks)
   }
 
