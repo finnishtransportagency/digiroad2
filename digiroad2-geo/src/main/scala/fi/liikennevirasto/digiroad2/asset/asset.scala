@@ -977,7 +977,7 @@ object AssetTypeInfo {
   )
 
   val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
-    CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId)
+    CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId, PavedRoad.typeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
