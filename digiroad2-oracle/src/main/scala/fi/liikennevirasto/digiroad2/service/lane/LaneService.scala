@@ -146,6 +146,18 @@ trait LaneOperations {
     }.toSeq
   }
 
+  def getLanesAndRoadLinkOnLinearReferencePoint(linkId: String, mValue: Double): (Seq[PieceWiseLane], RoadLink) = {
+    val roadLink = roadLinkService.getRoadLinksByLinkIds(Set(linkId)).headOption.getOrElse(throw new NoSuchElementException(s"No road link found on given linkId: $linkId"))
+    val lanesOnLink = getLanesByRoadLinks(Seq(roadLink))
+    val lanesOnPoint = lanesOnLink.filter(lane => {
+      lane.startMeasure <= mValue && lane.endMeasure >= mValue
+    })
+    val lanesWithPossibleRoadAddressInfo = LogUtils.time(logger, "Get Viite road address for lanes"){
+      roadAddressService.laneWithRoadAddress(lanesOnPoint)
+    }
+    (lanesWithPossibleRoadAddressInfo, roadLink)
+  }
+
   def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
     val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
     laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)

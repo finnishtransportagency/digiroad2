@@ -65,6 +65,18 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       description "Example URL: /externalApi/lanes/lanes_in_municipality?municipality=235"
       )
 
+  val getLanesOnPoint =
+    (apiOperation[Long]("getLanesOnPoint")
+      .parameters(
+        queryParam[String]("linkId").description("LinkID for linear referencing"),
+        queryParam[Double]("mValue").description("M-Value for linear referencing, three decimal point accuracy")
+      )
+      tags "LaneApi"
+      summary "Get lanes on given linearly referenced point"
+      authorizations "Contact your service provider for more information"
+      description "Example URL: /externalApi/lanes/lanes_on_point?linkId=abb902fe-96a2-4423-b619-2af7f06f410a:1&mValue=50.567"
+      )
+
   get("/lanes_in_range", operation(getLanesInRoadAddressRange)) {
     contentType = formats("json") + "; charset=utf-8"
     ApiUtils.avoidRestrictions(apiId + "_range", request, params) { params =>
@@ -106,6 +118,27 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       }
       catch {
         case _: NumberFormatException => halt(BadRequest("Missing or invalid municipality parameter"))
+      }
+    }
+  }
+
+  get("/lanes_on_point", operation(getLanesOnPoint)) {
+    contentType = formats("json") + "; charset=utf-8"
+    ApiUtils.avoidRestrictions(apiId + "_point", request, params) { params =>
+      try {
+        val linkIdParam = params.get("linkId")
+        val mValueParam = params.get("mValue")
+        if (linkIdParam.isEmpty) halt(BadRequest("Missing linkId parameter"))
+        if (mValueParam.isEmpty) halt(BadRequest("Missing mValue parameter"))
+        else {
+          val linkId = linkIdParam.get
+          val mValue = mValueParam.get.toDouble
+          lanesOnPointToApi(linkId, mValue)
+        }
+      }
+      catch {
+            //TODO tarkemmat poikkeus käsittelyt
+        case _: Exception => halt(BadRequest("Missing or invalid parameters"))
       }
     }
   }
@@ -201,5 +234,31 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     }).values.toSeq
   }
 
+  def lanesOnPointToApi(linkId: String, mValue: Double): Seq[mutable.LinkedHashMap[String, Any]] = {
+    val (lanes, roadLink) = laneService.getLanesAndRoadLinkOnLinearReferencePoint(linkId, mValue)
+    lanes.map(laneToApi => {
+      val municipalityCode = roadLink.municipalityCode
+      val roadName = roadLink.roadNameIdentifier.getOrElse("")
+      val roadNumber = roadLink.roadNumber.getOrElse("")
+      val roadPartNumber = roadLink.roadPartNumber.getOrElse("")
+      val track = roadLink.track.getOrElse("")
+      val startAddrM = roadLink.startAddrM.getOrElse("")
+      val endAddrM = roadLink.endAddrM.getOrElse("")
+      val laneCode = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_code").asInstanceOf[Int]
+      val laneType = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_type").asInstanceOf[Int]
+
+      mutable.LinkedHashMap(
+        "laneCode" -> laneCode,
+        "laneType" -> laneType,
+        "municipality" -> municipalityCode,
+        "roadName" -> roadName,
+        "roadNumber" -> roadNumber,
+        "roadPartNumber" -> roadPartNumber,
+        "track" -> track,
+        "startAddr" -> startAddrM,
+        "endAddr" -> endAddrM
+      )
+    })
+  }
 
 }
