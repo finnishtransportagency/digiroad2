@@ -205,7 +205,8 @@ object PostGISDirectionalTrafficSignDao {
        set
        start_measure = $mValue,
        link_id = ${sign.linkId},
-       side_code = ${sign.validityDirection}
+       side_code = ${sign.validityDirection},
+       modified_date = current_timestamp
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
 

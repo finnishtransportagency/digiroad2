@@ -305,7 +305,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     passThroughStep
   }
- 
+
   private def partitionAndAddPairs(assetsAfter: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): Set[Pair] = {
     val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
     val pairList = new ListBuffer[Set[Pair]]
@@ -347,7 +347,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     LogUtils.time(logger,"Adding to changesForReport"){
     for (pair <- pairs) {createRow(assetsInNewLink.changeInfo, changes, pair)}
     }
-    
+
     Some(assetsInNewLink)
   }
 
@@ -778,7 +778,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     if (changeSet.adjustedMValues.nonEmpty) {
       //TODO remove after finding what looking for
       logger.info(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.sortBy(_.linkId).map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
-      dao.updateMValuesChangeInfos(changeSet.adjustedMValues.map(a => MValueUpdate(a.assetId, a.linkId, Measures(a.startMeasure, a.endMeasure).roundMeasures(), LinearAssetUtils.createTimeStamp())))
+      dao.updateMValuesChangeInfos(changeSet.adjustedMValues.map(a => MValueUpdate(a.assetId, a.linkId, Measures(a.startMeasure, a.endMeasure).roundMeasures())))
     }
     
     val ids = changeSet.expiredAssetIds.toSeq

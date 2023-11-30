@@ -203,7 +203,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
   test("Replace. Given a Road Link that is replaced with a New Link; " +
     "when the New Link has grown outside of Old Link geometry from the beginning; " +
-    "then the Pavement Asset on New Link should not grow") {
+    "then the Pavement Asset on New Link should extend to the new link length") {
     val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
     val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
 
@@ -226,13 +226,13 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
-      assetLength should be(oldRoadLink.length)
+      assetLength should be(newRoadLink.length)
     }
   }
 
   test("Replace. Given a Road Link that is replaced with a New Link; " +
     "when the New Link has grown outside of Old Link geometry from the end; " +
-    "then the Pavement Asset on New Link should not grow") {
+    "then the Pavement Asset on New Link should extend to the new link length") {
     val oldLinkID = "18ce7a01-0ddc-47a2-9df1-c8e1be193516:1"
     val newLinkID = "016200a1-5dd4-47cc-8f4f-38ab4934eef9:1"
 
@@ -255,12 +255,12 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
-      //Check that calculated value is approx same as given
-      (Math.abs(assetLength - 20) < 0.5) should equal(true)
+      assetLength should be(newRoadLink.length)
     }
   }
 
-  test("Split, road link is split into two links, other has SurfaceType None. Divide user created pavedRoad asset to two links"){
+  test("Split, road link is split into two links, other has SurfaceType None. Divide user created pavedRoad asset to two links." +
+    "Extend the assets to road link length."){
     val oldLinkId = "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1" //ST 2
     val newLinkId1 = "4a9f1948-8bae-4cc9-9f11-218079aac595:1" //ST 1
     val newLinkId2 = "254ed5a2-bc16-440a-88f1-23868011975b:1" // ST 2
@@ -281,13 +281,14 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       val assetOnLink2 = assetsAfter.find(_.linkId == newLinkId2).get
 
       assetOnLink1.startMeasure should equal(0.0)
-      assetOnLink1.endMeasure should equal(68.417)
-      assetOnLink2.startMeasure should equal(23.65)
+      assetOnLink1.endMeasure should equal(132.982)
+      assetOnLink2.startMeasure should equal(0.0)
       assetOnLink2.endMeasure should equal(89.351)
     }
   }
 
-  test("Split, road link is split into two links, other has SurfaceType None. Move Samuutus generated asset only to new link with SurfaceType 2"){
+  test("Split, road link is split into two links, other has SurfaceType None. Move Samuutus generated asset only to new link with SurfaceType 2" +
+    "The asset on link 2 is extended to link length."){
     val oldLinkId = "dbeea36b-16b4-4ddb-b7b7-3ea4fa4b3667:1" //ST 2
     val newLinkId1 = "4a9f1948-8bae-4cc9-9f11-218079aac595:1" //ST 1
     val newLinkId2 = "254ed5a2-bc16-440a-88f1-23868011975b:1" // ST 2
@@ -308,7 +309,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       val assetOnLink2 = assetsAfter.find(_.linkId == newLinkId2).get
 
       assetOnLink1.isDefined should equal(false)
-      assetOnLink2.startMeasure should equal(23.65)
+      assetOnLink2.startMeasure should equal(0.0)
       assetOnLink2.endMeasure should equal(89.351)
     }
   }
