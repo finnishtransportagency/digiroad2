@@ -779,7 +779,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     
     if (changeSet.adjustedMValues.nonEmpty) {
       logger.debug(s"Saving adjustments for asset/link ids=${changeSet.adjustedMValues.map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
-      dao.updateMValuesChangeInfos(changeSet.adjustedMValues.map(a => MValueUpdate(a.assetId, a.linkId, Measures(a.startMeasure, a.endMeasure).roundMeasures(), LinearAssetUtils.createTimeStamp())))
+      dao.updateMValuesChangeInfos(changeSet.adjustedMValues.map(a => MValueUpdate(a.assetId, a.linkId, Measures(a.startMeasure, a.endMeasure).roundMeasures())))
     }
     
     val ids = changeSet.expiredAssetIds.toSeq

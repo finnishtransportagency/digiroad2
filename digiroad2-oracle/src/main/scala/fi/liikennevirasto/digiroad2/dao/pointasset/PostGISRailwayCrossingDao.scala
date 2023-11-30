@@ -199,6 +199,7 @@ object PostGISRailwayCrossingDao {
            start_measure = $mValue,
            link_id = ${railwayCrossing.linkId},
            adjusted_timestamp = ${adjustedTimeStamp},
+           modified_date = current_timestamp,
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
@@ -208,6 +209,7 @@ object PostGISRailwayCrossingDao {
            set
            start_measure = $mValue,
            link_id = ${railwayCrossing.linkId},
+           modified_date = current_timestamp,
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute

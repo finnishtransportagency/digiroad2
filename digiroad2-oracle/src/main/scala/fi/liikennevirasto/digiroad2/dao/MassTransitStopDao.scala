@@ -482,6 +482,7 @@ class MassTransitStopDao {
             set start_measure = $mValue,
             link_id = $linkId,
             link_source = ${linkSource.value},
+            modified_date = current_timestamp,
             adjusted_timestamp = ${adjustedTimeStamp}
            where id = (
             select pos.id
@@ -493,7 +494,7 @@ class MassTransitStopDao {
       case _ =>
         sqlu"""
            update lrm_position
-           set start_measure = $mValue, link_id = $linkId, link_source = ${linkSource.value}
+           set start_measure = $mValue, link_id = $linkId, modified_date = current_timestamp, link_source = ${linkSource.value}
            where id = (
             select pos.id
             from asset a
