@@ -35,7 +35,7 @@ case class AssetLastModification(id: Long, linkId: String, modifiedBy: Option[St
 case class AssetLink(id: Long, linkId: String, assetTypeId: Int)
 case class AssetLinkWithMeasures(id: Long, assetTypeId: Int, linkId: String, sideCode: Int, startMeasure: Double, endMeasure: Double)
 
-case class MValueUpdate(id: Long, linkId: String, linkMeasures: Measures, timeStamp: Long)
+case class MValueUpdate(id: Long, linkId: String, linkMeasures: Measures)
 
 class PostGISLinearAssetDao() {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
@@ -650,15 +650,14 @@ class PostGISLinearAssetDao() {
   /**
     * Updates from Change Info in db.
     */
-  def updateMValuesChangeInfo(id: Long,linkId:String, linkMeasures: Measures, timeStamp: Long): Unit = {
+  def updateMValuesChangeInfo(id: Long,linkId:String, linkMeasures: Measures): Unit = {
     sqlu"""
       update LRM_POSITION
       set
         link_id = $linkId,
         start_measure = ${linkMeasures.startMeasure},
         end_measure = ${linkMeasures.endMeasure},
-        modified_date = current_timestamp,
-        adjusted_timestamp = $timeStamp
+        modified_date = current_timestamp
       where id = (
         select lrm.id
           from asset a
@@ -676,8 +675,7 @@ class PostGISLinearAssetDao() {
         link_id = (?),
         start_measure = (?),
         end_measure = (?),
-        modified_date = current_timestamp,
-        adjusted_timestamp = (?)
+        modified_date = current_timestamp
       where id = (
         select lrm.id
           from asset a
@@ -690,8 +688,7 @@ class PostGISLinearAssetDao() {
         ps.setString(1, a.linkId)
         ps.setDouble(2, a.linkMeasures.startMeasure)
         ps.setDouble(3, a.linkMeasures.endMeasure)
-        ps.setLong(4, a.timeStamp)
-        ps.setLong(5, a.id)
+        ps.setLong(4, a.id)
         ps.addBatch()
       })
     }
@@ -959,16 +956,15 @@ class PostGISLinearAssetDao() {
     ps.setLong(2, lrmPositionId)
     ps.addBatch()
   }
-  private def LRMInsert(ps: PreparedStatement, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int], lrmPositionId: Long): Unit = {
+  private def LRMInsert(ps: PreparedStatement, linkId: String, sideCode: Int, measures: Measures, linkSource: Option[Int], lrmPositionId: Long): Unit = {
     ps.setLong(1, lrmPositionId)
     ps.setDouble(2, measures.startMeasure)
     ps.setDouble(3, measures.endMeasure)
     ps.setString(4, linkId)
     ps.setInt(5, sideCode)
-    ps.setLong(6, timeStamp)
 
-    if (linkSource.nonEmpty) ps.setInt(7, linkSource.get)
-    else ps.setNull(7, java.sql.Types.NUMERIC)
+    if (linkSource.nonEmpty) ps.setInt(6, linkSource.get)
+    else ps.setNull(6, java.sql.Types.NUMERIC)
 
     ps.addBatch()
   }
@@ -1033,11 +1029,11 @@ class PostGISLinearAssetDao() {
   }
 
   private def addPositions(list:Seq[NewLinearAssetWithId]): Unit = {
-    val lrmSql1 = s""" insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source) values ((?), (?), (?), (?), (?), current_timestamp, (?), (?));""".stripMargin
+    val lrmSql1 = s""" insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, link_source) values ((?), (?), (?), (?), (?), current_timestamp, (?));""".stripMargin
     val lrmSql2 = s"""insert   into asset_link(asset_id, position_id) values ((?), (?));""".stripMargin
     MassQuery.executeBatch(lrmSql1) { ps =>
       list.foreach(a => {
-        LRMInsert(ps, a.asset.linkId, a.asset.sideCode, a.asset.measures, a.asset.timeStamp, a.asset.linkSource, a.positionId)
+        LRMInsert(ps, a.asset.linkId, a.asset.sideCode, a.asset.measures, a.asset.linkSource, a.positionId)
       })
     }
     MassQuery.executeBatch(lrmSql2) { ps =>
