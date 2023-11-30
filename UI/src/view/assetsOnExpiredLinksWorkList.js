@@ -47,7 +47,7 @@
                         $('<td>').text("SideCode"),
                         $('<td>').text("StartM"),
                         $('<td>').text("EndM"),
-                        $('<td>').text("Kohteen päätepisteet"),
+                        $('<td>').text("Kohteen päätepisteet (Itäkoord., Pohjoiskoord.)"),
                         $('<td>').text("Tielinkin päättymispvm.")
                     ];
 
@@ -59,6 +59,7 @@
                         var row = $('<tr>');
                         var firstPoint = _.head(item.geometry);
                         var lastPoint;
+                        var divider = "";
                         if (item.geometry.length === 1) {
                             lastPoint = {
                                 x: "",
@@ -66,8 +67,9 @@
                             };
                         } else {
                             lastPoint = _.last(item.geometry);
+                            divider = ", ";
                         }
-                        var geomString = firstPoint.x + " " + firstPoint.y + ", " + lastPoint.x + " " + lastPoint.y;
+                        var geomString = firstPoint.x + " " + firstPoint.y + divider + lastPoint.x + " " + lastPoint.y;
 
                         var cells = [
                             $('<td>').append(checkbox(item.id)),
