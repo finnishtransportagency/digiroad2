@@ -148,6 +148,47 @@ object SpeedLimitFiller extends AssetFiller {
     }
   }
 
+  override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
+                                           changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
+      debugLogging("operation start"),
+      fuse,
+      debugLogging("fuse"),
+      dropShortSegments,
+      debugLogging("dropShortSegments"),
+      adjustAssets,
+      debugLogging("adjustAssets"),
+      expireOverlappingSegments,
+      debugLogging("expireOverlappingSegments"),
+      droppedSegmentWrongDirection,
+      debugLogging("droppedSegmentWrongDirection"),
+      adjustSegmentSideCodes,
+      debugLogging("adjustSegmentSideCodes"),
+      fillHoles,
+      debugLogging("fillHoles"),
+      clean
+    )
+    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
+    
+    topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingAssets, changeSet) = acc
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
+
+      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
+      val filterExpiredAway: ChangeSet = LinearAssetFiller.removeExpiredMValuesAdjustments(assetAdjustments)
+      
+      val noDuplicate = filterExpiredAway.copy(
+        adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
+        adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
+        valueAdjustments = filterExpiredAway.valueAdjustments.distinct
+      )
+
+      (existingAssets ++ adjustedAssets, noDuplicate)
+    }
+  }
+
   /**
     * For debugging; print speed limit relevant data
     * @param speedLimit speedlimit to print

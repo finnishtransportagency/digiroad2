@@ -32,7 +32,7 @@
 
     var obtainValue = function(value){
       var property = _.find(value.properties, function(val) { return val.publicId === 'huoltotie_tarkistettu'; });
-      if(property)
+      if(property && !_.isEmpty(property.values))
         return _.head(property.values).value;
       return 0;
     };
