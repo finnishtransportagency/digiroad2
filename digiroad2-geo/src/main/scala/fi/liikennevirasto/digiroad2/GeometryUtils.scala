@@ -1,16 +1,53 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
+import com.vividsolutions.jts.geom._
 
+
+sealed case class GeometryString( format:String,string: String)
 object GeometryUtils {
 
   // Default value of minimum distance where locations are considered to be same
   final private val DefaultEpsilon = 0.01
   final private val adjustmentTolerance = 2.0
+  final private val defaultDecimalPrecision = 3
 
   def getDefaultEpsilon(): Double = {
     DefaultEpsilon
   }
+
+  def doubleToDefaultPrecision(value: Double): Double = {
+    BigDecimal(value).setScale(defaultDecimalPrecision, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
+
+  def toDefaultPrecision(geometry: Seq[Point]): Seq[Point] = {
+    geometry.map(point => {
+      val x = doubleToDefaultPrecision(point.x)
+      val y = doubleToDefaultPrecision(point.y)
+      val z = doubleToDefaultPrecision(point.z)
+      Point(x, y, z)
+    })
+  }
+
+  def toWktLineString(geometry: Seq[Point]): GeometryString = {
+    if (geometry.nonEmpty) {
+      val segments = geometry.zip(geometry.tail)
+      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2)).map(doubleToDefaultPrecision)
+      val mValuedGeometry = geometry.zip(runningSum.toList)
+      val wktString = mValuedGeometry.map {
+        case (p, newM) => p.x + " " + p.y + " " + p.z + " " + newM
+      }.mkString(", ")
+      GeometryString( "geometryWKT", "LINESTRING ZM (" + wktString + ")")
+    }
+    else
+      GeometryString("geometryWKT","")
+  }
+
+  def toWktPoint(lon: Double, lat: Double): GeometryString = {
+    val geometryWKT = "POINT (" + doubleToDefaultPrecision(lon) + " " + doubleToDefaultPrecision(lat) + ")"
+    GeometryString( "geometryWKT", geometryWKT)
+  }
+  
 
   def areMeasuresCloseEnough(measure1: Double, measure2: Double, tolerance: Double): Boolean ={
     val difference = math.abs(measure2 - measure1)
@@ -44,12 +81,21 @@ object GeometryUtils {
   }
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
+    if (geometry.isEmpty) {
+      throw new NoSuchElementException("Geometry is empty")
+    }
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last
     (firstPoint, lastPoint)
   }
 
-  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+  /**
+    * Check if given measure is between the given start and end measures
+    * @param measure m-value to check
+    * @param interval First element of tuple is start measure, second element is the end measure of the interval
+    * @return true if m-value lies between the given start and end measures, else false
+    */
+  def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
 
@@ -70,7 +116,7 @@ object GeometryUtils {
       firstPoint + directionVector
     }
 
-    if (startMeasure > endMeasure) throw new IllegalArgumentException
+    if (startMeasure > endMeasure) throw new IllegalArgumentException(s"start measure is greater than end, start: ${startMeasure} end: ${endMeasure}")
     if (geometry.length == 1) throw new IllegalArgumentException
     if (geometry.isEmpty) return Nil
 
@@ -457,7 +503,7 @@ object GeometryUtils {
     connectionPoint(geometries, DefaultEpsilon)
   }
 
-  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long)
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long = 0, linkId:String = "", linkLength:Double = 0)
 
   def getOppositePoint(geometry: Seq[Point], point: Point) : Point = {
     val (headPoint, lastPoint) = geometryEndpoints(geometry)
@@ -466,4 +512,23 @@ object GeometryUtils {
     else
       headPoint
   }
+
+  def isPointInsideGeometry(point: Point, geometry: Geometry): Boolean = {
+    val jtsPoint = new GeometryFactory().createPoint(new Coordinate(point.x, point.y))
+    convertToJTSGeometry(geometry).contains(jtsPoint)
+  }
+
+  def convertToJTSGeometry(geometry: Geometry): Polygon = {
+    val coordinates = geometry.`type` match {
+      case "Polygon" => List(geometry.coordinates)
+      case "MultiPolygon" => geometry.coordinates
+      case _ => List.empty[List[Double]]
+    }
+
+    val polygonCoordinates = coordinates.flatMap(coordList =>
+      coordList.map(coords => new Coordinate(coords.asInstanceOf[List[Double]](0), coords.asInstanceOf[List[Double]](1)))
+    ).toArray
+    new GeometryFactory().createPolygon(polygonCoordinates)
+  }
+
 }

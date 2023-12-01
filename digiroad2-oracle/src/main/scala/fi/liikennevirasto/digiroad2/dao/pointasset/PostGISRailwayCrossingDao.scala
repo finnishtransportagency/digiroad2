@@ -160,12 +160,16 @@ object PostGISRailwayCrossingDao {
 
   def create(asset: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long,
              linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""),
-             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String]): Long = {
+             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String],
+             fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+    val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
+    val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
     sqlu"""
         insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 230, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp);
+        values ($id, $externalIdFromUpdate, 230, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $modifiedBy, $modifiedAt);
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
         values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
@@ -180,9 +184,9 @@ object PostGISRailwayCrossingDao {
     id
   }
 
-  def update(id: Long, railwayCrossing: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
+  def update(id: Long, railwayCrossing: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource, fromPointAssetUpdater: Boolean = false) = {
     sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
-    updateAssetModified(id, username).execute
+    if (!fromPointAssetUpdater) updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
     deleteTextProperty(id, getNamePropertyId).execute
     deleteTextProperty(id, getCodePropertyId).execute
@@ -195,6 +199,7 @@ object PostGISRailwayCrossingDao {
            start_measure = $mValue,
            link_id = ${railwayCrossing.linkId},
            adjusted_timestamp = ${adjustedTimeStamp},
+           modified_date = current_timestamp,
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
@@ -204,6 +209,7 @@ object PostGISRailwayCrossingDao {
            set
            start_measure = $mValue,
            link_id = ${railwayCrossing.linkId},
+           modified_date = current_timestamp,
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute

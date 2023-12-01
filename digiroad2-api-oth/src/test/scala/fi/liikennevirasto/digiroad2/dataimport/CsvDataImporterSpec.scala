@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.dataimport
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.kgv.{KgvMunicipalityBorderClient, MunicipalityBorders}
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.csvDataImporter.{RoadLinkCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkOverrideDAO}
@@ -48,6 +49,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   private val mockComplementaryLinkDAO = MockitoSugar.mock[ComplementaryLinkDAO]
+  private val mockMunicipalityBorderClient = MockitoSugar.mock[KgvMunicipalityBorderClient]
 
   val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   val roadLinkFetcheds = Seq(RoadLinkFetched(linkId1, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
@@ -70,6 +72,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def eventBus: DigiroadEventBus = mockEventBus
+    override val municipalityBorderClient: KgvMunicipalityBorderClient = mockMunicipalityBorderClient
   }
 
   object roadLinkCsvImporter extends RoadLinkCsvImporter(mockRoadLinkService, mockEventBus) {
@@ -464,6 +467,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
 
   test("validation for traffic light import fails if mandatory parameters are missing", Tag("db")) {
+    when(trafficLightsCsvImporter.municipalityBorderClient.fetchAllMunicipalities()).thenReturn(Seq(MunicipalityBorders(99, List())))
     val assetFields = Map("koordinaatti x" -> "", "koordinaatti y" -> "", "liikennevalo tyyppi" -> "")
     val invalidCsv = csvToInputStream(createCsvForTrafficLights(assetFields))
     val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
@@ -477,6 +481,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation for traffic light import fails if lane number is invalid", Tag("db")) {
+    when(trafficLightsCsvImporter.municipalityBorderClient.fetchAllMunicipalities()).thenReturn(Seq(MunicipalityBorders(99, List())))
     val assetFields = Map("koordinaatti x" -> 52828, "koordinaatti y" -> 58285, "liikennevalo tyyppi" -> 4.2, "kaista" -> 54)
     val invalidCsv = csvToInputStream(createCsvForTrafficLights(assetFields))
     val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
@@ -486,6 +491,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation for traffic light import fails if lane number and lane type don't match", Tag("db")) {
+    when(trafficLightsCsvImporter.municipalityBorderClient.fetchAllMunicipalities()).thenReturn(Seq(MunicipalityBorders(99, List())))
     val assetFields = Map("koordinaatti x" -> 52828, "koordinaatti y" -> 58285, "liikennevalo tyyppi" -> 4.2, "kaista" -> 12, "kaistan tyyppi" -> 1)
     val invalidCsv = csvToInputStream(createCsvForTrafficLights(assetFields))
     val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap

@@ -172,16 +172,17 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   test("Update pedestrian crossing without geometry changes"){
     runWithRollback {
       val linkId = randomLinkId
-      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, linkId, Set()), "jakke", roadLink )
+      val roadLink = RoadLink(linkId, Seq(Point(2.0, 0.0), Point(4.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingPedestrianCrossing(3.15, 11.5, linkId, Set()), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, linkId, Set()), roadLink, "test")
+      val newId = service.update(id, IncomingPedestrianCrossing(asset.lon, asset.lat, linkId, Set(), Some(asset.mValue)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
       updatedAsset.lon should be (asset.lon)
       updatedAsset.lat should be (asset.lat)
+      updatedAsset.mValue should be(asset.mValue)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
 

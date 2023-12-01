@@ -91,7 +91,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val cyclingAndWalkingService: CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService,
                    val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
-                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService)
+                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService,
+                   val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = Digiroad2Context.assetsOnExpiredLinksService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -1487,12 +1488,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     user.isOperator() match {
       case true =>
-        manoeuvreService.getInaccurateRecords()
+        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId)
       case false =>
-        manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
+        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId,municipalityCode, Set(Municipality))
     }
   }
-
+  
+  get("/manoeuvreSamuutusWorkList") {
+    val user = userProvider.getCurrentUser()
+    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
+    workListItems.map(a=> Map("assetId" -> a.assetId, "links" -> a.links)).toList
+  }
+  
   delete("/laneWorkList") {
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
@@ -1511,7 +1518,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
     val workListItems = userHasRights match {
-      case true => laneWorkListService.getLaneWorkList
+      case true => laneWorkListService.getLaneWorkList()
       case false => halt(Forbidden("User not authorized to get items from lane work list"))
     }
 
@@ -1524,6 +1531,42 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "oldValue" -> item.oldValue,
           "createdAt" -> item.createdDate,
           "createdBy" -> item.createdBy)}))
+  }
+
+  get("/assetsOnExpiredLinksWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val workListItems = userHasRights match {
+      case true => assetsOnExpiredLinksService.getAllWorkListAssets()
+      case false => halt(Forbidden("User not authorized for assetsOnExpiredLinksWorkList"))
+    }
+
+    Map("items" -> workListItems.groupBy(_.assetTypeId)
+      .mapValues(_.map { item =>
+        Map("id" -> item.id,
+          "assetType" -> item.assetTypeId,
+          "linkId" -> item.linkId,
+          "sideCode" -> item.sideCode,
+          "startMeasure" -> item.startMeasure,
+          "endMeasure" -> item.endMeasure,
+          "geometry" -> item.geometry,
+          "roadLinkExpiredDate" -> item.roadLinkExpiredDate)
+      })
+    )
+  }
+
+  delete("/assetsOnExpiredLinksWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val assetIdsToDeleteFromList = userHasRights match {
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(Forbidden("User not authorized to delete items from work list"))
+    }
+    assetIdsToDeleteFromList match {
+      case Some(assetIds) =>
+        assetsOnExpiredLinksService.deleteFromWorkList(assetIds, newTransaction = true)
+      case None => halt(BadRequest("No ids to delete provided"))
+    }
   }
 
   get("/inaccurates") {
@@ -1711,7 +1754,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         validateBoundingBox(boundingRectangle)
       }
       LogUtils.time(logger, "TEST LOG Get manoeuvres by boundingBox total operation") {
-        manoeuvreService.getByBoundingBox(boundingRectangle, Set())
+        manoeuvreService.getByBoundingBox(boundingRectangle, Set[Int]())
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")

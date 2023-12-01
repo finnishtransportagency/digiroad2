@@ -1,17 +1,22 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
+import fi.liikennevirasto.digiroad2.DummyEventBus
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.lane.LaneWorkListDAO
-import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertyChange}
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertyChange, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class LaneWorkListServiceSpec extends FunSuite with Matchers {
   val laneWorkListDao: LaneWorkListDAO = new LaneWorkListDAO
   val laneWorkListService: LaneWorkListService = new LaneWorkListService
 
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val laneService: LaneService = new LaneService(mockRoadLinkService, new DummyEventBus, mockRoadAddressService)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   val user: String = "testuser"
@@ -22,7 +27,7 @@ class LaneWorkListServiceSpec extends FunSuite with Matchers {
     val fetchedRoadLink = RoadLinkFetched("1l", 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)
     runWithRollback {
       val itemsBeforeOperation = laneWorkListDao.getAllItems
-      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("traffic_direction", None, linkProperty, fetchedRoadLink, Some(user)), false)
+      laneService.processRoadLinkPropertyChange(LinkPropertyChange("traffic_direction", None, linkProperty, fetchedRoadLink, Some(user)), newTransaction = false)
       val itemsAfterOperation = laneWorkListDao.getAllItems
 
       itemsBeforeOperation.size should equal(0)
@@ -42,7 +47,7 @@ class LaneWorkListServiceSpec extends FunSuite with Matchers {
       val existingOverriddenValue = Option(3)
       val itemsBeforeOperation = laneWorkListDao.getAllItems
 
-      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("traffic_direction", existingOverriddenValue, linkProperty, roadLinkFetched, Some(user)), false)
+      laneService.processRoadLinkPropertyChange(LinkPropertyChange("traffic_direction", existingOverriddenValue, linkProperty, roadLinkFetched, Some(user)), newTransaction = false)
       val itemsAfterOperation = laneWorkListDao.getAllItems
 
       itemsBeforeOperation.size should equal(0)
@@ -62,7 +67,7 @@ class LaneWorkListServiceSpec extends FunSuite with Matchers {
       val existingOverriddenValue = Option(3)
       val itemsBeforeOperation = laneWorkListDao.getAllItems
 
-      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("link_type", existingOverriddenValue, linkProperty, fetchedRoadLink, Some(user)), false)
+      laneService.processRoadLinkPropertyChange(LinkPropertyChange("link_type", existingOverriddenValue, linkProperty, fetchedRoadLink, Some(user)), newTransaction = false)
       val itemsAfterOperation = laneWorkListDao.getAllItems
 
       itemsBeforeOperation.size should equal(0)
@@ -82,8 +87,8 @@ class LaneWorkListServiceSpec extends FunSuite with Matchers {
       val existingOverriddenValue = None
       val itemsBeforeOperation = laneWorkListDao.getAllItems
 
-      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("link_type", existingOverriddenValue, linkProperty, fetchedRoadLink, Some(user)), false)
-      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("traffic_direction", existingOverriddenValue, linkProperty, fetchedRoadLink, Some(user)), false)
+      laneService.processRoadLinkPropertyChange(LinkPropertyChange("link_type", existingOverriddenValue, linkProperty, fetchedRoadLink, Some(user)), newTransaction = false)
+      laneService.processRoadLinkPropertyChange(LinkPropertyChange("traffic_direction", existingOverriddenValue, linkProperty, fetchedRoadLink, Some(user)), newTransaction = false)
       val itemsAfterOperation = laneWorkListDao.getAllItems
 
       itemsBeforeOperation.size should equal(0)

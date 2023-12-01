@@ -12,14 +12,18 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.Measures
+import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewSpeedLimitMassOperation}
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import org.postgis.PGgeometry
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+import java.sql.PreparedStatement
+case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
+case class NewSpeedLimitWithId(asset:NewSpeedLimitMassOperation, id:Long, positionId:Long)
 class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends DynamicLinearAssetDao {
   def MassQueryThreshold = 500
-  case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
+ 
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
@@ -183,6 +187,11 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     groupSpeedLimitsResult(speedLimitRows)
   }
 
+  override def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    val queryFilter = "AND (valid_to IS NULL OR valid_to > current_timestamp)"
+    fetchByLinkIds(linkIds,queryFilter)
+  }
+
   /**
     * Returns speed limits that match a set of link ids.
     */
@@ -249,6 +258,21 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       }
 
     addCountsFor(limitsByMunicipality)
+  }
+
+  def getUnknownSpeedLimits(links: Set[String]): Seq[UnknownLimit] = {
+    if (links.isEmpty) {
+      throw new Exception("Parameters is empty")
+    }
+   
+    val sql =
+      s"""
+      select s.link_id, m.name_fi, s.administrative_class
+      from unknown_speed_limit s
+      join municipality m on s.municipality_code = m.id
+      where s.unnecessary = 0 and s.link_id in (${links.map(t=>s"'$t'").mkString(",")}) """
+    
+    Q.queryNA[UnknownLimit](sql).list
   }
 
   def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
@@ -478,6 +502,88 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     assetId
   }
 
+  private def insertSpeedLimitStatement(ps: PreparedStatement, typeId: Int,
+                                        createdBy: Option[String], createdDate: Option[DateTime],
+                                        modifiedDate: Option[DateTime], id: Long, modifiedBy: Option[String]): Unit = {
+    ps.setLong(1, id)
+    ps.setInt(2, typeId)
+
+    if (createdBy.nonEmpty) {
+      ps.setString(3, createdBy.get)
+    } else ps.setNull(3, java.sql.Types.VARCHAR)
+
+    if (createdDate.nonEmpty) ps.setString(4, createdDate.get.toString())
+    else ps.setNull(4, java.sql.Types.TIMESTAMP)
+
+    if (modifiedBy.nonEmpty) {
+      ps.setString(5, modifiedBy.get)
+    } else ps.setNull(5, java.sql.Types.VARCHAR)
+    
+    if (modifiedDate.nonEmpty) ps.setString(6, modifiedDate.get.toString())
+    else ps.setNull(6, java.sql.Types.TIMESTAMP)
+    
+    ps.addBatch()
+  }
+
+  private def LRMRelationInser(ps: PreparedStatement, id: Long, lrmPositionId: Long): Unit = {
+    ps.setLong(1, id)
+    ps.setLong(2, lrmPositionId)
+    ps.addBatch()
+  }
+  private def LRMInsert(ps: PreparedStatement, linkId: String, sideCode: Int, measures: Measures, timeStamp: Long, linkSource: Option[Int], lrmPositionId: Long): Unit = {
+    ps.setLong(1, lrmPositionId)
+    ps.setDouble(2, measures.startMeasure)
+    ps.setDouble(3, measures.endMeasure)
+    ps.setString(4, linkId)
+    ps.setInt(5, sideCode)
+    ps.setLong(6, timeStamp)
+
+    if (linkSource.nonEmpty) ps.setInt(7, linkSource.get)
+    else ps.setNull(7, java.sql.Types.NUMERIC)
+
+    ps.addBatch()
+  }
+
+
+  
+  /**
+    * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
+    */
+  def createMultipleLinearAssets(list: Seq[NewSpeedLimitMassOperation]): Seq[NewSpeedLimitWithId] = {
+    val ids = Sequences.nextPrimaryKeySeqValues(list.size)
+    val lrmPositions = Sequences.nextLRMPositionIdsSeqValues(list.size)
+    val assetsWithNewIds = list.zipWithIndex.map { case (a, index) => NewSpeedLimitWithId(a, ids(index), lrmPositions(index)) }
+    val timestamp = s"""TO_TIMESTAMP((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3')"""
+    val insertSql =
+      s""" insert into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
+              values ((?), (?), (?), ${timestamp}, (?), ${timestamp});
+            """.stripMargin
+
+    if (assetsWithNewIds.nonEmpty) {
+      MassQuery.executeBatch(insertSql) { ps =>
+        assetsWithNewIds.foreach(a => insertSpeedLimitStatement(ps, a.asset.typeId,
+          Some(a.asset.creator),  Some(a.asset.createdDate.getOrElse(DateTime.now())),
+          a.asset.modifiedAt, a.id,  a.asset.modifiedBy)
+        )
+      }
+      addPositions(assetsWithNewIds)
+    }
+    assetsWithNewIds
+  }
+
+  private def addPositions(list: Seq[NewSpeedLimitWithId]): Unit = {
+    val lrmSql1 = s""" insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source) values ((?), (?), (?), (?), (?), current_timestamp, (?), (?));""".stripMargin
+    val lrmSql2 = s"""insert   into asset_link(asset_id, position_id) values ((?), (?));""".stripMargin
+    MassQuery.executeBatch(lrmSql1) { ps =>
+      list.foreach(a => {
+        LRMInsert(ps, a.asset.linkId, a.asset.sideCode.value, a.asset.linkMeasures, a.asset.timeStamp.getOrElse(0), Some(a.asset.linkSource.value), a.positionId)
+      })
+    }
+    MassQuery.executeBatch(lrmSql2) { ps =>
+      list.foreach(a => LRMRelationInser(ps, a.id, a.positionId))
+    }
+  }
+  
 
   /**
     * Sets floating flag of linear assets true in db. Used in AssetDataImporter.splitSpeedLimits.
@@ -566,6 +672,11 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     }
   }
 
+  def updateExpirations(ids: Set[Long],username:String) = {
+    Queries.updateAssestModified(ids.toSeq, username)
+     sqlu"update asset set valid_to = current_timestamp where id in (#${ids.mkString(",")})".execute
+  }
+
   /**
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
     */
@@ -648,34 +759,4 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       }
     }
   }
-
-  /**
-    * Updates from Change Info in db.
-    */
-  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
-    println("asset_id -> " + id)
-    val (startMeasure, endMeasure) = linkMeasures
-    sqlu"""
-      update LRM_POSITION
-      set
-        start_measure = $startMeasure,
-        end_measure = $endMeasure,
-        modified_date = current_timestamp,
-        adjusted_timestamp = $timeStamp
-      where id = (
-        select lrm.id
-          from asset a
-          join asset_link al on a.ID = al.ASSET_ID
-          join lrm_position lrm on lrm.id = al.POSITION_ID
-          where a.id = $id)
-    """.execute
-
-    sqlu"""
-      update ASSET
-      set modified_by = $username,
-          modified_date = current_timestamp
-      where id = $id
-    """.execute
-  }
-
 }

@@ -614,18 +614,22 @@
       });
 
       var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
-        $('ul[class=information-content]').empty();
         $('ul[class=information-content]').append('' +
           '<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
 
       };
+      var renderSamuutusWorkList = function renderSamuutusWorkList() {
+        $('ul[class=information-content]').append('' +
+            '<li><button id="work-list-link-manoeuvre-samuutus" class="manoeuvre-samuutus-work-list btn btn-tertiary" onclick=location.href="#work-list/manoeuvreSamuutusWorkList">Tarkistettavien kääntymisrajoituksien lista</button></li>');
+      };
 
       eventbus.on('layer:selected', function(layer) {
-        if(layer === 'manoeuvre')
+        if(layer === 'manoeuvre') {
           renderInaccurateWorkList(layer);
+          renderSamuutusWorkList();
+        }
       });
     };
-
     bindEvents();
   };
 

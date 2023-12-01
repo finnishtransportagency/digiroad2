@@ -56,10 +56,10 @@ class PostGISPedestrianCrossingDao() {
     }
   }
 
-  def update(id: Long, persisted: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
+  def update(id: Long, persisted: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource, fromPointAssetUpdater: Boolean = false) = {
     sqlu""" update asset set municipality_code = ${municipality} where id = $id """.execute
     updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
-    updateAssetModified(id, username).execute
+    if (!fromPointAssetUpdater) updateAssetModified(id, username).execute
 
     adjustedTimeStampOption match {
       case Some(adjustedTimeStamp) =>
@@ -69,6 +69,7 @@ class PostGISPedestrianCrossingDao() {
            start_measure = ${mValue},
            link_id = ${persisted.linkId},
            adjusted_timestamp = ${adjustedTimeStamp},
+           modified_date = current_timestamp,
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
@@ -78,6 +79,7 @@ class PostGISPedestrianCrossingDao() {
            set
            start_measure = ${mValue},
            link_id = ${persisted.linkId},
+           modified_date = current_timestamp,
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
@@ -110,13 +112,16 @@ class PostGISPedestrianCrossingDao() {
 
   def create(crossing: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long, linkSource: LinkGeomSource,
              createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime],
-             externalIdFromUpdate: Option[String]): Long = {
+             externalIdFromUpdate: Option[String], fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
-    sqlu"""
+    val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
+    val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
+
+      sqlu"""
         insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 200, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp);
+        values ($id, $externalIdFromUpdate, 200, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $modifiedBy, $modifiedAt);
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
         values ($lrmPositionId, $mValue, ${crossing.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
@@ -124,6 +129,7 @@ class PostGISPedestrianCrossingDao() {
         insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
     """.execute
+
     updateAssetGeometry(id, Point(crossing.lon, crossing.lat))
 
     createOrUpdatePedestrianCrossing(crossing, id)
