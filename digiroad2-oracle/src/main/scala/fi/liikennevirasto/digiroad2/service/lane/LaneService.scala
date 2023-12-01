@@ -155,7 +155,17 @@ trait LaneOperations {
     val lanesWithPossibleRoadAddressInfo = LogUtils.time(logger, "Get Viite road address for lanes"){
       roadAddressService.laneWithRoadAddress(lanesOnPoint)
     }
-    (lanesWithPossibleRoadAddressInfo, roadLink)
+
+    if (lanesWithPossibleRoadAddressInfo.forall { lane =>
+      val roadNumber = lane.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
+      roadNumber.nonEmpty
+    }) {
+      val roadLinkGrouped = Seq(roadLink).groupBy(_.linkId).mapValues(_.head)
+      val lanesWithAccurateAddressInfo = calculateAccurateAddrMValuesForCutLanes(lanesWithPossibleRoadAddressInfo, roadLinkGrouped)
+      (lanesWithAccurateAddressInfo, roadLink)
+    } else {
+      (lanesWithPossibleRoadAddressInfo, roadLink)
+    }
   }
 
   def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {

@@ -137,8 +137,9 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         }
       }
       catch {
-            //TODO tarkemmat poikkeus käsittelyt
-        case _: Exception => halt(BadRequest("Missing or invalid parameters"))
+        case _: NoSuchElementException => halt(BadRequest("No road link found on given linkID"))
+        case _: NumberFormatException => halt(BadRequest("Invalid mValue parameter"))
+        case _: Exception => halt(BadRequest("Something went wrong"))
       }
     }
   }
@@ -239,13 +240,13 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     lanes.map(laneToApi => {
       val municipalityCode = roadLink.municipalityCode
       val roadName = roadLink.roadNameIdentifier.getOrElse("")
-      val roadNumber = roadLink.roadNumber.getOrElse("")
-      val roadPartNumber = roadLink.roadPartNumber.getOrElse("")
-      val track = roadLink.track.getOrElse("")
-      val startAddrM = roadLink.startAddrM.getOrElse("")
-      val endAddrM = roadLink.endAddrM.getOrElse("")
+      val roadNumber = laneToApi.roadNumber.getOrElse("")
+      val roadPartNumber = laneToApi.roadPartNumber.getOrElse("")
+      val track = laneToApi.track.getOrElse("")
+      val startAddrM = laneToApi.startAddrM.getOrElse("")
+      val endAddrM = laneToApi.endAddrM.getOrElse("")
       val laneCode = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_code").asInstanceOf[Int]
-      val laneType = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_type").asInstanceOf[Int]
+      val laneType = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_type").asInstanceOf[String].toInt
 
       mutable.LinkedHashMap(
         "laneCode" -> laneCode,
