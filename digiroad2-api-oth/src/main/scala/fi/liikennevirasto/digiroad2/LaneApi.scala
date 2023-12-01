@@ -246,7 +246,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val startAddrM = laneToApi.startAddrM.getOrElse("")
       val endAddrM = laneToApi.endAddrM.getOrElse("")
       val laneCode = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_code").asInstanceOf[Int]
-      val laneType = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_type").asInstanceOf[String].toInt
+      val laneType = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_type").toString.toInt
 
       mutable.LinkedHashMap(
         "laneCode" -> laneCode,

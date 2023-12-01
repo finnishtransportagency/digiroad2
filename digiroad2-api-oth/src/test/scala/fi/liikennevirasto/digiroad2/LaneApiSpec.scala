@@ -36,7 +36,7 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
       "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
   val pieceWiseLane = PieceWiseLane(111, linkId1, 2, false, Seq(Point(0.0, 0.0), Point(1.0, 1.0)), 0, 1, Set(Point(0.0, 0.0), Point(1.0, 1.0)),
-    None, None, None, None, 0L, None, State, Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))))
+    None, None, None, None, 0L, None, State, Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))),LaneProperty("lane_type", Seq(LanePropertyValue("1")))))
 
   val roadAddress = RoadAddressForLink(0, 0, 0, Track(99), 0, 0, None, None, "0", 0, 0, SideCode(1), Seq(), false, None, None, None)
 
@@ -181,6 +181,21 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
     //TODO Remove after walking and cycling lanes are enabled in laneApi
     get("/lanes_in_range?road_number=70001&track=1&start_part=208&start_addrm=8500&end_part=208&end_addrm=9000") {
       status should equal(400)
+    }
+  }
+
+  test("Lanes on linearly referenced point API requires correct linkID and mValue params") {
+    //Missing both params
+    get("/lanes_on_point") {
+      status should equal(400)
+    }
+    //MValue param missing
+    get("/lanes_on_point?linkId=linkId=abb902fe-96a2-4423-b619-2af7f06f410a:1&mValue=INVALIDMVALUE") {
+      status should equal(400)
+    }
+    //Correct params
+    get("/lanes_on_point?linkId=abb902fe-96a2-4423-b619-2af7f06f410a:1&mValue=50.567") {
+      status should equal(200)
     }
   }
 
