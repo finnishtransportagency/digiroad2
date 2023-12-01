@@ -20,12 +20,22 @@ case class ChangedSegment(startMeasure: Double, startAddrM: Int, endMeasure: Dou
 
 case class LightLane ( value: Int, expired: Boolean,  sideCode: Int )
 
-case class PieceWiseLane ( id: Long, linkId: String, sideCode: Int, expired: Boolean, geometry: Seq[Point],
-                                startMeasure: Double, endMeasure: Double,
-                                endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
-                                createdBy: Option[String], createdDateTime: Option[DateTime],
-                                timeStamp: Long, geomModifiedDate: Option[DateTime], administrativeClass: AdministrativeClass,
-                           laneAttributes: Seq[LaneProperty],  attributes: Map[String, Any] = Map() ) extends Lane
+case class PieceWiseLane(id: Long, linkId: String, sideCode: Int, expired: Boolean, geometry: Seq[Point],
+                         startMeasure: Double, endMeasure: Double,
+                         endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
+                         createdBy: Option[String], createdDateTime: Option[DateTime],
+                         timeStamp: Long, geomModifiedDate: Option[DateTime], administrativeClass: AdministrativeClass,
+                         laneAttributes: Seq[LaneProperty], attributes: Map[String, Any] = Map()) extends Lane {
+  def roadNumber: Option[String] = attributes.get("ROAD_NUMBER").map(_.toString)
+
+  def roadPartNumber: Option[String] = attributes.get("ROAD_PART_NUMBER").map(_.toString)
+
+  def track: Option[String] = attributes.get("TRACK").map(_.toString)
+
+  def startAddrM: Option[String] = attributes.get("START_ADDR").map(_.toString)
+
+  def endAddrM: Option[String] = attributes.get("END_ADDR").map(_.toString)
+}
 
 case class PersistedLane ( id: Long, linkId: String, sideCode: Int, laneCode: Int, municipalityCode: Long,
                            startMeasure: Double, endMeasure: Double,

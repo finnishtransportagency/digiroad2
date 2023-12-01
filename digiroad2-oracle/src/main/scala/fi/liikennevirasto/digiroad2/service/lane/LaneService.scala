@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdate
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
-import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
+import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode, pwLanesTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
 import org.joda.time.DateTime
@@ -144,6 +144,29 @@ trait LaneOperations {
             roadLink.linkType.value, roadLink.constructionType.value)
         }
     }.toSeq
+  }
+
+  def getLanesAndRoadLinkOnLinearReferencePoint(linkId: String, mValue: Double): (Seq[PieceWiseLane], RoadLink) = {
+    val roadLink = roadLinkService.getRoadLinksByLinkIds(Set(linkId)).headOption.getOrElse(throw new NoSuchElementException(s"No road link found on given linkId: $linkId"))
+    val lanesOnLink = getLanesByRoadLinks(Seq(roadLink))
+    val lanesOnPoint = lanesOnLink.filter(lane => {
+      lane.startMeasure <= mValue && lane.endMeasure >= mValue
+    })
+    val lanesWithPossibleRoadAddressInfo = LogUtils.time(logger, "Get Viite road address for lanes"){
+      roadAddressService.laneWithRoadAddress(lanesOnPoint)
+    }
+
+    if (lanesWithPossibleRoadAddressInfo.forall { lane =>
+      val roadNumber = lane.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
+      roadNumber.nonEmpty
+    }) {
+      val roadLinkGrouped = Seq(roadLink).groupBy(_.linkId).mapValues(_.head)
+      val lanesWithAccurateAddressInfo = calculateAccurateAddrMValuesForCutLanes(lanesWithPossibleRoadAddressInfo, roadLinkGrouped)
+      val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithAccurateAddressInfo)
+      (twoDigitLanes, roadLink)
+    } else {
+      (lanesWithPossibleRoadAddressInfo, roadLink)
+    }
   }
 
   def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
