@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdate
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
-import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
+import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode, pwLanesTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
 import org.joda.time.DateTime
@@ -162,7 +162,8 @@ trait LaneOperations {
     }) {
       val roadLinkGrouped = Seq(roadLink).groupBy(_.linkId).mapValues(_.head)
       val lanesWithAccurateAddressInfo = calculateAccurateAddrMValuesForCutLanes(lanesWithPossibleRoadAddressInfo, roadLinkGrouped)
-      (lanesWithAccurateAddressInfo, roadLink)
+      val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithAccurateAddressInfo)
+      (twoDigitLanes, roadLink)
     } else {
       (lanesWithPossibleRoadAddressInfo, roadLink)
     }
