@@ -61,6 +61,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
     
     runWithRollback {
       TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
+      TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes) // check that no overlapping assets are created even if the process is run twice
       val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq("624df3a8-b403-4b42-a032-41d4b59e1840:1"), false)
       assetsAfter.size should be(1)
       val sorted = assetsAfter.sortBy(_.endMeasure)

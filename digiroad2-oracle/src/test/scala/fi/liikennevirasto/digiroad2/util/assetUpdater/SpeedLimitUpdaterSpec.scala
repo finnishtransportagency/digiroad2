@@ -149,6 +149,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       val newLink = "624df3a8-b403-4b42-a032-41d4b59e1840:1"
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes) // check that no overlapping assets are created even if the process is run twice
       val unknown =  speedLimitService.getUnknownByLinkIds(Set(newLink),newTransaction = false)
       unknown.size should be(1)
     }

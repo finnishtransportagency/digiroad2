@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
-  override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
-    val (remove, other) = changes.partition(_.changeType == RoadLinkChangeType.Remove)
+  override def filterChanges(typeId: Int, changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+    val (remove, other) = super.filterChanges(typeId, changes).partition(_.changeType == RoadLinkChangeType.Remove)
     val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
     val filterChanges = if (linksOther.nonEmpty) {
       val links = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(linksOther,false)
