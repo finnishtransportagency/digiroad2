@@ -153,7 +153,10 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val changeSet = LaneUpdater.handleChanges(relevantChanges)
       LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChanges)
 
+      // check that no overlapping lanes are created even if the process is run twice
       val duplicateChangeSet = LaneUpdater.handleChanges(relevantChanges)
+      duplicateChangeSet.isEmpty should equal(true)
+
       LaneUpdater.updateSamuutusChangeSet(duplicateChangeSet, relevantChanges)
 
       val createdLanesOnNewLinks = LaneServiceWithDao.fetchExistingLanesByLinkIds(newLinkIds)
