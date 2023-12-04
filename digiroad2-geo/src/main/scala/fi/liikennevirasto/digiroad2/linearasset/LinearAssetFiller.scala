@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.lane.PersistedLane
 object LinearAssetFiller {
   case class MValueAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double,timeStamp: Long=0)
-  case class SideCodeAdjustment(assetId: Long, sideCode: SideCode, typeId: Int,oldId:Long = 0 )
+  case class SideCodeAdjustment(assetId: Long, sideCode: SideCode, typeId: Int,oldId:Long = 0 ,timeStamp: Long=0)
   case class ValueAdjustment(asset: PieceWiseLinearAsset)
   case class ChangeSet(droppedAssetIds: Set[Long],
                        adjustedMValues: Seq[MValueAdjustment],
@@ -58,6 +59,24 @@ object LinearAssetFiller {
     assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p =>
       assetAdjustments.droppedAssetIds.contains(p.assetId) ||
         assetAdjustments.expiredAssetIds.contains(p.assetId)))
+  }
+  case class Measures(starMeasure:Double,endMeasure:Double)
+  def removeDuplicated(assetAdjustments: ChangeSet): ChangeSet = {
+    val mValueAdjustments = assetAdjustments.adjustedMValues.groupBy(_.assetId)
+    val mValueAdjustments2 = assetAdjustments.adjustedMValues.groupBy(_.linkId)
+
+
+    mValueAdjustments2.filter(a=> {
+      
+      val assets = a._2
+      
+      val overFlapping=assets.map(a=>Measures(a.startMeasure,a.endMeasure)).sortBy(_.endMeasure)
+
+      def partsAreContinues(current: Measures, next: Measures) = Math.abs(current.starMeasure - next.endMeasure) < 0.1
+      assets.size>2
+    })
+    mValueAdjustments.filter(_._2.size>2)
+    assetAdjustments
   }
 
   def removeExpiredMValuesAdjustments2(assetAdjustments: ChangeSet): ChangeSet = {
