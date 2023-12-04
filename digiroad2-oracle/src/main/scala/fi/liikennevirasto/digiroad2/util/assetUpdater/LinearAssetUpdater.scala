@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, getDefaultEpsilon}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Add
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.linearasset.{MValueUpdate, PostGISLinearAssetDao}
@@ -394,11 +395,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     resetReport()
   }
   /**
-    * 2) [[filterChanges]] Apply only needed changes to assets by writing your own filtering logic. Default is do nothing.
+    * 2) [[filterChanges]] Apply only needed changes to assets by writing your own filtering logic. Default is to remove
+    * new links that already have assets, so that duplicate assets will not be created.
+    * @param typeId
     * @param changes
-    * @return
+    * @return filtered changes
     */
-  def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = changes
+  def filterChanges(typeId: Int, changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+    val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
+    val linkIdsWithExistingAsset = service.fetchExistingAssetsByLinksIdsString(typeId, newLinkIds.toSet, Set(), newTransaction = false).map(_.linkId)
+    if (linkIdsWithExistingAsset.nonEmpty) logger.info(s"found already created assets on new links ${linkIdsWithExistingAsset}")
+    changes.filterNot(c => c.changeType == Add && linkIdsWithExistingAsset.contains(c.newLinks.head.linkId))
+  }
   /**
     * 4.2) Add logic to create assets when link is created. Default is do nothing.
     * @param change
@@ -458,7 +466,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]): Unit = {
-    val changes = filterChanges(changesAll)
+    val changes = filterChanges(typeId, changesAll)
     val oldIds = changes.filterNot(isDeletedOrNew).map(_.oldLink.get.linkId)
     val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
     val addedLinksCount = changes.filter(isNew).flatMap(_.newLinks).size

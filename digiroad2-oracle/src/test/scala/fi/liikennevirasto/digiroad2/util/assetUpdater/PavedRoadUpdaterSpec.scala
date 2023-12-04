@@ -88,6 +88,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
     runWithRollback {
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+      TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes) // check that no overlapping assets are created even if the process is run twice
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkId15), false)
       assetsAfter.size should be(1)
       val sorted = assetsAfter.sortBy(_.endMeasure)
