@@ -18,6 +18,7 @@ import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, LogUtils, MainLanePopulationProcess}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Add
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -406,6 +407,10 @@ object LaneUpdater {
     val newLinkIds = roadLinkChanges.flatMap(_.newLinks.map(_.linkId))
     val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
 
+    val linkIdsWithExistingLane = laneService.fetchAllLanesByLinkIds(newLinkIds, newTransaction = false).map(_.linkId)
+    if (linkIdsWithExistingLane.nonEmpty) logger.info(s"found already created lanes on new links ${linkIdsWithExistingLane}")
+    val filteredChanges = roadLinkChanges.filterNot(c => c.changeType == Add && linkIdsWithExistingLane.contains(c.newLinks.head.linkId))
+
     val lanesOnOldRoadLinks = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false)
     val lanesOnWorkListLinks = laneService.fetchAllLanesByLinkIds(oldWorkListLinkIds, newTransaction = false)
 
@@ -413,7 +418,7 @@ object LaneUpdater {
     val workListMainLanes = lanesOnWorkListLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
     val (trafficDirectionChangeSet, trafficDirectionCreatedMainLanes) = handleTrafficDirectionChange(workListChanges, workListMainLanes)
 
-    val changeSetsAndAdjustedLanes = roadLinkChanges.map(change => {
+    val changeSetsAndAdjustedLanes = filteredChanges.map(change => {
       change.changeType match {
         case RoadLinkChangeType.Add =>
           val newLinkIds = change.newLinks.map(_.linkId)

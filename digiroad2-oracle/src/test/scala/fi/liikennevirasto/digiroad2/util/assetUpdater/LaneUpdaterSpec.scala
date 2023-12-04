@@ -153,6 +153,9 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val changeSet = LaneUpdater.handleChanges(relevantChanges)
       LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChanges)
 
+      val duplicateChangeSet = LaneUpdater.handleChanges(relevantChanges)
+      LaneUpdater.updateSamuutusChangeSet(duplicateChangeSet, relevantChanges)
+
       val createdLanesOnNewLinks = LaneServiceWithDao.fetchExistingLanesByLinkIds(newLinkIds)
       createdLanesOnNewLinks.size should equal(6)
 
