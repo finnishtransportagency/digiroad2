@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, LogUtilsGeo, Point}
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
 import scala.collection.{Seq, mutable}
@@ -21,6 +21,13 @@ case class RoadLinkForFillTopology(linkId: String, length:Double, trafficDirecti
 
     !(constructionTypeAllowed.contains(constructionType) || (roadLinkTypeAllowed.contains(linkType) && administrativeClass == State))
   }
+}
+
+def createTimeStamp(offsetHours: Int = 5): Long = {
+  val oneHourInMs = 60 * 60 * 1000L
+  val utcTime = DateTime.now().minusHours(offsetHours).getMillis
+  val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
+  curr - (curr % (24L * oneHourInMs))
 }
 
 class AssetFiller {
@@ -73,7 +80,7 @@ class AssetFiller {
     val adjustedEndMeasure = if (endMeasureDifference != 0.0 && endMeasureDifference < AllowedTolerance) Some(roadLinkLength) else None
     val mValueAdjustments = (adjustedStartMeasure, adjustedEndMeasure) match {
       case (None, None) => Nil
-      case (s, e)       => Seq(MValueAdjustment(asset.id, asset.linkId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure)))
+      case (s, e)       => Seq(MValueAdjustment(asset.id, asset.linkId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure),createTimeStamp()))
     }
     val adjustedAsset = asset.copy(
       startMeasure = adjustedStartMeasure.getOrElse(asset.startMeasure),
@@ -107,7 +114,7 @@ class AssetFiller {
     val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
     val cappedSegments = overflowingSegments.map { s =>
       (s.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, Math.min(s.startMeasure, linkLength), linkLength), endMeasure = linkLength),
-        MValueAdjustment(s.id, roadLink.linkId, Math.min(s.startMeasure, linkLength), linkLength))
+        MValueAdjustment(s.id, roadLink.linkId, Math.min(s.startMeasure, linkLength), linkLength,createTimeStamp()))
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
@@ -134,16 +141,16 @@ class AssetFiller {
       val adjusted = roadLink.trafficDirection match {
         case TrafficDirection.AgainstDigitizing => segments.map { s =>
           s.sideCode match {
-            case SideCode.BothDirections => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId,oldId = s.oldId))
-            case SideCode.TowardsDigitizing => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId,oldId = s.oldId))
-            case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId))
+            case SideCode.BothDirections => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId,oldId = s.oldId,timeStamp=createTimeStamp()))
+            case SideCode.TowardsDigitizing => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId,oldId = s.oldId,timeStamp=createTimeStamp()))
+            case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId,timeStamp=createTimeStamp()))
           }
         }
         case TrafficDirection.TowardsDigitizing => segments.map { s =>
           s.sideCode match {
-            case SideCode.BothDirections => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId,oldId = s.oldId))
-            case SideCode.AgainstDigitizing => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId,oldId = s.oldId))
-            case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId))
+            case SideCode.BothDirections => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId,oldId = s.oldId,timeStamp=createTimeStamp()))
+            case SideCode.AgainstDigitizing => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId,oldId = s.oldId,timeStamp=createTimeStamp()))
+            case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId,timeStamp=createTimeStamp()))
           }
         }
       }
@@ -280,7 +287,7 @@ class AssetFiller {
         val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
         GeometryUtils.withinTolerance(newGeom, asset.geometry, MaxAllowedMValueError) match {
           case true => (asset, None)
-          case false => (asset.copy(geometry = newGeom) , Option(MValueAdjustment(asset.id, asset.linkId, asset.startMeasure, asset.endMeasure)))
+          case false => (asset.copy(geometry = newGeom) , Option(MValueAdjustment(asset.id, asset.linkId, asset.startMeasure, asset.endMeasure,createTimeStamp())))
         }
       }
     }
@@ -317,7 +324,7 @@ class AssetFiller {
     val updatedAssetsAndMValueAdjustments = updateGeometry(combinedSegment, roadLink)
     val changedSideCodes = combinedSegment.filter(cl =>
       assets.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
-      map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode.value), sl.typeId))
+      map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode.value), sl.typeId,timeStamp=createTimeStamp()))
     val resultingAssets = updatedAssetsAndMValueAdjustments.map(n => n._1) ++ updateGeometry(newSegments, roadLink).map(_._1)
     val expiredIds = assets.map(_.id).toSet.--(resultingAssets.map(_.id).toSet)
 
@@ -496,7 +503,7 @@ class AssetFiller {
 
       // Creates for each linear asset a new MValueAdjustment if the start or end measure have changed
       val mValueChanges = alteredSegments.filter(isChanged).
-        map(s => MValueAdjustment(s.id, s.linkId, s.startMeasure, s.endMeasure))
+        map(s => MValueAdjustment(s.id, s.linkId, s.startMeasure, s.endMeasure,createTimeStamp()))
 
       val expiredIds = segments.map(_.id).filterNot(_ == 0).toSet -- alteredSegments.map(_.id) ++ changeSet.expiredAssetIds
       (sortedSegments,
@@ -560,7 +567,7 @@ class AssetFiller {
           geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, origin.startMeasure, target.get.endMeasure),
           timeStamp = latestTimestamp(toBeFused.head, target))
         val expiredId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to expire id zero
-        val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
+        val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure,createTimeStamp()))
         // Replace origin and target with this new item in the list and recursively call itself again
         fuse(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
           changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(a=>a.assetId > 0 && a.assetId != modified.id) ++ mValueAdjustment))
@@ -580,7 +587,7 @@ class AssetFiller {
     val roadLinkLength = roadLink.length
     val mAdjustment =
       if (asset.startMeasure > 0 || asset.endMeasure < roadLinkLength)
-        Seq(MValueAdjustment(asset.id, asset.linkId, 0, roadLinkLength))
+        Seq(MValueAdjustment(asset.id, asset.linkId, 0, roadLinkLength,createTimeStamp()))
       else
         Nil
     val modifiedSegment = asset.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
@@ -589,7 +596,7 @@ class AssetFiller {
 
   def adjustRoadLinkLongAssetHead(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (Option[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
     if (asset.startMeasure > 0) {
-      val mAdjustment= Seq(MValueAdjustment(asset.id, asset.linkId, 0, asset.endMeasure))
+      val mAdjustment= Seq(MValueAdjustment(asset.id, asset.linkId, 0, asset.endMeasure,createTimeStamp()))
       val modifiedSegment = asset.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, asset.endMeasure), startMeasure = 0, endMeasure = asset.endMeasure)
       (Some(modifiedSegment), mAdjustment)
     }else {
@@ -600,7 +607,7 @@ class AssetFiller {
   def adjustRoadLinkLongAssetTail(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (Option[PieceWiseLinearAsset], Seq[MValueAdjustment]) = {
     val roadLinkLength = roadLink.length
     if (asset.endMeasure < roadLinkLength) {
-      val mAdjustment= Seq(MValueAdjustment(asset.id, asset.linkId, asset.startMeasure, roadLinkLength))
+      val mAdjustment= Seq(MValueAdjustment(asset.id, asset.linkId, asset.startMeasure, roadLinkLength,createTimeStamp()))
       val modifiedSegment = asset.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, roadLinkLength), startMeasure = asset.startMeasure, endMeasure = roadLinkLength)
       (Some(modifiedSegment), mAdjustment)
     } else {
@@ -778,7 +785,7 @@ class AssetFiller {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
             timeStamp = latestTimestamp(left, right))
-          val adj = MValueAdjustment(adjustedLeft.id, adjustedLeft.linkId, adjustedLeft.startMeasure, adjustedLeft.endMeasure)
+          val adj = MValueAdjustment(adjustedLeft.id, adjustedLeft.linkId, adjustedLeft.startMeasure, adjustedLeft.endMeasure, createTimeStamp())
           val recurse = fillBySideCode(assets.tail, roadLink, changeSet)
           (Seq(adjustedLeft) ++ recurse._1, recurse._2.copy(adjustedMValues = recurse._2.adjustedMValues ++ Seq(adj)))
         } else {

@@ -73,7 +73,7 @@ object SpeedLimitFiller extends AssetFiller {
     val onlyLimitOnLink = assets.length == 1 && assets.head.sideCode != SideCode.BothDirections
     if (onlyLimitOnLink) {
       val segment = assets.head
-      val sideCodeAdjustments = Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections, SpeedLimitAsset.typeId))
+      val sideCodeAdjustments = Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections, SpeedLimitAsset.typeId,timeStamp=createTimeStamp()))
       (Seq(segment.copy(sideCode = SideCode.BothDirections)), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ sideCodeAdjustments))
     } else {
       (assets, changeSet)
