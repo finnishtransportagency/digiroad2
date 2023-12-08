@@ -352,4 +352,37 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       roadLinkService.getIncompleteLinks(None, false).size should be(0)
     }
   }
+
+  test("Given a merge after a split; When old links are not missing information; Then no incomplete link should be generated") {
+    val oldLinkId1 = "73565cbb-3009-4ba7-a779-44f93f09b516:1"
+    val oldLinkId2 = "0382390e-f382-40f8-a442-677685b6e00e:1"
+    val newLinkId1 = "6d391a6d-3420-4b7e-a4e9-33a56dd12291:1"
+    val newLinkId2 = "de4a484f-5e96-46b2-8da7-4aaae50c23e5:1"
+    val relevantChanges = Seq(
+      RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId1, 555.312,
+        List(Point(410580.098, 7524656.363, 186.118), Point(410698.996, 7525137.579, 186.329)), 12316, Private, 261, UnknownDirection)),
+        List(RoadLinkInfo(newLinkId1, 734.309, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
+          12316, Unknown, 261, UnknownDirection)),
+        List(ReplaceInfo(Option(oldLinkId1), Option(newLinkId1), Option(0.0), Option(555.312), Option(0.0), Option(555.312), false))),
+      RoadLinkChange(Split, Some(RoadLinkInfo(oldLinkId2, 178.997,
+        List(Point(378461.027, 6674230.896, 1.993), Point(378521.11, 6674258.813, 6.9)), 12314, Municipality, 49, BothDirections)),
+        List(RoadLinkInfo(newLinkId1, 734.309, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
+          12316, Unknown, 261, UnknownDirection),
+          RoadLinkInfo(newLinkId2, 734.309, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
+            12316, Unknown, 261, UnknownDirection)),
+        List(ReplaceInfo(Option(oldLinkId2), Option(newLinkId1), Option(0.0), Option(178.997), Option(555.312), Option(734.309), false),
+          ReplaceInfo(Option(oldLinkId2), Option(newLinkId2), Option(0.0), Option(178.997), Option(555.312), Option(734.309), false)))
+    )
+    runWithRollback {
+      RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId1, Some("test"), 7)
+      RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId2, Some("test"), 7)
+      RoadLinkOverrideDAO.insert(LinkType, oldLinkId1, Some("test"), 1)
+      RoadLinkOverrideDAO.insert(LinkType, oldLinkId2, Some("test"), 1)
+      val transferredProperties = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(relevantChanges)
+      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(relevantChanges)
+      transferredProperties.size should be(0)
+      createdProperties.size should be(4)
+      roadLinkService.getIncompleteLinks(None, false).size should be(0)
+    }
+  }
 }
