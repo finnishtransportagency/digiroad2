@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
+import com.vividsolutions.jts.geom._
 
 object GeometryUtils {
 
@@ -466,4 +467,23 @@ object GeometryUtils {
     else
       headPoint
   }
+
+  def isPointInsideGeometry(point: Point, geometry: Geometry): Boolean = {
+    val jtsPoint = new GeometryFactory().createPoint(new Coordinate(point.x, point.y))
+    convertToJTSGeometry(geometry).contains(jtsPoint)
+  }
+
+  def convertToJTSGeometry(geometry: Geometry): Polygon = {
+    val coordinates = geometry.`type` match {
+      case "Polygon" => List(geometry.coordinates)
+      case "MultiPolygon" => geometry.coordinates
+      case _ => List.empty[List[Double]]
+    }
+
+    val polygonCoordinates = coordinates.flatMap(coordList =>
+      coordList.map(coords => new Coordinate(coords.asInstanceOf[List[Double]](0), coords.asInstanceOf[List[Double]](1)))
+    ).toArray
+    new GeometryFactory().createPolygon(polygonCoordinates)
+  }
+
 }
