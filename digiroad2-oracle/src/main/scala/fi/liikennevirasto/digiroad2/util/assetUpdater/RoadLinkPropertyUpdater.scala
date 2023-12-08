@@ -191,7 +191,7 @@ class RoadLinkPropertyUpdater {
           }
         case _ =>
           change.newLinks.foreach { newLink =>
-            if (KgvUtil.extractFeatureClass(newLink.roadClass) != WinterRoads) {
+            if (!(iteratedNewLinks.contains(newLink)) && KgvUtil.extractFeatureClass(newLink.roadClass) != WinterRoads) {
               val functionalClassChange = transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink)
               val linkTypeChange = transferOrGenerateLinkType(change.changeType, change.oldLink, newLink)
               if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
