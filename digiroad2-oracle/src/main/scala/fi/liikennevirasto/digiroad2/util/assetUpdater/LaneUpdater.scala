@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, LogUtils, MainLanePopulationProcess}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LaneUtils, LogUtils, MainLanePopulationProcess}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Add
@@ -408,7 +408,7 @@ object LaneUpdater {
     val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
 
     val linkIdsWithExistingLane = laneService.fetchAllLanesByLinkIds(newLinkIds, newTransaction = false).map(_.linkId)
-    if (linkIdsWithExistingLane.nonEmpty) logger.info(s"found already created lanes on new links ${linkIdsWithExistingLane}")
+    if (linkIdsWithExistingLane.nonEmpty) logger.info(s"found already created lanes on new links ${linkIdsWithExistingLane.mkString(", ")}")
     val filteredChanges = roadLinkChanges.filterNot(c => c.changeType == Add && linkIdsWithExistingLane.contains(c.newLinks.head.linkId))
 
     val lanesOnOldRoadLinks = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false)
@@ -421,35 +421,13 @@ object LaneUpdater {
     val changeSetsAndAdjustedLanes = filteredChanges.map(change => {
       change.changeType match {
         case RoadLinkChangeType.Add =>
-          val newLinkIds = change.newLinks.map(_.linkId)
-          val addedRoadLinks = newRoadLinks.filter(roadLink => newLinkIds.contains(roadLink.linkId)).filterNot(_.linkType == TractorRoad)
-          val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(addedRoadLinks, saveResult = false)
-          RoadLinkChangeWithResults(change, ChangeSet(generatedPersistedLanes = createdMainLanes), createdMainLanes)
+          handleAddChange(change, newRoadLinks)
         case RoadLinkChangeType.Remove =>
-          val removedLinkId = change.oldLink.get.linkId
-          val lanesToExpireOnRemovedLink = lanesOnOldRoadLinks.filter(_.linkId == removedLinkId).map(_.id).toSet
-          RoadLinkChangeWithResults(change, ChangeSet(expiredLaneIds = lanesToExpireOnRemovedLink), Seq())
+          handleRemoveChange(change, lanesOnOldRoadLinks)
         case RoadLinkChangeType.Replace =>
-          val lanesOnReplacedLink = lanesOnOldRoadLinks.filter(lane => change.oldLink.get.linkId == lane.linkId)
-          val newLinkId = change.newLinks.map(_.linkId).headOption.getOrElse("")
-          val replacementRoadLink = newRoadLinks.find(_.linkId == newLinkId)
-            .getOrElse(throw new NoSuchElementException(s"Could not find replacement roadlink with ID: $newLinkId"))
-          if(replacementRoadLink.linkType == TractorRoad) {
-            RoadLinkChangeWithResults(change, ChangeSet(expiredLaneIds = lanesOnReplacedLink.map(_.id).toSet), Seq())
-          } else {
-            val adjustmentsAndAdjustedLanes = fillReplacementLinksWithExistingLanes(lanesOnReplacedLink, change)
-            val adjustments = adjustmentsAndAdjustedLanes.map(_._1)
-            val adjustedLanes = adjustmentsAndAdjustedLanes.map(_._2)
-            RoadLinkChangeWithResults(change, ChangeSet(positionAdjustments = adjustments), adjustedLanes)
-          }
+          handleReplaceChange(change, newRoadLinks, lanesOnOldRoadLinks)
         case RoadLinkChangeType.Split =>
-          val oldRoadLink = change.oldLink.get
-          val newSplitRoadLinks = newRoadLinks.filter(link => change.newLinks.map(_.linkId).contains(link.linkId))
-          val lanesOnSplitLink = lanesOnOldRoadLinks.filter(_.linkId == oldRoadLink.linkId)
-          val adjustmentsAndAdjustedLanes = fillSplitLinksWithExistingLanes(lanesOnSplitLink, newSplitRoadLinks, change)
-          val adjustments = adjustmentsAndAdjustedLanes._1
-          val adjustedLanes = adjustmentsAndAdjustedLanes._2
-          RoadLinkChangeWithResults(change, ChangeSet(splitLanes = adjustments), adjustedLanes)
+          handleSplitChange(change, newRoadLinks, lanesOnOldRoadLinks)
       }
     })
 
@@ -461,6 +439,63 @@ object LaneUpdater {
     val removedSplit = removeSplitWhichAreAlsoPartOfMerger(finalChangeSet,linksPartOfReplacement)
     finalChangeSet.copy(splitLanes = removedSplit)
   }
+
+  private def handleAddChange(change: RoadLinkChange, newRoadLinks: Seq[RoadLink]): RoadLinkChangeWithResults = {
+    val newRoadLinkInfo = change.newLinks.headOption
+      .getOrElse(throw new NoSuchElementException(s"Replacement change is missing new link info, old linkID: ${change.oldLink.get.linkId}"))
+    val newFeatureClass = KgvUtil.extractFeatureClass(newRoadLinkInfo.roadClass)
+    if(FeatureClass.featureClassesToIgnore.contains(newFeatureClass)) {
+      RoadLinkChangeWithResults(change, ChangeSet(), Seq())
+    } else {
+      val addedRoadLink = newRoadLinks.find(_.linkId == newRoadLinkInfo.linkId)
+        .getOrElse(throw new NoSuchElementException(s"Could not find added roadlink with ID: $newRoadLinkInfo.linkId"))
+      if(addedRoadLink.linkType == TractorRoad) {
+        RoadLinkChangeWithResults(change, ChangeSet(), Seq())
+      } else {
+        val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(Seq(addedRoadLink), saveResult = false)
+        RoadLinkChangeWithResults(change, ChangeSet(generatedPersistedLanes = createdMainLanes), createdMainLanes)
+      }
+    }
+  }
+
+  private def handleRemoveChange(change: RoadLinkChange, lanesOnOldRoadLinks: Seq[PersistedLane]): RoadLinkChangeWithResults = {
+    val removedLinkId = change.oldLink.get.linkId
+    val lanesToExpireOnRemovedLink = lanesOnOldRoadLinks.filter(_.linkId == removedLinkId).map(_.id).toSet
+    RoadLinkChangeWithResults(change, ChangeSet(expiredLaneIds = lanesToExpireOnRemovedLink), Seq())
+  }
+
+  private def handleReplaceChange(change: RoadLinkChange, newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks: Seq[PersistedLane]): RoadLinkChangeWithResults = {
+    val lanesOnReplacedLink = lanesOnOldRoadLinks.filter(lane => change.oldLink.get.linkId == lane.linkId)
+    val newRoadLinkInfo = change.newLinks.headOption
+      .getOrElse(throw new NoSuchElementException(s"Replacement change is missing new link info, old linkID: ${change.oldLink.get.linkId}"))
+    val newLinkId = newRoadLinkInfo.linkId
+    val newFeatureClass = KgvUtil.extractFeatureClass(newRoadLinkInfo.roadClass)
+    if(FeatureClass.featureClassesToIgnore.contains(newFeatureClass)) {
+      RoadLinkChangeWithResults(change, ChangeSet(expiredLaneIds = lanesOnReplacedLink.map(_.id).toSet), Seq())
+    } else {
+      val replacementRoadLink = newRoadLinks.find(_.linkId == newLinkId)
+        .getOrElse(throw new NoSuchElementException(s"Could not find replacement roadlink with ID: $newLinkId"))
+      if(replacementRoadLink.linkType == TractorRoad) {
+        RoadLinkChangeWithResults(change, ChangeSet(expiredLaneIds = lanesOnReplacedLink.map(_.id).toSet), Seq())
+      } else {
+        val adjustmentsAndAdjustedLanes = fillReplacementLinksWithExistingLanes(lanesOnReplacedLink, change)
+        val adjustments = adjustmentsAndAdjustedLanes.map(_._1)
+        val adjustedLanes = adjustmentsAndAdjustedLanes.map(_._2)
+        RoadLinkChangeWithResults(change, ChangeSet(positionAdjustments = adjustments), adjustedLanes)
+      }
+    }
+  }
+
+  private def handleSplitChange(change: RoadLinkChange, newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks: Seq[PersistedLane]): RoadLinkChangeWithResults= {
+    val oldRoadLink = change.oldLink.get
+    val newSplitRoadLinks = newRoadLinks.filter(link => change.newLinks.map(_.linkId).contains(link.linkId))
+    val lanesOnSplitLink = lanesOnOldRoadLinks.filter(_.linkId == oldRoadLink.linkId)
+    val adjustmentsAndAdjustedLanes = fillSplitLinksWithExistingLanes(lanesOnSplitLink, newSplitRoadLinks, change)
+    val adjustments = adjustmentsAndAdjustedLanes._1
+    val adjustedLanes = adjustmentsAndAdjustedLanes._2
+    RoadLinkChangeWithResults(change, ChangeSet(splitLanes = adjustments), adjustedLanes)
+  }
+
   private def removeSplitWhichAreAlsoPartOfMerger(finalChangeSet: ChangeSet,linksPartOfReplacement:Seq[String]) = {
     finalChangeSet.splitLanes.map(b => {
       b.copy(lanesToCreate = b.lanesToCreate.filterNot(c => linksPartOfReplacement.contains(c.linkId)))
@@ -521,8 +556,11 @@ object LaneUpdater {
 
   def fillSplitLinksWithExistingLanes(lanesToUpdate: Seq[PersistedLane], newRoadLinks: Seq[RoadLink], change: RoadLinkChange): (Seq[LaneSplit], Seq[PersistedLane]) = {
     def filterTractorRoadSplits(laneSplit: LaneSplit): LaneSplit = {
-      val tractorRoadLinkIds = newRoadLinks.filter(_.linkType == TractorRoad).map(_.linkId)
-      val lanesToCreateFiltered = laneSplit.lanesToCreate.filterNot(laneToCreate => tractorRoadLinkIds.contains(laneToCreate.linkId))
+      val newLinkIdsFilteredByFC = change.newLinks.filterNot(linkInfo => {
+        FeatureClass.featureClassesToIgnore.contains(KgvUtil.extractFeatureClass(linkInfo.roadClass))
+      }).map(_.linkId)
+      val filteredByFcAndLinkType = newRoadLinks.filter(rl => newLinkIdsFilteredByFC.contains(rl.linkId) && rl.linkType != TractorRoad).map(_.linkId)
+      val lanesToCreateFiltered = laneSplit.lanesToCreate.filter(laneToCreate => filteredByFcAndLinkType.contains(laneToCreate.linkId))
       laneSplit.copy(lanesToCreate = lanesToCreateFiltered)
     }
     val (mainLanesOnOldLink, additionalLanesOnOldLink) = lanesToUpdate.partition(lane => isMainLane(lane.laneCode))
