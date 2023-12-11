@@ -14,6 +14,7 @@ import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.compat.Platform.EOL
 
 case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
@@ -50,6 +51,7 @@ case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, 
 class RoadAddressService(viiteClient: SearchViiteClient ) {
   val roadAddressTempDAO = new RoadAddressTempDAO
   val logger = LoggerFactory.getLogger(getClass)
+  val BATCH_SIZE_LIMIT = 1000 // limit determined by Jetty for DOS protection
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -127,16 +129,40 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    if (linkIds.nonEmpty) {
+    (linkIds.nonEmpty) match {
+      case true =>
+        processLinkIdBatches(linkIds, Seq.empty[RoadAddressForLink])
+      case false =>
+        Seq.empty[RoadAddressForLink]
+    }
+  }
+
+  @tailrec
+  private def processLinkIdBatches(linkIds: Seq[String], roadAddressCollection: Seq[RoadAddressForLink]): Seq[RoadAddressForLink] = {
+    (linkIds.nonEmpty) match {
+      case true =>
+        val (linkIdBatch, remainingIds) = linkIds.splitAt(BATCH_SIZE_LIMIT)
+        val batchResult = processLinkIdBatch(linkIdBatch)
+        processLinkIdBatches(remainingIds, roadAddressCollection ++ batchResult)
+      case false =>
+        roadAddressCollection
+    }
+  }
+
+  def processLinkIdBatch(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
+    (linkIds.nonEmpty) match {
+      case true =>
       val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
       ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
         LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
           viiteClient.fetchAllByLinkIds(linkIds)
         }
       }
-    } else Seq()
+      case false =>
+        Seq.empty[RoadAddressForLink]
+    }
   }
-  
+
   def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = {
     withDynTransaction {
       val tempAddresses = roadAddressTempDAO.getByLinkIds(linkIds)
