@@ -129,21 +129,9 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     (linkIds.nonEmpty) match {
       case true =>
-        processLinkIdBatches(linkIds, Seq.empty[RoadAddressForLink])
+        linkIds.grouped(BATCH_SIZE_LIMIT).flatMap(processLinkIdBatch(_)).toSeq
       case false =>
         Seq.empty[RoadAddressForLink]
-    }
-  }
-
-  @tailrec
-  private def processLinkIdBatches(linkIds: Seq[String], roadAddressCollection: Seq[RoadAddressForLink]): Seq[RoadAddressForLink] = {
-    (linkIds.nonEmpty) match {
-      case true =>
-        val (linkIdBatch, remainingIds) = linkIds.splitAt(BATCH_SIZE_LIMIT)
-        val batchResult = processLinkIdBatch(linkIdBatch)
-        processLinkIdBatches(remainingIds, roadAddressCollection ++ batchResult)
-      case false =>
-        roadAddressCollection
     }
   }
 
