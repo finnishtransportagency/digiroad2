@@ -49,6 +49,7 @@ case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, 
 class RoadAddressService(viiteClient: SearchViiteClient ) {
 
   val logger = LoggerFactory.getLogger(getClass)
+  val BATCH_SIZE_LIMIT = 1000 // limit determined by Jetty for DOS protection
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -126,14 +127,38 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    if (linkIds.nonEmpty) {
+    (linkIds.nonEmpty) match {
+      case true =>
+        processLinkIdBatches(linkIds, Seq.empty[RoadAddressForLink])
+      case false =>
+        Seq.empty[RoadAddressForLink]
+    }
+  }
+
+  @tailrec
+  private def processLinkIdBatches(linkIds: Seq[String], roadAddressCollection: Seq[RoadAddressForLink]): Seq[RoadAddressForLink] = {
+    (linkIds.nonEmpty) match {
+      case true =>
+        val (linkIdBatch, remainingIds) = linkIds.splitAt(BATCH_SIZE_LIMIT)
+        val batchResult = processLinkIdBatch(linkIdBatch)
+        processLinkIdBatches(remainingIds, roadAddressCollection ++ batchResult)
+      case false =>
+        roadAddressCollection
+    }
+  }
+
+  def processLinkIdBatch(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
+    (linkIds.nonEmpty) match {
+      case true =>
       val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
       ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
         LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
           viiteClient.fetchAllByLinkIds(linkIds)
         }
       }
-    } else Seq()
+      case false =>
+        Seq.empty[RoadAddressForLink]
+    }
   }
 
   /**
@@ -144,7 +169,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     */
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink], logComment: String = ""): Seq[RoadLink] = {
     try {
-      
+
       val roadAddressLinks = getAllByLinkIds(roadLinks.map(_.linkId))
       val addressData = groupRoadAddress(roadAddressLinks).map(a => (a.linkId, a)).toMap
       logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links. ${logComment}")
@@ -166,7 +191,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
       case e: Exception =>
         logger.error(s"Unknown error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
         logger.info(s"Failed to retrieve road address information, return links without it. ${logComment}")
-        roadLinks  
+        roadLinks
     }
   }
 
