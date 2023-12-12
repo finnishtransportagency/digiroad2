@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.MValueCalculator
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
@@ -448,6 +449,43 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       })
 
       TestLinearAssetUpdaterNoRoadLinkMock.getReport().groupBy(_.changeType).find(_._1 == ChangeTypeReport.Deletion).get._2.size should be(1)
+    }
+  }
+
+
+  test("case 2 links under asset is merged, check that only the final MValueAdjustment is retained") {
+    object TestLinearAssetUpdaterWithoutDbUpdate extends LinearAssetUpdater(service) {
+      val changeSets: ListBuffer[ChangeSet] = ListBuffer()
+
+      override def updateChangeSet(changeSet: LinearAssetFiller.ChangeSet): Unit = {
+        changeSets.append(changeSet)
+      }
+    }
+
+    runWithRollback {
+      val linksid1 = linkId7
+      val linksid2 = linkId8
+      val change = roadLinkChangeClient.convertToRoadLinkChange(source)
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid1).get
+      val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(linksid2).get
+      val newLinkId = "524c67d9-b8af-4070-a4a1-52d7aec0526c:1"
+
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid1, NumericValue(3), SideCode.BothDirections.value,
+        Measures(0, 23.48096698), "testuser", 0L, Some(oldRoadLink), true, Some("testCreator"),
+        Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2022-01-01")))
+      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid2, NumericValue(3), SideCode.BothDirections.value, Measures(0, 66.25297685), "testuser", 0L, Some(oldRoadLink2), true, Some("testCreator"),
+        Some(DateTime.parse("2019-01-01")), Some("testModifier"), Some(DateTime.parse("2023-01-01")))
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
+      assetsBefore.size should be(2)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterWithoutDbUpdate.updateByRoadLinks(TrafficVolume.typeId, change)
+      val adjustments = TestLinearAssetUpdaterWithoutDbUpdate.changeSets.head.adjustedMValues
+      adjustments.size should be(1)
+      adjustments.head.linkId should be(newLinkId)
+      adjustments.head.startMeasure should be(0.0)
+      adjustments.head.endMeasure should be(89.728)
     }
   }
 
