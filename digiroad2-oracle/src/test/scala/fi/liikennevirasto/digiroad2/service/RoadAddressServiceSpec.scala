@@ -29,7 +29,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     against.addressMValueToLRM(111L) should be (None)
   }
 
-  test("When fetching RoadAddress info with more than 1000 linkIds, returned batches should be combined into one sequence") {
+  test("When fetching RoadAddress info with more than 1000 linkIds, then returned batches should be combined into one sequence") {
     val mockRoadAddresses: Seq[RoadAddressForLink] = List.fill(1000)(RoadAddressForLink(1L, 1L, 1L, Track.RightSide, 100, 110, None, None, LinkIdGenerator.generateRandom(), 1.5, 11.4, SideCode.TowardsDigitizing, Seq(), false, None, None, None))
     val linkIds: Seq[String] = List.fill(2000)(LinkIdGenerator.generateRandom())
     when(mockViiteClient.fetchAllByLinkIds(any[Seq[String]])).thenReturn(mockRoadAddresses)
