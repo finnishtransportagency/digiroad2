@@ -626,7 +626,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       case _ => List(adjusting(typeId, changeSet, assetsByLink))
     }
     
-    val changeSetResult = result.map(_._2).foldLeft(LinearAssetFiller.useOrEmpty(changeSet)) { (a, b) =>
+    val changeSetResult = result.map(_._2).foldLeft(LinearAssetFiller.useOrEmpty(None)) { (a, b) =>
       LinearAssetFiller.combineChangeSets(a, b)
     }
     (result.flatMap(_._1), LinearAssetFiller.removeExpiredMValuesAdjustments(changeSetResult))
