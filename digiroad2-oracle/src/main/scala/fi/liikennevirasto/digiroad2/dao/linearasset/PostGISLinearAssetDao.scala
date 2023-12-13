@@ -987,7 +987,7 @@ class PostGISLinearAssetDao() {
             values ((?), (?), (?),${timestamp},${timestamp},(?),${timestamp},(?),(?), (?), (?));
             """.stripMargin
     
-    if (verifiedDateFromUpdateNo.nonEmpty){
+    if (verifiedDateFromUpdateYes.nonEmpty){
       MassQuery.executeBatch(verifiedStatementSql) { ps => 
         verifiedDateFromUpdateYes.foreach(a => verifiedStatement(ps, a.asset.typeId, a.asset.createdByFromUpdate, a.asset.createdDateTimeFromUpdate, 
             a.asset.modifiedDateTimeFromUpdate, a.asset.verifiedBy, a.asset.verifiedDateFromUpdate, a.asset.informationSource, a.id,
