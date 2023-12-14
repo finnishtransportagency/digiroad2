@@ -874,8 +874,7 @@ class PostGISLinearAssetDao() {
 
     if (verifiedBy.nonEmpty) ps.setString(8, verifiedBy.get)
     else ps.setNull(8, java.sql.Types.VARCHAR)
-
-    if (verifiedDateFromUpdate.nonEmpty) ps.setString(9, verifiedDateFromUpdate.toString)
+    if (verifiedDateFromUpdate.nonEmpty) ps.setString(9, verifiedDateFromUpdate.get.toString)
     else ps.setNull(9, java.sql.Types.VARCHAR)
 
     if (informationSource.nonEmpty) ps.setInt(10, informationSource.get)
@@ -984,7 +983,7 @@ class PostGISLinearAssetDao() {
     val (verifiedDateFromUpdateYes, verifiedDateFromUpdateNo) = fromUpdate.partition(_.asset.verifiedDateFromUpdate.isDefined)
     val verifiedStatementSql =
       s""" insert  into asset (id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry) 
-            values ((?), (?), (?),${timestamp},${timestamp},(?),${timestamp},(?),(?), (?), (?));
+            values ((?), (?), (?),${timestamp},${timestamp},(?),${timestamp},(?),${timestamp}, (?), (?));
             """.stripMargin
     
     if (verifiedDateFromUpdateYes.nonEmpty){

@@ -1712,7 +1712,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
-      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 18.081), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id1 = service.createWithoutTransaction(HeightLimit.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value,
+        Measures(0, 18.081), "testuser", 0L, Some(oldRoadLink), false, None, None, verifiedBy = Some("testVerifier"))
 
       val assetsBefore = service.getPersistedAssetsByIds(HeightLimit.typeId, Set(id1), false)
       assetsBefore.size should be(1)
