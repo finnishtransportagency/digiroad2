@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LogUtils}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.{Asset, ChangeReport, ChangeReporter, ChangeType, ChangedAsset, LinearReferenceForReport, SamuutusFailed, ValidateSamuutus}
 import org.joda.time.DateTime
@@ -132,6 +132,8 @@ class PointAssetUpdater(service: PointAssetOperations) {
     newLinkInfo match {
       case Some(link) if link.municipality != asset.municipalityCode =>
         (true, Some(FloatingReason.DifferentMunicipalityCode))
+      case Some(link) if FeatureClass.featureClassesToIgnore.contains(KgvUtil.extractFeatureClass(link.roadClass)) =>
+        (true, Some(FloatingReason.InvalidFeatureClass))
       case None =>
         (true, Some(FloatingReason.NoRoadLinkFound))
       case _ =>
