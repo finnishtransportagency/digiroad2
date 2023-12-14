@@ -50,7 +50,6 @@ case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, 
 class RoadAddressService(viiteClient: SearchViiteClient ) {
   val roadAddressTempDAO = new RoadAddressTempDAO
   val logger = LoggerFactory.getLogger(getClass)
-  val BATCH_SIZE_LIMIT = 1000 // limit determined by Jetty for DOS protection
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -130,21 +129,12 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     (linkIds.nonEmpty) match {
       case true =>
-        linkIds.grouped(BATCH_SIZE_LIMIT).flatMap(processLinkIdBatch(_)).toSeq
-      case false =>
-        Seq.empty[RoadAddressForLink]
-    }
-  }
-
-  def processLinkIdBatch(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    (linkIds.nonEmpty) match {
-      case true =>
-      val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
-      ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
-        LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
-          viiteClient.fetchAllByLinkIds(linkIds)
+        val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
+        ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
+          LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
+            viiteClient.fetchAllByLinkIds(linkIds)
+          }
         }
-      }
       case false =>
         Seq.empty[RoadAddressForLink]
     }
