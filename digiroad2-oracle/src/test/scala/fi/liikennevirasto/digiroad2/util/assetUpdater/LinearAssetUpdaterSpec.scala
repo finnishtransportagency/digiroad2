@@ -335,6 +335,23 @@ trait UpdaterUtilsSuite {
       )
     )
   }
+
+  def changeAddWinterRoad(newLinkId: String): RoadLinkChange = {
+    RoadLinkChange(
+      changeType = RoadLinkChangeType.Add,
+      oldLink = None,
+      newLinks = Seq(RoadLinkInfo(
+        linkId = newLinkId,
+        linkLength = 150.675,
+        geometry = List(),
+        roadClass = 12312,//WinterRoad MTKClass
+        adminClass = Municipality,
+        municipality = 0,
+        trafficDirection = TrafficDirection.BothDirections
+      )),
+      replaceInfo = Seq.empty[ReplaceInfo])
+  }
+
 }
 
 class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers with UpdaterUtilsSuite {
@@ -2020,6 +2037,106 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetOnLink2.startMeasure should be(0.0)
       assetOnLink2.endMeasure should be(10.248)
       assetOnLink2.value.get should be(NumericValue(5))
+    }
+  }
+
+  test("Link is replaced with WinterRoad road link, assets should be expired not moved") {
+    val oldLinkId = "3469c252-6c52-4e57-b3cf-0045b2b3e47c:1"
+    val newLinkId = "b6882964-2d4b-49e7-8f35-c042fac2f007:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(oldLinkId).get
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, 106.144), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, changes)
+      val assetsAfterOnOldLink = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      assetsAfterOnOldLink.size should be(1)
+      assetsAfterOnOldLink.head.expired should be(true)
+
+      val reports = TestLinearAssetUpdater.getReport()
+      reports.size should equal(1)
+      reports.head.changeType should equal(ChangeTypeReport.Deletion)
+      reports.head.roadLinkChangeType should equal(RoadLinkChangeType.Replace)
+      reports.head.before.get.assetId should equal(assetsBefore.head.id)
+      reports.head.after.size should equal(0)
+    }
+  }
+
+  test("Road link is split, and one of new links is WinterRoads FeatureClass, dont move assets to WinterRoads link") {
+    val oldLinkId = "9536a2ce-0d6a-4327-822d-5e62a5fcf188:1"
+    val newLinkId1 = "bb08a1ec-1899-49ef-83ea-9c018e86c758:1" //WinterRoads
+    val newLinkId2 = "8d202e61-ab42-4782-9064-c81bb32d796a:1"
+    val newLinkId3 = "b957e857-21a2-4dbc-beec-3e0ed130bee8:1"
+
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(oldLinkId).get
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, 503.138), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, changes)
+      val assetsAfterOnOldLink = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(oldLinkId), false)
+      assetsAfterOnOldLink.size should be(0)
+      // WinterRoads should have no asset
+      val assetsAfterOnNewLink1 = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(newLinkId1), false)
+      val assetsAfterOnNewLink2 = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(newLinkId2), false)
+      val assetsAfterOnNewLink3 = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(newLinkId3), false)
+      assetsAfterOnNewLink1.size should equal(0)
+      assetsAfterOnNewLink2.size should equal(1)
+      assetsAfterOnNewLink3.size should equal(1)
+
+      val reports = TestLinearAssetUpdaterNoRoadLinkMock.getReport()
+      reports.size should equal(2)
+      reports.foreach(report => {
+        report.changeType should equal(ChangeTypeReport.Divided)
+        report.linkId should equal(oldLinkId)
+        report.roadLinkChangeType should equal(RoadLinkChangeType.Split)
+      })
+    }
+  }
+
+  test("Road link is split, and one of new links is WinterRoads FeatureClass, expire asset which is projected completely to WinterRoads link") {
+    val oldLinkId = "9536a2ce-0d6a-4327-822d-5e62a5fcf188:1"
+    val newLinkId1 = "bb08a1ec-1899-49ef-83ea-9c018e86c758:1" //WinterRoads
+    val newLinkId2 = "8d202e61-ab42-4782-9064-c81bb32d796a:1"
+    val newLinkId3 = "b957e857-21a2-4dbc-beec-3e0ed130bee8:1"
+
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(oldLinkId).get
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkId, NumericValue(3), SideCode.BothDirections.value, Measures(299.398, 503.138), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, changes)
+      val assetsAfterOnOldLink = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(oldLinkId), false)
+      assetsAfterOnOldLink.size should be(0)
+
+      val assetsAfterOnNewLink1 = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(newLinkId1), false)
+      val assetsAfterOnNewLink2 = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(newLinkId2), false)
+      val assetsAfterOnNewLink3 = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(newLinkId3), false)
+      // Asset should not be moved to any new links
+      assetsAfterOnNewLink1.size should equal(0)
+      assetsAfterOnNewLink2.size should equal(0)
+      assetsAfterOnNewLink3.size should equal(0)
+
+      val reports = TestLinearAssetUpdaterNoRoadLinkMock.getReport()
+      reports.size should equal(1)
+      reports.head.changeType should equal(ChangeTypeReport.Deletion)
+      reports.head.linkId should equal(oldLinkId)
+      reports.head.roadLinkChangeType should equal(RoadLinkChangeType.Split)
     }
   }
 }

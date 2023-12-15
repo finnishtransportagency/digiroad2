@@ -1,13 +1,13 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewSpeedLimitMassOperation, SpeedLimitService}
-import fi.liikennevirasto.digiroad2.util.LogUtils
+import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
 
 class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUpdater(service) {
 
@@ -16,8 +16,12 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   override def assetFiller: AssetFiller = SpeedLimitFiller
   
   override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
-    service.persistUnknown(Seq(UnknownSpeedLimit(change.newLinks.head.linkId, change.newLinks.head.municipality, change.newLinks.head.adminClass)),newTransaction = false)
-    None
+    val newLink = change.newLinks.head
+    val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+    if(!FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+      service.persistUnknown(Seq(UnknownSpeedLimit(newLink.linkId, newLink.municipality, newLink.adminClass)),newTransaction = false)
+      None
+    } else None
   }
 
   override def additionalRemoveOperationMass(expiredLinks:Seq[String]): Unit = {

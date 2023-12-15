@@ -25,7 +25,8 @@ sealed trait FloatingReason {
 case class ChangedPointAsset(pointAsset: PersistedPointAsset, link: RoadLink)
 
 object FloatingReason{
-  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue, TrafficDirectionNotMatch, TerminalChildless)
+  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad,
+    NoReferencePointForMValue, TrafficDirectionNotMatch, TerminalChildless, TerminatedRoad, InvalidFeatureClass )
 
   def apply(intValue: Int): FloatingReason = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -40,6 +41,7 @@ object FloatingReason{
   case object TrafficDirectionNotMatch extends FloatingReason { def value = 6 }
   case object TerminalChildless extends FloatingReason { def value = 7 }
   case object TerminatedRoad extends FloatingReason { def value = 8 }
+  case object InvalidFeatureClass extends FloatingReason { def value = 9 }
 }
 
 trait IncomingPointAsset {

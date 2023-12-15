@@ -20,6 +20,9 @@ object FeatureClass {
   case object CarRoad_IIIa extends FeatureClass
   case object CarRoad_IIIb extends FeatureClass
   case object AllOthers extends FeatureClass
+
+  // RoadLinks with these feature classes are generally not handled by Digiroad
+  val featureClassesToIgnore = Seq(WinterRoads, HardShoulder)
 }
 
 
