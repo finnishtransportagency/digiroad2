@@ -44,7 +44,7 @@ case class LinkPropertyChange(propertyName: String, optionalExistingValue: Optio
                               roadLinkFetched: RoadLinkFetched, username: Option[String])
 
 
-case class RoadLinkWithExpiredDate(roadLink: RoadLink, expiredDate: DateTime)
+case class RoadLinkWithExpiredDate(roadLink: RoadLinkFetched, expiredDate: DateTime)
 
 sealed trait RoadLinkType {
   def value: Int
@@ -268,8 +268,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   def getAllExpiredRoadLinksWithExpiredDates(): Seq[RoadLinkWithExpiredDate]= {
     val fetchedExpiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
     val expiredDates = roadLinkDAO.getRoadLinkExpiredDateWithLinkIds(fetchedExpiredLinks.map(_.linkId).toSet)
-    val roadLinks = enrichFetchedRoadLinks(fetchedExpiredLinks)
-    roadLinks.map(roadLink => {
+    fetchedExpiredLinks.map(roadLink => {
       val expiredDate = expiredDates.find(_.linkId == roadLink.linkId).get
       RoadLinkWithExpiredDate(roadLink, expiredDate.expiredDate)
     })
@@ -934,7 +933,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   def enrichFetchedRoadLinks(allFetchedRoadLinks: Seq[IRoadLinkFetched], includeHardShoulderRoads: Boolean = false): Seq[RoadLink] = {
     val featureClassesToExclude =
       if (includeHardShoulderRoads) Seq(FeatureClass.WinterRoads)
-      else Seq(FeatureClass.WinterRoads, FeatureClass.HardShoulder)
+      else FeatureClass.featureClassesToIgnore
     val filteredRoadLinks = allFetchedRoadLinks.filterNot(link => featureClassesToExclude.contains(link.featureClass))
     LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + filteredRoadLinks.size){getRoadLinkDataByLinkIds(filteredRoadLinks)}
   }

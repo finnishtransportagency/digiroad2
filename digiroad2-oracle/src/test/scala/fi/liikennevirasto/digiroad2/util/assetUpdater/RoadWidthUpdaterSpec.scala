@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.MTKClassWidth.CarRoad_IIIa
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, MTKClassWidth}
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, RoadWidthService}
+import fi.liikennevirasto.digiroad2.util.LinkIdGenerator
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -441,4 +442,18 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
     }
 
   }
+
+  test("Do not create roadWidth asset on WinterRoads road link") {
+    val newLinkId = LinkIdGenerator.generateRandom()
+    val changes = Seq(changeAddWinterRoad(newLinkId))
+
+    runWithRollback {
+      val assetsBefore = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(newLinkId), false)
+      assetsBefore.size should be(0)
+      TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
+      val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(newLinkId), false)
+      assetsAfter.size should be(0)
+    }
+  }
+
 }

@@ -395,4 +395,18 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       newAsset.lat should be(corrected.lat)
     }
   }
+
+  test("Link is replaced with WinterRoads road link, float asset") {
+    val oldLinkId = "3469c252-6c52-4e57-b3cf-0045b2b3e47c:1"
+    val newLinkId = "b6882964-2d4b-49e7-8f35-c042fac2f007:1"
+    val lon = 493151.52
+    val lat = 7356520.289
+    val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+    val asset = testPersistedPointAsset(1, lon, lat, 698, oldLinkId,
+      13.478, true, 0, NormalLinkInterface)
+    val corrected = updater.correctPersistedAsset(asset, change)
+
+    corrected.floating should be(true)
+    corrected.linkId should be(oldLinkId)
+  }
 }
