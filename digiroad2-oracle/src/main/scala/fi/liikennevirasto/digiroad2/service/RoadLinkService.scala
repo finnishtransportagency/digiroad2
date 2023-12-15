@@ -934,7 +934,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   def enrichFetchedRoadLinks(allFetchedRoadLinks: Seq[IRoadLinkFetched], includeHardShoulderRoads: Boolean = false): Seq[RoadLink] = {
     val featureClassesToExclude =
       if (includeHardShoulderRoads) Seq(FeatureClass.WinterRoads)
-      else Seq(FeatureClass.WinterRoads, FeatureClass.HardShoulder)
+      else FeatureClass.featureClassesToIgnore
     val filteredRoadLinks = allFetchedRoadLinks.filterNot(link => featureClassesToExclude.contains(link.featureClass))
     LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + filteredRoadLinks.size){getRoadLinkDataByLinkIds(filteredRoadLinks)}
   }

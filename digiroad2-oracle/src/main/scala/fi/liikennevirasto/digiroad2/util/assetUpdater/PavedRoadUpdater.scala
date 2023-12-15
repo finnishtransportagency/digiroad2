@@ -2,20 +2,21 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{KgvUtil, LinearAssetUtils}
 import org.joda.time.DateTime
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
   
   override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
     val newLink = change.newLinks.head
+    val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
     
-    if (newLink.surfaceType == SurfaceType.Paved) {
+    if (newLink.surfaceType == SurfaceType.Paved && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
       val defaultMultiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("99")))))
       val defaultPropertyData = DynamicValue(defaultMultiTypePropSeq)
       

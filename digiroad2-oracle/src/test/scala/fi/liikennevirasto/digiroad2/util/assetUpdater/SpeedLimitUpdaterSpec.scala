@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, Post
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.util.LinkIdGenerator
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -315,4 +316,18 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       MValueCalculator.roundMeasure(assetGap, 3) should be(64.968)
     }
   }
+
+  test("Dont create unknown speed limit for WinterRoads"){
+    val newLinkId = LinkIdGenerator.generateRandom()
+    val changes = Seq(changeAddWinterRoad(newLinkId))
+
+    runWithRollback {
+      val unknownsBefore =  speedLimitService.getUnknownByLinkIds(Set(newLinkId),newTransaction = false)
+      unknownsBefore.size should be(0)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val unknownsAfter =  speedLimitService.getUnknownByLinkIds(Set(newLinkId),newTransaction = false)
+      unknownsAfter.size should be(0)
+    }
+  }
+
 }

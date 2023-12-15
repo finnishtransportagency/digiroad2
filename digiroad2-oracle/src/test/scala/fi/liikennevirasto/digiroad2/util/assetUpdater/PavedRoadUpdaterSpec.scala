@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao,
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.PolygonTools
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Deletion, Divided}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
@@ -349,4 +349,19 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       })
     }
   }
+
+  test("Added road link has SurfaceType 2 but FeatureClass is WinterRoads, do not generate PavedRoad asset") {
+    val newLinkId = LinkIdGenerator.generateRandom()
+    val changes = Seq(changeAddWinterRoad(newLinkId))
+
+    runWithRollback {
+      TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+      val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId), false)
+      assetsAfter.size should be(0)
+
+      val reports = TestPavedRoadUpdater.getReport().filter(_.linkId ==linkId15).map(a => PairAsset(a.before, a.after.headOption,a.changeType))
+      reports.size should  be(0)
+    }
+  }
+
 }
