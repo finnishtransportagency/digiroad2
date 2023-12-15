@@ -31,7 +31,7 @@ import scala.util.{Failure, Success, Try}
   * @param changeInfo ChangeSet for saving [[LinearAssetUpdater.updateChangeSet]]
   * @param assetsBefore before samuutus record
   */
-sealed case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(),
+sealed case class OperationStep(assetsAfter: Seq[PersistedLinearAsset] = Seq(), 
                                 changeInfo: Option[ChangeSet] = None,
                                 assetsBefore: Seq[PersistedLinearAsset] = Seq())
 sealed case class OperationStepSplit(assetsAfter: Seq[PersistedLinearAsset] = Seq(),
@@ -624,7 +624,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       case _ => List(adjusting(typeId, changeSet, assetsByLink))
     }
 
-    val changeSetResult = result.map(_._2).foldLeft(LinearAssetFiller.useOrEmpty(changeSet)) { (a, b) =>
+    val changeSetResult = result.map(_._2).foldLeft(LinearAssetFiller.useOrEmpty(None)) { (a, b) =>
       LinearAssetFiller.combineChangeSets(a, b)
     }
     (result.flatMap(_._1), LinearAssetFiller.removeExpiredMValuesAdjustments(changeSetResult))
