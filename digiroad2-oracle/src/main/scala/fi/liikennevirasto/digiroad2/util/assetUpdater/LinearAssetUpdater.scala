@@ -414,7 +414,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changeSets
     * @return
     */
-  def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = None
+  def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = None
   /**
     * 4.3) Add additional operation based on removed link when something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -515,7 +515,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"Projecting ${assetsAll.size} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
       val assetsGroup= IterableOperation.groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
-      val rawData = changes.map(goThroughChanges(assetsGroup,assetsAll, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
+      val rawData = changes.map(goThroughChanges(assetsGroup,assetsAll,links, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
       LogUtils.time(logger, "Filter empty and empty afters away from projected") {
         rawData.filter(_.nonEmpty)
       }
@@ -538,14 +538,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     (assetsOperated, changeInfo.get)
   }
 
-  private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet,
+  private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], assetsAll: Seq[PersistedLinearAsset], newRoadlinks: Seq[RoadLink], changeSets: ChangeSet,
                                initStep: OperationStep, change: RoadLinkChange, initStepSplit:OperationStepSplit): Option[OperationStep] = {
 
     nonAssetUpdate(change, Seq(), null)
     LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
       change.changeType match {
         case RoadLinkChangeType.Add =>
-          val operation = operationForNewLink(change, assetsAll, changeSets).getOrElse(initStep)
+          val operation = operationForNewLink(change, assetsAll, newRoadlinks, changeSets).getOrElse(initStep)
           Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ =>
@@ -556,9 +556,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           if (assets.nonEmpty) {
             change.changeType match {
               case RoadLinkChangeType.Replace =>
-                handleReplacements(changeSets, initStep, change, assets)
+                handleReplacements(changeSets, initStep, change, assets, newRoadlinks)
               case RoadLinkChangeType.Split =>
-                handleSplits(changeSets, initStepSplit, change, assets)
+                handleSplits(changeSets, initStepSplit, change, assets, newRoadlinks)
               case _ => None
             }
           } else None
@@ -644,10 +644,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
   }
 
-  private def handleReplacements(changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset]): Option[OperationStep] = {
+  private def handleReplacements(changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
     val roadLinkInfo = change.newLinks.head
-    val featureClass = KgvUtil.extractFeatureClass(roadLinkInfo.roadClass)
-    if(FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+    val roadLinkFound = newRoadLinks.exists(_.linkId == roadLinkInfo.linkId)
+    if(!roadLinkFound) {
       assets.map(a => {
         val expireStep = OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(a.id))), assetsBefore = Seq(a))
         Some(reportAssetChanges(Some(a), None, Seq(change), expireStep, Some(ChangeTypeReport.Deletion),useGivenChange = true))
@@ -660,13 +660,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  private def handleSplits(changeSet: ChangeSet, initStep:  OperationStepSplit, change: RoadLinkChange, assets: Seq[PersistedLinearAsset]): Option[OperationStep] = {
+  private def handleSplits(changeSet: ChangeSet, initStep:  OperationStepSplit, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
     val divided = operationForSplit(change, assets, changeSet).map(a=>LinkAndOperation(a.newLinkId,a))
-    val updatedAdjustments = updateSplitsWithExpiredIds(divided, change)
-    val filteredByFeatureClass = filterLinkAndOperationByFeatureClass(updatedAdjustments, change)
-    val splitOperation = filteredByFeatureClass.map(a=>Some(a.operation)).foldLeft(Some(initStep))(mergerOperationsSplit)
-    val updatedSplitOperation = updateSplitOperationWithExpiredIds(splitOperation, getIdsForAssetsOutsideSplitGeometry(filteredByFeatureClass))
-    reportAssetExpirationAfterSplit(filteredByFeatureClass,change)
+    val updatedAdjustments = updateSplitsWithExpiredIds(divided, change, newRoadLinks)
+    val filterByValidRoadLinks = filterLinkAndOperationByValidRoadLinks(updatedAdjustments, change, newRoadLinks)
+    val splitOperation = filterByValidRoadLinks.map(a=>Some(a.operation)).foldLeft(Some(initStep))(mergerOperationsSplit)
+    val updatedSplitOperation = updateSplitOperationWithExpiredIds(splitOperation, getIdsForAssetsOutsideSplitGeometry(filterByValidRoadLinks))
+    reportAssetExpirationAfterSplit(filterByValidRoadLinks,change)
     if (updatedSplitOperation.isDefined){
       Some(OperationStep(
         assetsAfter   = updatedSplitOperation.get.assetsAfter,
@@ -883,7 +883,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @param linksAndOperations sequence of RoadLink and related OperationStep pairs
    * @return Seq[LinkAndOperation] returns an updated copy of original parameter
    */
-  private def updateSplitsWithExpiredIds(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Seq[LinkAndOperation] = {
+  private def updateSplitsWithExpiredIds(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange, newRoadLinks: Seq[RoadLink]): Seq[LinkAndOperation] = {
     def updateLinkAndOperationWithExpiredIds(linkAndOperation: LinkAndOperation, expiredIds: Set[Long]): LinkAndOperation = {
       val updatedOperation = updateSplitOperationWithExpiredIds(Some(linkAndOperation.operation),expiredIds).get
       val updatedLinkAndOperation = linkAndOperation.copy(operation = updatedOperation)
@@ -892,19 +892,19 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     linksAndOperations.map(linkAndOperation => {
         val idsToExpireByGeometry = if (linkAndOperation.newLinkId.isEmpty) getIdsForAssetsOutsideSplitGeometry(linksAndOperations) else Set.empty[Long]
-        val idsToExpireByFeatureClass = expireSplitAssetsByFeatureClass(linkAndOperation,linksAndOperations, change)
-        updateLinkAndOperationWithExpiredIds(linkAndOperation, idsToExpireByGeometry ++ idsToExpireByFeatureClass)
+        val idsToBeExpiredByInvalidRoadLinks = getIdsForSplitAssetsOnInvalidLinks(linkAndOperation,linksAndOperations, change, newRoadLinks)
+        updateLinkAndOperationWithExpiredIds(linkAndOperation, idsToExpireByGeometry ++ idsToBeExpiredByInvalidRoadLinks)
     })
   }
 
-  private def filterLinkAndOperationByFeatureClass(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Seq[LinkAndOperation] = {
+  private def filterLinkAndOperationByValidRoadLinks(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange, newRoadLinks: Seq[RoadLink]): Seq[LinkAndOperation] = {
     linksAndOperations.map(linkAndOperation => {
       val roadLinkInfo = change.newLinks.find(_.linkId == linkAndOperation.newLinkId)
       if(roadLinkInfo.nonEmpty) {
-        val newLinkFeatureClass = KgvUtil.extractFeatureClass(roadLinkInfo.get.roadClass)
+        val roadLinkFound = newRoadLinks.exists(_.linkId == roadLinkInfo.get.linkId)
         val newAssetsFilteredOperation = linkAndOperation.operation.copy(assetsAfter = Seq())
-        if(FeatureClass.featureClassesToIgnore.contains(newLinkFeatureClass)) linkAndOperation.copy(newLinkId = "", operation = newAssetsFilteredOperation)
-        else linkAndOperation
+        if(roadLinkFound) linkAndOperation
+        else linkAndOperation.copy(newLinkId = "", operation = newAssetsFilteredOperation)
       } else linkAndOperation
     })
   }
@@ -915,7 +915,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @param linksAndOperations sequence of RoadLink and related OperationStep pairs that contain post-split information
    * @return Set[PersistedLinearAsset] returns the found assets
    */
-  private def getAssetsOutsideSplitGeometry(linksAndOperations: Seq[LinkAndOperation]): Set[PersistedLinearAsset] = {
+  private def getOldAssetsToExpireAfterSplit(linksAndOperations: Seq[LinkAndOperation]): Set[PersistedLinearAsset] = {
     val oldAssetsInsideGeometry = linksAndOperations.filter(_.newLinkId.nonEmpty).flatMap(_.operation.assetsAfter).toSet
     val oldAssetsOutsideGeometry = linksAndOperations
       .filter(_.newLinkId.isEmpty).flatMap(_.operation.assetsBefore)
@@ -930,7 +930,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @return Set[Long] returns the found assets' Ids
    */
   private def getIdsForAssetsOutsideSplitGeometry(linksAndOperations: Seq[LinkAndOperation]): Set[Long] = {
-    getAssetsOutsideSplitGeometry(linksAndOperations)
+    getOldAssetsToExpireAfterSplit(linksAndOperations)
       .map(oldAssetToExpire => oldAssetToExpire.id)
   }
 
@@ -965,20 +965,21 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  def expireSplitAssetsByFeatureClass(linkAndOperation: LinkAndOperation, linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Seq[Long] = {
+  def getIdsForSplitAssetsOnInvalidLinks(linkAndOperation: LinkAndOperation, linksAndOperations: Seq[LinkAndOperation], 
+                                         change: RoadLinkChange, newRoadLinks: Seq[RoadLink]): Seq[Long] = {
     val roadLinkInfo = change.newLinks.find(_.linkId == linkAndOperation.newLinkId)
     if (roadLinkInfo.nonEmpty) {
-      val featureClass = KgvUtil.extractFeatureClass(roadLinkInfo.get.roadClass)
+      val roadLinkFound = newRoadLinks.exists(_.linkId == roadLinkInfo.get.linkId)
       val oldAssetId = linkAndOperation.operation.assetsBefore.head.id
       val otherSplits = linksAndOperations.filter(_.newLinkId.nonEmpty).filter(lao =>
         lao.operation.assetsBefore.head.id == oldAssetId && lao.newLinkId != linkAndOperation.newLinkId)
       val otherSplitsToBeIgnoredAlso = otherSplits.forall(split => {
         val splitRoadLinkInfo = change.newLinks.find(_.linkId == split.newLinkId).get
-        val otherLinkFeatureClass = KgvUtil.extractFeatureClass(splitRoadLinkInfo.roadClass)
-        FeatureClass.featureClassesToIgnore.contains(otherLinkFeatureClass)
+        val roadLinkFound = newRoadLinks.exists(_.linkId == splitRoadLinkInfo.linkId)
+        !roadLinkFound
       })
 
-      if (FeatureClass.featureClassesToIgnore.contains(featureClass) && otherSplitsToBeIgnoredAlso) linkAndOperation.operation.assetsBefore.map(_.id)
+      if (!roadLinkFound && otherSplitsToBeIgnoredAlso) linkAndOperation.operation.assetsBefore.map(_.id)
       else Seq()
     }
     else Seq()
@@ -991,22 +992,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @param change Change case information
    * @return Set[PersistedLinearAsset] returns the reported assets, or no assets if no empty link was presented
    */
-  private def reportAssetExpirationAfterSplit(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Unit = {
-    val (emptyLinkBecauseOfGeometry, other) = linksAndOperations.partition(linkAndOperation => linkAndOperation.newLinkId.isEmpty)
-    val expiredByFeatureClass = other.filter(linkAndOperation => {
-      val roadLinkInfo = change.newLinks.find(_.linkId == linkAndOperation.newLinkId).get
-      val featureClass = KgvUtil.extractFeatureClass(roadLinkInfo.roadClass)
-      FeatureClass.featureClassesToIgnore.contains(featureClass)
-    })
-    if (emptyLinkBecauseOfGeometry.nonEmpty) {
-      val emptyLinkOperation = emptyLinkBecauseOfGeometry.head.operation
-      val assetsOutsideGeometry = getAssetsOutsideSplitGeometry(linksAndOperations)
-      assetsOutsideGeometry.foreach(asset => Some(reportAssetChanges(Some(asset), None, Seq(change), toOperationStep(emptyLinkOperation), Some(ChangeTypeReport.Deletion),useGivenChange = true)))
-    }
-    if(expiredByFeatureClass.nonEmpty) {
-      val emptyLinkOperation = expiredByFeatureClass.head.operation
-      val assetsExpired = emptyLinkOperation.assetsBefore
-      assetsExpired.foreach(asset => Some(reportAssetChanges(Some(asset), None, Seq(change), toOperationStep(emptyLinkOperation), Some(ChangeTypeReport.Deletion),useGivenChange = true)))
-    }
+  private def reportAssetExpirationAfterSplit(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Set[PersistedLinearAsset] = {
+    val emptyLink = linksAndOperations.filter(linkAndOperation => linkAndOperation.newLinkId.isEmpty)
+    if (emptyLink.nonEmpty) {
+      val emptyLinkOperation = emptyLink.head.operation
+      val oldAssetsToExpire = getOldAssetsToExpireAfterSplit(linksAndOperations)
+      oldAssetsToExpire.foreach(asset => Some(reportAssetChanges(Some(asset), None, Seq(change),
+        toOperationStep(emptyLinkOperation), Some(ChangeTypeReport.Deletion),useGivenChange = true)))
+      oldAssetsToExpire
+    } else
+      Set.empty[PersistedLinearAsset]
   }
 }

@@ -2053,12 +2053,12 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, changes)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, changes)
       val assetsAfterOnOldLink = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
       assetsAfterOnOldLink.size should be(1)
       assetsAfterOnOldLink.head.expired should be(true)
 
-      val reports = TestLinearAssetUpdater.getReport()
+      val reports = TestLinearAssetUpdaterNoRoadLinkMock.getReport()
       reports.size should equal(1)
       reports.head.changeType should equal(ChangeTypeReport.Deletion)
       reports.head.roadLinkChangeType should equal(RoadLinkChangeType.Replace)
@@ -2139,4 +2139,32 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       reports.head.roadLinkChangeType should equal(RoadLinkChangeType.Split)
     }
   }
+
+  test("Link is replaced with link with ConstructionType 5 Expiring Soon, assets should be expired not moved") {
+    val oldLinkId = "8e1cb5f1-5e4b-4927-8942-2a769333ff7d:1"
+    val newLinkId = "14665229-71bd-429c-820a-c8642c2fede6:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(oldLinkId).get
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, 12.792), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, changes)
+      val assetsAfterOnOldLink = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      assetsAfterOnOldLink.size should be(1)
+      assetsAfterOnOldLink.head.expired should be(true)
+
+      val reports = TestLinearAssetUpdaterNoRoadLinkMock.getReport()
+      reports.size should equal(1)
+      reports.head.changeType should equal(ChangeTypeReport.Deletion)
+      reports.head.roadLinkChangeType should equal(RoadLinkChangeType.Replace)
+      reports.head.before.get.assetId should equal(assetsBefore.head.id)
+      reports.head.after.size should equal(0)
+    }
+  }
+
 }

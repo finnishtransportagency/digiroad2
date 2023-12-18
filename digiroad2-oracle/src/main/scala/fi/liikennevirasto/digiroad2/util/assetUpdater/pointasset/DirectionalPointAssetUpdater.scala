@@ -37,10 +37,4 @@ class DirectionalPointAssetUpdater(service: PointAssetOperations) extends PointA
   override def calculateBearing(point: Point, geometry: Seq[Point]): Option[Int] = {
     Some(PointAssetOperations.calculateBearing(point, geometry))
   }
-
-  override def getRoadLink(link: Option[RoadLinkInfo]): Option[RoadLink] = {
-    if (link.isDefined)
-      roadLinkService.getExistingOrExpiredRoadLinkByLinkId(link.get.linkId, false)
-    else None
-  }
 }
