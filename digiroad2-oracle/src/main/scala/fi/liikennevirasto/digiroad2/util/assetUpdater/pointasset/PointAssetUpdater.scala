@@ -29,7 +29,11 @@ class PointAssetUpdater(service: PointAssetOperations) {
 
   def adjustValidityDirection(assetDirection: Option[Int], digitizationChange: Boolean): Option[Int] = None
   def calculateBearing(point: Point, geometry: Seq[Point]): Option[Int] = None
-  def getRoadLink(newLink: Option[RoadLinkInfo]): Option[RoadLink] = None
+  def getRoadLink(linkInfo: Option[RoadLinkInfo]): Option[RoadLink] = {
+    if (linkInfo.isDefined)
+      roadLinkService.getExistingOrExpiredRoadLinkByLinkId(linkInfo.get.linkId, newTransaction = false)
+    else None
+  }
 
   def updatePointAssets(typeId: Int): Unit = {
     val latestSuccess = PostGISDatabase.withDynSession ( Queries.getLatestSuccessfulSamuutus(typeId) )
@@ -130,10 +134,10 @@ class PointAssetUpdater(service: PointAssetOperations) {
   protected def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo, newLinkInfo: Option[RoadLinkInfo],
                             newLink: Option[RoadLink]): (Boolean, Option[FloatingReason]) = {
     newLinkInfo match {
-      case Some(link) if link.municipality != asset.municipalityCode =>
+      case Some(linkInfo) if linkInfo.municipality != asset.municipalityCode =>
         (true, Some(FloatingReason.DifferentMunicipalityCode))
-      case Some(link) if FeatureClass.featureClassesToIgnore.contains(KgvUtil.extractFeatureClass(link.roadClass)) =>
-        (true, Some(FloatingReason.InvalidFeatureClass))
+      case Some(linkInfo) if newLink.isEmpty =>
+        (true, Some(FloatingReason.NoRoadLinkFound))
       case None =>
         (true, Some(FloatingReason.NoRoadLinkFound))
       case _ =>
