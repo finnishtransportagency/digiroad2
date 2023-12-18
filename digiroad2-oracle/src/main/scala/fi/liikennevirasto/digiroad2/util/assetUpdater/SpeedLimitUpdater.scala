@@ -15,11 +15,11 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
 
   override def assetFiller: AssetFiller = SpeedLimitFiller
   
-  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
-    val newLink = change.newLinks.head
-    val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-    if(!FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-      service.persistUnknown(Seq(UnknownSpeedLimit(newLink.linkId, newLink.municipality, newLink.adminClass)),newTransaction = false)
+  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
+    val newLinkInfo = change.newLinks.head
+    val roadLinkFound = newRoadLinks.exists(_.linkId == newLinkInfo.linkId)
+    if(roadLinkFound) {
+      service.persistUnknown(Seq(UnknownSpeedLimit(newLinkInfo.linkId, newLinkInfo.municipality, newLinkInfo.adminClass)),newTransaction = false)
       None
     } else None
   }
