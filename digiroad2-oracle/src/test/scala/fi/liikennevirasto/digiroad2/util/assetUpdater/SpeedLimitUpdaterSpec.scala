@@ -31,7 +31,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
   }
   
   def createSpeedLimit(measures: Measures, value: Value, link: RoadLink, sideCode:SideCode = SideCode.BothDirections ): Long = {
-    speedLimitService.createWithoutTransaction(TrafficVolume.typeId, link.linkId, value, sideCode.value,
+    speedLimitService.createWithoutTransaction(SpeedLimitAsset.typeId, link.linkId, value, sideCode.value,
       measures, "testuser", 0L, Some(link), false, None, None)
   }
 
@@ -327,6 +327,36 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val unknownsAfter =  speedLimitService.getUnknownByLinkIds(Set(newLinkId),newTransaction = false)
       unknownsAfter.size should be(0)
+    }
+  }
+
+  test("Split. The second new link changes to one way. The side code of the speed limit should change as well.") {
+    val oldLinkID = "609d430a-de96-4cb7-987c-3caa9c72c08d:1"
+    val newLinkID = "4b061477-a7bc-4b72-b5fe-5484e3cec03d:1"
+    val newLinkID2 = "b0b54052-7a0e-4714-80e0-9de0ea62a347:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink1 = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLinkID2).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID, newLinkID2), false)).thenReturn(Seq(newRoadLink1, newRoadLink2))
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+
+      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, 45.230), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface)
+
+      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val assetsAfter = service.fetchExistingAssetsByLinksIdsString(SpeedLimitAsset.typeId, Set(newLinkID, newLinkID2), Set(), false).sortBy(_.linkId)
+      assetsAfter.size should be(2)
+
+      assetsAfter.head.sideCode should be(SideCode.BothDirections.value)
+      assetsAfter.last.sideCode should be(SideCode.AgainstDigitizing.value)
     }
   }
 
