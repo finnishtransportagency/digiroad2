@@ -126,32 +126,35 @@ class AssetFiller {
   }
 
   def adjustSegmentSideCodes(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val oneWayTrafficDirection =
-      (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) || (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
-    if (!oneWayTrafficDirection) {
-      (segments, changeSet)
-    } else {
-      val adjusted = roadLink.trafficDirection match {
-        case TrafficDirection.AgainstDigitizing => segments.map { s =>
-          s.sideCode match {
-            case SideCode.BothDirections => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId,oldId = s.oldId))
-            case SideCode.TowardsDigitizing => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId,oldId = s.oldId))
-            case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId))
-          }
-        }
-        case TrafficDirection.TowardsDigitizing => segments.map { s =>
-          s.sideCode match {
-            case SideCode.BothDirections => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId,oldId = s.oldId))
-            case SideCode.AgainstDigitizing => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId,oldId = s.oldId))
-            case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId))
-          }
+    val adjusted = roadLink.trafficDirection match {
+      case TrafficDirection.BothDirections => segments.map { s =>
+        s.sideCode match {
+          case SideCode.AgainstDigitizing if !AssetTypeInfo.assetsWithValidityDirection.contains(s.typeId) =>
+            (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId, oldId = s.oldId))
+          case SideCode.TowardsDigitizing if !AssetTypeInfo.assetsWithValidityDirection.contains(s.typeId) =>
+            (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId, oldId = s.oldId))
+          case _ => (s, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, s.typeId))
         }
       }
-
-      (adjusted.map(_._1),
-        changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++
-          adjusted.map(_._2).filterNot(s=>s.assetId == 0 || s.assetId == -1 )))
+      case TrafficDirection.AgainstDigitizing => segments.map { s =>
+        s.sideCode match {
+          case SideCode.BothDirections => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId, oldId = s.oldId))
+          case SideCode.TowardsDigitizing => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId, oldId = s.oldId))
+          case _ => (s, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, s.typeId))
+        }
+      }
+      case TrafficDirection.TowardsDigitizing => segments.map { s =>
+        s.sideCode match {
+          case SideCode.BothDirections => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId, oldId = s.oldId))
+          case SideCode.AgainstDigitizing => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId, oldId = s.oldId))
+          case _ => (s, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, s.typeId))
+        }
+      }
     }
+
+    (adjusted.map(_._1),
+      changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++
+        adjusted.map(_._2).filterNot(s => s.assetId == 0 || s.assetId == -1)))
   }
 
   protected def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
@@ -808,6 +811,7 @@ class AssetFiller {
       debugLogging("adjustAssets"),
       droppedSegmentWrongDirection,
       debugLogging("droppedSegmentWrongDirection"),
+      //TODO check if this can be left out as unnecessary
       adjustSegmentSideCodes,
       debugLogging("adjustSegmentSideCodes"),
       generateTwoSidedNonExistingLinearAssets(typeId),
