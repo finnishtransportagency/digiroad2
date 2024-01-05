@@ -31,6 +31,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockLaneService = MockitoSugar.mock[LaneService]
   val mockLaneWorkListService = MockitoSugar.mock[LaneWorkListService]
+  val mockAutoProcessedLanesWorkListService = MockitoSugar.mock[AutoProcessedLanesWorkListService]
 
   val laneDao = new LaneDao()
   val laneHistoryDao = new LaneHistoryDao()
@@ -92,7 +93,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def vkmClient: VKMClient = mockVKMClient
     override def roadAddressService: RoadAddressService = mockRoadAddressService
     override def laneWorkListService: LaneWorkListService = mockLaneWorkListService
-
+    override def autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = mockAutoProcessedLanesWorkListService
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)

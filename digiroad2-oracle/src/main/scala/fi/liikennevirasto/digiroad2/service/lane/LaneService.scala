@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
-import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao, LaneWorkListItem}
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao, LaneWorkListItem, AutoProcessedLanesWorkListItem}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -34,6 +34,7 @@ class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEv
   override def vkmClient: VKMClient = new VKMClient
   override def roadAddressService: RoadAddressService = roadAddressServiceImpl
   override def laneWorkListService: LaneWorkListService = new LaneWorkListService
+  override def autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = new AutoProcessedLanesWorkListService
 
 }
 
@@ -51,6 +52,7 @@ trait LaneOperations {
   def vkmClient: VKMClient
   def roadAddressService: RoadAddressService
   def laneWorkListService: LaneWorkListService
+  def autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService
 
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -248,10 +250,11 @@ trait LaneOperations {
     else dao.fetchLanesByLinkIds( linkIds ++ removedLinkIds,mainLanes = true).filterNot(_.expired)
   }
 
-  def fetchExistingLanesByLinkIds(linkIds: Seq[String], removedLinkIds: Seq[String] = Seq()): Seq[PersistedLane] = {
-    withDynTransaction {
-      dao.fetchLanesByLinkIds(linkIds ++ removedLinkIds)
-    }.filterNot(_.expired)
+  def fetchExistingLanesByLinkIds(linkIds: Seq[String], removedLinkIds: Seq[String] = Seq(), newTransaction: Boolean = true): Seq[PersistedLane] = {
+    if(newTransaction)
+      withDynTransaction {
+        dao.fetchLanesByLinkIds(linkIds ++ removedLinkIds).filterNot(_.expired)
+      } else dao.fetchLanesByLinkIds(linkIds ++ removedLinkIds).filterNot(_.expired)
   }
 
   def fetchAllLanesByLinkIds(linkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLane] = {
@@ -1226,46 +1229,58 @@ trait LaneOperations {
 
   /**
     * Processes messages coming from RoadLinkPropertyChangedActor actor when roadlink properties are changed
-    * Rules:
-    * 1. TD changed on link: insert to worklist
-    * 2. link_type changed to or from twowaylane type: insert to worklist
-    * 3. link_type changed to TractorRoad: Expire all lanes
-    * 4. link_type changed from TractorRoad: Generate main lanes on link according to rules
+    * In situations where changed properties affect main lanes:
+    * 1. adds lanes to LaneWorkList if link has additional lanes
+    * 2. expires current main lanes and generates new one if link has only main lanes
     * @param linkPropertyChange Event info on link property change
     */
-    def handleRoadLinkPropertyChange(linkPropertyChange: LinkPropertyChange): Unit = {
-      val linkId = linkPropertyChange.roadLinkFetched.linkId
-      val timeStamp = DateTime.now()
-      val username = linkPropertyChange.username.getOrElse("")
-      val itemToInsert = linkPropertyChange.propertyName match {
-        case "traffic_direction" =>
-          val newValue = linkPropertyChange.linkProperty.trafficDirection.value
-          val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(linkPropertyChange.roadLinkFetched.trafficDirection.value)
-          val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timeStamp, username)
-          if (newValue != oldValue) Some(itemToInsert)
-          else None
-        case "link_type" =>
-          val newValue = linkPropertyChange.linkProperty.linkType.value
-          val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(99)
-          val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timeStamp, username)
+  def handleRoadLinkPropertyChange(linkPropertyChange: LinkPropertyChange): Unit = {
+    val username = linkPropertyChange.username.getOrElse("")
+    val timeStamp = DateTime.now()
+    val linkId = linkPropertyChange.roadLinkFetched.linkId
+    val roadLink = roadLinkService.enrichFetchedRoadLinks(Seq(linkPropertyChange.roadLinkFetched))
+    val (mainLanesOnLink, additionalLanesOnLink) = fetchExistingLanesByLinkIds(Seq(linkId), Seq(), newTransaction = false).partition(lane => LaneNumber.isMainLane(lane.laneCode))
 
-          val twoWayLaneLinkTypeChange = twoWayLanes.map(_.value).contains(newValue) || twoWayLanes.map(_.value).contains(oldValue)
-          if (oldValue == TractorRoad.value && newValue != TractorRoad.value) {
-            val roadLink = roadLinkService.enrichFetchedRoadLinks(Seq(linkPropertyChange.roadLinkFetched))
-            MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
-            None
-          }
-          else if (newValue == TractorRoad.value && oldValue != TractorRoad.value) {
-            expireAllLanesOnRoadLink(linkId, username)
-            None
-          }
-          else if (twoWayLaneLinkTypeChange && (newValue != oldValue)) Some(itemToInsert)
-          else None
-        case _ => None
-      }
-
-      if (itemToInsert.isDefined) laneWorkListService.insertToLaneWorkList(itemToInsert.get, newTransaction = false)
+    def expireAndGenerateLanesAndAddToWorkList(oldValue: Int, newValue: Int): Unit = {
+      val mainLanesStartDates = mainLanesOnLink.flatMap(lane => getPropertyValue(lane, "start_date")).map(_.value).asInstanceOf[Seq[String]]
+      val itemToInsert = AutoProcessedLanesWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, mainLanesStartDates, timeStamp, username)
+      mainLanesOnLink.foreach(mainLane => moveToHistory(mainLane.id, None, expireHistoryLane = true, deleteFromLanes = true, username))
+      MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
+      autoProcessedLanesWorkListService.insertToAutoProcessedLanesWorkList(itemToInsert)
     }
+
+    linkPropertyChange.propertyName match {
+      case "traffic_direction" =>
+        val newValue = linkPropertyChange.linkProperty.trafficDirection.value
+        val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(linkPropertyChange.roadLinkFetched.trafficDirection.value)
+        if (newValue != oldValue) {
+          if (additionalLanesOnLink.isEmpty) {
+            expireAndGenerateLanesAndAddToWorkList(oldValue, newValue)
+          } else {
+            val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timeStamp, username)
+            laneWorkListService.insertToLaneWorkList(itemToInsert, newTransaction = false)
+          }
+        }
+      case "link_type" =>
+        val newValue = linkPropertyChange.linkProperty.linkType.value
+        val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(99)
+        val twoWayLaneLinkTypeChange = twoWayLanes.map(_.value).contains(newValue) || twoWayLanes.map(_.value).contains(oldValue)
+        if (oldValue == TractorRoad.value && newValue != TractorRoad.value) {
+          MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
+        }
+        else if (newValue == TractorRoad.value && oldValue != TractorRoad.value) {
+          (mainLanesOnLink ++ additionalLanesOnLink).foreach(mainLane =>
+            moveToHistory(mainLane.id, None, expireHistoryLane = true, deleteFromLanes = true, username))
+        }
+        if (twoWayLaneLinkTypeChange && (newValue != oldValue)) {
+          if (additionalLanesOnLink.isEmpty) expireAndGenerateLanesAndAddToWorkList(oldValue, newValue)
+          else {
+            val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timeStamp, username)
+            laneWorkListService.insertToLaneWorkList(itemToInsert, newTransaction = false)
+          }
+        }
+    }
+  }
 
   //Deletes all lane info, only to be used in MainLanePopulation initial process
   def deleteAllPreviousLaneData(): Unit = {
