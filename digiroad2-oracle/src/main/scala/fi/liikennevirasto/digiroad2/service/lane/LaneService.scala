@@ -1246,7 +1246,7 @@ trait LaneOperations {
       val itemToInsert = AutoProcessedLanesWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, mainLanesStartDates, timeStamp, username)
       mainLanesOnLink.foreach(mainLane => moveToHistory(mainLane.id, None, expireHistoryLane = true, deleteFromLanes = true, username))
       MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
-      autoProcessedLanesWorkListService.insertToAutoProcessedLanesWorkList(itemToInsert)
+      autoProcessedLanesWorkListService.insertToAutoProcessedLanesWorkList(itemToInsert, newTransaction = false)
     }
 
     linkPropertyChange.propertyName match {
