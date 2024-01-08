@@ -1,7 +1,7 @@
 CREATE TABLE automatically_processed_lanes_work_list
 (
     id              bigint NOT NULL,
-    link_id         numeric(38),
+    link_id         varchar(40),
     property        varchar(128),
     old_value       integer,
     new_value       integer,
