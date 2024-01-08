@@ -528,7 +528,7 @@ object Digiroad2Context {
     new LaneWorkListService()
   }
 
-  lazy val generatedLanesWorkListService: AutoProcessedLanesWorkListService = {
+  lazy val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = {
     new AutoProcessedLanesWorkListService()
   }
 

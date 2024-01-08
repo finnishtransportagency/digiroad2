@@ -92,7 +92,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val laneService: LaneService = Digiroad2Context.laneService,
                    val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
                    val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService,
-                   val generatedLanesWorkListService: AutoProcessedLanesWorkListService = Digiroad2Context.generatedLanesWorkListService,
+                   val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = Digiroad2Context.autoProcessedLanesWorkListService,
                    val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = Digiroad2Context.assetsOnExpiredLinksService)
 
   extends ScalatraServlet
@@ -1244,7 +1244,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case _ => Seq()
     }
   }
-  
+
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1258,7 +1258,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
     assets.foreach(usedService.validateCondition)
-    
+
     try {
       usedService.createOrUpdate(newLinearAssets, typeId, user.username, valueOption, existingAssetIds)
     } catch {
@@ -1266,7 +1266,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case e: IllegalArgumentException => halt(BadRequest("Property not found"))
     }
   }
-  
+
   put("/linearassets/verified") {
     val user = userProvider.getCurrentUser()
     val ids = (parsedBody \ "ids").extract[Set[Long]]
@@ -1307,7 +1307,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRights(existingAssets, Seq(), user, typeId)
     usedService.expire(ids.toSeq, user.username)
   }
-  
+
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1319,7 +1319,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       user.username,
       validateUserAccess(user, Some(typeId)))
   }
-  
+
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1493,13 +1493,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         manoeuvreService.getInaccurateRecords(Manoeuvres.typeId,municipalityCode, Set(Municipality))
     }
   }
-  
+
   get("/manoeuvreSamuutusWorkList") {
     val user = userProvider.getCurrentUser()
     val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
     workListItems.map(a=> Map("assetId" -> a.assetId, "links" -> a.links)).toList
   }
-  
+
   delete("/laneWorkList") {
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
@@ -1542,7 +1542,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     itemIdsToDelete match {
       case Some(ids) =>
-        generatedLanesWorkListService.deleteFromAutoProcessedLanesWorkList(ids)
+        autoProcessedLanesWorkListService.deleteFromAutoProcessedLanesWorkList(ids)
       case None => halt(BadRequest("No item ids to delete provided"))
     }
   }
@@ -1551,7 +1551,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
     val workListItems = userHasRights match {
-      case true => generatedLanesWorkListService.getAutoProcessedLanesWorkList()
+      case true => autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList()
       case false => halt(Forbidden("User not authorized to get items from generated lanes work list"))
     }
 
