@@ -161,6 +161,7 @@
         widthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'widthLimit'},
         pedestrianCrossingsErrors: {Title: 'Laatuvirhelista', SourceLayer: 'pedestrianCrossings'},
         lanes: {Title: 'Kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', ShowDeleteCheckboxes: true},
+        autoProcessedLanes: {Title: 'Automaattisesti käsiteltyjen kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', ShowDeleteCheckboxes: true},
         assetsOnExpiredLinks: {Title: 'Kohteet päättyneillä tielinkeillä', SourceLayer: 'linkProperty', ShowDeleteCheckboxes: true},
         manoeuvreSamuutusWorkList: {Title: 'Kääntymisrajoituksien samuutuksen tarkistuslista', SourceLayer: 'manoeuvre'}
       };
