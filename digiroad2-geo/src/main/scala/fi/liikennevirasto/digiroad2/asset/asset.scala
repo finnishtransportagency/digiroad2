@@ -976,7 +976,7 @@ object AssetTypeInfo {
     LitRoad, CarryingCapacity, CareClass, PavedRoad
   )
 
-  val assetsWithValidityDirection = Seq(MassTransitLane.typeId, SpeedLimitAsset.typeId, WinterSpeedLimit.typeId, NumberOfLanes.typeId,
+  val assetsWithValidityDirectionExcludingSpeedLimits = Seq(MassTransitLane.typeId, NumberOfLanes.typeId,
     CyclingAndWalking.typeId, HazmatTransportProhibition.typeId, ParkingProhibition.typeId, Prohibition.typeId)
 
   val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,

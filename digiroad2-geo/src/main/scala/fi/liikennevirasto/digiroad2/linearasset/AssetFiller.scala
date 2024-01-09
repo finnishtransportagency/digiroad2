@@ -129,9 +129,9 @@ class AssetFiller {
     val adjusted = roadLink.trafficDirection match {
       case TrafficDirection.BothDirections => segments.map { s =>
         s.sideCode match {
-          case SideCode.AgainstDigitizing if !AssetTypeInfo.assetsWithValidityDirection.contains(s.typeId) =>
+          case SideCode.AgainstDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(s.typeId) =>
             (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId, oldId = s.oldId))
-          case SideCode.TowardsDigitizing if !AssetTypeInfo.assetsWithValidityDirection.contains(s.typeId) =>
+          case SideCode.TowardsDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(s.typeId) =>
             (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId, oldId = s.oldId))
           case _ => (s, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, s.typeId))
         }
@@ -811,7 +811,6 @@ class AssetFiller {
       debugLogging("adjustAssets"),
       droppedSegmentWrongDirection,
       debugLogging("droppedSegmentWrongDirection"),
-      //TODO check if this can be left out as unnecessary
       adjustSegmentSideCodes,
       debugLogging("adjustSegmentSideCodes"),
       generateTwoSidedNonExistingLinearAssets(typeId),
