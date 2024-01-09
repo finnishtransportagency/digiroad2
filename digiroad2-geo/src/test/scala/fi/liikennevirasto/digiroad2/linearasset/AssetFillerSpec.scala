@@ -1305,4 +1305,27 @@ class AssetFillerSpec extends FunSuite with Matchers {
     result._2.adjustedMValues.filter(_.assetId == 3).size should be(1)
     result._2.adjustedMValues.filter(_.assetId == 3).head should be(adjustedMValuesId3.last)
   }
+
+  test("one-way asset without a validity direction on a two-way link is changed to two-way, an asset with validity directions remains one-way") {
+    val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(20, 0.0)), 20, AdministrativeClass.apply(2), UnknownFunctionalClass.value,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 20), SideCode.TowardsDigitizing, None, TrafficDirection.TowardsDigitizing, NumberOfLanes.typeId),
+      createAsset(2, linkId1, Measure(0, 20), SideCode.TowardsDigitizing, None, TrafficDirection.TowardsDigitizing, TrafficVolume.typeId)
+    )
+
+    val (adjustedAssets, changeSet) = assetFiller.adjustSegmentSideCodes(assetFiller.toRoadLinkForFillTopology(roadLink), assets, initChangeSet)
+
+    val sortedAssets = adjustedAssets.sortBy(_.id)
+
+    sortedAssets.size should be(2)
+    sortedAssets.head.sideCode should be(SideCode.TowardsDigitizing)
+    sortedAssets.last.sideCode should be(SideCode.BothDirections)
+
+    changeSet.adjustedSideCodes.size should be(1)
+    changeSet.adjustedSideCodes.head.assetId should be(2)
+    changeSet.adjustedSideCodes.head.sideCode should be(SideCode.BothDirections)
+    changeSet.adjustedSideCodes.head.typeId should be(TrafficVolume.typeId)
+  }
 }
