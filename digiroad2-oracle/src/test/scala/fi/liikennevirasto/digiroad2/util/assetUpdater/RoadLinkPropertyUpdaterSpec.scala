@@ -386,7 +386,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Given a new road link; When new admin class and link type are not created due to RoadClass value; Then an incomplete link should be generated") {
+  test("Given a new road link; When new functional class and link type are not created due to RoadClass value; Then an incomplete link should be generated") {
     val newLinkId = "eea524dd-e371-47e3-9d58-44272ccf9db0:1"
     val relevantChanges = Seq(
       RoadLinkChange(Add, None,
@@ -402,7 +402,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Given a new road link; When new link already has admin class and link type; Then no properties or incomplete link should be generated") {
+  test("Given a new road link; When new link already has functional class and link type; Then no properties or incomplete link should be generated") {
     val newLinkId = "eea524dd-e371-47e3-9d58-44272ccf9db0:1"
     val relevantChanges = Seq(
       RoadLinkChange(Add, None,
