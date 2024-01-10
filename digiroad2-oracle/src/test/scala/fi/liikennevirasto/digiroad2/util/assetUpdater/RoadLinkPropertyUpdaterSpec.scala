@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Replace, Spl
 import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkClient, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClass, FunctionalClass, LinkType, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SurfaceType}
 import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
@@ -455,6 +455,22 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       createdProperties.size should be(6)
       val incompleteLinks = roadLinkService.getIncompleteLinks(None, false)
       incompleteLinks.size should be(0)
+    }
+  }
+
+  test("no link type or functional class should be transferred or generated when road class changes to hard shoulder") {
+    val oldLinkId = "c51f721d-5c0b-4cd2-b6a5-6a0df207a8fe:1"
+    val newLinkId = "ed66eaf4-c0b7-4356-86fb-10cf0624bf8a:1"
+    val change = RoadLinkChange(Replace,Some(RoadLinkInfo("c51f721d-5c0b-4cd2-b6a5-6a0df207a8fe:1",119.687,
+      List(Point(339271.771,6971427.195,153.038), Point(339265.3400000001,6971546.706,152.451)),12316,Unknown,5,BothDirections, SurfaceType.None)),
+      List(RoadLinkInfo("ed66eaf4-c0b7-4356-86fb-10cf0624bf8a:1",119.687,List(Point(339271.771,6971427.195,153.038), Point(339265.3400000001,6971546.706,152.451)),
+        12318,Unknown,5,BothDirections,SurfaceType.None)),List(ReplaceInfo(Some("c51f721d-5c0b-4cd2-b6a5-6a0df207a8fe:1"),
+        Some("ed66eaf4-c0b7-4356-86fb-10cf0624bf8a:1"),Some(0.0),Some(119.687),Some(0.0),Some(119.687),false)))
+    runWithRollback {
+      RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId, Some("test"), 7)
+      RoadLinkOverrideDAO.insert(LinkType, oldLinkId, Some("test"), 12)
+      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(change))
+      createdProperties.size should be(0)
     }
   }
 }
