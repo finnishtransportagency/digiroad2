@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.{AssetsOnExpiredLinksService, _}
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
+import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{SpeedLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -526,6 +526,10 @@ object Digiroad2Context {
 
   lazy val laneWorkListService: LaneWorkListService = {
     new LaneWorkListService()
+  }
+
+  lazy val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = {
+    new AutoProcessedLanesWorkListService()
   }
 
   lazy val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = {
