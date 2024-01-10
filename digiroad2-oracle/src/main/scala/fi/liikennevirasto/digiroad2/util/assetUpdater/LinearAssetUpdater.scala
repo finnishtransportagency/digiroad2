@@ -105,7 +105,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"droppedAssetIds size: ${changeSet.droppedAssetIds.size}")
     
     changeSet.adjustedMValues.groupBy(_.assetId).filter(_._2.size>=2).foreach(a1=> {
-      logger.error(s"More than one for asset/link ids=${a1._2.sortBy(_.linkId).map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
+      logger.error(s"More than one M-Value adjustment for asset ids=${a1._2.sortBy(_.linkId).map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
     })
 
     changeSet.adjustedSideCodes.groupBy(_.assetId).filter(_._2.size >= 2).foreach(a1 => {
