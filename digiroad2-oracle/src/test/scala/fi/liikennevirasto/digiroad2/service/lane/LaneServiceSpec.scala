@@ -6,14 +6,14 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched, VKMClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
-import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao, LaneWorkListDAO}
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertyChange, RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.LaneUtils.persistedLanesTwoDigitLaneCode
+import fi.liikennevirasto.digiroad2.util.LaneUtils.{laneService, persistedLanesTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, lane}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -31,9 +31,13 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockLaneService = MockitoSugar.mock[LaneService]
   val mockLaneWorkListService = MockitoSugar.mock[LaneWorkListService]
+  val mockAutoProcessedLanesWorkListService = MockitoSugar.mock[AutoProcessedLanesWorkListService]
 
   val laneDao = new LaneDao()
   val laneHistoryDao = new LaneHistoryDao()
+  val laneWorkListDao: LaneWorkListDAO = new LaneWorkListDAO
+  val laneWorkListService: LaneWorkListService = new LaneWorkListService
+  val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = new AutoProcessedLanesWorkListService
   val linkId: String = LinkIdGenerator.generateRandom()
   val roadLinkWithLinkSource = RoadLink(
     linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -42,6 +46,10 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
   when(mockRoadLinkService.getRoadLinkByLinkId(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
+  val mainLanePropertiesStartDate = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(1))),
+                                        LaneProperty("lane_type", Seq(LanePropertyValue("1"))),
+                                        LaneProperty("start_date", Seq(LanePropertyValue("12.06.1970")))
+                                        )
 
   val lanePropertiesValues1 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(1))),
                                 LaneProperty("lane_type", Seq(LanePropertyValue("1")))
@@ -92,7 +100,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def vkmClient: VKMClient = mockVKMClient
     override def roadAddressService: RoadAddressService = mockRoadAddressService
     override def laneWorkListService: LaneWorkListService = mockLaneWorkListService
-
+    override def autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = mockAutoProcessedLanesWorkListService
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
@@ -2118,6 +2126,125 @@ class LaneServiceSpec extends LaneTestSupporter {
         generatedLane.startMeasure should equal(0.0)
         generatedLane.endMeasure should equal(enrichedRoadLink.length)
       })
+    }
+  }
+
+  test("traffic direction change with NO already existing overridden value should be identified and saved to lane work list" +
+    "Link has additional lanes, should not add item to auto processed work list") {
+    val linkProperty = LinkProperties(linkId1, 5, PedestrianZone, TrafficDirection.BothDirections, Private)
+    val fetchedRoadLink = RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
+
+      //MainLane towards
+      ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 2, usernameTest).head
+      //MainLane against
+      ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 3, usernameTest).head
+      //AdditionalLane towards
+      ServiceWithDao.create(Seq(subLane2), Set(linkId1), 2, usernameTest).head
+
+      val lanesBefore = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesBefore.size should equal(3)
+
+      val laneWorkListItemsBeforeOperation = laneWorkListDao.getAllItems
+      val autoProcessedItemsBeforeOperation = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+      when(mockRoadLinkService.enrichFetchedRoadLinks(any[Seq[RoadLinkFetched]], any[Boolean])).thenReturn(Seq(roadlink1))
+      ServiceWithDao.processRoadLinkPropertyChange(LinkPropertyChange("traffic_direction", None, linkProperty, fetchedRoadLink, Some(usernameTest)), newTransaction = false)
+      val laneWorkListItemsAfter = laneWorkListDao.getAllItems
+      val autoProcessedItemsAfter = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+
+      val lanesAfter = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesBefore.size should equal(3)
+
+      //Link has additional lanes, do not automatically process main lanes
+      autoProcessedItemsBeforeOperation.size should equal(0)
+      autoProcessedItemsAfter.size should equal(0)
+
+      laneWorkListItemsBeforeOperation.size should equal(0)
+      laneWorkListItemsAfter.size should equal(1)
+
+      laneWorkListItemsAfter.head.propertyName should equal("traffic_direction")
+      laneWorkListItemsAfter.head.oldValue should equal(TrafficDirection.TowardsDigitizing.value)
+      laneWorkListItemsAfter.head.newValue should equal(TrafficDirection.BothDirections.value)
+      laneWorkListItemsAfter.head.createdBy should equal(usernameTest)
+    }
+  }
+
+  test("traffic direction change with already existing overridden value. No additional lanes, expire main lanes, and generate new ones. " +
+    "Add item to auto processed work list") {
+    runWithRollback {
+      val linkProperty = LinkProperties(linkId1, 5, PedestrianZone, TrafficDirection.BothDirections, Private)
+      val roadLinkFetched = RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)
+      val existingOverriddenValue = Option(3)
+
+      val laneWorkListItemsBeforeOperation = laneWorkListDao.getAllItems
+      val autoProcessedItemsBeforeOperation = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, mainLanePropertiesStartDate)
+
+      //MainLane towards
+      ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 2, usernameTest).head
+
+      val lanesBefore = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesBefore.size should equal(1)
+
+      when(mockRoadLinkService.enrichFetchedRoadLinks(any[Seq[RoadLinkFetched]], any[Boolean])).thenReturn(Seq(roadlink1))
+      ServiceWithDao.processRoadLinkPropertyChange(LinkPropertyChange("traffic_direction", existingOverriddenValue, linkProperty, roadLinkFetched, Some(usernameTest)), newTransaction = false)
+      val laneWorkListItemsAfterOperation = laneWorkListDao.getAllItems
+      val autoProcessedItemsAfter = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+
+      val lanesAfter = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesAfter.size should equal(2)
+
+      autoProcessedItemsBeforeOperation.size should equal(0)
+      laneWorkListItemsBeforeOperation.size should equal(0)
+      laneWorkListItemsAfterOperation.size should equal(0)
+
+      autoProcessedItemsAfter.head.propertyName should equal("traffic_direction")
+      autoProcessedItemsAfter.head.oldValue should equal(TrafficDirection.AgainstDigitizing.value)
+      autoProcessedItemsAfter.head.newValue should equal(TrafficDirection.BothDirections.value)
+      autoProcessedItemsAfter.head.createdBy should equal(usernameTest)
+      autoProcessedItemsAfter.head.startDates should equal(Seq("12.06.1970"))
+    }
+  }
+
+  test("Link type changed to BidirectionalLaneCarriageWay, no additional lanes on link, expire mainlane, generate one both directions lane") {
+    runWithRollback {
+      val linkProperty = LinkProperties(linkId1, 5, BidirectionalLaneCarriageWay, TrafficDirection.TowardsDigitizing, Private)
+      val fetchedRoadLink = RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)
+      val existingOverriddenValue = Option(3)
+
+      val laneWorkListItemsBeforeOperation = laneWorkListDao.getAllItems
+      val autoProcessedItemsBeforeOperation = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, mainLanePropertiesStartDate)
+      //MainLane towards
+      ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 2, usernameTest).head
+      val lanesBefore = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesBefore.size should equal(1)
+
+      when(mockRoadLinkService.enrichFetchedRoadLinks(any[Seq[RoadLinkFetched]], any[Boolean])).thenReturn(Seq(roadlink1.copy(linkType = BidirectionalLaneCarriageWay)))
+      ServiceWithDao.processRoadLinkPropertyChange(LinkPropertyChange("link_type", existingOverriddenValue, linkProperty, fetchedRoadLink, Some(usernameTest)), newTransaction = false)
+
+      val lanesAfter = laneDao.fetchAllLanesByLinkIds(Seq(linkId1))
+      lanesAfter.size should equal(1)
+      lanesAfter.head.sideCode should equal(SideCode.BothDirections.value)
+
+      val laneWorkListItemsAfter = laneWorkListDao.getAllItems
+      val autoProcessedItemsAfter = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+
+      autoProcessedItemsBeforeOperation.size should equal(0)
+      autoProcessedItemsAfter.size should equal(1)
+
+      laneWorkListItemsBeforeOperation.size should equal(0)
+      laneWorkListItemsAfter.size should equal(0)
+
+      autoProcessedItemsAfter.head.propertyName should equal("link_type")
+      autoProcessedItemsAfter.head.oldValue should equal(SingleCarriageway.value)
+      autoProcessedItemsAfter.head.newValue should equal(BidirectionalLaneCarriageWay.value)
+      autoProcessedItemsAfter.head.createdBy should equal(usernameTest)
+      autoProcessedItemsAfter.head.startDates should equal(Seq("12.06.1970"))
     }
   }
 
