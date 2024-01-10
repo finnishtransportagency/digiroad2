@@ -105,13 +105,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"droppedAssetIds size: ${changeSet.droppedAssetIds.size}")
     
     changeSet.adjustedMValues.groupBy(_.assetId).filter(_._2.size>=2).foreach(a1=> {
-      val assets = a1._2
-      logger.info(s"More than one for asset/link ids=${assets.sortBy(_.linkId).map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
+      logger.error(s"More than one for asset/link ids=${a1._2.sortBy(_.linkId).map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
     })
 
     changeSet.adjustedSideCodes.groupBy(_.assetId).filter(_._2.size >= 2).foreach(a1 => {
-      val assets = a1._2
-      logger.info(s"More than one sideCode change for asset/link ids=${assets.map(a => s"${a.assetId}/${a.sideCode}").mkString(", ")}")
+      logger.error(s"More than one sideCode change for asset/sidecode ids=${a1._2.map(a => s"${a.assetId}/${a.sideCode}").mkString(", ")}")
     })
   }
 
