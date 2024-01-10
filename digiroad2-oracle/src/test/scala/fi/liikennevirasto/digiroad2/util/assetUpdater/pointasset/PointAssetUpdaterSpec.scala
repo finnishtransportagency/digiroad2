@@ -433,4 +433,20 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       corrected.linkId should be(oldLinkId)
     }
   }
+
+  test("split with one part removed, the point asset placed between the splits should be placed on the remaining part") {
+    runWithRollback {
+      val oldLinkId = "b9073cbd-5fb7-4dcb-9a0d-b368c948f1d5:1"
+      val newLinkId = "7da294fc-cb5e-48e3-8a2d-47addf586147:1"
+      val lon = 286834.99
+      val lat = 6752236.407
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val asset = testPersistedPointAsset(1, lon, lat, 430, oldLinkId,
+        29.978, false, 0, NormalLinkInterface)
+      val corrected = updater.correctPersistedAsset(asset, change)
+
+      corrected.floating should be(false)
+      corrected.linkId should be(newLinkId)
+    }
+  }
 }
