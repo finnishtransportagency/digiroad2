@@ -83,7 +83,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private val emptyStep: OperationStep = OperationStep(Seq(), None, Seq())
   val groupSizeForParallelRun = 1500
-  val parallelizationThreshold = 1500
+  val parallelizationThreshold = 20000
 
   // Mark generated part to be removed. Used when removing pavement in PaveRoadUpdater
   protected val removePart: Int = -1
