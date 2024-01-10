@@ -1235,50 +1235,60 @@ trait LaneOperations {
     * @param linkPropertyChange Event info on link property change
     */
   def handleRoadLinkPropertyChange(linkPropertyChange: LinkPropertyChange): Unit = {
+    def expireAndGenerateLanesAndAddToWorkList(mainLanesOnLink: Seq[PersistedLane], roadLink: Seq[RoadLink], oldValue: Int, newValue: Int, username: String, timestamp: DateTime): Unit = {
+      val linkId = linkPropertyChange.roadLinkFetched.linkId
+      val mainLanesStartDates = mainLanesOnLink.flatMap(lane => getPropertyValue(lane, "start_date")).map(_.value).asInstanceOf[Seq[String]]
+      val itemToInsert = AutoProcessedLanesWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, mainLanesStartDates, timestamp, username)
+      mainLanesOnLink.foreach(mainLane => moveToHistory(mainLane.id, None, expireHistoryLane = true, deleteFromLanes = true, username))
+      MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
+      autoProcessedLanesWorkListService.insertToAutoProcessedLanesWorkList(itemToInsert, newTransaction = false)
+    }
+
+    def handleTrafficDirectionChange(mainLanesOnLink: Seq[PersistedLane], additionalLanesOnLink: Seq[PersistedLane], roadLink: Seq[RoadLink], username: String, timestamp: DateTime) = {
+      val linkId = linkPropertyChange.roadLinkFetched.linkId
+      val newValue = linkPropertyChange.linkProperty.trafficDirection.value
+      val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(linkPropertyChange.roadLinkFetched.trafficDirection.value)
+      if (newValue != oldValue) {
+        if (additionalLanesOnLink.isEmpty) {
+          expireAndGenerateLanesAndAddToWorkList(mainLanesOnLink, roadLink, oldValue, newValue, username, timestamp)
+        } else {
+          val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timestamp, username)
+          laneWorkListService.insertToLaneWorkList(itemToInsert, newTransaction = false)
+        }
+      }
+    }
+
+    def handleLinkTypeChange(mainLanesOnLink: Seq[PersistedLane], additionalLanesOnLink: Seq[PersistedLane], roadLink: Seq[RoadLink], username: String, timestamp: DateTime) = {
+      val linkId = linkPropertyChange.roadLinkFetched.linkId
+      val newValue = linkPropertyChange.linkProperty.linkType.value
+      val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(99)
+      val twoWayLaneLinkTypeChange = twoWayLanes.map(_.value).contains(newValue) || twoWayLanes.map(_.value).contains(oldValue)
+      if (oldValue == TractorRoad.value && newValue != TractorRoad.value) {
+        MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
+      }
+      else if (newValue == TractorRoad.value && oldValue != TractorRoad.value) {
+        (mainLanesOnLink ++ additionalLanesOnLink).foreach(mainLane =>
+          moveToHistory(mainLane.id, None, expireHistoryLane = true, deleteFromLanes = true, username))
+      }
+      if (twoWayLaneLinkTypeChange && (newValue != oldValue)) {
+        if (additionalLanesOnLink.isEmpty) expireAndGenerateLanesAndAddToWorkList(mainLanesOnLink, roadLink, oldValue, newValue, username, timestamp)
+        else {
+          val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timestamp, username)
+          laneWorkListService.insertToLaneWorkList(itemToInsert, newTransaction = false)
+        }
+      }
+    }
+
     val username = linkPropertyChange.username.getOrElse("")
     val timeStamp = DateTime.now()
     val linkId = linkPropertyChange.roadLinkFetched.linkId
     val roadLink = roadLinkService.enrichFetchedRoadLinks(Seq(linkPropertyChange.roadLinkFetched))
     val (mainLanesOnLink, additionalLanesOnLink) = fetchExistingLanesByLinkIds(Seq(linkId), Seq(), newTransaction = false).partition(lane => LaneNumber.isMainLane(lane.laneCode))
 
-    def expireAndGenerateLanesAndAddToWorkList(oldValue: Int, newValue: Int): Unit = {
-      val mainLanesStartDates = mainLanesOnLink.flatMap(lane => getPropertyValue(lane, "start_date")).map(_.value).asInstanceOf[Seq[String]]
-      val itemToInsert = AutoProcessedLanesWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, mainLanesStartDates, timeStamp, username)
-      mainLanesOnLink.foreach(mainLane => moveToHistory(mainLane.id, None, expireHistoryLane = true, deleteFromLanes = true, username))
-      MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
-      autoProcessedLanesWorkListService.insertToAutoProcessedLanesWorkList(itemToInsert, newTransaction = false)
-    }
 
     linkPropertyChange.propertyName match {
-      case "traffic_direction" =>
-        val newValue = linkPropertyChange.linkProperty.trafficDirection.value
-        val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(linkPropertyChange.roadLinkFetched.trafficDirection.value)
-        if (newValue != oldValue) {
-          if (additionalLanesOnLink.isEmpty) {
-            expireAndGenerateLanesAndAddToWorkList(oldValue, newValue)
-          } else {
-            val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timeStamp, username)
-            laneWorkListService.insertToLaneWorkList(itemToInsert, newTransaction = false)
-          }
-        }
-      case "link_type" =>
-        val newValue = linkPropertyChange.linkProperty.linkType.value
-        val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(99)
-        val twoWayLaneLinkTypeChange = twoWayLanes.map(_.value).contains(newValue) || twoWayLanes.map(_.value).contains(oldValue)
-        if (oldValue == TractorRoad.value && newValue != TractorRoad.value) {
-          MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
-        }
-        else if (newValue == TractorRoad.value && oldValue != TractorRoad.value) {
-          (mainLanesOnLink ++ additionalLanesOnLink).foreach(mainLane =>
-            moveToHistory(mainLane.id, None, expireHistoryLane = true, deleteFromLanes = true, username))
-        }
-        if (twoWayLaneLinkTypeChange && (newValue != oldValue)) {
-          if (additionalLanesOnLink.isEmpty) expireAndGenerateLanesAndAddToWorkList(oldValue, newValue)
-          else {
-            val itemToInsert = LaneWorkListItem(0, linkId, linkPropertyChange.propertyName, oldValue, newValue, timeStamp, username)
-            laneWorkListService.insertToLaneWorkList(itemToInsert, newTransaction = false)
-          }
-        }
+      case "traffic_direction" => handleTrafficDirectionChange(mainLanesOnLink, additionalLanesOnLink, roadLink, username, timeStamp)
+      case "link_type" => handleLinkTypeChange(mainLanesOnLink, additionalLanesOnLink, roadLink, username, timeStamp)
     }
   }
 
