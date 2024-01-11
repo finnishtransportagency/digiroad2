@@ -171,7 +171,7 @@ class RoadLinkPropertyUpdater {
   }
 
   /***
-   * Filters out links that need no property update processing due to already having Admin Class or Link type,
+   * Filters out links that need no property update processing due to already having Functional Class or Link type,
    * or having ignorable Feature Class
    * @param newLink
    * @return
