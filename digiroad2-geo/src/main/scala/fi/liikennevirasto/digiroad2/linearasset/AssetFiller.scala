@@ -773,11 +773,11 @@ class AssetFiller {
       if (assets.size > 1) {
         val left = assets.head
         val right = assets.find(sl => sl.startMeasure >= left.endMeasure)
-        val notTooShortGap = Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
-        val gapIsAcceptable = Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
-        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) gapIsAcceptable else true
-        
-        if (right.nonEmpty && notTooShortGap && condition) {
+        val notTooShortGap = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
+        val gapIsAcceptable = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
+        val valuesAreSame = right.nonEmpty && left.value.equals(right.get.value)
+        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) gapIsAcceptable else valuesAreSame
+        if (notTooShortGap && condition) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
             timeStamp = latestTimestamp(left, right))
@@ -793,7 +793,7 @@ class AssetFiller {
       }
     }
 
-    val (geometrySegments, geometryAdjustments) = fillBySideCode(assets, roadLink, changeSet)
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(assets.sortBy(_.startMeasure), roadLink, changeSet)
     (geometrySegments, geometryAdjustments)
   }
 
