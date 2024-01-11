@@ -860,20 +860,18 @@ class AssetFiller {
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
-      val (adjustedAssets, assetAdjustments) = LogUtilsGeo.time(logger, s"Looping over link: ${roadLink.linkId}") {
-        operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
           operation(roadLink, currentSegments, currentAdjustments)
         }
-      }
+      
       val filterExpiredAway = LinearAssetFiller.removeExpiredMValuesAdjustments2(assetAdjustments)
 
-      val noDuplicate = LogUtilsGeo.time(logger, s"Remove duplicates") {
-        filterExpiredAway.copy(
+      val noDuplicate = filterExpiredAway.copy(
           adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
           adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
           valueAdjustments = filterExpiredAway.valueAdjustments.distinct
         )
-      }
+      
 
       (existingAssets ++ adjustedAssets, noDuplicate)
     }
