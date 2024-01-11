@@ -129,11 +129,8 @@ class RoadLinkPropertyUpdater {
 
   def transferOrGenerateFunctionalClass(changeType: RoadLinkChangeType, optionalOldLink: Option[RoadLinkInfo], newLink: RoadLinkInfo): Option[FunctionalClassChange] = {
     val timeStamp = DateTime.now().toString()
-    val alreadyUpdatedFunctionalClass = FunctionalClassDao.getExistingValue(newLink.linkId)
-    (alreadyUpdatedFunctionalClass, optionalOldLink) match {
-      case (Some(_), _) =>
-        None
-      case (None, Some(oldLink)) =>
+    optionalOldLink match {
+      case Some(oldLink) =>
         transferFunctionalClass(changeType, oldLink, newLink, timeStamp) match {
           case Some(functionalClassChange) => Some(functionalClassChange)
           case _ =>
@@ -142,7 +139,7 @@ class RoadLinkPropertyUpdater {
               case _ => None
             }
         }
-      case (None, None) =>
+      case None =>
         generateFunctionalClass(changeType, newLink) match {
           case Some(generatedFunctionalClass) => Some(generatedFunctionalClass)
           case _ => None
@@ -173,6 +170,27 @@ class RoadLinkPropertyUpdater {
     }
   }
 
+  /***
+   * Filters out links that need no property update processing due to already having Functional Class or Link type,
+   * or having ignorable Feature Class
+   * @param newLink
+   * @return
+   */
+  def isProcessableLink(newLink: RoadLinkInfo): Boolean = {
+    val alreadyUpdatedFunctionalClass = FunctionalClassDao.getExistingValue(newLink.linkId)
+    val alreadyUpdatedLinkType = LinkTypeDao.getExistingValue(newLink.linkId)
+    if (alreadyUpdatedFunctionalClass.nonEmpty) {
+      logger.info(s"Functional Class already exists for new link ${newLink.linkId}")
+    }
+    if (alreadyUpdatedLinkType.nonEmpty) {
+      logger.info(s"Link Type already exists for new link ${newLink.linkId}")
+    }
+    val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+    val hasIgnoredFeatureClass = FeatureClass.featureClassesToIgnore.contains(featureClass)
+
+    alreadyUpdatedFunctionalClass.isEmpty && alreadyUpdatedLinkType.isEmpty && !hasIgnoredFeatureClass
+  }
+
   def transferOrGenerateFunctionalClassesAndLinkTypes(changes: Seq[RoadLinkChange]): Seq[ReportedChange] = {
     val incompleteLinks = new ListBuffer[IncompleteLink]()
     val createdProperties = new ListBuffer[Option[ReportedChange]]()
@@ -183,7 +201,7 @@ class RoadLinkPropertyUpdater {
         case Replace =>
           val newLink = change.newLinks.head
           val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-          if (!(iteratedNewLinks.contains(newLink)) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+          if ((!iteratedNewLinks.exists(_.linkId == newLink.linkId)) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
             val relatedMerges = changes.filter(change => change.changeType == Replace && change.newLinks.head == newLink)
             val (created, failed) = transferFunctionalClassesAndLinkTypesForSingleReplace(relatedMerges, newLink, timeStamp)
             createdProperties ++= created
@@ -191,9 +209,8 @@ class RoadLinkPropertyUpdater {
             iteratedNewLinks += newLink
           }
         case _ =>
-          change.newLinks.foreach { newLink =>
-            val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-            if (!(iteratedNewLinks.contains(newLink)) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+          change.newLinks.filter(isProcessableLink).foreach { newLink =>
+            if (!iteratedNewLinks.exists(_.linkId == newLink.linkId)) {
               val functionalClassChange = transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink)
               val linkTypeChange = transferOrGenerateLinkType(change.changeType, change.oldLink, newLink)
               if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
@@ -201,6 +218,7 @@ class RoadLinkPropertyUpdater {
               }
               createdProperties += functionalClassChange
               createdProperties += linkTypeChange
+              iteratedNewLinks += newLink
             }
           }
       }

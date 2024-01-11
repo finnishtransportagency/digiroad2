@@ -594,6 +594,10 @@
       return $.getJSON('api/laneWorkList');
     };
 
+    this.getAutoProcessedLanesWorkList = function () {
+      return $.getJSON('api/autoProcessedLanesWorkList');
+    };
+
     this.getAssetsOnExpiredLinksWorkList = function () {
       return $.getJSON('api/assetsOnExpiredLinksWorkList');
     };
@@ -1088,6 +1092,18 @@
         contentType: "application/json",
         type: "DELETE",
         url: "api/laneWorkList",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.deleteAutoProcessedLanesWorkListItems = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/autoProcessedLanesWorkList",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
