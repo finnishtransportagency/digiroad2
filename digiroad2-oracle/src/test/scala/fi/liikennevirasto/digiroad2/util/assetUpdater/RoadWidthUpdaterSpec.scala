@@ -456,4 +456,34 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
     }
   }
 
+  test("Old link is split into multiple part. Some part are removed.") {
+    val oldSplitLinkId = "6ddd592c-14a9-4765-bbb9-6b38ce9ecc8e:1"
+    val newSplitLinkId1 = "248f54b7-8608-4989-9c2f-9d08d6e85e6d:1"
+
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLinkSplit = roadLinkService.getExistingOrExpiredRoadLinkByLinkId(oldSplitLinkId).get
+      val newLink = roadLinkService.getExistingOrExpiredRoadLinkByLinkId(newSplitLinkId1).get
+      val id1 = roadWidthService.createWithoutTransaction(RoadWidth.typeId, oldSplitLinkId, valueDynamic,
+        SideCode.BothDirections.value, Measures(0.0, oldRoadLinkSplit.length), "testuser",
+        0L, Some(oldRoadLinkSplit), false, None, None) // Width 400 on old Split link
+
+
+      val assetsBefore = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(oldSplitLinkId), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
+      val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(newSplitLinkId1), false)
+      assetsAfter.size should equal(1)
+
+      val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
+      assetsAfter.head.linkId should be(newSplitLinkId1)
+      assetLength should be(newLink.length)
+      
+    }
+
+  }
+  
 }
