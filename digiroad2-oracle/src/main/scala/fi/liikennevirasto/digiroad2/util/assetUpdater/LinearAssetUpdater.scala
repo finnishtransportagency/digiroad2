@@ -619,10 +619,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     /**
       *
       * @param level default five is arbitrary, adjust as needed
-      * @param groupSize if we assume one link will be operated in ~ 43ms then 1500 links will be operated about in one minute.
+      *  [[groupSizeForParallelRun]] if we assume one link will be operated in ~ 43ms then 1500 links will be operated about in one minute.
       * @return
       */
-    def parallelLoop(level: Int = 5,groupSize: Int=1500):List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
+    def parallelLoop(level: Int = 5):List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
       val grouped = assetsByLink.grouped(groupSizeForParallelRun).toList.par
       new Parallel().operation(grouped, level){_.map{al=>
         val ids = al.flatMap(_._2.assets.map(_.id)).toSet
