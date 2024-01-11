@@ -761,7 +761,7 @@ class AssetFiller {
     * Fills any missing pieces in the middle of asset.
     * - If the gap is smaller than minimum allowed asset length the first asset is extended
     * !!! But if it is smaller than 1E-6 we let it be and treat it as a rounding error to avoid repeated writes !!!
-    * - If the gap is larger it's let to be and will be generated as unknown asset later
+    * - If the gap is larger and assets is not in roadLinkLongAssets list, it's let to be and will be generated as unknown asset later
     *
     * @param roadLink    Road link being handled
     * @param assets List of asset limits
@@ -774,8 +774,8 @@ class AssetFiller {
         val left = assets.head
         val right = assets.find(sl => sl.startMeasure >= left.endMeasure)
         val notTooShortGap = Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
-        val tooBigGap = Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
-        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) tooBigGap else true
+        val gapIsAcceptable = Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
+        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) gapIsAcceptable else true
         
         if (right.nonEmpty && notTooShortGap && condition) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
