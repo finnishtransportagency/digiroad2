@@ -944,6 +944,56 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sorted(3).endMeasure should be(223.872)
     
   }
+
+  test("Fill whole in middle of links, roadlink long assets") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(223.872, 0.0)), 223.872, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 200.303), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(207.304, 215.304), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(2)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(207.304)
+
+    sorted(1).startMeasure should be(207.304)
+    sorted(1).endMeasure should be(215.304)
+
+  }
+
+  test("Do not fill whole if values are different either side of whole, roadlink lenth assets") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(223.872, 0.0)), 223.872, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 200.303), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(207.304, 215.304), SideCode.BothDirections, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(2)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(207.304)
+
+    sorted(1).startMeasure should be(207.304)
+    sorted(1).endMeasure should be(215.304)
+
+  }
   
   private def makeAssetsList(linkId: String) = {
     Seq(

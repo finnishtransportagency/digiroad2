@@ -773,8 +773,11 @@ class AssetFiller {
       if (assets.size > 1) {
         val left = assets.head
         val right = assets.find(sl => sl.startMeasure >= left.endMeasure)
-        if (right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength &&
-          Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
+        val notTooShortGap = Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
+        val tooBigGap = Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
+        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) tooBigGap else true
+        
+        if (right.nonEmpty && notTooShortGap && condition) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
             timeStamp = latestTimestamp(left, right))
@@ -852,6 +855,8 @@ class AssetFiller {
       debugLogging("adjustSegmentSideCodes"),
       fillHoles,
       debugLogging("fillHoles"),
+      fuse,
+      debugLogging("fuse after filling hole"),
       clean
     )
 
