@@ -60,6 +60,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createdDateTime = Some(DateTime.now()), typeId = typeId, trafficDirection = trafficDirection, timeStamp = 0L,
       geomModifiedDate = None, linkSource = NormalLinkInterface, administrativeClass = State, attributes = Map(), verifiedBy = None, verifiedDate = None, informationSource = None)
   }
+  def createAssetTimestamp(id: Long, linkId1: String, measure: Measure, sideCode: SideCode, value: Option[Value], trafficDirection: TrafficDirection = TrafficDirection.BothDirections, typeId: Int = NumberOfLanes.typeId,timeStamp:Long = 0L) = {
+    PieceWiseLinearAsset(id = id, linkId = linkId1, sideCode = sideCode, value = value, geometry = Nil, expired = false, startMeasure = measure.startMeasure, endMeasure = measure.endMeasure,
+      endpoints = Set(Point(measure.endMeasure, 0.0)), modifiedBy = None, modifiedDateTime = None, createdBy = Some("guy"),
+      createdDateTime = Some(DateTime.now()), typeId = typeId, trafficDirection = trafficDirection, timeStamp = timeStamp,
+      geomModifiedDate = None, linkSource = NormalLinkInterface, administrativeClass = State, attributes = Map(), verifiedBy = None, verifiedDate = None, informationSource = None)
+  }
   def createRoadLink(id: String, length: Double) = {
     RoadLink(id, Seq(Point(0.0, 0.0), Point(length, 0.0)), length, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
@@ -970,6 +976,29 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
   }
 
+  test("Fill whole in middle of links and merge similar parts, roadlink long assets2") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAssetTimestamp(1, linkId1, Measure(0, 200.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId, timeStamp = 1),
+      createAssetTimestamp(2, linkId1, Measure(207.00, 215.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId,timeStamp = 2),
+      createAssetTimestamp(3, linkId1, Measure(240.00, 265.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId,timeStamp = 3),
+      createAssetTimestamp(4, linkId1, Measure(265.00, 300.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId,timeStamp = 4)
+    )
+    val (filledTopology, changeSet) = assetFiller.fillTopologyChangesGeometry(roadLinks.map(assetFiller.toRoadLinkForFillTopology),assets.groupBy(_.linkId), RoadWidth.typeId)
+
+    val sorted = filledTopology.sortBy(_.endMeasure)
+
+    sorted.size should be(1)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(400)
+    sorted(0).value should be(Some(NumericValue(1)))
+  }
+
   test("Do not fill whole if values are different either side of whole, roadlink lenth assets") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(223.872, 0.0)), 223.872, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
@@ -988,10 +1017,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sorted.size should be(2)
 
     sorted(0).startMeasure should be(0)
-    sorted(0).endMeasure should be(207.304)
+    sorted(0).endMeasure should be(200.303)
+    sorted(0).value should be(Some(NumericValue(1)))
 
     sorted(1).startMeasure should be(207.304)
     sorted(1).endMeasure should be(215.304)
+    sorted(1).value should be(Some(NumericValue(3)))
 
   }
   
