@@ -456,7 +456,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
     }
   }
 
-  test("Old link is split into multiple part. Some part are removed.") {
+  test("Old link is split into multiple part but destination link is same. Some part are removed. Fill wholes and fuse to create one asset.") {
     val oldSplitLinkId = "6ddd592c-14a9-4765-bbb9-6b38ce9ecc8e:1"
     val newSplitLinkId1 = "248f54b7-8608-4989-9c2f-9d08d6e85e6d:1"
 
