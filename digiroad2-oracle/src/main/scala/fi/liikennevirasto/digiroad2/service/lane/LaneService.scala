@@ -1289,6 +1289,7 @@ trait LaneOperations {
     linkPropertyChange.propertyName match {
       case "traffic_direction" => handleTrafficDirectionChange(mainLanesOnLink, additionalLanesOnLink, roadLink, username, timeStamp)
       case "link_type" => handleLinkTypeChange(mainLanesOnLink, additionalLanesOnLink, roadLink, username, timeStamp)
+      case _ =>
     }
   }
 
