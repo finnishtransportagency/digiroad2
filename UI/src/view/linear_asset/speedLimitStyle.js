@@ -5,11 +5,11 @@
     };
 
     var createZoomDependentOneWayRule = function(zoomLevel, style) {
-      return new StyleRule().where('sideCode').isNot(1).and('zoomLevel').is(zoomLevel).use(style);
+      return new StyleRule().where('sideCode').isNot(1).and('zoomLevel').is(zoomLevel).and('trafficDirection').is('BothDirections').use(style);
     };
 
     var createZoomAndTypeDependentOneWayRule = function(type, zoomLevel, style) {
-      return new StyleRule().where('type').is(type).and('zoomLevel').is(zoomLevel).and('sideCode').isNot(1).use(style);
+      return new StyleRule().where('type').is(type).and('zoomLevel').is(zoomLevel).and('trafficDirection').is('BothDirections').and('sideCode').isNot(1).use(style);
     };
 
     var unknownLimitStyleRule = new StyleRule().where('type').is('unknown').use({icon: {src:  'images/speed-limits/unknown.svg' }});
