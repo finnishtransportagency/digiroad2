@@ -715,7 +715,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(1,BothDirections,20), SideCodeAdjustment(2,BothDirections,20)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -786,7 +786,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(2,BothDirections,20), SideCodeAdjustment(3,BothDirections,20)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -1327,5 +1327,25 @@ class AssetFillerSpec extends FunSuite with Matchers {
     changeSet.adjustedSideCodes.head.assetId should be(2)
     changeSet.adjustedSideCodes.head.sideCode should be(SideCode.BothDirections)
     changeSet.adjustedSideCodes.head.typeId should be(TrafficVolume.typeId)
+  }
+
+  test("do not change side code to BothDirections if there is an asset on the other side") {
+    val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(20, 0.0)), 20, AdministrativeClass.apply(2), UnknownFunctionalClass.value,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 20), SideCode.TowardsDigitizing, None, TrafficDirection.BothDirections, WinterSpeedLimit.typeId),
+      createAsset(2, linkId1, Measure(0, 20), SideCode.AgainstDigitizing, None, TrafficDirection.BothDirections, WinterSpeedLimit.typeId)
+    )
+
+    val (adjustedAssets, changeSet) = assetFiller.adjustSegmentSideCodes(assetFiller.toRoadLinkForFillTopology(roadLink), assets, initChangeSet)
+
+    val sortedAssets = adjustedAssets.sortBy(_.id)
+
+    sortedAssets.size should be(2)
+    sortedAssets.head.sideCode should be(SideCode.TowardsDigitizing)
+    sortedAssets.last.sideCode should be(SideCode.AgainstDigitizing)
+
+    changeSet.adjustedSideCodes.size should be(0)
   }
 }

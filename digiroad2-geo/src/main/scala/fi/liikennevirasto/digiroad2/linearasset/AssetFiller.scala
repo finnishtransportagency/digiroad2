@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
-import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
+import fi.liikennevirasto.digiroad2.asset.SideCode.{BothDirections, switch}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, LogUtilsGeo, Point}
@@ -126,12 +126,16 @@ class AssetFiller {
   }
 
   def adjustSegmentSideCodes(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    def segmentFoundOnTheOtherSide(currentSegment: PieceWiseLinearAsset) = {
+      segments.exists(s => s.linkId == currentSegment.linkId && s.sideCode == switch(currentSegment.sideCode))
+    }
+
     val adjusted = roadLink.trafficDirection match {
       case TrafficDirection.BothDirections => segments.map { s =>
         s.sideCode match {
-          case SideCode.AgainstDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(s.typeId) =>
+          case SideCode.AgainstDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(s.typeId) && !segmentFoundOnTheOtherSide(s) =>
             (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId, oldId = s.oldId))
-          case SideCode.TowardsDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(s.typeId) =>
+          case SideCode.TowardsDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(s.typeId) && !segmentFoundOnTheOtherSide(s) =>
             (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId, oldId = s.oldId))
           case _ => (s, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, s.typeId))
         }
