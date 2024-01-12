@@ -1283,7 +1283,9 @@ trait LaneOperations {
       val linkId = linkPropertyChange.roadLinkFetched.linkId
       val newValue = linkPropertyChange.linkProperty.linkType.value
       val oldValue = linkPropertyChange.optionalExistingValue.getOrElse(99)
-      val twoWayLaneLinkTypeChange = twoWayLanes.map(_.value).contains(newValue) || twoWayLanes.map(_.value).contains(oldValue)
+      val newValueIsTwoWayLane = twoWayLanes.map(_.value).contains(newValue)
+      val oldValueIsTwoWayLane =  twoWayLanes.map(_.value).contains(oldValue)
+      val twoWayLaneLinkTypeChange = newValueIsTwoWayLane ^ oldValueIsTwoWayLane
       if (oldValue == TractorRoad.value && newValue != TractorRoad.value) {
         MainLanePopulationProcess.createMainLanesForRoadLinks(roadLink)
       }
