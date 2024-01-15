@@ -779,7 +779,7 @@ class AssetFiller {
     def fillBySideCode(assets: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFillTopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       if (assets.size > 1) {
         val left = assets.head
-        val right = assets.find(sl => sl.startMeasure >= left.endMeasure)
+        val right = assets.find(sl => sl.startMeasure >= left.endMeasure && sl.sideCode.value == left.sideCode.value)
         val notTooShortGap = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
         val gapIsAcceptable = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
         val valuesAreSame = right.nonEmpty && left.value.equals(right.get.value)

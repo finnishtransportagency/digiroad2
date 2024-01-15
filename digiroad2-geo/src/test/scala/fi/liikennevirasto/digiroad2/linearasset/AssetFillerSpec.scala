@@ -1253,6 +1253,52 @@ class AssetFillerSpec extends FunSuite with Matchers {
     ))
   }
 
+  test("Fill hole in middle of link, different value each sides, roadlink long assets") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      // TowardsDigitizing
+      createAsset(1, linkId1, Measure(0, 200.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      createAsset(2, linkId1, Measure(210, 400.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      // AgainstDigitizing
+      createAsset(3, linkId1, Measure(0, 200.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      createAsset(4, linkId1, Measure(210, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
+    val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
+
+    sorted.size should be(2)
+    sorted2.size should be(2)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(210)
+    sorted(0).value should be(Some(NumericValue(1)))
+
+    sorted(1).startMeasure should be(210)
+    sorted(1).endMeasure should be(400)
+    sorted(1).value should be(Some(NumericValue(1)))
+
+    sorted2(0).startMeasure should be(0)
+    sorted2(0).endMeasure should be(210)
+    sorted2(0).value should be(Some(NumericValue(3)))
+
+    sorted2(1).startMeasure should be(210)
+    sorted2(1).endMeasure should be(400)
+    sorted2(1).value should be(Some(NumericValue(3)))
+
+    val adjustedMValues = combineTestChangeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(
+      MValueAdjustment(1, linkId1, 0, 210),
+      MValueAdjustment(3, linkId1, 0, 210)
+    ))
+  }
+
   test("Fill hole in middle of links when AgainstDigitizing side has multiple values, roadlink long assets") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
