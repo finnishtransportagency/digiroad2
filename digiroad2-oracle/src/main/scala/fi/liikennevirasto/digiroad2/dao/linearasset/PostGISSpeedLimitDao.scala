@@ -187,8 +187,8 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     groupSpeedLimitsResult(speedLimitRows)
   }
 
-  override def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val queryFilter = "AND (valid_to IS NULL OR valid_to > current_timestamp)"
+  override def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], getHistory: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    val queryFilter = if (getHistory) "AND (valid_to IS NOT NULL AND valid_to < current_timestamp" else "AND (valid_to IS NULL OR valid_to > current_timestamp)"
     fetchByLinkIds(linkIds,queryFilter)
   }
 
