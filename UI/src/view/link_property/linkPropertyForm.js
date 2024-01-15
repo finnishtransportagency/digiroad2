@@ -37,7 +37,10 @@
 
     var laneWorkListTDConfirmationPopUp = function (target, selectedValue) {
       return {
-        message: "Tielinkki nousee kaistojen tarkastuslistalle liikennevirran suunnan muutoksen myötä.",
+        message: "Liikennevirran suunnan muutos aiheuttaa pääkaistojen lakkauttamisen ja uusien generoimisen linkillä," +
+            " sekä kohteen nostamisen automaattisesti käsiteltyjen kaistojen työlistalle, jos sillä ei ole lisäkaistoja. " +
+            "Jos linkillä on lisäkaistoja, kaistoja ei muokata, mutta kohde nousee kaistojen työlistalle." +
+            " Vaikutussuuntaiset viivamaiset kohteet sovitetaan muuttuneelle linkille. ",
         type: "confirm",
         yesButtonLbl: 'Jatka',
         noButtonLbl: 'Peruuta',
@@ -55,7 +58,9 @@
       var messageText;
       if (originalValue === enumerations.linkTypes.TractorRoad.value) messageText = "Olet muuttamassa tielinkin tyyppiä pois ajopolusta. Linkille generoidaan pääkaistat";
       else if (selectedValue === enumerations.linkTypes.TractorRoad.value) messageText = "Olet muuttamassa tielinkin tyypiksi ajopolku. Linkillä olevat kaistat päätetään.";
-      else messageText = "Tielinkki nousee kaistojen tarkastuslistalle tielinkin tyypin muutoksen myötä.";
+      else messageText = "Jos tielinkillä ei ole lisäkaistoja, tielinkin pääkaistat päätetään ja " +
+            "sille generoidaan uuden tyypin mukaiset pääkaistat ja kohde nostetaan automaattisesti käsiteltyjen kaistojen työlistalle." +
+            " Jos tielinkillä on lisäkaistoja, kaistoja ei muokata ja kohde nostetaan kaistojen työlistalle.";
 
       return {
         message: messageText,
