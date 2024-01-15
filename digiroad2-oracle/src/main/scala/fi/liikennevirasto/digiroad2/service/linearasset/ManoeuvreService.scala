@@ -136,11 +136,14 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     * @param intermediateElements Intermediate elements' list
     * @return Sequence of Start->Intermediate(s)->Target elements.
     */
-  def cleanChain(firstElement: ManoeuvreElement, lastElement: ManoeuvreElement, intermediateElements: Seq[ManoeuvreElement]) : Seq[ManoeuvreElement] = {
-    if (intermediateElements.isEmpty)
-      Seq(firstElement, lastElement)
-    else {
-      val chain = buildChain(intermediateElements ++ Seq(lastElement), Seq(firstElement))
+  def cleanChain(firstElement: Option[ManoeuvreElement], lastElement: Option[ManoeuvreElement], intermediateElements: Seq[ManoeuvreElement]) : Seq[ManoeuvreElement] = {
+    if (firstElement.isEmpty || lastElement.isEmpty) {
+      Seq()
+    }
+    else if (intermediateElements.isEmpty) {
+      Seq(firstElement.get, lastElement.get)
+    } else {
+      val chain = buildChain(intermediateElements ++ Seq(lastElement.get), Seq(firstElement.get))
       if (chain.nonEmpty && chain.last.elementType == ElementTypes.LastElement)
         chain
       else
@@ -171,7 +174,7 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     if (isValidLinkChain(linkPairs) == false) return false
 
-    val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
+    val cleanedManoeuvreElements = cleanChain(Some(firstElement), Some(lastElement), intermediateElements)
 
     val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.orNull, null, null, false)
 
@@ -223,7 +226,7 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
          val lastElement = manoeuvre.elements.find(_.elementType == ElementTypes.LastElement)
            .getOrElse(throw MissingElement(s"Manoeuvre is invalid ${manoeuvre.id}, no last element"))
          val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
-         Some(manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements)))
+         Some(manoeuvre.copy(elements = cleanChain(Some(firstElement), Some(lastElement), intermediateElements)))
        } catch {
          case e: MissingElement =>  logger.error(e.getMessage); None
          case e: Throwable => throw e
@@ -243,8 +246,8 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val manoeuvres =
       withDynTransaction {
         getDaoManoeuvres(roadLinks.map(_.linkId)).map{ manoeuvre =>
-          val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
-          val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
+          val firstElement = manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement)
+          val lastElement = manoeuvre.elements.find(_.elementType == ElementTypes.LastElement)
           val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
 
           manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
