@@ -1124,7 +1124,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
 
-  test("Fill whole in middle of links, side code values , roadlink long assets") {
+  test("Fill whole in middle of links when on TowardsDigitizing and AgainstDigitizing side has hole, roadlink long assets") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
         TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
@@ -1164,7 +1164,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sorted2(1).value should be(Some(NumericValue(2)))
   }
 
-  test("Fill whole in middle of links, side code values , roadlink long assets21") {
+  test("Fill whole in middle of link and do not fill when AgainstDigitizing side has multiple values, roadlink long assets21") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
         TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
@@ -1204,7 +1204,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sorted2(1).value should be(Some(NumericValue(3)))
   }
 
-  test("Fill whole in middle of links, side code values , roadlink long assets22") {
+  test("Fill whole in middle of links when AgainstDigitizing side has multiple values, roadlink long assets") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
         TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
@@ -1217,7 +1217,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       // AgainstDigitizing
       createAsset(3, linkId1, Measure(0, 310.00), SideCode.AgainstDigitizing, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
       createAsset(4, linkId1, Measure(320, 360.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
-        createAsset(5, linkId1, Measure(370, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
+      createAsset(5, linkId1, Measure(370, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
     )
 
     val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
