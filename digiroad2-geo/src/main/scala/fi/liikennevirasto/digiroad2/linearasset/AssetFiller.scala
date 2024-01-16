@@ -781,9 +781,9 @@ class AssetFiller {
         val left = assets.head
         val right = assets.find(sl => sl.startMeasure >= left.endMeasure && sl.sideCode.value == left.sideCode.value)
         val notTooShortGap = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
-        val gapIsSmallerThan2Meter = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
+        val gapIsSmallerThanTolerance = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
         val valuesAreSame = right.nonEmpty && left.value.equals(right.get.value)
-        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) gapIsSmallerThan2Meter else valuesAreSame
+        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) gapIsSmallerThanTolerance else valuesAreSame
         if (notTooShortGap && condition) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
