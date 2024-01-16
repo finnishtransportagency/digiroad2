@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, MValueCalculator}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkTypeDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -143,16 +144,24 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     }
   }
   
-  test("Create unknown speed limit when there is new links"){
+  test("Create unknown speed limit to a new car road, check that no unknown limit is generated to illegal targets, "){
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(_.changeType == RoadLinkChangeType.Add)
 
     runWithRollback {
-      val newLink = "624df3a8-b403-4b42-a032-41d4b59e1840:1"
+      val newCarRoadId = "624df3a8-b403-4b42-a032-41d4b59e1840:1"
+      LinkTypeDao.insertValues(newCarRoadId, Some("test"), SingleCarriageway.value)
+      val newPedestrianRoadId = "f2eba575-f306-4c37-b49d-a4d27a3fc049:1"
+      LinkTypeDao.insertValues(newPedestrianRoadId, Some("test"), CycleOrPedestrianPath.value)
+      val newHardShoulderId = "e24e9e6c-e011-4889-9ca4-4a13734d0f41: 1"
+      LinkTypeDao.insertValues(newHardShoulderId, Some("test"), HardShoulder.value)
+      val newTractorRoadId = "a15cf59b-c17c-4b6d-8e9b-a558143d0d47:1"
+      LinkTypeDao.insertValues(newTractorRoadId, Some("test"), TractorRoad.value)
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes) // check that no overlapping assets are created even if the process is run twice
-      val unknown =  speedLimitService.getUnknownByLinkIds(Set(newLink),newTransaction = false)
+      val unknown = speedLimitService.getUnknownByLinkIds(Set(newCarRoadId, newPedestrianRoadId, newHardShoulderId),newTransaction = false)
       unknown.size should be(1)
+      unknown.head.linkId should be(newCarRoadId)
     }
   }
   
