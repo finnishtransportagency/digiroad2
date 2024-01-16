@@ -1336,6 +1336,45 @@ class AssetFillerSpec extends FunSuite with Matchers {
     ))
     
   }
+  test("Fill hole in middle of links and merge similar parts, hole is only in one side, roadlink long assets2") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 400.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(207.00, 215.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(3, linkId1, Measure(240.00, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    
+    val sorted = methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
+    val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
+
+    sorted.size should be(1)
+    sorted2.size should be(2)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(400)
+    sorted(0).value should be(Some(NumericValue(1)))
+    sorted(0).sideCode.value should be(SideCode.TowardsDigitizing.value)
+
+    sorted2(0).startMeasure should be(207)
+    sorted2(0).endMeasure should be(240)
+    sorted2(0).value should be(Some(NumericValue(3)))
+    sorted2(0).sideCode.value should be(SideCode.AgainstDigitizing.value)
+
+    sorted2(1).startMeasure should be(240)
+    sorted2(1).endMeasure should be(400)
+    sorted2(1).value should be(Some(NumericValue(3)))
+
+    val adjustedMValues = combineTestChangeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(
+      MValueAdjustment(2, linkId1, 207, 240)
+    ))
+
+  }
 
   test("Fill hole in middle of links and merge similar parts, side codes are not continues but values are same, roadlink long assets") {
     val roadLinks = Seq(
