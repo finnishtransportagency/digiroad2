@@ -768,7 +768,7 @@ class AssetFiller {
     * Fills any missing pieces in the middle of asset.
     * - If the gap is smaller than minimum allowed asset length the first asset is extended
     * !!! But if it is smaller than 1E-6 we let it be and treat it as a rounding error to avoid repeated writes !!!
-    * - If the gap is larger it's let to be and will be generated as unknown asset later
+    * - If the gap is larger and assets is not in roadLinkLongAssets list, it's let to be and will be generated as unknown asset later
     *
     * @param roadLink    Road link being handled
     * @param assets List of asset limits
@@ -779,9 +779,12 @@ class AssetFiller {
     def fillBySideCode(assets: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFillTopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       if (assets.size > 1) {
         val left = assets.head
-        val right = assets.find(sl => sl.startMeasure >= left.endMeasure)
-        if (right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength &&
-          Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
+        val right = assets.find(sl => sl.startMeasure >= left.endMeasure && sl.sideCode.value == left.sideCode.value)
+        val notTooShortGap = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
+        val gapIsSmallerThanTolerance = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
+        val valuesAreSame = right.nonEmpty && left.value.equals(right.get.value)
+        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) gapIsSmallerThanTolerance && valuesAreSame else valuesAreSame
+        if (notTooShortGap && condition) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
             timeStamp = latestTimestamp(left, right))
@@ -797,7 +800,7 @@ class AssetFiller {
       }
     }
 
-    val (geometrySegments, geometryAdjustments) = fillBySideCode(assets, roadLink, changeSet)
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(assets.sortBy(_.startMeasure), roadLink, changeSet)
     (geometrySegments, geometryAdjustments)
   }
 
@@ -859,6 +862,8 @@ class AssetFiller {
       debugLogging("adjustSegmentSideCodes"),
       fillHoles,
       debugLogging("fillHoles"),
+      fuse,
+      debugLogging("fuse after filling hole"),
       clean
     )
 
