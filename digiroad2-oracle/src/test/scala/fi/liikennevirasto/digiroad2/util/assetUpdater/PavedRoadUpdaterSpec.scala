@@ -364,4 +364,50 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
     }
   }
 
+  test("Given a split RoadLink that has an Unknown pavement type asset; When the new part does not cover the whole new RoadLink; Then the new part should be ignored.") {
+    val oldLinkId1 = "1981d30f-1a0f-4d57-bcde-759f5eedaaef:1"
+    val oldLinkId2 = "0b873c9b-43d3-43fb-8ffd-c361c5366db6:1"
+    val newLinkId1 = "a4310ee4-7fa2-485f-9298-701f2fa07a3e:1"
+    val newLinkId2 = "8b02477e-1e74-461e-af98-f06fc73a5ee9:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.newLinks.exists(link => link.linkId == newLinkId2))
+    val knownAssetValue = DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(10)))
+      , DynamicProperty("suggest_box", "checkbox", false, List())
+    )))
+    runWithRollback {
+      val oldRoadLink1 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId1).get
+      val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId2).get
+      val newRoadLink1 = roadLinkService.getRoadLinkByLinkId(newLinkId1).get
+      val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLinkId2).get
+      val oldAsset1Id = dynamicLinearAssetService.createWithoutTransaction(PavedRoad.typeId, oldLinkId1,
+        assetValues, SideCode.BothDirections.value, Measures(0, oldRoadLink1.length), "testuser", 0L, Some(oldRoadLink1), true, Some("testCreator"),
+        Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2022-01-01")))
+
+      val oldAsset2Id = dynamicLinearAssetService.createWithoutTransaction(PavedRoad.typeId, oldLinkId2,
+        knownAssetValue, SideCode.BothDirections.value, Measures(0, oldRoadLink2.length), "testuser", 0L, Some(oldRoadLink2), true, Some("testCreator"),
+        Some(DateTime.parse("2020-01-01")), Some("testModifier"), Some(DateTime.parse("2022-01-01")))
+
+
+      val assetsBefore = dynamicLinearAssetService.getPersistedAssetsByIds(PavedRoad.typeId, Set(oldAsset1Id, oldAsset2Id), false)
+
+      assetsBefore.size should be(2)
+      assetsBefore.map(asset => asset.expired == false should be(true))
+
+      TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+      val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId1, newLinkId2), false)
+      assetsAfter.size should be(2)
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+
+      sorted(0).linkId should be(newLinkId1)
+      sorted(0).startMeasure should be(0)
+      sorted(0).endMeasure should be(newRoadLink1.length)
+      sorted(0).value.equals(assetValues)
+
+      sorted(1).linkId should be(newLinkId2)
+      sorted(1).startMeasure should be(0)
+      sorted(1).endMeasure should be(newRoadLink2.length)
+      sorted(1).value.equals(knownAssetValue)
+
+    }
+  }
+
 }
