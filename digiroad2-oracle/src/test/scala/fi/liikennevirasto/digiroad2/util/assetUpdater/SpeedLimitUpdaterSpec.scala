@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, MValueCalculator}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkTypeDao
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -17,6 +19,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
   val speedLimitDao = new PostGISSpeedLimitDao(roadLinkService)
   val speedLimitService = new SpeedLimitService(mockEventBus,mockRoadLinkService)
   val speedLimitServiceNoMock = new SpeedLimitService(mockEventBus,roadLinkService)
+  protected def roadLinkDAO: RoadLinkDAO = new RoadLinkDAO
 
   object TestLinearAssetUpdater extends SpeedLimitUpdater(speedLimitService) {
     override def withDynTransaction[T](f: => T): T = f
@@ -143,16 +146,24 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     }
   }
   
-  test("Create unknown speed limit when there is new links"){
+  test("Create unknown speed limit to a new car road, check that no unknown limit is generated to illegal targets, "){
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(_.changeType == RoadLinkChangeType.Add)
 
     runWithRollback {
-      val newLink = "624df3a8-b403-4b42-a032-41d4b59e1840:1"
+      val newCarRoadId = "624df3a8-b403-4b42-a032-41d4b59e1840:1"
+      LinkTypeDao.insertValues(newCarRoadId, Some("test"), SingleCarriageway.value)
+      val newPedestrianRoadId = "f2eba575-f306-4c37-b49d-a4d27a3fc049:1"
+      LinkTypeDao.insertValues(newPedestrianRoadId, Some("test"), CycleOrPedestrianPath.value)
+      val newHardShoulderId = "e24e9e6c-e011-4889-9ca4-4a13734d0f41: 1"
+      LinkTypeDao.insertValues(newHardShoulderId, Some("test"), HardShoulder.value)
+      val newTractorRoadId = "a15cf59b-c17c-4b6d-8e9b-a558143d0d47:1"
+      LinkTypeDao.insertValues(newTractorRoadId, Some("test"), TractorRoad.value)
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes) // check that no overlapping assets are created even if the process is run twice
-      val unknown =  speedLimitService.getUnknownByLinkIds(Set(newLink),newTransaction = false)
+      val unknown = speedLimitService.getUnknownByLinkIds(Set(newCarRoadId, newPedestrianRoadId, newHardShoulderId),newTransaction = false)
       unknown.size should be(1)
+      unknown.head.linkId should be(newCarRoadId)
     }
   }
   
@@ -226,17 +237,19 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(oldLinkID)
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(fetchedRoadLinks.head))
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
-      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id = speedLimitService.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, SpeedLimitValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsAfter = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       assetsAfter.size should be(1)
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
@@ -257,16 +270,18 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(oldLinkID)
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(fetchedRoadLinks.head))
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
-      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id = speedLimitService.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, SpeedLimitValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsAfter = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       assetsAfter.size should be(1)
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
@@ -289,18 +304,22 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID2).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(oldLinkID)
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(fetchedRoadLinks.head))
+      val fetchedRoadLinks2 = roadLinkDAO.fetchExpiredRoadLink(oldLinkID2)
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID2)).thenReturn(Some(fetchedRoadLinks2.head))
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
 
-      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(40), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID2, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink2.length), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+      val id = speedLimitService.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, SpeedLimitValue(40), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = speedLimitService.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID2, SpeedLimitValue(50), SideCode.BothDirections.value, Measures(0.0, oldRoadLink2.length), "testuser", 0L, Some(oldRoadLink2), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false)
+      val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false).sortBy(_.startMeasure)
+      val assetsAfter = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false).sortBy(_.startMeasure)
       assetsAfter.size should be(2)
 
       val startAsset = assetsAfter.head
@@ -347,12 +366,12 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
 
       val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, 45.230), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface)
 
-      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
+      val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
-      val assetsAfter = service.fetchExistingAssetsByLinksIdsString(SpeedLimitAsset.typeId, Set(newLinkID, newLinkID2), Set(), false).sortBy(_.linkId)
+      val assetsAfter = speedLimitService.fetchExistingAssetsByLinksIdsString(SpeedLimitAsset.typeId, Set(newLinkID, newLinkID2), Set(), false).sortBy(_.linkId)
       assetsAfter.size should be(2)
 
       assetsAfter.head.sideCode should be(SideCode.BothDirections.value)
