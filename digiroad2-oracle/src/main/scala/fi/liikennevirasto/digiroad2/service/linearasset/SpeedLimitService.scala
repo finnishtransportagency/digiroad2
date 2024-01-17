@@ -265,7 +265,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
                                         roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     withDynTransaction {
       val roadLinksFiltered = roadLinks.filter(roadLinkFilter)
-      val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinksFiltered, showHistory)
+      val speedLimitLinks = SpeedLimitFiller.toLinearAssetsOnMultipleLinks(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(SpeedLimitAsset.typeId, roadLinksFiltered.map(_.linkId), showHistory),
+        roadLinksFiltered.map(toRoadLinkForFillTopology))
       val speedLimits = speedLimitLinks.groupBy(_.linkId)
       if (generateUnknownBoolean) generateUnknowns(roadLinksFiltered, speedLimits) else speedLimitLinks
     }

@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -183,18 +184,21 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val speedLimits = Map(linkId1 -> Seq(speedLimit1, speedLimit2, speedLimit3))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     val sortedFilledTopology = filledTopology.sortBy(_.startMeasure)
-    sortedFilledTopology.length should be(4)
+    sortedFilledTopology.length should be(3)
     sortedFilledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(2.0, 0.0)))
     sortedFilledTopology.head.startMeasure should be(0.0)
     sortedFilledTopology.head.endMeasure should be(2.0)
+    sortedFilledTopology.head.sideCode should be(BothDirections)
     sortedFilledTopology(1).geometry should be(Seq(Point(2.0, 0.0), Point(4.9, 0.0)))
     sortedFilledTopology(1).startMeasure should be(2.0)
     sortedFilledTopology(1).endMeasure should be(4.9)
+    sortedFilledTopology(1).sideCode should be(BothDirections)
     sortedFilledTopology.last.geometry should be(Seq(Point(4.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(4.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
+    sortedFilledTopology.last.sideCode should be(BothDirections)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(2,BothDirections,20)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -288,14 +292,17 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(2.9, 0.0)))
     sortedFilledTopology.head.startMeasure should be(0.0)
     sortedFilledTopology.head.endMeasure should be(2.9)
+    sortedFilledTopology.head.sideCode should be(BothDirections)
     sortedFilledTopology(1).geometry should be(Seq(Point(2.9, 0.0), Point(5.9, 0.0)))
     sortedFilledTopology(1).startMeasure should be(2.9)
     sortedFilledTopology(1).endMeasure should be(5.9)
+    sortedFilledTopology(1).sideCode should be(BothDirections)
     sortedFilledTopology.last.geometry should be(Seq(Point(5.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
+    sortedFilledTopology.last.sideCode should be(BothDirections)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(1,BothDirections,20), SideCodeAdjustment(2,BothDirections,20)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -356,14 +363,17 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(2.9, 0.0)))
     sortedFilledTopology.head.startMeasure should be(0.0)
     sortedFilledTopology.head.endMeasure should be(2.9)
+    sortedFilledTopology.head.sideCode should be(BothDirections)
     sortedFilledTopology(1).geometry should be(Seq(Point(2.9, 0.0), Point(5.9, 0.0)))
     sortedFilledTopology(1).startMeasure should be(2.9)
     sortedFilledTopology(1).endMeasure should be(5.9)
+    sortedFilledTopology(1).sideCode should be(BothDirections)
     sortedFilledTopology.last.geometry should be(Seq(Point(5.9, 0.0), Point(10.0, 0.0)))
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
+    sortedFilledTopology.last.sideCode should be(BothDirections)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes should be(Nil)
+    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(2,BothDirections,20,0), SideCodeAdjustment(3,BothDirections,20,0)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -943,6 +953,29 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     oldLink2.startMeasure should be(30.0)
     oldLink2.endMeasure should be(50.00)
     oldLink2.value.get should be(SpeedLimitValue(60))
+  }
+
+  test("do not change side code to BothDirections if there is a speed limit on the other side") {
+    val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(20, 0.0)), 20, AdministrativeClass.apply(2), UnknownFunctionalClass.value,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+
+    val speedLimits = Seq(
+      PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(60)), Seq(Point(0.0, 0.0), Point(20.0, 0.0)),
+        false, 0.0, 20.0, Set(Point(0.0, 0.0), Point(20.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(50)), Seq(Point(0.0, 0.0), Point(20.0, 0.0)),
+        false, 0.0, 20.0, Set(Point(0.0, 0.0), Point(20.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
+
+    val (adjustedAssets, changeSet) = SpeedLimitFiller.adjustSegmentSideCodes(SpeedLimitFiller.toRoadLinkForFillTopology(roadLink), speedLimits, initChangeSet)
+
+    val sortedSpeedLimits = adjustedAssets.sortBy(_.id)
+
+    sortedSpeedLimits.size should be(2)
+    sortedSpeedLimits.head.sideCode should be(SideCode.TowardsDigitizing)
+    sortedSpeedLimits.last.sideCode should be(SideCode.AgainstDigitizing)
+
+    changeSet.adjustedSideCodes.size should be(0)
   }
 
   case class ChangeInfo(oldId: Option[String],

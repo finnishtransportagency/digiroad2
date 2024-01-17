@@ -974,15 +974,17 @@ object AssetTypeInfo {
     ParkingProhibition, CyclingAndWalking, Lanes)
   
   /**
-    * assets which use side code
+    * for updating all linear assets side code when traffic direction changes via UI
     */
-  val updateSideCodes: Seq[AssetTypeInfo] = Seq(
-    SpeedLimitAsset,WinterSpeedLimit,
-    TotalWeightLimit,TrailerTruckWeightLimit,AxleWeightLimit,
-    BogieWeightLimit,HeightLimit,LengthLimit,WidthLimit,RoadWorksAsset,ParkingProhibition,
-    NumberOfLanes,
-    HazmatTransportProhibition,Prohibition,CyclingAndWalking
+  val linearAssets: Seq[AssetTypeInfo] = Seq(
+    SpeedLimitAsset, WinterSpeedLimit, TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
+    HeightLimit, LengthLimit, WidthLimit, RoadWorksAsset, ParkingProhibition, NumberOfLanes, HazmatTransportProhibition,
+    Prohibition, CyclingAndWalking, TrafficVolume, EuropeanRoads, ExitNumbers, RoadWidth, DamagedByThaw, MassTransitLane,
+    LitRoad, CarryingCapacity, CareClass, PavedRoad
   )
+
+  val assetsWithValidityDirectionExcludingSpeedLimits = Seq(MassTransitLane.typeId, NumberOfLanes.typeId,
+    CyclingAndWalking.typeId, HazmatTransportProhibition.typeId, ParkingProhibition.typeId, Prohibition.typeId)
 
   val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
     CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId, PavedRoad.typeId)

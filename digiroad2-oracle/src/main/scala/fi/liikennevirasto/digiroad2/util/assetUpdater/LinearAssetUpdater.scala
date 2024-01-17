@@ -82,6 +82,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private val changesForReport: mutable.ListBuffer[ChangedAsset] = ListBuffer()
 
   private val emptyStep: OperationStep = OperationStep(Seq(), None, Seq())
+  val groupSizeForParallelRun = 1500
+  val parallelizationThreshold = 20000
 
   // Mark generated part to be removed. Used when removing pavement in PaveRoadUpdater
   protected val removePart: Int = -1
@@ -101,6 +103,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"expiredAssetIds size: ${changeSet.expiredAssetIds.size}")
     logger.info(s"valueAdjustments size: ${changeSet.valueAdjustments.size}")
     logger.info(s"droppedAssetIds size: ${changeSet.droppedAssetIds.size}")
+    
+    changeSet.adjustedMValues.groupBy(_.assetId).filter(_._2.size>=2).foreach(a1=> {
+      logger.error(s"More than one M-Value adjustment for asset ids=${a1._2.sortBy(_.linkId).map(a => s"${a.assetId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
+    })
+
+    changeSet.adjustedSideCodes.groupBy(_.assetId).filter(_._2.size >= 2).foreach(a1 => {
+      logger.error(s"More than one sideCode change for asset/sidecode ids=${a1._2.map(a => s"${a.assetId}/${a.sideCode}").mkString(", ")}")
+    })
   }
 
   private val isDeleted: RoadLinkChange => Boolean = (change: RoadLinkChange) => {
@@ -609,18 +619,31 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     /**
       *
       * @param level default five is arbitrary, adjust as needed
-      * @param groupSize if we assume one link will be operated in ~ 43ms then 1500 links will be operated about in one minute.
+      * [[groupSizeForParallelRun]] if we assume one link will be operated in ~ 43ms then 1500 links will be operated about in one minute.
       * @return
       */
-    def parallelLoop(level: Int = 5,groupSize: Int=1500):List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
-      val grouped = assetsByLink.grouped(1500).toList.par
-      new Parallel().operation(grouped, level){_.map{adjusting(typeId, changeSet,_)}}.toList
+    def parallelLoop(level: Int = 5):List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
+      val grouped = assetsByLink.grouped(groupSizeForParallelRun).toList.par
+      new Parallel().operation(grouped, level){_.map{al=>
+        val ids = al.flatMap(_._2.assets.map(_.id)).toSet
+        val links =  al.keys.toSet
+        val excludeUnneededChangSetItems = changeSet match { 
+          case Some(x) => Some(ChangeSet(
+            droppedAssetIds = x.droppedAssetIds.intersect(ids),
+            adjustedMValues = x.adjustedMValues.filter(a => links.contains(a.linkId)),
+            adjustedSideCodes = x.adjustedSideCodes.filter(a => ids.contains(a.assetId)),
+            expiredAssetIds = x.expiredAssetIds.intersect(ids),
+            valueAdjustments = x.valueAdjustments
+          ))
+          case None => None
+        }
+        adjusting(typeId, excludeUnneededChangSetItems,al)}}.toList
     }
 
     val linksCount = assetsByLink.size
 
     val result = linksCount match {
-      case a if a >= 20000 => parallelLoop()
+      case a if a >= parallelizationThreshold => parallelLoop()
       case _ => List(adjusting(typeId, changeSet, assetsByLink))
     }
 

@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane._
-import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
+import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinkIdGenerator, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
@@ -37,6 +37,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
   val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
   val laneWorkListService = new LaneWorkListService
+  val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = new AutoProcessedLanesWorkListService
 
 
   object LaneServiceWithDao extends LaneService(mockRoadLinkService, new DummyEventBus, mockRoadAddressService) {
@@ -573,7 +574,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("TrafficDirection changed on link, generate new main lanes, raise to work list if it has additional lanes") {
+  test("TrafficDirection changed on link, generate new main lanes, raise link to auto processed lanes work list," +
+    "raise link to lane work list because it has additional lanes") {
     runWithRollback {
       val newLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:2"
       val relevantChange = testChanges.find(change => change.changeType == Replace && change.newLinks.head.linkId == newLinkId).get
@@ -594,8 +596,11 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       LaneUpdater.updateTrafficDirectionChangesLaneWorkList(Seq(trafficDirectionChange))
 
-      val itemsAfterUpdate = laneWorkListService.workListDao.getAllItems
-      itemsAfterUpdate.size should equal(1)
+      val laneWorkListItemsAfterUpdate = laneWorkListService.workListDao.getAllItems
+      laneWorkListItemsAfterUpdate.size should equal(1)
+
+      val autoProcessedLanesWorkListItems = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+      autoProcessedLanesWorkListItems.size should equal(1)
 
       val lanesOnOldLinkBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
       // Old link has one main lane and one additional lane
@@ -637,8 +642,10 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       LaneUpdater.updateTrafficDirectionChangesLaneWorkList(Seq(trafficDirectionChange))
 
-      val itemsAfterUpdate = laneWorkListService.workListDao.getAllItems
-      itemsAfterUpdate.size should equal(1)
+      val laneWorkListItemsAfterUpdate = laneWorkListService.workListDao.getAllItems
+      laneWorkListItemsAfterUpdate.size should equal(1)
+      val autoProcessedLanesWorkListItems = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+      autoProcessedLanesWorkListItems.size should equal(1)
 
       val lanesOnOldLinkBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
       // Old link has one main lane and one additional lane
