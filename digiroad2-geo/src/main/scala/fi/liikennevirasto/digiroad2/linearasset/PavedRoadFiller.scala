@@ -24,7 +24,7 @@ object PavedRoadFiller extends AssetFiller {
   def isRedundantUnknownPavementAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): Boolean = {
     val assetLength = asset.endMeasure - asset.startMeasure
     val linkLength = roadLink.length
-    val pavementClass = extractPavementClass(asset.value).getOrElse(DynamicPropertyValue(""))
+    val pavementClass = PavementClass.extractPavementClass(asset.value).getOrElse(DynamicPropertyValue(""))
     (assetLength - linkLength).abs > MaxAllowedMValueError &&
       PavementClass.applyFromDynamicPropertyValue(pavementClass.value) == PavementClass.Unknown match {
       case true =>
@@ -33,15 +33,5 @@ object PavedRoadFiller extends AssetFiller {
       case _ =>
         false
     }
-  }
-
-  def extractPavementClass(assetValue: Option[Value]): Option[DynamicPropertyValue] = {
-    assetValue.collect {
-      case dynamicValue: DynamicValue =>
-        dynamicValue.value.properties.collectFirst {
-          case property if property.publicId == "paallysteluokka" && property.values.size > 0 =>
-            property.values.head
-        }
-    }.flatten
   }
 }
