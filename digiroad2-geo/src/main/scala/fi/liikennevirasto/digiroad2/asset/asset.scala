@@ -8,7 +8,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.JsonAST.JString
 import org.json4s._
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 
 
 sealed trait LinkGeomSource{
@@ -285,6 +285,13 @@ object PavementClass {
 
   def apply(value: Int): PavementClass = {
     values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def applyFromDynamicPropertyValue(value: Any): PavementClass = {
+    Try(apply(value.toString.toInt)) match {
+      case Success(pavementClass) => pavementClass
+      case Failure(_) => Unknown
+    }
   }
 
   case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
