@@ -532,8 +532,8 @@ object LaneUpdater {
   def calculateAdditionalLanePositionsOnSplitLinks(oldAdditionalLanes: Seq[PersistedLane], change: RoadLinkChange): Seq[LaneSplit] = {
     oldAdditionalLanes.map(originalAdditionalLane => {
       val replaceInfosAffectingLane = change.replaceInfo.filter(replaceInfo => {
-        GeometryUtils.liesInBetween(originalAdditionalLane.startMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0))) ||
-          GeometryUtils.liesInBetween(originalAdditionalLane.endMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0)))
+        GeometryUtils.liesInBetweenExclusiveEnd(originalAdditionalLane.startMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0))) ||
+          GeometryUtils.liesInBetweenExclusiveStart(originalAdditionalLane.endMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0)))
       })
       val lanesSplitFromOriginal = replaceInfosAffectingLane.map(replaceInfo => {
         val newId = replaceInfo.newLinkId.getOrElse("")

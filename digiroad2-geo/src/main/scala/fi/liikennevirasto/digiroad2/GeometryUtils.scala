@@ -89,13 +89,35 @@ object GeometryUtils {
   }
 
   /**
-    * Check if given measure is between the given start and end measures
+    * Check if given measure is between the given start and end measures, inclusive
     * @param measure m-value to check
     * @param interval First element of tuple is start measure, second element is the end measure of the interval
     * @return true if m-value lies between the given start and end measures, else false
     */
   def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
+  }
+
+  /**
+    * Check if given measure is between given start and end measures, start measure is exclusive
+    * Used in LaneUpdater to check if replaceInfo affects lane.
+    * @param measure m-value to check
+    * @param interval First element of tuple is start measure, second element is the end measure of the interval
+    * @return true if m-value lies between the given start and end measures, else false
+    */
+  def liesInBetweenExclusiveStart(measure: Double, interval: (Double, Double)): Boolean = {
+    measure > interval._1 && measure <= interval._2
+  }
+
+  /**
+    * Check if given measure is between given start and end measures, end measure is exclusive
+    * Used in LaneUpdater to check if replaceInfo affects lane.
+    * @param measure m-value to check
+    * @param interval First element of tuple is start measure, second element is the end measure of the interval
+    * @return true if m-value lies between the given start and end measures, else false
+    */
+  def liesInBetweenExclusiveEnd(measure: Double, interval: (Double, Double)): Boolean = {
+    measure >= interval._1 && measure < interval._2
   }
 
   def truncateGeometry2D(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
