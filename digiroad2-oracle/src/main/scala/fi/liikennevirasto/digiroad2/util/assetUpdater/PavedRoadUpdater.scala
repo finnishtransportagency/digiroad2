@@ -2,16 +2,17 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkChange, RoadLinkChangeType}
+import fi.liikennevirasto.digiroad2.client.RoadLinkChange
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.{KgvUtil, LinearAssetUtils}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
-  
+
+  override def assetFiller: AssetFiller = PavedRoadFiller
   override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
     val roadLinkFound = newRoadLinks.exists(_.linkId == newLinkInfo.linkId)

@@ -4,11 +4,13 @@ import java.nio.charset.StandardCharsets
 import java.text.Normalizer
 import java.util.Base64
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Value}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.json4s.JsonAST.JString
 import org.json4s._
-import scala.util.Try
+
+import scala.util.{Failure, Success, Try}
 
 
 sealed trait LinkGeomSource{
@@ -285,6 +287,23 @@ object PavementClass {
 
   def apply(value: Int): PavementClass = {
     values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def applyFromDynamicPropertyValue(value: Any): PavementClass = {
+    Try(apply(value.toString.toInt)) match {
+      case Success(pavementClass) => pavementClass
+      case Failure(_) => Unknown
+    }
+  }
+
+  def extractPavementClass(assetValue: Option[Value]): Option[DynamicPropertyValue] = {
+    assetValue.collect {
+      case dynamicValue: DynamicValue =>
+        dynamicValue.value.properties.collectFirst {
+          case property if property.publicId == "paallysteluokka" && property.values.size > 0 =>
+            property.values.head
+        }
+    }.flatten
   }
 
   case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
