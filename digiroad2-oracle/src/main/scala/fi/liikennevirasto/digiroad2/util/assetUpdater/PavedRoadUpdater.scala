@@ -78,7 +78,8 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     val combinedSteps = expiredPavementSteps.foldLeft(OperationStep(assetToPersist, Some(changeSets), operatio.assetsBefore))((a, b) => {
       OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)), b.assetsBefore)
     })
-    Some(combinedSteps)
+    val removedAssetsFiltered = combinedSteps.copy(assetsAfter = combinedSteps.assetsAfter.filterNot(asset => assetToBeRemoved.contains(asset)))
+    Some(removedAssetsFiltered)
   }
   override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
     removePavement(operationStep,changes)
