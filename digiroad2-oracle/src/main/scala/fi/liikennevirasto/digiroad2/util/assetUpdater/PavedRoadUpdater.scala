@@ -66,7 +66,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     val (assetToBeRemoved, assetToPersist) = assetsAll.partition(a => pavementShouldBeRemoved(a, changesRemovePavement))
     val expiredPavementSteps = assetToBeRemoved.map(asset => {
         if (asset.id != 0) {
-          operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
+          operatio.copy(assetsAfter = Seq(), changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
           val originalAsset = operatio.assetsBefore.find(_.id == asset.oldId)
             .getOrElse(throw new NoSuchElementException(s"Could not find original asset for reporting," +
@@ -78,8 +78,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     val combinedSteps = expiredPavementSteps.foldLeft(OperationStep(assetToPersist, Some(changeSets), operatio.assetsBefore))((a, b) => {
       OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)), b.assetsBefore)
     })
-    val removedAssetsFiltered = combinedSteps.copy(assetsAfter = combinedSteps.assetsAfter.filterNot(asset => assetToBeRemoved.contains(asset)))
-    Some(removedAssetsFiltered)
+    Some(combinedSteps)
   }
   override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
     removePavement(operationStep,changes)
