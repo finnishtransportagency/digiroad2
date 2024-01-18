@@ -66,7 +66,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     val (assetToBeRemoved, assetToPersist) = assetsAll.partition(a => pavementShouldBeRemoved(a, changesRemovePavement))
     val expiredPavementSteps = assetToBeRemoved.map(asset => {
         if (asset.id != 0) {
-          operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
+          operatio.copy(assetsAfter = Seq(), changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
           val originalAsset = operatio.assetsBefore.find(_.id == asset.oldId)
             .getOrElse(throw new NoSuchElementException(s"Could not find original asset for reporting," +
