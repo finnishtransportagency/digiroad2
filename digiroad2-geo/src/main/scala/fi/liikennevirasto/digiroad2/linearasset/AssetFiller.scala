@@ -709,9 +709,6 @@ class AssetFiller {
       }
     }
   }
-  
-  protected def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet):
-  (Seq[PieceWiseLinearAsset], ChangeSet) = (assets, changeSet)
 
   /**
     * Finally adjust asset length by snapping to links start and endpoint. <br> <pre> 
@@ -733,9 +730,7 @@ class AssetFiller {
       val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(roadLink, linearAssets, SideCode.AgainstDigitizing)
       val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(roadLink, linearAssets)
       val mValueAdjustments = towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments
-      val (asset,changeSetCopy)=(towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments,
-        changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
-      adjustLopsidedLimit(roadLink,asset,changeSetCopy)
+      (towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
     } else {
       linearAssets.foldLeft((Seq[PieceWiseLinearAsset](), changeSet)) {
         case ((resultAssets, change), linearAsset) =>

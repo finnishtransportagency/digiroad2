@@ -70,17 +70,6 @@ object SpeedLimitFiller extends AssetFiller {
     )
   }
 
-
-  override protected def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val onlyLimitOnLink = assets.length == 1 && assets.head.sideCode != SideCode.BothDirections
-    if (onlyLimitOnLink) {
-      val segment = assets.head
-      val sideCodeAdjustments = Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections, SpeedLimitAsset.typeId))
-      (Seq(segment.copy(sideCode = SideCode.BothDirections)), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ sideCodeAdjustments))
-    } else {
-      (assets, changeSet)
-    }
-  }
   override def dropShortSegments(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val limitsToDrop = assets.filter { limit =>
       GeometryUtils.geometryLength(limit.geometry) < MinAllowedLength && roadLink.length > MinAllowedLength
