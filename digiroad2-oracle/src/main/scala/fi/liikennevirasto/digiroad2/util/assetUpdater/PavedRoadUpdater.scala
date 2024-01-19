@@ -2,16 +2,17 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkChange, RoadLinkChangeType}
+import fi.liikennevirasto.digiroad2.client.RoadLinkChange
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.{KgvUtil, LinearAssetUtils}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
-  
+
+  override def assetFiller: AssetFiller = PavedRoadFiller
   override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
     val roadLinkFound = newRoadLinks.exists(_.linkId == newLinkInfo.linkId)
@@ -65,7 +66,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     val (assetToBeRemoved, assetToPersist) = assetsAll.partition(a => pavementShouldBeRemoved(a, changesRemovePavement))
     val expiredPavementSteps = assetToBeRemoved.map(asset => {
         if (asset.id != 0) {
-          operatio.copy(changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
+          operatio.copy(assetsAfter = Seq(), changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
         } else {
           val originalAsset = operatio.assetsBefore.find(_.id == asset.oldId)
             .getOrElse(throw new NoSuchElementException(s"Could not find original asset for reporting," +

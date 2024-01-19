@@ -709,9 +709,6 @@ class AssetFiller {
       }
     }
   }
-  
-  protected def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet):
-  (Seq[PieceWiseLinearAsset], ChangeSet) = (assets, changeSet)
 
   /**
     * Finally adjust asset length by snapping to links start and endpoint. <br> <pre> 
@@ -733,9 +730,7 @@ class AssetFiller {
       val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(roadLink, linearAssets, SideCode.AgainstDigitizing)
       val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(roadLink, linearAssets)
       val mValueAdjustments = towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments
-      val (asset,changeSetCopy)=(towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments,
-        changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
-      adjustLopsidedLimit(roadLink,asset,changeSetCopy)
+      (towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
     } else {
       linearAssets.foldLeft((Seq[PieceWiseLinearAsset](), changeSet)) {
         case ((resultAssets, change), linearAsset) =>
@@ -768,7 +763,7 @@ class AssetFiller {
     * Fills any missing pieces in the middle of asset.
     * - If the gap is smaller than minimum allowed asset length the first asset is extended
     * !!! But if it is smaller than 1E-6 we let it be and treat it as a rounding error to avoid repeated writes !!!
-    * - If the gap is larger it's let to be and will be generated as unknown asset later
+    * - If the gap is larger and assets is not in roadLinkLongAssets list, it's let to be and will be generated as unknown asset later
     *
     * @param roadLink    Road link being handled
     * @param assets List of asset limits
@@ -779,9 +774,19 @@ class AssetFiller {
     def fillBySideCode(assets: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFillTopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       if (assets.size > 1) {
         val left = assets.head
-        val right = assets.find(sl => sl.startMeasure >= left.endMeasure)
-        if (right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength &&
-          Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
+        val right = assets.find(sl => sl.startMeasure >= left.endMeasure && sl.sideCode.value == left.sideCode.value)
+        val middleParts = if(right.nonEmpty) assets.filter(a=> 
+          a.startMeasure>=left.endMeasure && a.endMeasure<=right.get.startMeasure && !Set(left.id,right.get.id).contains(a.id)
+        ) else Seq()
+        
+        val notTooShortGap = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
+        val gapIsSmallerThanTolerance = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
+        val valuesAreSame = right.nonEmpty && left.value.equals(right.get.value)
+        val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) gapIsSmallerThanTolerance else {
+          if (gapIsSmallerThanTolerance) true else valuesAreSame // do not check is same value if gap is 2 meter or smaller
+        }
+        
+        if (middleParts.isEmpty && notTooShortGap && condition) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
             timeStamp = latestTimestamp(left, right))
@@ -797,7 +802,7 @@ class AssetFiller {
       }
     }
 
-    val (geometrySegments, geometryAdjustments) = fillBySideCode(assets, roadLink, changeSet)
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(assets.sortBy(_.startMeasure), roadLink, changeSet)
     (geometrySegments, geometryAdjustments)
   }
 
@@ -859,6 +864,8 @@ class AssetFiller {
       debugLogging("adjustSegmentSideCodes"),
       fillHoles,
       debugLogging("fillHoles"),
+      fuse,
+      debugLogging("fuse after filling hole"),
       clean
     )
 

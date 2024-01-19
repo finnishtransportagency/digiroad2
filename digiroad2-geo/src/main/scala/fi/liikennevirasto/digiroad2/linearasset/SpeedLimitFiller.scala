@@ -26,6 +26,7 @@ object SpeedLimitFiller extends AssetFiller {
       dropShortSegments,
       debugLogging("dropShortSegments"),
       fillHoles,
+      fuse,
       debugLogging("fillHoles"),
       generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
       debugLogging("generateTwoSidedNonExistingLinearAssets"),
@@ -45,6 +46,7 @@ object SpeedLimitFiller extends AssetFiller {
       adjustSegmentSideCodes,
       dropShortSegments,
       fillHoles,
+      fuse,
       generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
       debugLogging("generateTwoSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
@@ -68,17 +70,6 @@ object SpeedLimitFiller extends AssetFiller {
     )
   }
 
-
-  override protected def adjustLopsidedLimit(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val onlyLimitOnLink = assets.length == 1 && assets.head.sideCode != SideCode.BothDirections
-    if (onlyLimitOnLink) {
-      val segment = assets.head
-      val sideCodeAdjustments = Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections, SpeedLimitAsset.typeId))
-      (Seq(segment.copy(sideCode = SideCode.BothDirections)), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ sideCodeAdjustments))
-    } else {
-      (assets, changeSet)
-    }
-  }
   override def dropShortSegments(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val limitsToDrop = assets.filter { limit =>
       GeometryUtils.geometryLength(limit.geometry) < MinAllowedLength && roadLink.length > MinAllowedLength
@@ -145,47 +136,6 @@ object SpeedLimitFiller extends AssetFiller {
         operation(roadLink, currentSegments, currentAdjustments)
       }
       (existingSegments ++ adjustedSegments, segmentAdjustments)
-    }
-  }
-
-  override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
-                                           changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      debugLogging("operation start"),
-      fuse,
-      debugLogging("fuse"),
-      dropShortSegments,
-      debugLogging("dropShortSegments"),
-      adjustAssets,
-      debugLogging("adjustAssets"),
-      expireOverlappingSegments,
-      debugLogging("expireOverlappingSegments"),
-      droppedSegmentWrongDirection,
-      debugLogging("droppedSegmentWrongDirection"),
-      adjustSegmentSideCodes,
-      debugLogging("adjustSegmentSideCodes"),
-      fillHoles,
-      debugLogging("fillHoles"),
-      clean
-    )
-    val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
-    
-    topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
-      val (existingAssets, changeSet) = acc
-      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
-
-      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-        operation(roadLink, currentSegments, currentAdjustments)
-      }
-      val filterExpiredAway: ChangeSet = LinearAssetFiller.removeExpiredMValuesAdjustments(assetAdjustments)
-      
-      val noDuplicate = filterExpiredAway.copy(
-        adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
-        adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
-        valueAdjustments = filterExpiredAway.valueAdjustments.distinct
-      )
-
-      (existingAssets ++ adjustedAssets, noDuplicate)
     }
   }
 

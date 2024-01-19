@@ -17,7 +17,8 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   
   override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
-    val roadLinkFound = newRoadLinks.exists(_.linkId == newLinkInfo.linkId)
+    val filteredLinks = newRoadLinks.filterNot(link => Seq(HardShoulder, CycleOrPedestrianPath, TractorRoad).contains(link.linkType))
+    val roadLinkFound = filteredLinks.exists(_.linkId == newLinkInfo.linkId)
     if(roadLinkFound) {
       service.persistUnknown(Seq(UnknownSpeedLimit(newLinkInfo.linkId, newLinkInfo.municipality, newLinkInfo.adminClass)),newTransaction = false)
       None
