@@ -1130,6 +1130,16 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
+
+  /**
+   * used by getAdjacent method to handle minor errors in road link geometry precision
+   */
+  private def pointFoundWithinEpsilon(sourcePoint: Point, destPoints: Seq[Point]) = {
+    destPoints.exists(d => {
+      Math.abs(d.x - sourcePoint.x) < getDefaultEpsilon() && Math.abs(d.y - sourcePoint.y) < getDefaultEpsilon()
+    })
+  }
+
   /**
     * Returns adjacent road links by link id. Used by Digiroad2Api /roadlinks/adjacent/:id GET endpoint and CsvGenerator.generateDroppedManoeuvres.
     */
@@ -1153,7 +1163,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
           //It's a valid destination link to turn if the end point of the source exists on the
           //start points of the destination links
           val pointDirections = getRoadLinkPoints(roadLink)
-          sourcePoints.exists(sourcePoint => pointDirections.contains(sourcePoint))
+          sourcePoints.exists(sourcePoint => pointFoundWithinEpsilon(sourcePoint, pointDirections))
         })
     }).getOrElse(Nil)
   }
@@ -1175,7 +1185,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
         })
         .filter(roadLink => {
           val pointDirections = getRoadLinkStartDirectionPoints(roadLink)
-          sourcePoints.exists(sourcePoint => pointDirections.contains(sourcePoint))
+          sourcePoints.exists(sourcePoint => pointFoundWithinEpsilon(sourcePoint, pointDirections))
         })
     }).getOrElse(Nil)
   }
