@@ -1437,4 +1437,26 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Add. Given a new RoadLink; When the new RoadLink already has any lanes; Then no new lanes should be created") {
+    val newLinkId = "f2eba575-f306-4c37-b49d-a4d27a3fc049:1"
+    val relevantChanges = testChanges.filter(change => change.changeType == RoadLinkChangeType.Add && newLinkId == change.newLinks.head.linkId)
+
+    runWithRollback {
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkId).get
+
+      val mainLane = NewLane(0, 0.0, newRoadLink.length, newRoadLink.municipalityCode, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      val mainLaneID = LaneServiceWithDao.create(Seq(mainLane), Set(newLinkId), SideCode.TowardsDigitizing.value, testUserName).head
+
+      // filterChanges is called by updateByRoadLinks before handleChanges to filter redundant new links
+      val filteredChanges = LaneUpdater.filterChanges(relevantChanges)
+      filteredChanges.size should be(0)
+
+      val changeSet = LaneUpdater.handleChanges(filteredChanges)
+      val changedAssets = LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChanges)
+      changedAssets.size should be(0)
+
+      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
+      lanesAfterChanges.size should equal(1)
+    }
+  }
 }
