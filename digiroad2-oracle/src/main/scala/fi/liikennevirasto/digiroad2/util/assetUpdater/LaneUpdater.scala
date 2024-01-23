@@ -27,6 +27,7 @@ import org.json4s.jackson.compactJson
 import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
+import scala.util.Random
 
 object LaneUpdater {
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
@@ -44,6 +45,13 @@ object LaneUpdater {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   case class RoadLinkChangeWithResults(roadLinkChange: RoadLinkChange, changeSet: ChangeSet, lanesOnAdjustedLink: Seq[PersistedLane])
 
+  //Returns random negative Long value for lanes to use as id before creation
+  //Used for split lanes, so that final result can be adjusted in method fuseLanesOnMergedRoadLink
+  def getPseudoId: Long = {
+    val randomGen = new Random()
+    -Math.abs(randomGen.nextLong)
+  }
+
   def logChangeSetSizes(changeSet: ChangeSet): Unit = {
     logger.info(s"adjustedMValues size: ${changeSet.adjustedMValues.size}")
     logger.info(s"adjustedSideCodes size: ${changeSet.adjustedSideCodes.size}")
@@ -54,7 +62,7 @@ object LaneUpdater {
   }
 
   def fuseLaneSections(replacementResults: Seq[RoadLinkChangeWithResults]): (Seq[PersistedLane], ChangeSet) = {
-    val newLinkIds = replacementResults.flatMap(_.roadLinkChange.newLinks.map(_.linkId))
+    val newLinkIds = replacementResults.flatMap(_.roadLinkChange.newLinks.map(_.linkId)).distinct
     val changeSets = replacementResults.map(_.changeSet)
     val lanesOnNewLinks = replacementResults.flatMap(_.lanesOnAdjustedLink)
     val lanesGroupedByNewLinkId = lanesOnNewLinks.groupBy(_.linkId)
@@ -93,24 +101,42 @@ object LaneUpdater {
         val propertiesToUse = if(LaneNumber.isMainLane(origin.laneCode)) {
           getLatestStartDatePropertiesForFusedLanes(toBeFused)
         } else origin.attributes
-        val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
+        val newId = toBeFused.find(_.id != 0).map(_.id).getOrElse(0L)
 
         val modified = toBeFused.head.copy(id = newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure, attributes = propertiesToUse)
-        val expiredId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to expire id zero
+        val expiredId = Set(origin.id, target.get.id) -- Set(newId, 0L) // never attempt to expire id zero
 
-        val positionAdjustment = Seq(changeSet.positionAdjustments.find(a => a.laneId == modified.id) match {
-          case Some(adjustment) => adjustment.copy(startMeasure = modified.startMeasure, endMeasure = modified.endMeasure,
-            sideCode = SideCode.apply(modified.sideCode), attributesToUpdate = Some(propertiesToUse))
-          case _ => LanePositionAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure,
-            SideCode.apply(modified.sideCode), attributesToUpdate = Some(propertiesToUse))
+
+        val positionAdjustment = changeSet.positionAdjustments.find(a => a.laneId == modified.id) match {
+          case Some(adjustment) => Seq(adjustment.copy(startMeasure = modified.startMeasure, endMeasure = modified.endMeasure,
+            sideCode = SideCode.apply(modified.sideCode), attributesToUpdate = Some(propertiesToUse)))
+          case None if modified.id < 0 => Seq()
+          case _ => Seq(LanePositionAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure,
+            SideCode.apply(modified.sideCode), attributesToUpdate = Some(propertiesToUse)))
+        }
+
+        val splitLanesWithAdjusted = changeSet.splitLanes.map(laneSplit => {
+          val lanesToCreateWithAdjusted = laneSplit.lanesToCreate.flatMap(laneToCreate => {
+            laneToCreate.id match {
+              case id if id == newId => Some(modified)
+              case id if id == expiredId.headOption.getOrElse(0) => None
+              case _ => Some(laneToCreate)
+            }
+          })
+          laneSplit.copy(lanesToCreate = lanesToCreateWithAdjusted)
         })
-        
-        // Replace origin and target with this new item in the list and recursively call itself again
-        fuseLanesOnMergedRoadLink(Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
-          changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredId,
-              positionAdjustments = changeSet.positionAdjustments.filter(a => a.laneId > 0 && a.laneId != modified.id &&
-              !changeSet.expiredLaneIds.contains(a.laneId) && !expiredId.contains(a.laneId)) ++ positionAdjustment))
 
+        // Replace origin and target with this new item in the list and recursively call itself again
+        val filteredList = Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl))
+        // Filter out pseudo IDs
+        val realIdsToExpire = expiredId.filter(id => id > 0)
+        val expiredIdsAfterFuse = changeSet.expiredLaneIds ++ realIdsToExpire
+        val positionAdjustmentsAfterFuse = changeSet.positionAdjustments.filter(a => a.laneId > 0 && a.laneId != modified.id &&
+          !changeSet.expiredLaneIds.contains(a.laneId) && !realIdsToExpire.contains(a.laneId)) ++ positionAdjustment
+
+        val changeSetWithFused = changeSet.copy(expiredLaneIds = expiredIdsAfterFuse,
+          positionAdjustments = positionAdjustmentsAfterFuse, splitLanes = splitLanesWithAdjusted)
+        fuseLanesOnMergedRoadLink(filteredList,changeSetWithFused)
       } else {
         val fused = fuseLanesOnMergedRoadLink(sortedList.tail, changeSet)
         (Seq(origin) ++ fused._1, fused._2)
@@ -548,8 +574,8 @@ object LaneUpdater {
   def calculateAdditionalLanePositionsOnSplitLinks(oldAdditionalLanes: Seq[PersistedLane], change: RoadLinkChange): Seq[LaneSplit] = {
     oldAdditionalLanes.map(originalAdditionalLane => {
       val replaceInfosAffectingLane = change.replaceInfo.filter(replaceInfo => {
-        GeometryUtils.liesInBetween(originalAdditionalLane.startMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0))) ||
-          GeometryUtils.liesInBetween(originalAdditionalLane.endMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0)))
+        GeometryUtils.liesInBetweenExclusiveEnd(originalAdditionalLane.startMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0))) ||
+          GeometryUtils.liesInBetweenExclusiveStart(originalAdditionalLane.endMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0)))
       })
       val lanesSplitFromOriginal = replaceInfosAffectingLane.map(replaceInfo => {
         val newId = replaceInfo.newLinkId.getOrElse("")
@@ -559,7 +585,7 @@ object LaneUpdater {
         val newMValues = if (replaceInfo.newFromMValue.nonEmpty && replaceInfo.newToMValue.nonEmpty) (replaceInfo.newFromMValue.get, replaceInfo.newToMValue.get) else (0.0, 0.0)
         val projection = Projection(replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0), newMValues._1, newMValues._2)
         val (newStartM, newEndM, newSideCode) = MValueCalculator.calculateNewMValues(laneLinearReference, projection, newRoadLinkLength, replaceInfo.digitizationChange)
-        originalAdditionalLane.copy(id = 0 ,startMeasure = newStartM, endMeasure = newEndM, linkId = newId, sideCode = newSideCode)
+        originalAdditionalLane.copy(id = getPseudoId ,startMeasure = newStartM, endMeasure = newEndM, linkId = newId, sideCode = newSideCode)
       }).filter(_.linkId.nonEmpty)
       LaneSplit(lanesSplitFromOriginal, originalAdditionalLane)
     })
@@ -575,7 +601,7 @@ object LaneUpdater {
         else originalMainLane.sideCode
         val splitLaneStartMeasure = 0.0
         val splitLaneEndMeasure = LaneUtils.roundMeasure(newRoadLinkLength)
-        originalMainLane.copy(id = 0, linkId =replaceInfo.newLinkId.getOrElse(""), sideCode = newSideCode, startMeasure = splitLaneStartMeasure, endMeasure = splitLaneEndMeasure)
+        originalMainLane.copy(id = getPseudoId, linkId =replaceInfo.newLinkId.getOrElse(""), sideCode = newSideCode, startMeasure = splitLaneStartMeasure, endMeasure = splitLaneEndMeasure)
       }).filter(_.linkId.nonEmpty)
       LaneSplit(splitMainLanesToCreate, originalMainLane)
     })

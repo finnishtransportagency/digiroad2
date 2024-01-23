@@ -1347,6 +1347,96 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Two split changes contain a merge, lanes on merged link should not overlap, " +
+    "split lanes on shared new link should fuse together") {
+    val oldLinkIdA = "a5eb0323-1b71-4a00-8c4c-9386d311fa30:1"
+    val oldLinkIdB = "2af35082-2f93-4480-a805-96d9f88e2db4:1"
+    val newSharedLinkId = "d07c9cfe-77bb-4b62-8165-2a731c689dfc:1"
+    val newLinkId1 = "7114be37-ce90-4ce9-b58c-e951e525f8d1:1"
+    val newLinkId2 = "305879bd-6755-4e0d-81d5-ccfb4cba8b69:1"
+    val newLinkId3 = "c469b8df-bfee-49ea-8bdc-3b475bc01555:1"
+    val newLinkId4 = "4adaad20-c435-4563-86ae-929e132137b4:1"
+
+    val newLinkIds = Seq(newSharedLinkId, newLinkId1, newLinkId2, newLinkId3, newLinkId4)
+
+    val relevantChanges = testChanges.filter(_.oldLink.nonEmpty).filter(change => Seq(oldLinkIdA, oldLinkIdB).contains(change.oldLink.get.linkId))
+    runWithRollback {
+      val newRoadLinks = roadLinkService.getRoadLinksByLinkIds(newLinkIds.toSet, false)
+      val mainLane11a = NewLane(0, 0.0, 216.191, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      val mainLane11aId = LaneServiceWithDao.create(Seq(mainLane11a), Set(oldLinkIdA), SideCode.TowardsDigitizing.value, testUserName).head
+
+      val mainLane21a = NewLane(0, 0.0, 216.191, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      val mainLane21aId = LaneServiceWithDao.create(Seq(mainLane21a), Set(oldLinkIdA), SideCode.AgainstDigitizing.value, testUserName).head
+      // Additional lane covering  4.0 -> 9.874 part of shared new link
+      val subLane12a = NewLane(0, 210.318, 216.191, 49, isExpired = false, isDeleted = false, subLane2PropertiesA)
+      val subLane12aId = LaneServiceWithDao.create(Seq(subLane12a), Set(oldLinkIdA), SideCode.TowardsDigitizing.value, testUserName).head
+
+      val mainLane11b = NewLane(0, 0.0, 182.059, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      val mainLane11bId = LaneServiceWithDao.create(Seq(mainLane11b), Set(oldLinkIdB), SideCode.TowardsDigitizing.value, testUserName).head
+
+      val mainLane21b = NewLane(0, 0.0, 182.059, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      val mainLane21bId = LaneServiceWithDao.create(Seq(mainLane21b), Set(oldLinkIdB), SideCode.AgainstDigitizing.value, testUserName).head
+      // Additional lane covering 9.874 -> 24.635 part of shared new link
+      val subLane12b = NewLane(0, 0.0, 14.757, 49, isExpired = false, isDeleted = false, subLane2PropertiesA)
+      val subLane12bId = LaneServiceWithDao.create(Seq(subLane12b), Set(oldLinkIdB), SideCode.TowardsDigitizing.value, testUserName).head
+
+      // Verify lanes are created
+      val lanesBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkIdA, oldLinkIdB))
+      lanesBefore.size should equal(6)
+
+      // Apply Changes
+      val changeSet = LaneUpdater.handleChanges(relevantChanges)
+      LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChanges)
+
+      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(newLinkIds)
+      lanesAfterChanges.size should equal(11)
+
+      // New roadlink which was shared in both split changes should have 2 mainlanes and one additional lane from 4.0 to 24.635
+      val (mainLanesAfter, additionalLanesAfter) = lanesAfterChanges.partition(_.laneCode == 1)
+      //Main lanes should cover whole link
+      mainLanesAfter.size should equal(10)
+      mainLanesAfter.foreach(ml => {
+        val roadLink = newRoadLinks.find(_.linkId == ml.linkId).get
+        ml.startMeasure should equal(0.0)
+        ml.endMeasure should equal(roadLink.length)
+        val startDate = LaneServiceWithDao.getPropertyValue(ml, "start_date")
+        startDate.get.value should equal("1.1.1970")
+      })
+
+      //All links should have 1 main lane towards and 1 against digitizing
+      val mainLanesGrouped = mainLanesAfter.groupBy(_.linkId)
+      mainLanesGrouped.values.foreach(group => {
+        group.count(_.sideCode == SideCode.TowardsDigitizing.value) should equal(1)
+        group.count(_.sideCode == SideCode.AgainstDigitizing.value) should equal(1)
+      })
+
+      //Additional lanes should be fused on merged link
+      additionalLanesAfter.size should equal(1)
+      additionalLanesAfter.head.linkId should equal(newSharedLinkId)
+      additionalLanesAfter.head.startMeasure should equal(4.0)
+      additionalLanesAfter.head.endMeasure should equal(24.635)
+
+      val oldLinkHistoryLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(oldLinkIdA, oldLinkIdB), includeExpired = true).toSet
+      oldLinkHistoryLanes.size should equal(12)
+      val historyLanesGrouped = oldLinkHistoryLanes.groupBy(historyLane => historyLane.oldId)
+
+      // main lanes on old link a are divided only to two lanes on two links because lanes split from original on shared link get fused
+      // main lanes on old link b are divided to three lanes on three links
+      historyLanesGrouped(mainLane11aId).size should equal(2)
+      historyLanesGrouped(mainLane21aId).size should equal(2)
+      historyLanesGrouped(mainLane11bId).size should equal(3)
+      historyLanesGrouped(mainLane21bId).size should equal(3)
+
+      // additional lanes on link a is expired without newId
+      // because split lane was fused to split additional lane from link b
+      // additional lane on link b is expired with newId referencing fused new lane on shared link
+      historyLanesGrouped(subLane12aId).size should equal(1)
+      historyLanesGrouped(subLane12aId).head.newId should equal(0)
+      historyLanesGrouped(subLane12bId).size should equal(1)
+      historyLanesGrouped(subLane12bId).head.newId should equal(additionalLanesAfter.head.id)
+    }
+  }
+
   test("Add. Given a new RoadLink; When the new RoadLink already has any lanes; Then no new lanes should be created") {
     val newLinkId = "f2eba575-f306-4c37-b49d-a4d27a3fc049:1"
     val relevantChanges = testChanges.filter(change => change.changeType == RoadLinkChangeType.Add && newLinkId == change.newLinks.head.linkId)
