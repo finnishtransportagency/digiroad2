@@ -153,7 +153,7 @@ object ValidatorLinearDao extends ValidatorDao{
       )
       SELECT DISTINCT id, link_id,side_code, start_measure, end_measure
       FROM result_set
-      WHERE ROUND(assets_total_lenght) != ROUND(geometrylength)"""
+      WHERE ABS(assets_total_lenght - geometrylength) > 0.1"""
     StaticQuery.queryNA[LinearReferenceAsset](sql)(getResult).iterator.toSeq
   }
 
