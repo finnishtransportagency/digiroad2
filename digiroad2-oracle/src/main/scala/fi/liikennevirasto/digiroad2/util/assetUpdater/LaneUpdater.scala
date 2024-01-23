@@ -267,22 +267,38 @@ object LaneUpdater {
     })
   }
 
+  /**
+   * Filters processed RoadLinkChanges with the following principles:
+   *
+   * Remove new links that already have lanes, so that duplicate lanes will not be created.
+   *
+   * @param changes
+   * @return filtered changes
+   */
+  def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+    val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
+    val linkIdsWithExistingLanes = laneService.fetchAllLanesByLinkIds(newLinkIds, newTransaction = false).map(_.linkId)
+    if (linkIdsWithExistingLanes.nonEmpty) logger.info(s"found already created lanes on new links ${linkIdsWithExistingLanes}")
+    changes.filterNot(c => c.changeType == Add && linkIdsWithExistingLanes.contains(c.newLinks.head.linkId))
+  }
+
   private def updateByRoadLinks(roadLinkChangeSet: RoadLinkChangeSet) = {
     logger.info(s"Started processing change set ${roadLinkChangeSet.key}")
     val allRoadLinkChanges = roadLinkChangeSet.changes
+    val filteredRoadLinkChanges = filterChanges(allRoadLinkChanges)
 
     logger.info("Starting to process traffic direction changes")
     LogUtils.time(logger, "Update Lane Work List with possible traffic direction changes") {
-      updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
+      updateTrafficDirectionChangesLaneWorkList(filteredRoadLinkChanges)
     }
-    val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkLists(change))
+    val (workListChanges, roadLinkChanges) = filteredRoadLinkChanges.partition(change => isOldLinkOnLaneWorkLists(change))
     logger.info("Starting to process changes")
     val changeSet = LogUtils.time(logger, s"Process ${workListChanges.size} workListChanges and ${roadLinkChanges.size} roadLinkChanges") {
       handleChanges(roadLinkChanges, workListChanges)
     }
     logger.info("Starting to save lane samuutus results")
     val changedLanes = LogUtils.time(logger, "Saving Lane samuutus results") {
-      updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
+      updateSamuutusChangeSet(changeSet, filteredRoadLinkChanges)
     }
     changedLanes
   }
