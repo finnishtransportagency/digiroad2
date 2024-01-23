@@ -624,8 +624,8 @@
       };
 
       eventbus.on('layer:selected', function(layer) {
-        $('ul[class=information-content]').empty();
         if(layer === 'manoeuvre') {
+          $('ul[class=information-content]').empty();
           renderInaccurateWorkList(layer);
           renderSamuutusWorkList();
         }
