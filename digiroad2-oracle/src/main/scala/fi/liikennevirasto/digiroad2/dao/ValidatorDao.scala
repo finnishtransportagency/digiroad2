@@ -102,6 +102,10 @@ object ValidatorLinearDao extends ValidatorDao{
     StaticQuery.queryNA[LinearReferenceAsset](sql)(getResult).iterator.toSeq
   }
 
+  /**
+  * get assets with total lengths differing from the link length by more than 0.1, which is also the generally allowed
+   * mValue error in topology corrections
+   */
   def assetDoesNotFillLink(assetType: Int, links: Set[String]): Seq[LinearReferenceAsset] = {
     val assetTypeFilter = s"a.asset_type_id = ${assetType}"
     val sql =
@@ -153,7 +157,7 @@ object ValidatorLinearDao extends ValidatorDao{
       )
       SELECT DISTINCT id, link_id,side_code, start_measure, end_measure
       FROM result_set
-      WHERE assets_total_lenght != geometrylength"""
+      WHERE ABS(assets_total_lenght - geometrylength) > 0.1"""
     StaticQuery.queryNA[LinearReferenceAsset](sql)(getResult).iterator.toSeq
   }
 
