@@ -56,3 +56,21 @@ sam local invoke Lambda --profile RoadLinkChangeLambdaRole --region eu-west-1 --
 
 - "sam build" muodostaa container imagen. Ajetaan aina muutoksien jälkeen.
 - "sam local invoke" käynnistää lokaalin lambda funktion annetuilla parametreilla
+### docker imagen työntaminen
+
+Kirjaudu
+```sh
+docker login --username AWS -p $(aws ecr get-login-password --region eu-west-1 --profile vaylaapp) 475079312496.dkr.ecr.eu-west-1.amazonaws.com
+```
+Tee image
+```sh
+docker build --tag testlambda:batch .
+```
+Taggaa
+```sh
+docker tag testlambda:batch 475079312496.dkr.ecr.eu-west-1.amazonaws.com/testlambdabbatch:latest
+```
+Työnnä jo luotuun repositoriin
+```sh
+docker push 475079312496.dkr.ecr.eu-west-1.amazonaws.com/testlambdabbatch:latest
+```

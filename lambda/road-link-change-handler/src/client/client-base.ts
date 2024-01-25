@@ -1,5 +1,6 @@
 import axios, {AxiosInstance} from "axios";
 import {SsmService} from "../service/ssm-service";
+import * as crypto from "crypto";
 
 export class ClientBase {
     protected maxRetriesPerQuery = 3;
@@ -26,12 +27,15 @@ export class ClientBase {
     async getRequest(client: AxiosInstance, url: string, params: object = {},
                                      retry: number = 1): Promise<any> {
         try {
+           const id = crypto.randomUUID().slice(0,10)
+            console.time(id+" Request tooks ")
             const response = await client.get(url, { params: params });
+            console.timeEnd(id+" Request tooks ")
             return response.data;
         } catch (err) {
             const queryParams = JSON.stringify(params).substring(0, 100);
             console.error(`Request ${client.getUri() + url} with params ${queryParams}... responded with error (retry: ${retry}):`);
-            const errorMsg = this.processErrorAndExtractMessage(err, client.getUri() + url);
+            const errorMsg = this.processErrorAndExtractMessage(err, client.getUri() + url,JSON.stringify(params));
             if (retry < this.maxRetriesPerQuery) {
                 await this.exponentialTimeout(retry);
                 return await this.getRequest(client, url, params, retry + 1);
@@ -62,11 +66,9 @@ export class ClientBase {
         }
     }
 
-    processErrorAndExtractMessage(error: any, url: string): string {
+    processErrorAndExtractMessage(error: any, url: string, payload : string = ""): string {
         if (axios.isAxiosError(error)) {
-            console.error("Error code :"+error.response?.status);
-            console.error(error.response?.data);
-            return `Error happened during fetch of ${url} (${error.response?.status}: ${error.response?.statusText.substring(0, 100)})`;
+            return `Error happened during fetch of ${url} (${error.response?.status}: ${error.response?.statusText.substring(0, 100)}), parameter: ${payload}`;
         } else {
             console.error(error);
             return `Error happened during fetch of ${url}`;
