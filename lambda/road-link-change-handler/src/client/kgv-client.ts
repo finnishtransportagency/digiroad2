@@ -30,7 +30,7 @@ export class KgvClient extends ClientBase {
         
         const promises = this.requestLinks(uniqueIds, instance);
         const results = await Promise.allSettled(promises.flatMap(async t => Promise.allSettled(await t)));
-        const succeeded = Utils.checkResultsForErrorsNestedPromise(results, "Unable to fetch road links") as KgvFeatureCollection[]
+        const succeeded = Utils.checkResultsForErrorsNestedPromise(results, "Unable to fetch road links") as KgvFeatureCollection<KgvFeature>[]
         const links = this.extractLinks(succeeded);
         if (links.length != uniqueIds.length) {
             const retrievedLinks = links.map(link => link.id);
@@ -47,7 +47,7 @@ export class KgvClient extends ClientBase {
      * @param instance
      * @private
      */
-    private requestLinks(uniqueIds: string[], instance: AxiosInstance): Promise<Promise<KgvFeatureCollection>[]>[] {
+    private requestLinks(uniqueIds: string[], instance: AxiosInstance): Promise<Promise<KgvFeatureCollection<KgvFeature>>[]>[] {
         const batches = _.chunk(uniqueIds, this.maxBatchSize);
         const requestBatch = _.chunk(batches, 300)
         return _.flatMap(requestBatch, async batch => {
@@ -56,7 +56,6 @@ export class KgvClient extends ClientBase {
         });
     }
 
-    protected async fetchLinkVersions(linkIds: string[], instance: AxiosInstance): Promise<KgvFeatureCollection> {
     /**
      * Fetch changes happened during time period
      * @param since
@@ -65,7 +64,7 @@ export class KgvClient extends ClientBase {
     async fetchChanges(since: string, until: string): Promise<ReplaceInfo[]> {
         console.log(this.formatDate(since))
         console.log(this.formatDate(until))
-       
+
         const instance = await this.createInstance(this.url, this.apiKey);
         const params = {
             "filter-lang": "cql-text",
@@ -74,18 +73,17 @@ export class KgvClient extends ClientBase {
             "limit":"100000000000"
         };
         const response = await this.getRequest(instance, this.pathChange, params) as KgvFeatureCollection<KgvFeatureChange>;
-       return response.features.map(f=> {
-           return this.changeResponseToReplaceInfo(f.properties)
+        return response.features.map(f=> {
+            return this.changeResponseToReplaceInfo(f.properties)
         })
     }
-    
     
     private formatDate (date :string) {
         const dateConverted = date.split(".")
         const year =dateConverted[2]
         const month = dateConverted[1]
         const day = dateConverted[0]
-        return `${year}-${month}-${day}`   
+        return `${year}-${month}-${day}`
     }
     protected changeResponseToReplaceInfo(properties: ChangeProperties): ReplaceInfo {
         return new ReplaceInfo(
@@ -95,9 +93,9 @@ export class KgvClient extends ClientBase {
             this.round(properties.mfromnew), this.round( properties.mtonew)
         );
     }
-    
+
     protected round(i: number | undefined ): number | undefined {
-       //const v =  this.extractNumberOrNull(input)
+        //const v =  this.extractNumberOrNull(input)
         if ( i !== undefined ) { return  Number(i?.toFixed(3))
         } else return  i
     }
@@ -110,11 +108,11 @@ export class KgvClient extends ClientBase {
         };
         return await this.getRequest(instance, this.path, params);
     }
-    
+
     private checkId (id:string|undefined, versio:string|undefined) {
         if (id != undefined && versio != undefined) { return `${id}:${versio}`
         } else return undefined
-    } 
+    }
 
     protected extractLinks(results: KgvFeatureCollection<KgvFeature>[]): Array<KgvLink> {
         return results.map(result => result.features.map(feature => {
