@@ -877,7 +877,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "typeOfDamage" -> Try(trafficSignService.getProperty(trafficSign, "type_of_damage").map(_.propertyValue.toInt).get).getOrElse(""),
           "urgencyOfRepair" -> Try(trafficSignService.getProperty(trafficSign, "urgency_of_repair").map(_.propertyValue.toInt).get).getOrElse(""),
           "lifespanLeft" -> Try(trafficSignService.getProperty(trafficSign, "lifespan_left").map(_.propertyDisplayValue.get.toInt).get).getOrElse(""),
-          "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
+          "trafficDirection" -> SideCode.toTrafficDirectionForTrafficSign(SideCode(trafficSign.validityDirection)),
           "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
      )}
   }
