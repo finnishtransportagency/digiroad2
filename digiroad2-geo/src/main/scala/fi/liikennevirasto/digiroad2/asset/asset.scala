@@ -262,7 +262,7 @@ object SideCode {
       case AgainstDigitizing => TrafficDirection.AgainstDigitizing.value
       case BothDirections => TrafficDirection.BothDirections.value
       case Unknown => TrafficDirection.UnknownDirection.value
-      case DoesNotAffectRoadLink => 0
+      case DoesNotAffectRoadLink => DoesNotAffectRoadLink.value
     }
   }
   
