@@ -1951,4 +1951,71 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     changeSet.adjustedSideCodes.size should be(0)
   }
+
+  test("Change one sided abstract asset side code if the traffic direction has changed") {
+    val roadLink1 = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(20, 0.0)), 20, AdministrativeClass.apply(2), UnknownFunctionalClass.value,
+      TrafficDirection.AgainstDigitizing, LinkType.apply(3), None, None, Map())
+    val roadLink2 = RoadLink(linkId2, Seq(Point(20.0, 0.0), Point(40, 0.0)), 20, AdministrativeClass.apply(2), UnknownFunctionalClass.value,
+      TrafficDirection.TowardsDigitizing, LinkType.apply(3), None, None, Map())
+    val roadLinks = Seq(roadLink1, roadLink2)
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 20), SideCode.TowardsDigitizing, None, TrafficDirection.BothDirections, WinterSpeedLimit.typeId),
+      createAsset(2, linkId2, Measure(0, 20), SideCode.AgainstDigitizing, None, TrafficDirection.BothDirections, WinterSpeedLimit.typeId)
+    )
+
+    val (adjustedAssets, changeSet) = assetFiller.fillTopologyChangesGeometry(roadLinks.map(assetFiller.toRoadLinkForFillTopology), assets.groupBy(_.linkId), RoadWidth.typeId)
+
+    val sortedAssets = adjustedAssets.sortBy(_.id)
+
+    sortedAssets.size should be(2)
+    sortedAssets.head.sideCode should be(SideCode.AgainstDigitizing)
+    sortedAssets.last.sideCode should be(SideCode.TowardsDigitizing)
+
+    changeSet.adjustedSideCodes.size should be(2)
+  }
+
+  test("Don't change one sided physical asset side code if the traffic direction has changed") {
+    val roadLink1 = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(20, 0.0)), 20, AdministrativeClass.apply(2), UnknownFunctionalClass.value,
+      TrafficDirection.AgainstDigitizing, LinkType.apply(3), None, None, Map())
+    val roadLink2 = RoadLink(linkId2, Seq(Point(20.0, 0.0), Point(40, 0.0)), 20, AdministrativeClass.apply(2), UnknownFunctionalClass.value,
+      TrafficDirection.TowardsDigitizing, LinkType.apply(3), None, None, Map())
+    val roadLinks = Seq(roadLink1, roadLink2)
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 20), SideCode.TowardsDigitizing, None, TrafficDirection.BothDirections, ParkingProhibition.typeId),
+      createAsset(2, linkId2, Measure(0, 20), SideCode.AgainstDigitizing, None, TrafficDirection.BothDirections, ParkingProhibition.typeId)
+    )
+
+    val (adjustedAssets, changeSet) = assetFiller.fillTopologyChangesGeometry(roadLinks.map(assetFiller.toRoadLinkForFillTopology), assets.groupBy(_.linkId), RoadWidth.typeId)
+
+    val sortedAssets = adjustedAssets.sortBy(_.id)
+
+    sortedAssets.size should be(2)
+    sortedAssets.head.sideCode should be(SideCode.TowardsDigitizing)
+    sortedAssets.last.sideCode should be(SideCode.AgainstDigitizing)
+
+    changeSet.adjustedSideCodes.size should be(0)
+  }
+
+  test("Don't change one sided abstract asset side code on traffic direction change if there is an asset on the other side." +
+    "Drop the asset heading to the wrong direction") {
+    val roadLink1 = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(20, 0.0)), 20, AdministrativeClass.apply(2), UnknownFunctionalClass.value,
+      TrafficDirection.AgainstDigitizing, LinkType.apply(3), None, None, Map())
+    val roadLinks = Seq(roadLink1)
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 20), SideCode.TowardsDigitizing, None, TrafficDirection.BothDirections, WinterSpeedLimit.typeId),
+      createAsset(2, linkId1, Measure(0, 20), SideCode.AgainstDigitizing, None, TrafficDirection.BothDirections, WinterSpeedLimit.typeId)
+    )
+
+    val (adjustedAssets, changeSet) = assetFiller.fillTopologyChangesGeometry(roadLinks.map(assetFiller.toRoadLinkForFillTopology), assets.groupBy(_.linkId), RoadWidth.typeId)
+
+    adjustedAssets.size should be(1)
+    adjustedAssets.head.sideCode should be(SideCode.AgainstDigitizing)
+
+    changeSet.adjustedSideCodes.size should be(0)
+    changeSet.expiredAssetIds.size should be(1)
+    changeSet.expiredAssetIds.head should be(1)
+  }
 }
