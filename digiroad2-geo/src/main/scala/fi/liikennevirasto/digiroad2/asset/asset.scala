@@ -233,7 +233,7 @@ sealed trait SideCode {
   def value: Int
 }
 object SideCode {
-  val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown)
+  val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown, DoesNotAffectRoadLink)
 
   def apply(intValue: Int): SideCode = {
     values.find(_.value == intValue).getOrElse(Unknown)
