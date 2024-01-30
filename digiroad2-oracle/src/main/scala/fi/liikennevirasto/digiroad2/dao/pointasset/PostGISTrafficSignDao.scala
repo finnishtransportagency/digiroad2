@@ -229,7 +229,7 @@ object PostGISTrafficSignDao {
       val modifiedAt = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
       val bearing = r.nextIntOption()
-      val validityDirection = r.nextInt()
+      val validityDirection = r.nextIntOption()
       val optPanelType = r.nextIntOption()
       val panelValue = r.nextStringOption()
       val panelInfo = r.nextStringOption()
@@ -246,7 +246,7 @@ object PostGISTrafficSignDao {
       val externalId = r.nextStringOption()
 
       TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property,
-        validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource),
+        validityDirection.getOrElse(99), bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource),
         additionalPanel, expired, externalId)
     }
   }

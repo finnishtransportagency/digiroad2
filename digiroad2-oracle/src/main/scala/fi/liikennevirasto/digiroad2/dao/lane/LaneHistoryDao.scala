@@ -32,7 +32,7 @@ class LaneHistoryDao() {
       val newId = r.nextLong()
       val oldId = r.nextLong()
       val linkId = r.nextString()
-      val sideCode = r.nextInt()
+      val sideCode = r.nextIntOption()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
       val createdBy = r.nextStringOption()
@@ -55,7 +55,7 @@ class LaneHistoryDao() {
       val historyCreatedBy = r.nextString()
       val changeEventOrderNumber = r.nextIntOption()
 
-      LaneHistoryRow(id, newId, oldId, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
+      LaneHistoryRow(id, newId, oldId, linkId, sideCode.getOrElse(99), value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
         expired, timeStamp, municipalityCode, laneCode, geomModifiedDate, historyCreatedDate, historyCreatedBy, changeEventOrderNumber)
     }
   }
