@@ -63,7 +63,7 @@ class PostGISMaintenanceDao() {
     def apply(r: PositionedResult) : DynamicAssetRow = {
       val id = r.nextLong()
       val linkId = r.nextString()
-      val sideCode = r.nextInt()
+      val sideCode = r.nextIntOption()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
 
@@ -89,7 +89,7 @@ class PostGISMaintenanceDao() {
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
 
-      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
+      DynamicAssetRow(id, linkId, sideCode.getOrElse(99), value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
     }
   }
 

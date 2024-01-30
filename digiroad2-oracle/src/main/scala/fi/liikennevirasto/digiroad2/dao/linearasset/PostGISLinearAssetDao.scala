@@ -46,7 +46,7 @@ class PostGISLinearAssetDao() {
 
       val id = r.nextLong()
       val linkId = r.nextString()
-      val sideCode = r.nextInt()
+      val sideCode = r.nextIntOption()
       val prohibitionId = r.nextLong()
       val prohibitionType = r.nextInt()
       val validityPeridoType = r.nextIntOption()
@@ -71,7 +71,7 @@ class PostGISLinearAssetDao() {
       val informationSource = r.nextIntOption()
       val isSuggested = r.nextBoolean()
 
-      ProhibitionsRow(id, linkId, sideCode, prohibitionId, prohibitionType, validityPeridoType, validityPeridoStartHour, validityPeridoEndHour,
+      ProhibitionsRow(id, linkId, sideCode.getOrElse(99), prohibitionId, prohibitionType, validityPeridoType, validityPeridoStartHour, validityPeridoEndHour,
                       exceptionType, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, timeStamp,
                       geomModifiedDate, validityPeridoStartMinute, validityPeridoEndMinute, prohibitionAdditionalInfo, linkSource,
                       verifiedBy, verifiedDate, informationSource, isSuggested)
@@ -83,7 +83,7 @@ class PostGISLinearAssetDao() {
     def apply(r: PositionedResult) : PersistedLinearAsset = {
       val id = r.nextLong()
       val linkId = r.nextString()
-      val sideCode = r.nextInt()
+      val sideCode = r.nextIntOption()
       val value = r.nextIntOption().map(NumericValue)
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -101,7 +101,7 @@ class PostGISLinearAssetDao() {
       val informationSource = r.nextIntOption()
 
 
-      PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate,
+      PersistedLinearAsset(id, linkId, sideCode.getOrElse(99), value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate,
         linkSource, verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }
   }
@@ -110,7 +110,7 @@ class PostGISLinearAssetDao() {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val linkId = r.nextString()
-      val sideCode = r.nextInt()
+      val sideCode = r.nextIntOption()
       val value = r.nextIntOption().map(NumericValue)
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -133,8 +133,8 @@ class PostGISLinearAssetDao() {
       val administrativeClass = AdministrativeClass(r.nextInt())
 
       val geometry = Seq(Point(startPoint_x, startPoint_y), Point(endPoint_x, endPoint_y))
-      PieceWiseLinearAsset(id, linkId, SideCode(sideCode), value, geometry, expired, startMeasure, endMeasure,
-                           geometry.toSet, modifiedBy, modifiedDate, createdBy, createdDate, typeId, SideCode.toTrafficDirection(SideCode(sideCode)), timeStamp,
+      PieceWiseLinearAsset(id, linkId, SideCode(sideCode.getOrElse(99)), value, geometry, expired, startMeasure, endMeasure,
+                           geometry.toSet, modifiedBy, modifiedDate, createdBy, createdDate, typeId, SideCode.toTrafficDirection(SideCode(sideCode.getOrElse(99))), timeStamp,
                            geomModifiedDate, linkSource, administrativeClass, verifiedBy = verifiedBy, verifiedDate = verifiedDate, informationSource = informationSource.map(info => InformationSource.apply(info)))
 
 
@@ -151,8 +151,8 @@ class PostGISLinearAssetDao() {
       val endPoint_x = r.nextDouble()
       val endPoint_y = r.nextDouble()
       val geometry = Seq(Point(startPoint_x, startPoint_y), Point(endPoint_x, endPoint_y))
-      val sideCode = r.nextInt()
-      LightLinearAsset(geometry, value, expired, typeId, sideCode)
+      val sideCode = r.nextIntOption()
+      LightLinearAsset(geometry, value, expired, typeId, sideCode.getOrElse(99))
     }
   }
 
