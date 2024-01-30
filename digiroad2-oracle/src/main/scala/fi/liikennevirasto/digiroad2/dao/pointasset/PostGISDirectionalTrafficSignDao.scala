@@ -133,7 +133,7 @@ object PostGISDirectionalTrafficSignDao {
         propertyRequired = propertyRequired,
         propertyValue = propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString,
         propertyDisplayValue = propertyDisplayValue.orNull)
-      val validityDirection = r.nextInt()
+      val validityDirection = r.nextIntOption()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
@@ -142,7 +142,7 @@ object PostGISDirectionalTrafficSignDao {
       val linkSource = r.nextInt()
       val externalId = r.nextStringOption()
 
-      DirectionalTrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, validityDirection,
+      DirectionalTrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, validityDirection.getOrElse(99),
         bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), externalId = externalId)
     }
   }
