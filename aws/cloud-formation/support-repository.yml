@@ -21,9 +21,3 @@ Resources:
             Condition:
               Bool:
                 'aws:SecureTransport': false
-  ECRRepoForBuildOpenjdk:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: "openjdk_8u191-jre-alpine"
-      ImageScanningConfiguration:
-        ScanOnPush: "true"
