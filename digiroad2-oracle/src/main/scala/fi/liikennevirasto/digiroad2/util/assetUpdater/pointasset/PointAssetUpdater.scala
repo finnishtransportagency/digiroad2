@@ -146,7 +146,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
     }
   }
 
-  private def snapAssetToNewLink(asset: PersistedPointAsset, newLink: RoadLinkInfo, oldLink: RoadLinkInfo,
+  protected def snapAssetToNewLink(asset: PersistedPointAsset, newLink: RoadLinkInfo, oldLink: RoadLinkInfo,
                                  digitizationChange: Boolean): AssetUpdate = {
     if (isVersionChange(asset.linkId, newLink.linkId) && newLink.linkLength == oldLink.linkLength) {
       toAssetUpdate(asset.id, Point(asset.lon, asset.lat), newLink.linkId, asset.mValue,
@@ -166,17 +166,17 @@ class PointAssetUpdater(service: PointAssetOperations) {
     }
   }
 
-  private def isVersionChange(oldId: String, newId: String): Boolean = {
+  protected def isVersionChange(oldId: String, newId: String): Boolean = {
     def linkIdWithoutVersion(id: String): String = id.split(":").head
     linkIdWithoutVersion(oldId) == linkIdWithoutVersion(newId)
   }
 
-  private def setAssetAsFloating(asset: PersistedPointAsset, floatingReason: Option[FloatingReason]): AssetUpdate = {
+  protected def setAssetAsFloating(asset: PersistedPointAsset, floatingReason: Option[FloatingReason]): AssetUpdate = {
     toAssetUpdate(asset.id, Point(asset.lon, asset.lat), asset.linkId, asset.mValue, asset.getValidityDirection,
                   asset.getBearing, floating = true, floatingReason)
   }
 
-  private def toAssetUpdate(assetId: Long, point: Point, linkId: String, mValue: Double,
+  protected def toAssetUpdate(assetId: Long, point: Point, linkId: String, mValue: Double,
                             validityDirection: Option[Int], bearing: Option[Int],
                             floating: Boolean = false, floatingReason: Option[FloatingReason] = None): AssetUpdate = {
     AssetUpdate(assetId, point.x, point.y, linkId, mValue, validityDirection, bearing, DateTime.now().getMillis,
