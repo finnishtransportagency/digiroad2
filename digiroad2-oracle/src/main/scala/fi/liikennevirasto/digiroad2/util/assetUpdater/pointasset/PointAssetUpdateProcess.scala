@@ -37,10 +37,12 @@ object PointAssetUpdateProcess {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   private def getAssetUpdater(typeId: Int): PointAssetUpdater = {
-    val directionalPointAssets = List(DirectionalTrafficSigns.typeId, TrafficSigns.typeId, TrafficLights.typeId)
+    val directionalPointAssets = List(DirectionalTrafficSigns.typeId, TrafficLights.typeId)
     typeId match {
       case id if id == MassTransitStopAsset.typeId =>
         new MassTransitStopUpdater(massTransitStopService)
+      case id if id == TrafficSigns.typeId =>
+        new TrafficSignUpdater(getPointAssetService(typeId))
       case id if directionalPointAssets.contains(id) =>
         new DirectionalPointAssetUpdater(getPointAssetService(typeId))
       case _ =>
