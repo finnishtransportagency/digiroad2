@@ -39,4 +39,10 @@ class TrafficSignUpdater(service: PointAssetOperations) extends DirectionalPoint
         false
     }
   }
+
+  override protected def setAssetAsFloating(asset: PersistedPointAsset, floatingReason: Option[FloatingReason]): AssetUpdate = {
+    val fixedValidityDirection = if (isOutsideRoadNetwork(asset)) Some(DoesNotAffectRoadLink.value) else asset.getValidityDirection
+    toAssetUpdate(asset.id, Point(asset.lon, asset.lat), asset.linkId, asset.mValue, fixedValidityDirection,
+      asset.getBearing, floating = true, floatingReason)
+  }
 }
