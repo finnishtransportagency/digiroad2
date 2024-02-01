@@ -39,8 +39,9 @@ class AssetFiller {
 
   def getUpdateSideCodes: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     Seq(
+      adjustSegmentSideCodes,
       droppedSegmentWrongDirection,
-      adjustSegmentSideCodes
+      clean
     )
   }
 
@@ -112,13 +113,20 @@ class AssetFiller {
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
 
+  private def segmentFoundOnTheOtherSide(currentSegment: PieceWiseLinearAsset, allSegments: Seq[PieceWiseLinearAsset]): Boolean = {
+    allSegments.exists(s => s.linkId == currentSegment.linkId && s.sideCode == switch(currentSegment.sideCode))
+  }
+
+  /**
+  * Drops the opposite direction assets on a one sided link if there is an asset to the same direction
+   */
   def droppedSegmentWrongDirection(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       (segments, changeSet)
     } else {
       val droppedAssetIds = (roadLink.trafficDirection match {
-        case TrafficDirection.TowardsDigitizing => segments.filter(s => s.sideCode == SideCode.AgainstDigitizing)
-        case _ => segments.filter(s => s.sideCode == SideCode.TowardsDigitizing)
+        case TrafficDirection.TowardsDigitizing => segments.filter(current => current.sideCode == SideCode.AgainstDigitizing && segmentFoundOnTheOtherSide(current, segments))
+        case _ => segments.filter(current => current.sideCode == SideCode.TowardsDigitizing && segmentFoundOnTheOtherSide(current, segments))
       }).map(_.id)
 
       (segments.filterNot(s => droppedAssetIds.contains(s.id)), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds++ droppedAssetIds))
@@ -126,32 +134,31 @@ class AssetFiller {
   }
 
   def adjustSegmentSideCodes(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    def segmentFoundOnTheOtherSide(currentSegment: PieceWiseLinearAsset) = {
-      segments.exists(s => s.linkId == currentSegment.linkId && s.sideCode == switch(currentSegment.sideCode))
-    }
 
     val adjusted = roadLink.trafficDirection match {
-      case TrafficDirection.BothDirections => segments.map { s =>
-        s.sideCode match {
-          case SideCode.AgainstDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(s.typeId) && !segmentFoundOnTheOtherSide(s) =>
-            (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId, oldId = s.oldId))
-          case SideCode.TowardsDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(s.typeId) && !segmentFoundOnTheOtherSide(s) =>
-            (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId, oldId = s.oldId))
-          case _ => (s, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, s.typeId))
+      case TrafficDirection.BothDirections => segments.map { current =>
+        current.sideCode match {
+          case SideCode.AgainstDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(current.typeId) && !segmentFoundOnTheOtherSide(current, segments) =>
+            (current.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(current.id, SideCode.BothDirections, current.typeId, oldId = current.oldId))
+          case SideCode.TowardsDigitizing if !AssetTypeInfo.assetsWithValidityDirectionExcludingSpeedLimits.contains(current.typeId) && !segmentFoundOnTheOtherSide(current, segments) =>
+            (current.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(current.id, SideCode.BothDirections, current.typeId, oldId = current.oldId))
+          case _ => (current, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, current.typeId))
         }
       }
-      case TrafficDirection.AgainstDigitizing => segments.map { s =>
-        s.sideCode match {
-          case SideCode.BothDirections => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId, oldId = s.oldId))
-          case SideCode.TowardsDigitizing => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId, oldId = s.oldId))
-          case _ => (s, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, s.typeId))
+      case TrafficDirection.AgainstDigitizing => segments.map { current =>
+        current.sideCode match {
+          case SideCode.BothDirections => (current.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(current.id, SideCode.AgainstDigitizing, current.typeId, oldId = current.oldId))
+          case SideCode.TowardsDigitizing if !AssetTypeInfo.physicalObjectsWithValidityDirection.contains(current.typeId) && !segmentFoundOnTheOtherSide(current, segments) =>
+            (current.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(current.id, SideCode.AgainstDigitizing, current.typeId, oldId = current.oldId))
+          case _ => (current, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, current.typeId))
         }
       }
-      case TrafficDirection.TowardsDigitizing => segments.map { s =>
-        s.sideCode match {
-          case SideCode.BothDirections => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId, oldId = s.oldId))
-          case SideCode.AgainstDigitizing => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId, oldId = s.oldId))
-          case _ => (s, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, s.typeId))
+      case TrafficDirection.TowardsDigitizing => segments.map { current =>
+        current.sideCode match {
+          case SideCode.BothDirections => (current.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(current.id, SideCode.TowardsDigitizing, current.typeId, oldId = current.oldId))
+          case SideCode.AgainstDigitizing if !AssetTypeInfo.physicalObjectsWithValidityDirection.contains(current.typeId) && !segmentFoundOnTheOtherSide(current, segments) =>
+            (current.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(current.id, SideCode.TowardsDigitizing, current.typeId, oldId = current.oldId))
+          case _ => (current, SideCodeAdjustment(-1, SideCode.TowardsDigitizing, current.typeId))
         }
       }
     }
@@ -818,10 +825,10 @@ class AssetFiller {
       debugLogging("dropShortSegments"),
       adjustAssets,
       debugLogging("adjustAssets"),
-      droppedSegmentWrongDirection,
-      debugLogging("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
       debugLogging("adjustSegmentSideCodes"),
+      droppedSegmentWrongDirection,
+      debugLogging("droppedSegmentWrongDirection"),
       generateTwoSidedNonExistingLinearAssets(typeId),
       debugLogging("generateTwoSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
@@ -858,10 +865,10 @@ class AssetFiller {
       debugLogging("adjustAssets"),
       expireOverlappingSegments,
       debugLogging("expireOverlappingSegments"),
-      droppedSegmentWrongDirection,
-      debugLogging("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
       debugLogging("adjustSegmentSideCodes"),
+      droppedSegmentWrongDirection,
+      debugLogging("droppedSegmentWrongDirection"),
       fillHoles,
       debugLogging("fillHoles"),
       fuse,
