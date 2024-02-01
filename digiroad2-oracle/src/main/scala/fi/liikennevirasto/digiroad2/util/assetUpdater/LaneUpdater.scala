@@ -341,13 +341,15 @@ object LaneUpdater {
 
   def updateTrafficDirectionChangesLaneWorkList(roadLinkChanges: Seq[RoadLinkChange]): Unit = {
     val oldLinkIds = roadLinkChanges.flatMap(_.oldLink).map(_.linkId)
-    val (mainLanesOnLink, additionalLanesOnLink) = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false).partition(lane => LaneNumber.isMainLane(lane.laneCode))
+    val (mainLanesOnOldLinks, additionalLanesOnOldLinks) = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false).partition(lane => LaneNumber.isMainLane(lane.laneCode))
     val changesFiltered = roadLinkChanges.filterNot(change => change.changeType == RoadLinkChangeType.Add ||
       change.changeType == RoadLinkChangeType.Remove)
     changesFiltered.foreach(change => {
       if (isRealTrafficDirectionChange(change)) {
         change.newLinks.foreach(newLink => {
           val oldLink = change.oldLink.get
+          val mainLanesOnLink = mainLanesOnOldLinks.filter(_.linkId == oldLink.linkId)
+          val additionalLanesOnLink = additionalLanesOnOldLinks.filter(_.linkId == oldLink.linkId)
           val oldTD = oldLink.trafficDirection
           val newTD = newLink.trafficDirection
           val mainLanesStartDates = mainLanesOnLink.flatMap(lane => laneService.getPropertyValue(lane, "start_date")).map(_.value).asInstanceOf[Seq[String]]
