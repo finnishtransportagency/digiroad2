@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "devDependencies": {
     "chai": "~4.2.0",
-    "grunt": "~1.5.2",
+    "grunt": "~1.5.3",
     "grunt-cache-breaker": "~2.0.1",
     "grunt-connect-proxy": "0.1.10",
     "grunt-contrib-clean": "~2.0.0",
@@ -25,7 +25,7 @@
     "serve-static": "^1.14.1"
   },
   "dependencies": {
-    "backbone": "1.4.0",
+    "backbone": "1.5.0",
     "chai-jquery": "2.1.0",
     "jquery": "3.5.0",
     "jquery-migrate": "3.3.0",
