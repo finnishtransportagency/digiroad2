@@ -4,6 +4,7 @@ import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.DoesNotAffectRoadLink
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.lane.LaneType
@@ -531,13 +532,20 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       } else
         nearbyLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
 
-      val validityDirection = if(assetBearing.isEmpty) {
-        trafficSignService.getValidityDirection(point, roadLink, assetBearing, twoSided)
-      } else assetValidityDirection.get
-
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
 
-      (props, CsvPointAsset(point.x, point.y, roadLink.linkId, generateBaseProperties(props), validityDirection, assetBearing, mValue, roadLink, (linksWithValidBearing.isEmpty || linksWithValidBearing.size > 1) && assetBearing.isEmpty))
+      val (sideCode, propsToUse, bearingToUse) = if (linksWithValidBearing.isEmpty) {
+        val validityDirection = DoesNotAffectRoadLink.value
+        val propsIndexToUpdate = props.indexWhere(_.columnName == "locationSpecifier")
+        val updatedAssetProperty = props(propsIndexToUpdate).copy(value = 6)
+        val updatedProps = props.updated(propsIndexToUpdate, updatedAssetProperty)
+        (validityDirection, updatedProps, optBearing)
+      }
+      else if(assetBearing.isEmpty) {
+        (trafficSignService.getValidityDirection(point, roadLink, assetBearing, twoSided), props, assetBearing)
+      } else (assetValidityDirection.get, props, assetBearing)
+
+      (propsToUse, CsvPointAsset(point.x, point.y, roadLink.linkId, generateBaseProperties(propsToUse), sideCode, bearingToUse, mValue, roadLink, (linksWithValidBearing.isEmpty || linksWithValidBearing.size > 1) && assetBearing.isEmpty))
     }
 
     var notImportedDataExceptions: List[NotImportedData] = List()
