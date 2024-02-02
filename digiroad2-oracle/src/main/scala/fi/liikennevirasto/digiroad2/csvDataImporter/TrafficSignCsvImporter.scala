@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.LocationSpecifier.OutsideRoadOrStreetNetwork
+import fi.liikennevirasto.digiroad2.LocationSpecifier.OnRoadOrStreetNetwork
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.DoesNotAffectRoadLink
@@ -538,7 +538,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       val (sideCode, propsToUse, bearingToUse) = if (linksWithValidBearing.isEmpty) {
         val validityDirection = DoesNotAffectRoadLink.value
         val propsIndexToUpdate = props.indexWhere(_.columnName == "locationSpecifier")
-        val updatedAssetProperty = props(propsIndexToUpdate).copy(value = OutsideRoadOrStreetNetwork.value)
+        val updatedAssetProperty = props(propsIndexToUpdate).copy(value = OnRoadOrStreetNetwork.value)
         val updatedProps = props.updated(propsIndexToUpdate, updatedAssetProperty)
         (validityDirection, updatedProps, optBearing)
       }
