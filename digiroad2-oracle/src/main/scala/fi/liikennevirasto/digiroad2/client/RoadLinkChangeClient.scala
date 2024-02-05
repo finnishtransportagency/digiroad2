@@ -38,6 +38,7 @@ case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point
                         adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection,
                         surfaceType: SurfaceType = SurfaceType.Unknown)
 case class ReplaceInfo(oldLinkId: Option[String], newLinkId: Option[String], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
+case class ReplaceInfoWithGeometry(oldLinkId: Option[String], oldGeometry: List[Point], newLinkId: Option[String], newGeometry: List[Point], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
 case class ChangeSetId(key: String, statusDate: DateTime, targetDate: DateTime)
 case class RoadLinkChangeSet(key: String, statusDate: DateTime, targetDate: DateTime, changes: Seq[RoadLinkChange])
