@@ -5,13 +5,15 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object PavedRoadFiller extends AssetFiller {
 
-  //RoadLinks should contain only 1 pavement asset. If multiple are present, redundant assets should be ignored from the process
+  //RoadLinks should contain only 1 pavement asset. If multiple are present, redundant assets should be expired
   override def adjustAssets(roadLink: RoadLinkForFillTopology, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val filteredAssets = (linearAssets.size > 1) match {
-      case true => linearAssets.filterNot(asset => isRedundantUnknownPavementAsset(asset, roadLink))
-      case false => linearAssets
+    val (filteredAssets, updatedChangeSet) = (linearAssets.size > 1) match {
+      case true =>
+        val (redundantAssets, validAssets) = linearAssets.partition(asset => isRedundantUnknownPavementAsset(asset, roadLink))
+        (validAssets, changeSet.copy(expiredAssetIds = redundantAssets.map(_.id).toSet))
+      case false => (linearAssets, changeSet)
     }
-    super.adjustAssets(roadLink, filteredAssets, changeSet)
+    super.adjustAssets(roadLink, filteredAssets, updatedChangeSet)
   }
 
   /** *
