@@ -10,7 +10,7 @@ object PavedRoadFiller extends AssetFiller {
     val (filteredAssets, updatedChangeSet) = (linearAssets.size > 1) match {
       case true =>
         val (redundantAssets, validAssets) = linearAssets.partition(asset => isRedundantUnknownPavementAsset(asset, roadLink))
-        (validAssets, changeSet.copy(expiredAssetIds = redundantAssets.map(_.id).toSet))
+        (validAssets, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ redundantAssets.map(_.id).toSet))
       case false => (linearAssets, changeSet)
     }
     super.adjustAssets(roadLink, filteredAssets, updatedChangeSet)
