@@ -1454,10 +1454,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sorted(2).value should be(Some(NumericValue(1)))
     sorted(2).sideCode.value should be(SideCode.TowardsDigitizing.value)
 
-/*    val adjustedMValues = combineTestChangeSet.adjustedMValues
+    val adjustedMValues = combineTestChangeSet.adjustedMValues
     adjustedMValues.sortBy(_.assetId) should be(Seq(
       MValueAdjustment(1,linkId1,0.0,207.0,0), MValueAdjustment(2,linkId1,207.0,265.0,0)
-    ))*/
+    ))
 
   }
 
