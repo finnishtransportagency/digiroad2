@@ -2032,7 +2032,7 @@ object DataFixture {
 
     args.headOption match {
       case Some("test") =>
-        if (!localDbConnection(PostGISDatabase.ds)) {
+        if (!PostGISDatabase.isLocalDbConnection) {
           throw new IllegalDatabaseConnectionException("not connected to local database, reset aborted")
         } else {
           logger.info("resetting database")
