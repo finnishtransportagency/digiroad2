@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io.{BufferedWriter, File, FileWriter}
 import java.security.InvalidParameterException
-import java.sql.SQLIntegrityConstraintViolationException
+import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.{Date, NoSuchElementException, Properties}
@@ -35,9 +35,11 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
+import javax.sql.DataSource
 import scala.collection.mutable.ListBuffer
 import scala.sys.exit
 
+class IllegalDatabaseConnectionException(msg: String) extends SQLException(msg)
 
 object DataFixture {
   val TestAssetId = 300000
@@ -2014,11 +2016,15 @@ object DataFixture {
     ))
   }
 
+  private def localDbConnection(dataSource: DataSource) = {
+    dataSource.getConnection.getMetaData.getURL == "jdbc:postgresql://localhost:5432/digiroad2" && dataSource.getConnection.getMetaData.getUserName == "digiroad2"
+  }
+
   def main(args:Array[String]) : Unit = {
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
       println("*************************************************************************************")
-      println("TURN ENV batchMode true TO RUN FIXTURE RESET")
+      println("TURN ENV batchMode true TO RUN DATAFIXTURE BATCHES")
       println("*************************************************************************************")
       exit()
     } else
@@ -2026,12 +2032,17 @@ object DataFixture {
 
     args.headOption match {
       case Some("test") =>
-        tearDown()
-        setUpTest()
-        val typeProps = dataImporter.getTypeProperties
-        BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
-        TrafficSignTestData.createTestData
-        ServicePointTestData.createTestData
+        if (!localDbConnection(PostGISDatabase.ds)) {
+          throw new IllegalDatabaseConnectionException("not connected to local database, reset aborted")
+        } else {
+          logger.info("resetting database")
+          tearDown()
+          setUpTest()
+          val typeProps = dataImporter.getTypeProperties
+          BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
+          TrafficSignTestData.createTestData
+          ServicePointTestData.createTestData
+        }
       case Some("flyway_init") =>
         flywayInit()
       case Some("flyway_migrate") =>
