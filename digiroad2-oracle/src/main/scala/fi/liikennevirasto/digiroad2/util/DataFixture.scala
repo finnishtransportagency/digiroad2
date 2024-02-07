@@ -2016,10 +2016,6 @@ object DataFixture {
     ))
   }
 
-  private def localDbConnection(dataSource: DataSource) = {
-    dataSource.getConnection.getMetaData.getURL == "jdbc:postgresql://localhost:5432/digiroad2" && dataSource.getConnection.getMetaData.getUserName == "digiroad2"
-  }
-
   def main(args:Array[String]) : Unit = {
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
