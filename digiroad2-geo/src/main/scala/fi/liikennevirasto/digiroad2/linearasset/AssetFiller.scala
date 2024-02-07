@@ -777,11 +777,13 @@ class AssetFiller {
     * @param changeSet   Set of changes
     * @return List of asset and change set so that there are no small gaps between asset
     */
-  def fillHoles(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  def fillHolesSteps(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet,takesAccountSidCode:Boolean= true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     def fillBySideCode(assets: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFillTopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       if (assets.size > 1) {
         val left = assets.head
-        val right = assets.find(sl => sl.startMeasure >= left.endMeasure && sl.sideCode.value == left.sideCode.value)
+        val right = if (takesAccountSidCode) assets.find(sl => sl.startMeasure >= left.endMeasure && sl.sideCode.value == left.sideCode.value) 
+                    else assets.find(sl =>sl.startMeasure >= left.endMeasure)
+      
         val middleParts = if(right.nonEmpty) assets.filter(a=> 
           a.startMeasure>=left.endMeasure && a.endMeasure<=right.get.startMeasure && !Set(left.id,right.get.id).contains(a.id)
         ) else Seq()
@@ -811,6 +813,21 @@ class AssetFiller {
 
     val (geometrySegments, geometryAdjustments) = fillBySideCode(assets.sortBy(_.startMeasure), roadLink, changeSet)
     (geometrySegments, geometryAdjustments)
+  }
+
+  /**
+    * Fills any missing pieces in the middle of assets.
+    * First fill hole by taking account side code. Merge parts if possible by calling [[fuse]].
+    * After that rerun fillHole without checking side code. 
+    * @param roadLink  Road link being handled
+    * @param assets    List of asset limits
+    * @param changeSet Set of changes
+    * @return List of asset and change set so that there are no small gaps between asset
+    */
+  def fillHoles(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val (geometrySegments,geometryAdjustments) = fillHolesSteps(roadLink, assets, changeSet)
+    val (merged, changeSetFromFuse) = fuse(roadLink, geometrySegments, geometryAdjustments)
+    fillHolesSteps(roadLink, merged, changeSetFromFuse,takesAccountSidCode = false)
   }
 
   def fillTopology(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
@@ -871,8 +888,6 @@ class AssetFiller {
       debugLogging("droppedSegmentWrongDirection"),
       fillHoles,
       debugLogging("fillHoles"),
-      fuse,
-      debugLogging("fuse after filling hole"),
       clean
     )
 
