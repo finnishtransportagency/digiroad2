@@ -1501,7 +1501,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
   }
 
-  test("Fill hole in middle of links and merge similar parts, side codes are not continues but values are same, roadlink long assets2") {
+  test("Fill hole in middle of links and merge similar parts, side codes are not continues and values are not same in middle, roadlink long assets") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
         TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
