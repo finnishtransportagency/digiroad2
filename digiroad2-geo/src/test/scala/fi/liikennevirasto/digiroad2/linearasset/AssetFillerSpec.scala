@@ -826,7 +826,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(2, linkId1, Measure(103.841, 107.093), SideCode.BothDirections, None, TrafficDirection.BothDirections)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
     
     val sorted = methodTest.sortBy(_.endMeasure)
 
@@ -849,7 +849,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(1, linkId1, Measure(0, 18.082), SideCode.BothDirections, None, TrafficDirection.BothDirections)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
@@ -926,7 +926,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(4, linkId1, Measure(215.304, 223.872), SideCode.BothDirections, None, TrafficDirection.BothDirections)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
@@ -957,7 +957,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(2, linkId1, Measure(207.304, 215.304), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
@@ -1090,7 +1090,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(4, linkId1, Measure(265.00, 300.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
     )
     
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
@@ -1132,7 +1132,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(4, linkId1, Measure(265.00, 300.00), SideCode.BothDirections, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
@@ -1177,7 +1177,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(4, linkId1, Measure(320, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
     
     val sorted =  methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
     val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
@@ -1223,7 +1223,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(4, linkId1, Measure(320, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
     val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
@@ -1304,7 +1304,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(3, linkId1, Measure(240.00, 260.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
       createAsset(4, linkId1, Measure(265.00, 300.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
     )
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
@@ -1347,7 +1347,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(2, linkId1, Measure(207.00, 215.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
       createAsset(3, linkId1, Measure(240.00, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
     )
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
     
     val sorted = methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
     val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
@@ -1376,6 +1376,91 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
   }
 
+  test("Fill hole in middle of links, side codes are not continues but values are same, roadlink long assets") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 200.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(207.00, 215.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(3, linkId1, Measure(240.00, 260.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(4, linkId1, Measure(265.00, 300.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(4)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(207)
+    sorted(0).value should be(Some(NumericValue(1)))
+    sorted(0).sideCode.value should be(SideCode.TowardsDigitizing.value)
+
+    sorted(1).startMeasure should be(207)
+    sorted(1).endMeasure should be(240)
+    sorted(1).value should be(Some(NumericValue(1)))
+    sorted(1).sideCode.value should be(SideCode.BothDirections.value)
+
+    sorted(2).startMeasure should be(240)
+    sorted(2).endMeasure should be(265)
+    sorted(2).value should be(Some(NumericValue(1)))
+    sorted(2).sideCode.value should be(SideCode.BothDirections.value)
+
+    sorted(3).startMeasure should be(265)
+    sorted(3).endMeasure should be(300)
+    sorted(3).value should be(Some(NumericValue(1)))
+    sorted(3).sideCode.value should be(SideCode.TowardsDigitizing.value)
+
+    val adjustedMValues = combineTestChangeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(
+      MValueAdjustment(1,linkId1,0.0,207.0,0), MValueAdjustment(2,linkId1,207.0,240.0,0), MValueAdjustment(3,linkId1,240.0,265.0,0)
+    ))
+
+  }
+
+  test("Fill hole in middle of links, side codes are not continues but values are same, roadlink long assets, merge similar parts") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 200.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(207.00, 215.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(3, linkId1, Measure(240.00, 260.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(4, linkId1, Measure(265.00, 300.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(3)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(207)
+    sorted(0).value should be(Some(NumericValue(1)))
+    sorted(0).sideCode.value should be(SideCode.TowardsDigitizing.value)
+
+    sorted(1).startMeasure should be(207)
+    sorted(1).endMeasure should be(265)
+    sorted(1).value should be(Some(NumericValue(1)))
+    sorted(1).sideCode.value should be(SideCode.BothDirections.value)
+
+    sorted(2).startMeasure should be(265)
+    sorted(2).endMeasure should be(300)
+    sorted(2).value should be(Some(NumericValue(1)))
+    sorted(2).sideCode.value should be(SideCode.TowardsDigitizing.value)
+
+    val adjustedMValues = combineTestChangeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(
+      MValueAdjustment(1,linkId1,0.0,207.0,0), MValueAdjustment(2,linkId1,207.0,265.0,0)
+    ))
+
+  }
+
   test("Fill hole in middle of links and merge similar parts, side codes are not continues but values are same, roadlink long assets") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
@@ -1388,25 +1473,65 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(3, linkId1, Measure(240.00, 260.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
       createAsset(4, linkId1, Measure(265.00, 300.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
     )
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(3)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(207.0)
+    sorted(0).value should be(Some(NumericValue(1)))
+    sorted(0).sideCode.value should be(SideCode.TowardsDigitizing.value)
+
+    sorted(1).startMeasure should be(207.0)
+    sorted(1).endMeasure should be(265)
+    sorted(1).value should be(Some(NumericValue(1)))
+    sorted(1).sideCode.value should be(SideCode.BothDirections.value)
+
+    sorted(2).startMeasure should be(265)
+    sorted(2).endMeasure should be(300)
+    sorted(2).value should be(Some(NumericValue(1)))
+    sorted(2).sideCode.value should be(SideCode.TowardsDigitizing.value)
+
+    val adjustedMValues = combineTestChangeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(
+      MValueAdjustment(1,linkId1,0.0,207.0,0), MValueAdjustment(2,linkId1,207.0,265.0,0)
+    ))
+
+  }
+
+  test("Fill hole in middle of links and merge similar parts, side codes are not continues and values are not same in middle, roadlink long assets") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 200.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(207.00, 215.00), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(3, linkId1, Measure(240.00, 260.00), SideCode.BothDirections, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(4, linkId1, Measure(265.00, 300.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
     sorted.size should be(4)
 
     sorted(0).startMeasure should be(0)
-    sorted(0).endMeasure should be(200)
+    sorted(0).endMeasure should be(207.0)
     sorted(0).value should be(Some(NumericValue(1)))
     sorted(0).sideCode.value should be(SideCode.TowardsDigitizing.value)
 
-    sorted(1).startMeasure should be(207)
-    sorted(1).endMeasure should be(240)
+    sorted(1).startMeasure should be(207.0)
+    sorted(1).endMeasure should be(215)
     sorted(1).value should be(Some(NumericValue(1)))
     sorted(1).sideCode.value should be(SideCode.BothDirections.value)
 
-    sorted(2).startMeasure should be(240)
+    sorted(2).startMeasure should be(240.0)
     sorted(2).endMeasure should be(260)
-    sorted(2).value should be(Some(NumericValue(1)))
+    sorted(2).value should be(Some(NumericValue(2)))
     sorted(2).sideCode.value should be(SideCode.BothDirections.value)
 
     sorted(3).startMeasure should be(265)
@@ -1416,9 +1541,110 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val adjustedMValues = combineTestChangeSet.adjustedMValues
     adjustedMValues.sortBy(_.assetId) should be(Seq(
-      MValueAdjustment(2, linkId1, 207, 240)
+      MValueAdjustment(1,linkId1,0.0,207.0,0)
     ))
 
+  }
+
+  test("There is small hole, side codes and value different in roadlink long assets") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(733.973, 0.0)), 733.973, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 41.093), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(41.28, 173.96), SideCode.AgainstDigitizing, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(3, linkId1, Measure(41.28, 173.96), SideCode.TowardsDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(4, linkId1, Measure(173.96, 733.973), SideCode.BothDirections, Some(NumericValue(4)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(4)
+
+    sorted.head.sideCode should be(SideCode.BothDirections)
+    sorted.head.startMeasure should be(0)
+    sorted.head.endMeasure should be(41.28)
+
+    sorted.filter(_.sideCode == SideCode.AgainstDigitizing).head.startMeasure should be(41.28)
+    sorted.filter(_.sideCode == SideCode.AgainstDigitizing).head.endMeasure should be(173.96)
+
+    sorted.filter(_.sideCode == SideCode.TowardsDigitizing).head.startMeasure should be(41.28)
+    sorted.filter(_.sideCode == SideCode.TowardsDigitizing).head.endMeasure should be(173.96)
+
+    sorted.last.sideCode should be(SideCode.BothDirections)
+    sorted.last.startMeasure should be(173.96)
+    sorted.last.endMeasure should be(733.973)
+
+  }
+
+  test("There is big hole, side codes and value different in roadlink long assets") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(733.973, 0.0)), 733.973, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 41.093), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(43.28, 173.96), SideCode.AgainstDigitizing, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(3, linkId1, Measure(43.28, 173.96), SideCode.TowardsDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(4, linkId1, Measure(173.96, 733.973), SideCode.BothDirections, Some(NumericValue(4)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(4)
+
+    sorted.head.sideCode should be(SideCode.BothDirections)
+    sorted.head.startMeasure should be(0)
+    sorted.head.endMeasure should be(41.093)
+
+    sorted.filter(_.sideCode == SideCode.AgainstDigitizing).head.startMeasure should be(43.28)
+    sorted.filter(_.sideCode == SideCode.AgainstDigitizing).head.endMeasure should be(173.96)
+
+    sorted.filter(_.sideCode == SideCode.TowardsDigitizing).head.startMeasure should be(43.28)
+    sorted.filter(_.sideCode == SideCode.TowardsDigitizing).head.endMeasure should be(173.96)
+
+    sorted.last.sideCode should be(SideCode.BothDirections)
+    sorted.last.startMeasure should be(173.96)
+    sorted.last.endMeasure should be(733.973)
+
+  }
+
+  test("There is small hole, side codes and value different in roadlink long assets, fillTopologyChangesGeometry") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(733.973, 0.0)), 733.973, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 41.093), SideCode.BothDirections, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(2, linkId1, Measure(41.28, 173.96), SideCode.AgainstDigitizing, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(3, linkId1, Measure(41.28, 173.96), SideCode.TowardsDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId),
+      createAsset(4, linkId1, Measure(173.96, 733.973), SideCode.BothDirections, Some(NumericValue(4)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
+    )
+    val (methodTest, combineTestChangeSet) = assetFiller.fillTopologyChangesGeometry(roadLinks.map(assetFiller.toRoadLinkForFillTopology), assets.groupBy(_.linkId), RoadWidth.typeId)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(4)
+
+    sorted.head.sideCode should be(SideCode.BothDirections)
+    sorted.head.startMeasure should be(0)
+    sorted.head.endMeasure should be(41.28)
+
+    sorted.filter(_.sideCode == SideCode.AgainstDigitizing).head.startMeasure should be(41.28)
+    sorted.filter(_.sideCode == SideCode.AgainstDigitizing).head.endMeasure should be(173.96)
+
+    sorted.filter(_.sideCode == SideCode.TowardsDigitizing).head.startMeasure should be(41.28)
+    sorted.filter(_.sideCode == SideCode.TowardsDigitizing).head.endMeasure should be(173.96)
+
+    sorted.last.sideCode should be(SideCode.BothDirections)
+    sorted.last.startMeasure should be(173.96)
+    sorted.last.endMeasure should be(733.973)
   }
 
   test("Fill hole in middle of link, different value each sides, roadlink long assets") {
@@ -1436,7 +1662,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(4, linkId1, Measure(210, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
     val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
@@ -1467,6 +1693,44 @@ class AssetFillerSpec extends FunSuite with Matchers {
     ))
   }
 
+  test("Fill hole in middle of link, different value each sides, roadlink long assets, finally merge") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      // TowardsDigitizing
+      createAsset(1, linkId1, Measure(0, 200.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      createAsset(2, linkId1, Measure(210, 400.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      // AgainstDigitizing
+      createAsset(3, linkId1, Measure(0, 200.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      createAsset(4, linkId1, Measure(210, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
+    val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
+
+    sorted.size should be(1)
+    sorted2.size should be(1)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(400)
+    sorted(0).value should be(Some(NumericValue(1)))
+
+    sorted2(0).startMeasure should be(0)
+    sorted2(0).endMeasure should be(400)
+    sorted2(0).value should be(Some(NumericValue(3)))
+
+    val adjustedMValues = combineTestChangeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(
+      MValueAdjustment(1, linkId1, 0, 400),
+      MValueAdjustment(3, linkId1, 0, 400)
+    ))
+  }
+  
   test("Fill hole in middle of links when AgainstDigitizing side has multiple values, roadlink long assets") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
@@ -1483,7 +1747,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(5, linkId1, Measure(370, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesTwoSteps(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
     val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
@@ -1517,6 +1781,50 @@ class AssetFillerSpec extends FunSuite with Matchers {
       MValueAdjustment(4, linkId1, 320, 370)
     ))
   }
+
+  test("Fill hole in middle of links when AgainstDigitizing side has multiple values, roadlink long assets, finally Merge") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      // TowardsDigitizing
+      createAsset(1, linkId1, Measure(0, 200.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      createAsset(2, linkId1, Measure(210, 400.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      // AgainstDigitizing
+      createAsset(3, linkId1, Measure(0, 310.00), SideCode.AgainstDigitizing, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      createAsset(4, linkId1, Measure(320, 360.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      createAsset(5, linkId1, Measure(370, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.filter(_.sideCode == SideCode.TowardsDigitizing).sortBy(_.endMeasure)
+    val sorted2 = methodTest.filter(_.sideCode == SideCode.AgainstDigitizing).sortBy(_.endMeasure)
+
+    sorted.size should be(1)
+    sorted2.size should be(2)
+
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(400)
+    sorted(0).value should be(Some(NumericValue(1)))
+    
+
+    sorted2(0).startMeasure should be(0)
+    sorted2(0).endMeasure should be(310)
+    sorted2(0).value should be(Some(NumericValue(2)))
+
+    sorted2(1).startMeasure should be(320)
+    sorted2(1).endMeasure should be(400)
+    sorted2(1).value should be(Some(NumericValue(3)))
+
+    val adjustedMValues = combineTestChangeSet.adjustedMValues
+    adjustedMValues.sortBy(_.assetId) should be(Seq(
+      MValueAdjustment(1, linkId1, 0, 400),
+      MValueAdjustment(4, linkId1, 320, 400)
+    ))
+  }
   
   test("Do not fill hole if values are different either side of hole, roadlink lenth assets") {
     val roadLinks = Seq(
@@ -1529,7 +1837,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createAsset(2, linkId1, Measure(207.304, 215.304), SideCode.BothDirections, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = RoadWidth.typeId)
     )
 
-    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
