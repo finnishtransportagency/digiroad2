@@ -19,6 +19,10 @@ object PostGISDatabase {
     override def initialValue(): Boolean = { false }
   }
 
+  def isLocalDbConnection: Boolean = {
+    ds.getConnection.getMetaData.getURL == "jdbc:postgresql://localhost:5432/digiroad2" && ds.getConnection.getMetaData.getUserName == "digiroad2"
+  }
+
   def isTransactionOpen: Boolean = transactionOpen.get()
 
   /**
