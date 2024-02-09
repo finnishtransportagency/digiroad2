@@ -287,7 +287,7 @@ object ChangeReporter {
       if (changedAsset.after.isEmpty) {
         val emptyAfterFields =  Seq("", "", "", "", "", "", "","", "", "")
         if(withGeometry) Seq(metaFields ++ beforeFields ++ emptyAfterFields)
-        else Seq(metaFields ++ beforeFieldsWithoutGeometry ++ emptyAfterFields)
+        else Seq(metaFields ++ beforeFieldsWithoutGeometry ++ emptyAfterFields.dropRight(1))
       } else {
         changedAsset.after.map { after =>
           val linearReference = after.linearReference.get
