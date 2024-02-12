@@ -23,6 +23,11 @@ object PostGISDatabase {
     ds.getConnection.getMetaData.getURL == "jdbc:postgresql://localhost:5432/digiroad2" && ds.getConnection.getMetaData.getUserName == "digiroad2"
   }
 
+  def isAwsUnitTestConnection: Boolean = {
+    ds.getConnection.getMetaData.getURL == "jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2" &&
+      ds.getConnection.getMetaData.getUserName == "digiroaduserfortest"
+  }
+
   def isTransactionOpen: Boolean = transactionOpen.get()
 
   /**
