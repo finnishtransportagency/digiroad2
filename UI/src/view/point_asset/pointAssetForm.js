@@ -41,6 +41,12 @@ root.PointAssetForm = function() {
       if(me.applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || readOnly);
       }
+      if(!readOnly && layerName === 'trafficSigns') {
+        var assetIsOutsideRoadNetwork =  selectedAsset.get().validityDirection === validitydirections.outsideRoadNetwork;
+        rootElement.find('button#change-validity-direction').prop("disabled", assetIsOutsideRoadNetwork);
+        rootElement.find('.form-point-asset input#bearing').prop("disabled", !assetIsOutsideRoadNetwork);
+        rootElement.find('.form-point-asset input#bearing').prop("valueAsNumber", assetIsOutsideRoadNetwork ? selectedAsset.get().bearing : NaN);
+      }
     });
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
