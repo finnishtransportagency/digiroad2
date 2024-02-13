@@ -201,6 +201,15 @@
         selectedAsset.set({bearing: parseInt($(this).val())});
       });
 
+      eventbus.on('application:readOnly', function(readOnly) {
+        if(!readOnly && selectedAsset.get()) {
+          var assetIsOutsideRoadNetwork = selectedAsset.get().validityDirection === validitydirections.outsideRoadNetwork;
+          rootElement.find('button#change-validity-direction').prop("disabled", assetIsOutsideRoadNetwork);
+          rootElement.find('.form-point-asset input#bearing').prop("disabled", !assetIsOutsideRoadNetwork);
+          rootElement.find('.form-point-asset input#bearing').prop("valueAsNumber", assetIsOutsideRoadNetwork ? selectedAsset.get().bearing : NaN);
+        }
+      });
+
       function bindPanelEvents(){
         rootElement.find('.remove-panel').on('click', function (event) {
           removeSingle(event);
@@ -537,12 +546,4 @@
     };
   };
 
-  eventbus.on('application:readOnly', function(readOnly) {
-    if(!readOnly) {
-      var assetIsOutsideRoadNetwork =  selectedAsset.get().validityDirection === validitydirections.outsideRoadNetwork;
-      rootElement.find('button#change-validity-direction').prop("disabled", assetIsOutsideRoadNetwork);
-      rootElement.find('.form-point-asset input#bearing').prop("disabled", !assetIsOutsideRoadNetwork);
-      rootElement.find('.form-point-asset input#bearing').prop("valueAsNumber", assetIsOutsideRoadNetwork ? selectedAsset.get().bearing : NaN);
-    }
-  });
 })(this);
