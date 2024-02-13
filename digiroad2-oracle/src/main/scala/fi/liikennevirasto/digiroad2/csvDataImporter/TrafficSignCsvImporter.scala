@@ -514,9 +514,10 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case _ => false
       }
       val point = getCoordinatesFromProperties(props)
-      val (assetBearing, assetValidityDirection) = trafficSignService.recalculateBearing(optBearing)
+      val assetValidityDirection = if(optBearing.nonEmpty) Some(trafficSignService.getAssetValidityDirection(optBearing.get))
+      else None
 
-      var linksWithValidBearing = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, nearbyLinks)
+      var linksWithValidBearing = roadLinkService.filterRoadLinkByBearing(optBearing, assetValidityDirection, point, nearbyLinks)
 
       if (linksWithValidBearing.size > 1) {
         getPropertyValue(props, "roadName") match {
@@ -542,11 +543,11 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         val updatedProps = props.updated(propsIndexToUpdate, updatedAssetProperty)
         (validityDirection, updatedProps, optBearing)
       }
-      else if(assetBearing.isEmpty) {
-        (trafficSignService.getValidityDirection(point, roadLink, assetBearing, twoSided), props, assetBearing)
-      } else (assetValidityDirection.get, props, assetBearing)
+      else if(optBearing.isEmpty) {
+        (trafficSignService.getValidityDirection(point, roadLink, None, twoSided), props, None)
+      } else (assetValidityDirection.get, props, None)
 
-      val isFloating = (linksWithValidBearing.isEmpty || linksWithValidBearing.size > 1) && assetBearing.isEmpty
+      val isFloating = (linksWithValidBearing.isEmpty || linksWithValidBearing.size > 1) && optBearing.isEmpty
       (propsToUse, CsvPointAsset(point.x, point.y, roadLink.linkId, generateBaseProperties(propsToUse), sideCode, bearingToUse, mValue, roadLink, isFloating))
     }
 
