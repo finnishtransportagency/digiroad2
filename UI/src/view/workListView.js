@@ -137,9 +137,13 @@
     };
 
     this.generateWorkList = function(layerName, listP) {
+      var errorListSummaryText = 'Laatuvirhelista on muodostettu vertaamalla liikennemerkkejä tietolajin kohteisiin. ' +
+          'Tietolajin kohde nostetaan listalle, jos maksimissaan 50 metrin etäisyydellä oleva liikennemerkki ei vastaa tietolajin kohteen tietoja. ' +
+          'Laatuvirhelistoja kannattaa käyttää tietolajin oikeellisuuden parantamiseen, kun kunnan alueelta on käytössä ajantasaiset liikennemerkit.';
+
       var layerInfo = {
         speedLimitUnknown: {Title: 'Tuntemattomien nopeusrajoitusten lista',  SourceLayer: 'speedLimit', ShowDeleteCheckboxes: true},
-        speedLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'speedLimit'},
+        speedLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'speedLimit', Summary: errorListSummaryText},
         linkProperty: 'Korjattavien linkkien lista',
         massTransitStopNationalId: 'Geometrian ulkopuolelle jääneet pysäkit',
         pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',
@@ -150,22 +154,23 @@
         directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut',
         maintenanceRoad: 'Tarkistamattomien huoltoteiden lista',
 
-        hazardousMaterialTransportProhibitionErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'hazardousMaterialTransportProhibition'},
-        manoeuvreErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'manoeuvre'},
-        heightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'heightLimit'},
-        bogieWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'bogieWeightLimit'},
-        axleWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'axleWeightLimit'},
-        lengthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'lengthLimit'},
-        totalWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'totalWeightLimit'},
-        trailerTruckWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'trailerTruckWeightLimit'},
-        widthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'widthLimit'},
-        pedestrianCrossingsErrors: {Title: 'Laatuvirhelista', SourceLayer: 'pedestrianCrossings'},
+        hazardousMaterialTransportProhibitionErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'hazardousMaterialTransportProhibition', Summary: errorListSummaryText},
+        manoeuvreErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'manoeuvre', Summary: errorListSummaryText},
+        heightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'heightLimit', Summary: errorListSummaryText},
+        bogieWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'bogieWeightLimit', Summary: errorListSummaryText},
+        axleWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'axleWeightLimit', Summary: errorListSummaryText},
+        lengthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'lengthLimit', Summary: errorListSummaryText},
+        totalWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'totalWeightLimit', Summary: errorListSummaryText},
+        trailerTruckWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'trailerTruckWeightLimit', Summary: errorListSummaryText},
+        widthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'widthLimit', Summary: errorListSummaryText},
+        pedestrianCrossingsErrors: {Title: 'Laatuvirhelista', SourceLayer: 'pedestrianCrossings', Summary: errorListSummaryText},
         lanes: {Title: 'Kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', ShowDeleteCheckboxes: true}
       };
 
       var sourceLayer = (layerInfo[layerName].SourceLayer) ? layerInfo[layerName].SourceLayer : layerName;
       var title = (layerInfo[layerName].Title) ? layerInfo[layerName].Title : layerInfo[layerName];
       var showDeleteCheckboxes = (layerInfo[layerName].ShowDeleteCheckboxes) ? layerInfo[layerName].ShowDeleteCheckboxes : false;
+      var workListSummary = (layerInfo[layerName].Summary) ? '<div class="work-list-summary">' + layerInfo[layerName].Summary + '</div>'  : '';
 
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
@@ -174,6 +179,7 @@
         '<header>' + title +
         '<a class="header-link" href="#' + sourceLayer + '">Sulje lista</a>' +
         '</header>' +
+        workListSummary +
         '<div class="work-list">' +
         '</div>' +
         '</div>' +

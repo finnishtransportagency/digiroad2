@@ -61,13 +61,13 @@ Resources:
         - Key: Project
           Value: !Ref Project
   
-  CacheCluster:
+  CacheClusterV2:
     Type: 'AWS::ElastiCache::CacheCluster'
     Properties:
       ClusterName: !Sub "${Environment}roadLinkcache"
       AutoMinorVersionUpgrade: true
       AZMode: single-az
-      CacheNodeType: cache.r6g.large
+      CacheNodeType: cache.t4g.medium
       CacheParameterGroupName: !Ref CacheParameterGroupInreasedItemSize
       CacheSubnetGroupName: !Ref CacheSubnetGroupName
       Engine: memcached
@@ -88,7 +88,7 @@ Resources:
 Outputs:
   CacheURL:
     Description: Port of cache url
-    Value: !GetAtt CacheCluster.ConfigurationEndpoint.Address
+    Value: !GetAtt CacheClusterV2.ConfigurationEndpoint.Address
   CachePort:
     Description: Port of cache service
-    Value: !GetAtt CacheCluster.ConfigurationEndpoint.Port
+    Value: !GetAtt CacheClusterV2.ConfigurationEndpoint.Port
