@@ -2028,7 +2028,7 @@ object DataFixture {
 
     args.headOption match {
       case Some("test") =>
-        if (!PostGISDatabase.isLocalDbConnection) {
+        if (!(PostGISDatabase.isLocalDbConnection || PostGISDatabase.isAwsUnitTestConnection)) {
           throw new IllegalDatabaseConnectionException("not connected to local database, reset aborted")
         } else {
           logger.info("resetting database")
