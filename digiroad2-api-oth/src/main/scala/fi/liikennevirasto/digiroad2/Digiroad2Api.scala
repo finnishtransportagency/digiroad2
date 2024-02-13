@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
+import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ProhibitionService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop, ServicePointStopService}
@@ -91,7 +91,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val cyclingAndWalkingService: CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService,
                    val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
-                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService)
+                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService,
+                   val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = Digiroad2Context.autoProcessedLanesWorkListService,
+                   val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = Digiroad2Context.assetsOnExpiredLinksService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -1243,7 +1245,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case _ => Seq()
     }
   }
-  
+
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1257,7 +1259,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
     assets.foreach(usedService.validateCondition)
-    
+
     try {
       usedService.createOrUpdate(newLinearAssets, typeId, user.username, valueOption, existingAssetIds)
     } catch {
@@ -1265,7 +1267,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case e: IllegalArgumentException => halt(BadRequest("Property not found"))
     }
   }
-  
+
   put("/linearassets/verified") {
     val user = userProvider.getCurrentUser()
     val ids = (parsedBody \ "ids").extract[Set[Long]]
@@ -1306,7 +1308,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRights(existingAssets, Seq(), user, typeId)
     usedService.expire(ids.toSeq, user.username)
   }
-  
+
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1318,7 +1320,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       user.username,
       validateUserAccess(user, Some(typeId)))
   }
-  
+
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1487,10 +1489,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     user.isOperator() match {
       case true =>
-        manoeuvreService.getInaccurateRecords()
+        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId)
       case false =>
-        manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
+        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId,municipalityCode, Set(Municipality))
     }
+  }
+
+  get("/manoeuvreSamuutusWorkList") {
+    val user = userProvider.getCurrentUser()
+    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
+    workListItems.map(a=> Map("assetId" -> a.assetId, "links" -> a.links)).toList
   }
 
   delete("/laneWorkList") {
@@ -1511,7 +1519,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
     val workListItems = userHasRights match {
-      case true => laneWorkListService.getLaneWorkList
+      case true => laneWorkListService.getLaneWorkList()
       case false => halt(Forbidden("User not authorized to get items from lane work list"))
     }
 
@@ -1524,6 +1532,76 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "oldValue" -> item.oldValue,
           "createdAt" -> item.createdDate,
           "createdBy" -> item.createdBy)}))
+  }
+
+  delete("/autoProcessedLanesWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isLaneMaintainer() || user.isOperator()
+    val itemIdsToDelete = userHasRights match{
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(Forbidden("User not authorized to delete items from generated lanes work list"))
+    }
+    itemIdsToDelete match {
+      case Some(ids) =>
+        autoProcessedLanesWorkListService.deleteFromAutoProcessedLanesWorkList(ids)
+      case None => halt(BadRequest("No item ids to delete provided"))
+    }
+  }
+
+  get("/autoProcessedLanesWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isLaneMaintainer() || user.isOperator()
+    val workListItems = userHasRights match {
+      case true => autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList()
+      case false => halt(Forbidden("User not authorized to get items from generated lanes work list"))
+    }
+
+    Map("items" -> workListItems.groupBy(_.propertyName)
+      .mapValues(_.map{ item =>
+        Map("id" -> item.id,
+          "linkId" -> item.linkId,
+          "propertyName" -> item.propertyName,
+          "newValue" -> item.newValue,
+          "oldValue" -> item.oldValue,
+          "startDates" -> item.startDates,
+          "createdAt" -> item.createdDate,
+          "createdBy" -> item.createdBy)}))
+  }
+
+  get("/assetsOnExpiredLinksWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val workListItems = userHasRights match {
+      case true => assetsOnExpiredLinksService.getAllWorkListAssets()
+      case false => halt(Forbidden("User not authorized for assetsOnExpiredLinksWorkList"))
+    }
+
+    Map("items" -> workListItems.groupBy(_.assetTypeId)
+      .mapValues(_.map { item =>
+        Map("id" -> item.id,
+          "assetType" -> item.assetTypeId,
+          "linkId" -> item.linkId,
+          "sideCode" -> item.sideCode,
+          "startMeasure" -> item.startMeasure,
+          "endMeasure" -> item.endMeasure,
+          "geometry" -> item.geometry,
+          "roadLinkExpiredDate" -> item.roadLinkExpiredDate)
+      })
+    )
+  }
+
+  delete("/assetsOnExpiredLinksWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val assetIdsToDeleteFromList = userHasRights match {
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(Forbidden("User not authorized to delete items from work list"))
+    }
+    assetIdsToDeleteFromList match {
+      case Some(assetIds) =>
+        assetsOnExpiredLinksService.deleteFromWorkList(assetIds, newTransaction = true)
+      case None => halt(BadRequest("No ids to delete provided"))
+    }
   }
 
   get("/inaccurates") {
@@ -1711,7 +1789,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         validateBoundingBox(boundingRectangle)
       }
       LogUtils.time(logger, "TEST LOG Get manoeuvres by boundingBox total operation") {
-        manoeuvreService.getByBoundingBox(boundingRectangle, Set())
+        manoeuvreService.getByBoundingBox(boundingRectangle, Set[Int]())
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")

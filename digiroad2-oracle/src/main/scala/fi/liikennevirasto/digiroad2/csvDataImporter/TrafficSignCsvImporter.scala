@@ -2,8 +2,10 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import fi.liikennevirasto.digiroad2.LocationSpecifier.OnRoadOrStreetNetwork
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.DoesNotAffectRoadLink
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.lane.LaneType
@@ -412,8 +414,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
           case (Some(lon), Some(lat)) =>
             val roadLinks = optTrafficSignType match {
               case Some(signType) if TrafficSignType.applyAdditionalGroup(TrafficSignTypeGroup.CycleAndWalkwaySigns).contains(signType) =>
-                roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
-              case _ => roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong))
+                roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong), forCarTraffic = false).filter(_.administrativeClass != State)
+              case _ => roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong)).filter(_.administrativeClass != State)
             }
 
             if (roadLinks.isEmpty) {
@@ -512,33 +514,41 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case _ => false
       }
       val point = getCoordinatesFromProperties(props)
-      val (assetBearing, assetValidityDirection) = trafficSignService.recalculateBearing(optBearing)
+      val assetValidityDirection = if(optBearing.nonEmpty) Some(trafficSignService.getAssetValidityDirection(optBearing.get))
+      else None
 
-      var possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, nearbyLinks)
+      var linksWithValidBearing = roadLinkService.filterRoadLinkByBearing(optBearing, assetValidityDirection, point, nearbyLinks)
 
-      if (possibleRoadLinks.size > 1) {
+      if (linksWithValidBearing.size > 1) {
         getPropertyValue(props, "roadName") match {
           case name: String =>
             val possibleRoadLinksByName = nearbyLinks.filter(_.roadNameIdentifier == Option(name))
             if (possibleRoadLinksByName.size == 1)
-              possibleRoadLinks = possibleRoadLinksByName
+              linksWithValidBearing = possibleRoadLinksByName
           case _ =>
         }
       }
 
-      val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
-      val roadLink = if (roadLinks.nonEmpty) {
-        roadLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
+      val roadLink = if (linksWithValidBearing.nonEmpty) {
+        linksWithValidBearing.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
       } else
         nearbyLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
 
-      val validityDirection = if(assetBearing.isEmpty) {
-        trafficSignService.getValidityDirection(point, roadLink, assetBearing, twoSided)
-      } else assetValidityDirection.get
-
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
 
-      (props, CsvPointAsset(point.x, point.y, roadLink.linkId, generateBaseProperties(props), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
+      val (sideCode, propsToUse, bearingToUse) = if (linksWithValidBearing.isEmpty) {
+        val validityDirection = DoesNotAffectRoadLink.value
+        val propsIndexToUpdate = props.indexWhere(_.columnName == "locationSpecifier")
+        val updatedAssetProperty = props(propsIndexToUpdate).copy(value = OnRoadOrStreetNetwork.value)
+        val updatedProps = props.updated(propsIndexToUpdate, updatedAssetProperty)
+        (validityDirection, updatedProps, optBearing)
+      }
+      else if(optBearing.isEmpty) {
+        (trafficSignService.getValidityDirection(point, roadLink, None, twoSided), props, None)
+      } else (assetValidityDirection.get, props, None)
+
+      val isFloating = (linksWithValidBearing.isEmpty || linksWithValidBearing.size > 1) && optBearing.isEmpty
+      (propsToUse, CsvPointAsset(point.x, point.y, roadLink.linkId, generateBaseProperties(propsToUse), sideCode, bearingToUse, mValue, roadLink, isFloating))
     }
 
     var notImportedDataExceptions: List[NotImportedData] = List()

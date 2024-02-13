@@ -13,9 +13,9 @@ import fi.liikennevirasto.digiroad2.middleware._
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process._
-import fi.liikennevirasto.digiroad2.service._
+import fi.liikennevirasto.digiroad2.service.{AssetsOnExpiredLinksService, _}
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
+import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{SpeedLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -194,18 +194,18 @@ class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSig
   }
 }
 
-class LaneWorkListInsertItem(laneWorkListService: LaneWorkListService) extends Actor {
+class RoadLinkPropertyChangedActor(laneService: LaneService) extends Actor {
   def receive = {
     case linkPropertyChange: LinkPropertyChange =>
-      laneWorkListService.insertToLaneWorkList(linkPropertyChange)
-    case _ => println("LaneWorkListInsertItem: Received unknown message")
+      laneService.processRoadLinkPropertyChange(linkPropertyChange)
+    case _ => println("RoadLinkPropertyChangedActor: Received unknown message")
   }
 }
 
 class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   val logger = LoggerFactory.getLogger(getClass)
   def receive: Receive = {
-    case a: AssetUpdate =>
+    case a: AssetUpdateActor =>
       lazy val eventbus = new DummyEventBus
       lazy val roadLinkService: RoadLinkService = {
         new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), eventbus, new JsonSerializer)
@@ -284,8 +284,8 @@ object Digiroad2Context {
   val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignService, trafficSignManager), name = "trafficSignUpdate")
   eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
-  val laneWorkListInsert = system.actorOf(Props(classOf[LaneWorkListInsertItem], laneWorkListService), name = "laneWorkListInsert")
-  eventbus.subscribe(laneWorkListInsert, "laneWorkList:insert")
+  val roadLinkPropertyChanged = system.actorOf(Props(classOf[RoadLinkPropertyChangedActor], laneService), name = "roadLinkPropertyChanged")
+  eventbus.subscribe(roadLinkPropertyChanged, "roadLinkProperty:changed")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
@@ -526,6 +526,14 @@ object Digiroad2Context {
 
   lazy val laneWorkListService: LaneWorkListService = {
     new LaneWorkListService()
+  }
+
+  lazy val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = {
+    new AutoProcessedLanesWorkListService()
+  }
+
+  lazy val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = {
+    new AssetsOnExpiredLinksService()
   }
 
   lazy val municipalityAssetMappingService: MunicipalityAssetMappingService = {

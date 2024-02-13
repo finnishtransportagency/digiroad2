@@ -63,7 +63,7 @@ class PostGISMaintenanceDao() {
     def apply(r: PositionedResult) : DynamicAssetRow = {
       val id = r.nextLong()
       val linkId = r.nextString()
-      val sideCode = r.nextInt()
+      val sideCode = r.nextIntOption()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
 
@@ -89,7 +89,7 @@ class PostGISMaintenanceDao() {
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
 
-      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
+      DynamicAssetRow(id, linkId, sideCode.getOrElse(99), value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
     }
   }
 
@@ -136,14 +136,15 @@ class PostGISMaintenanceDao() {
   def createLinearAsset(typeId: Int, linkId: String, expired: Boolean, sideCode: Int, measures: Measures, username: String, timeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
-                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), area: Int): Long = {
+                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), area: Int): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "current_timestamp" else "null"
+    val modifiedBy = modifiedByFromUpdate.getOrElse(username)
     if (fromUpdate) {
       sqlu"""
        insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, area)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $area);
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $modifiedBy, $modifiedDateTimeFromUpdate, $area);
 
        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);

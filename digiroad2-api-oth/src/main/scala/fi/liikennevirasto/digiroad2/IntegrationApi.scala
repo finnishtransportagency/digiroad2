@@ -23,7 +23,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   protected val applicationDescription = "Integration API "
   protected implicit val jsonFormats: Formats = DefaultFormats
   val apiId = "integration-api"
-  val defaultDecimalPrecision = 3
 
   after() {
     response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
@@ -38,16 +37,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def doubleToDefaultPrecision(value: Double): Double = {
-    BigDecimal(value).setScale(defaultDecimalPrecision, BigDecimal.RoundingMode.HALF_UP).toDouble
+    GeometryUtils.doubleToDefaultPrecision(value)
   }
 
   def geometryToDefaultPrecision(geometry: Seq[Point]): Seq[Point] = {
-    geometry.map(point => {
-      val x = doubleToDefaultPrecision(point.x)
-      val y = doubleToDefaultPrecision(point.y)
-      val z = doubleToDefaultPrecision(point.z)
-      Point(x,y,z)
-    })
+    GeometryUtils.toDefaultPrecision(geometry)
   }
 
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
@@ -692,25 +686,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) =
-  {
-    if (geometry.nonEmpty)
-    {
-      val segments = geometry.zip(geometry.tail)
-      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2)).map(doubleToDefaultPrecision)
-      val mValuedGeometry = geometry.zip(runningSum.toList)
-      val wktString = mValuedGeometry.map {
-        case (p, newM) => p.x +" " + p.y + " " + p.z + " " + newM
-      }.mkString(", ")
-      "geometryWKT" -> ("LINESTRING ZM (" + wktString + ")")
-    }
-    else
-      "geometryWKT" -> ""
+  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) = {
+    val formatted = GeometryUtils.toWktLineString(geometry)
+    (formatted.format,formatted.string)
   }
 
   def geometryWKTForPoints(lon: Double, lat: Double): (String, String) = {
-    val geometryWKT = "POINT (" + lon + " " + lat + ")"
-    "geometryWKT" -> geometryWKT
+    val formatted = GeometryUtils.toWktPoint(lon,lat)
+    (formatted.format,formatted.string)
   }
 
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
@@ -877,7 +860,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "typeOfDamage" -> Try(trafficSignService.getProperty(trafficSign, "type_of_damage").map(_.propertyValue.toInt).get).getOrElse(""),
           "urgencyOfRepair" -> Try(trafficSignService.getProperty(trafficSign, "urgency_of_repair").map(_.propertyValue.toInt).get).getOrElse(""),
           "lifespanLeft" -> Try(trafficSignService.getProperty(trafficSign, "lifespan_left").map(_.propertyDisplayValue.get.toInt).get).getOrElse(""),
-          "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
+          "trafficDirection" -> SideCode.toTrafficDirectionForTrafficSign(SideCode(trafficSign.validityDirection)),
           "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
      )}
   }
