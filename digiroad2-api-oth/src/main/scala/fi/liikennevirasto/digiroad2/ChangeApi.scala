@@ -68,8 +68,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
   get("/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
-      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-      val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
+      val since = DateTime.parse(params.get("since").getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mandatory 'since' parameter")))
+      val until = DateTime.parse(params.get("until").getOrElse( throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mandatory 'until' parameter")))
       val token = params.get("token").map(_.toString)
 
       val withAdjust = params.get("withAdjust") match {
@@ -105,8 +105,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
   get("/mass_transit_stops", operation(getMassTransitStopsPrintedAtValluXML)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId + "_mass_transit_stops", request, params) { params =>
-      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-      val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
+      val since = DateTime.parse(params.get("since").getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mandatory 'since' parameter")))
+      val until = DateTime.parse(params.get("until").getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mandatory 'until' parameter")))
       val token = params.get("token").map(_.toString)
 
       massTransitStopsToGeoJson(since, massTransitStopService.getPublishedOnXml(since, until, token))

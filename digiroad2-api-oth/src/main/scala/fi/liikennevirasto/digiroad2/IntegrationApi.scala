@@ -972,10 +972,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case "road_works_asset" => roadWorksToApi(municipalityNumber)
           case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
           case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
-          case _ => BadRequest("Invalid asset type")
+          case _ => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid asset type")
         }
       } getOrElse {
-        BadRequest("Missing mandatory 'municipality' parameter")
+        throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mandatory 'municipality' parameter")
       }
     }
   }
@@ -986,11 +986,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       params.get("municipality").map { municipality =>
         val groupName = getTrafficSignGroup(params("group_name"))
         groupName match {
-          case TrafficSignTypeGroup.Unknown => BadRequest("Invalid group type")
+          case TrafficSignTypeGroup.Unknown => DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid group type")
           case _ => trafficSignsToApi(trafficSignService.getByMunicipalityAndGroup(municipality.toInt, groupName))
         }
       } getOrElse {
-        BadRequest("Missing mandatory 'municipality' parameter")
+      throw  DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mandatory 'municipality' parameter")
       }
     }
   }
