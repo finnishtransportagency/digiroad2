@@ -927,7 +927,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     contentType = formats("json")+ "; charset=utf-8"
     ApiUtils.avoidRestrictions(apiId, request, params){ params =>
       params.get("municipality").map { municipality =>
-        val municipalityNumber = municipality.toInt
+        val municipalityNumber = Try(municipality.toInt).getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Municipality parameter is not in number format"))
         val assetType = params("assetType")
         assetType match {
           case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
