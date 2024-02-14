@@ -172,7 +172,7 @@ Resources:
           - Name: ECR_REPOSITORY_URI
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
           - Name: PROD_REPOSITORY_URI
-            Value: !Sub "${ProdAccountId}.dkr.ecr.${ProdAccountRegion}.amazonaws.com/${ProdRepositoryName}"
+            Value: !Sub "${ProdAccountId}.dkr.ecr.${ProdAccountRegion}.amazonaws.com/${ProdEcrRepositoryName}"
           - Name: AWS_REGION
             Value: !Ref AWS::Region
           - Name: AWS_ACCOUNT_ID
@@ -251,7 +251,7 @@ Resources:
                   - ecr:PutImage
                   - ecr:UploadLayerPart
               - Effect: "Allow"
-                Resource: !Sub "arn:aws:ecr:${ProdAccountRegion}:${ProdAccountId}:repository/${ProdRepositoryName}*"
+                Resource: !Sub "arn:aws:ecr:${ProdAccountRegion}:${ProdAccountId}:repository/${ProdEcrRepositoryName}*"
                 Action:
                   - ecr:BatchCheckLayerAvailability
                   - ecr:InitiateLayerUpload
