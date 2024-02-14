@@ -98,7 +98,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       }
       catch {
         case invalidRoadNumberException: InvalidRoadAddressRangeParamaterException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,invalidRoadNumberException.getMessage)
-        case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
+        case _: NumberFormatException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid parameters")
       }
 
       lanesInRoadAddressRangeToApi(parameters)
@@ -110,14 +110,14 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     ApiUtils.avoidRestrictions(apiId + "_municipality", request, params) { params =>
       try {
         val municipalityParameter = params.get("municipality")
-        if (municipalityParameter.isEmpty) halt(BadRequest("Missing municipality parameter"))
+        if (municipalityParameter.isEmpty)  throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing municipality parameter")
         else {
           val municipalityNumber = municipalityParameter.get.toInt
           lanesInMunicipalityToApi(municipalityNumber)
         }
       }
       catch {
-        case _: NumberFormatException => halt(BadRequest("Missing or invalid municipality parameter"))
+        case _: NumberFormatException =>  throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing or invalid municipality parameter")
       }
     }
   }
@@ -177,7 +177,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val (lanesWithRoadAddress, roadLinksGrouped) = try {
       laneService.getLanesInRoadAddressRange(roadAddressRange)
     } catch {
-      case rae: RoadAddressException => halt(BadRequest("Could not fetch lanes for given road address range, check that given road address range is valid"))
+      case rae: RoadAddressException =>  throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Could not fetch lanes for given road address range, check that given road address range is valid")
     }
     val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
     val homogenousLanes = homogenizeTwoDigitLanes(twoDigitLanes, roadLinksGrouped)

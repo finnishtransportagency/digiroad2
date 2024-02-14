@@ -69,7 +69,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
   get("/huoltotiet", operation(getServiceRoadByBoundingBox)){
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
-      val bbox = params.get("boundingBox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+      val bbox = params.get("boundingBox").map(constructBoundingRectangle).getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Bounding box was missing"))
       validateBoundingBox(bbox)
       createGeoJson(maintenanceService.getAllByBoundingBox(bbox))
     }
@@ -176,7 +176,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     val width = Math.abs(rightTop.x - leftBottom.x).toLong
     val height = Math.abs(rightTop.y - leftBottom.y).toLong
     if ((width * height) > MAX_BOUNDING_BOX) {
-      halt(BadRequest("Bounding box was too big: " + bbox))
+      throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Bounding box was too big: " + bbox)
     }
   }
 

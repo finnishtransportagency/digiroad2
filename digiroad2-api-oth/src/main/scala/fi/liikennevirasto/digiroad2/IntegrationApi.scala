@@ -986,7 +986,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       params.get("municipality").map { municipality =>
         val groupName = getTrafficSignGroup(params("group_name"))
         groupName match {
-          case TrafficSignTypeGroup.Unknown => DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid group type")
+          case TrafficSignTypeGroup.Unknown => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid group type")
           case _ => trafficSignsToApi(trafficSignService.getByMunicipalityAndGroup(municipality.toInt, groupName))
         }
       } getOrElse {
