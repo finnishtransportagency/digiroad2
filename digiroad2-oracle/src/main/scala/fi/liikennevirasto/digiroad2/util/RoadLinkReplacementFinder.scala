@@ -1,15 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
-import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory
-import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, Polygon}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-
+import com.vividsolutions.jts.geom.Polygon
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, ReplaceInfoWithGeometry, RoadLinkChange, RoadLinkChangeClient}
-
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkMissingReplacementService
-import org.geotools.geometry.jts.JTSFactoryFinder
 
 import scala.io.Source
 
@@ -19,7 +15,6 @@ object RoadLinkReplacementFinder {
   lazy val bufferTolerance: Double = 15.0
   lazy val parallelTolerance: Double = 5.0
   lazy val missingReplacementService: RoadLinkMissingReplacementService = new RoadLinkMissingReplacementService
-  lazy val geometryFactory: GeometryFactory = JTSFactoryFinder.getGeometryFactory(null)
 
   def withLinkGeometry(replaceInfos: Seq[ReplaceInfo], changes: Seq[RoadLinkChange]): Seq[ReplaceInfoWithGeometry] = {
     val oldLinks = changes.flatMap(_.oldLink)
@@ -68,15 +63,18 @@ object RoadLinkReplacementFinder {
 
 
     def findMatchesWithParallel(addedLink: ReplaceInfoWithGeometry, removedLinks: Seq[ReplaceInfoWithGeometry]) = {
-
+      removedLinks.map(removedLink => {
+        val addedLineString = GeometryUtils.pointsToLineString(addedLink.newGeometry)
+        val removedLineString = GeometryUtils.pointsToLineString(removedLink.oldGeometry)
+        val similarityMeasure = GeometryUtils.getHausdorffSimilarityMeasure(addedLineString, removedLineString)
+        println(similarityMeasure)
+      })
     }
 
     def polygonWithBuffer(replaceInfoWithGeometry: ReplaceInfoWithGeometry): Polygon = {
       val geomToUse = if(replaceInfoWithGeometry.oldGeometry.nonEmpty) replaceInfoWithGeometry.oldGeometry
       else replaceInfoWithGeometry.newGeometry
-
-      val coordinates = geomToUse.map(p => new Coordinate(p.x, p.y)).toArray
-      val lineString = geometryFactory.createLineString(coordinates)
+      val lineString = GeometryUtils.pointsToLineString(geomToUse)
       lineString.buffer(bufferTolerance).asInstanceOf[Polygon]
     }
 

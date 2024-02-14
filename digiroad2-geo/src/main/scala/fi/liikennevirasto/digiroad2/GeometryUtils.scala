@@ -1,6 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
+import com.vividsolutions.jts.algorithm.`match`.HausdorffSimilarityMeasure
+import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, LineString}
+import com.vividsolutions.jts.io.WKTReader
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
+import org.geotools.geometry.jts.JTSFactoryFinder
 
 
 sealed case class GeometryString( format:String,string: String)
@@ -10,6 +14,10 @@ object GeometryUtils {
   final private val DefaultEpsilon = 0.01
   final private val adjustmentTolerance = 2.0
   final private val defaultDecimalPrecision = 3
+  lazy val geometryFactory: GeometryFactory = JTSFactoryFinder.getGeometryFactory(null)
+  lazy val hausdorffSimilarityMeasure: HausdorffSimilarityMeasure =  new HausdorffSimilarityMeasure()
+  lazy val wktReader: WKTReader = new WKTReader()
+
 
   def getDefaultEpsilon(): Double = {
     DefaultEpsilon
@@ -379,6 +387,52 @@ object GeometryUtils {
 
   def isDirectionChangeProjection(projection: Projection): Boolean = {
     ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
+  }
+
+  def pointsToLineString(points: Seq[Point]): LineString = {
+    val coordinates = points.map(p => new Coordinate(p.x, p.y)).toArray
+    val lineString = geometryFactory.createLineString(coordinates)
+    lineString
+  }
+
+  /**
+    * Measures the degree of similarity between two Geometries using the Hausdorff distance metric.
+    * The measure is normalized to lie in the range [0, 1]. Higher measures indicate a great degree of similarity.
+    * @param geom1
+    * @param geom2
+    * @return Measure of similarity from 0 to 1
+    */
+  def getHausdorffSimilarityMeasure(geom1: LineString, geom2: LineString): Double = {
+    hausdorffSimilarityMeasure.measure(geom1, geom2)
+  }
+
+  def getFrechetDistance(geom1: LineString, geom2: LineString) = {
+    ???
+  }
+
+  /**
+    * Calculates the centroid (average of all the points) of given points
+    * @param points Points to calculate centroid from
+    * @return calculated centroid as a Point object
+    */
+  def calculateCentroid(points: Seq[Point]): Point = {
+    val (sumX, sumY, sumZ) = points.foldLeft((0.0, 0.0, 0.0)) {
+      case ((accX, accY, accZ), Point(x, y, z)) => (accX + x, accY + y, accZ + z)
+    }
+    Point(sumX / points.size, sumY / points.size, sumZ / points.size)
+  }
+
+  /**
+    * Centers the given points geometry around origin 0.0 by subtracting the calculated centroid from all the points
+    * @param points Points we want to center
+    * @param centroid Calculated average of all points
+    * @return Geometry centered around 0.0 with the same shape
+    */
+  def centerGeometry(points: Seq[Point], centroid: Point): Seq[Point] = {
+    val centeredPoints = points.map { case Point(x, y, z) =>
+      Point(x - centroid.x, y - centroid.y, z - centroid.z)
+    }
+    centeredPoints
   }
 
   def withinTolerance(geom1: Seq[Point], geom2: Seq[Point], tolerance: Double): Boolean = {

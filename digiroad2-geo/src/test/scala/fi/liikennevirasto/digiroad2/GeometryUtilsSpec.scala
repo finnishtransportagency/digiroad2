@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import com.vividsolutions.jts.geom.LineString
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import org.scalatest._
 
@@ -321,5 +322,61 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(assetPosition, linkGeometry)
     val bearingValue = GeometryUtils.calculateBearing(linkGeometry, Some(mValue))
     bearingValue should be(45.0)
+  }
+
+  test("hausdorff distance similarity testing") {
+    val points1 = Seq(
+      Point(591552.664, 6885125.509, 81.888),
+      Point(591557.145, 6885136.096, 81.482),
+      Point(591561.627, 6885146.04, 81.11),
+      Point(591562.421, 6885155.741, 80.719),
+      Point(591562.145, 6885164.373, 80.24)
+    )
+
+    val centroid1 = calculateCentroid(points1)
+    val centerline1 = centerGeometry(points1, centroid1)
+    val geometry1 = pointsToLineString(centerline1)
+
+    val points2 = Seq(
+      Point(591541.64, 6885127.573, 80.347),
+      Point(591548.507, 6885133.442, 80.495),
+      Point(591555.051, 6885138.218, 80.876),
+      Point(591559.215, 6885141.352, 81.175),
+      Point(591561.138, 6885144.571, 81.108)
+    )
+
+    val centroid2 = calculateCentroid(points2)
+    val centerline2 = centerGeometry(points2, centroid2)
+    val geometry2 = pointsToLineString(centerline2)
+
+    val similarityMeasure = getHausdorffSimilarityMeasure(geometry1, geometry2)
+    println(similarityMeasure)
+  }
+
+  test("Hausdorff similiarity test, geom2 is offset 20m to north, shape is similar, after centering, similary measure should be 1") {
+    val points1 = Seq(
+      Point(591552.664, 6885125.509, 81.888),
+      Point(591557.145, 6885136.096, 81.482),
+      Point(591561.627, 6885146.04, 81.11),
+      Point(591562.421, 6885155.741, 80.719),
+      Point(591562.145, 6885164.373, 80.24)
+    )
+    val centroid1 = calculateCentroid(points1)
+    val centerline1 = centerGeometry(points1, centroid1)
+    val geometry1 = pointsToLineString(centerline1)
+
+    val points2 = Seq(
+      Point(591552.664, 6885145.509, 81.888),
+      Point(591557.145, 6885156.096, 81.482),
+      Point(591561.627, 6885166.04, 81.11),
+      Point(591562.421, 6885175.741, 80.719),
+      Point(591562.145, 6885184.373, 80.24)
+    )
+    val centroid2 = calculateCentroid(points2)
+    val centerline2 = centerGeometry(points2, centroid2)
+    val geometry2 = pointsToLineString(centerline2)
+
+    val similarityMeasure = getHausdorffSimilarityMeasure(geometry1, geometry2)
+    println(similarityMeasure)
   }
 }
