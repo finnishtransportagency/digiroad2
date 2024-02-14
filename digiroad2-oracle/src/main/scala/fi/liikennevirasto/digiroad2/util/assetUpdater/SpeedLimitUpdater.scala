@@ -20,7 +20,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     val filteredLinks = newRoadLinks.filterNot(link => Seq(HardShoulder, CycleOrPedestrianPath, TractorRoad).contains(link.linkType))
     val roadLinkFound = filteredLinks.exists(_.linkId == newLinkInfo.linkId)
     if(roadLinkFound) {
-      service.persistUnknown(Seq(UnknownSpeedLimit(newLinkInfo.linkId, newLinkInfo.municipality, newLinkInfo.adminClass)),newTransaction = false)
+      service.persistUnknown(Seq(UnknownSpeedLimit(newLinkInfo.linkId, newLinkInfo.municipality.get, newLinkInfo.adminClass)),newTransaction = false)
       None
     } else None
   }
@@ -37,7 +37,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
         val oldUnknownLSpeedLimit = service.getUnknownByLinkIds(Set(oldLinkIds),newTransaction = false)
         if (oldUnknownLSpeedLimit.nonEmpty || trafficDirectionChanged) {
           service.purgeUnknown(Set(),oldUnknownLSpeedLimit.map(_.linkId),newTransaction = false) // recreate unknown speedlimit
-          service.persistUnknown(change.newLinks.map(l=>UnknownSpeedLimit(l.linkId, l.municipality, l.adminClass)),newTransaction = false)
+          service.persistUnknown(change.newLinks.map(l=>UnknownSpeedLimit(l.linkId, l.municipality.get, l.adminClass)),newTransaction = false)
         }
         None
       }
