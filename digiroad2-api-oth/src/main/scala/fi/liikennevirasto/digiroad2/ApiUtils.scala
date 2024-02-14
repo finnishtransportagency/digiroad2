@@ -67,10 +67,28 @@ object ApiUtils {
    */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
                            responseType: String = "json")(f: Params => T): Any = {
-    if (!Digiroad2Properties.awsConnectionEnabled) return f(params)
+    def prepare = {
+      val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
+      val path = "/digiroad" + request.getRequestURI + queryString
+      val id = Integer.toHexString(new Random().nextInt)
+      (path, id)
+    }
+    
+    def handleRequest: Any = {
+      val (path: String, id: String) = prepare
+      logger.info(s"API LOG $id: Received query $path at ${DateTime.now}")
+      try {
+        f(params)
+      } catch { // handle imminent error
+        case e: DigiroadApiError => handleError(id, e)
+        case e: Throwable =>
+          logger.error(s"API LOG $id: error with message ${e.getMessage} and stacktrace: ", e);
+          InternalServerError(s"Request with id $id failed.")
+      }
+    }
 
-    val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
-    val path = "/digiroad" + request.getRequestURI + queryString
+    if (!Digiroad2Properties.awsConnectionEnabled) return  handleRequest
+    val (path: String, id: String) = prepare
     val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
     val queryId = params.get("queryId") match {             // Used to identify requests in logs
       case Some(id) => id
@@ -88,9 +106,8 @@ object ApiUtils {
         redirectToUrl(preSignedUrl, queryId)
 
       case (None, false) =>
-        try {
-          newQuery(workId, queryId, path, f, params, responseType)
-        } catch { // handle imminent error
+        try {newQuery(workId, queryId, path, f, params, responseType)} catch {
+          // handle imminent error
           case e: DigiroadApiError => handleError(queryId, e)
           case e: Throwable => 
             logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: ", e);
