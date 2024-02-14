@@ -58,7 +58,7 @@ object ApiUtils {
  /**
    * Avoid API Gateway restrictions
    * When using avoidRestrictions, do not hide errors but delegate these to avoidRestrictions method.
-   * For error handling throw exception [[DigiroadApiError]].
+   * For handling validation exception throw [[DigiroadApiError]].
    * API Gateway timeouts if response is not received in 30 sec
    *  -> Return redirect to same url with retry param if query is not finished within maxWaitTime
    *  -> Save response to S3 when its ready (access with pre-signed url)
