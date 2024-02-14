@@ -105,7 +105,7 @@ trait UpdaterUtilsSuite {
       oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generatedGeometry._2,
         geometry = generatedGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq.empty[RoadLinkInfo],
       replaceInfo = Seq.empty[ReplaceInfo])
@@ -120,7 +120,7 @@ trait UpdaterUtilsSuite {
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -129,7 +129,7 @@ trait UpdaterUtilsSuite {
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =
@@ -148,7 +148,7 @@ trait UpdaterUtilsSuite {
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -157,7 +157,7 @@ trait UpdaterUtilsSuite {
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =
@@ -176,7 +176,7 @@ trait UpdaterUtilsSuite {
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.TowardsDigitizing)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -185,7 +185,7 @@ trait UpdaterUtilsSuite {
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =
@@ -204,7 +204,7 @@ trait UpdaterUtilsSuite {
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -213,7 +213,7 @@ trait UpdaterUtilsSuite {
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.TowardsDigitizing
         )),
       replaceInfo =
@@ -232,7 +232,7 @@ trait UpdaterUtilsSuite {
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -241,7 +241,7 @@ trait UpdaterUtilsSuite {
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.AgainstDigitizing
         )),
       replaceInfo =
@@ -260,7 +260,7 @@ trait UpdaterUtilsSuite {
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -269,7 +269,7 @@ trait UpdaterUtilsSuite {
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =
@@ -291,7 +291,7 @@ trait UpdaterUtilsSuite {
         geometry = oldLinkGeometry1._1,
         roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -300,7 +300,7 @@ trait UpdaterUtilsSuite {
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =
@@ -317,7 +317,7 @@ trait UpdaterUtilsSuite {
           geometry = oldLinkGeometry2._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections)),
         newLinks = Seq(
           RoadLinkInfo(
@@ -326,7 +326,7 @@ trait UpdaterUtilsSuite {
             geometry = newLinkGeometry1._1,
             roadClass = MTKClassWidth.CarRoad_Ia.value,
             adminClass = Municipality,
-            municipality = 0,
+            municipality = Some(0),
             trafficDirection = TrafficDirection.BothDirections
           )),
         replaceInfo =
@@ -346,7 +346,7 @@ trait UpdaterUtilsSuite {
         geometry = List(),
         roadClass = 12312,//WinterRoad MTKClass
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections
       )),
       replaceInfo = Seq.empty[ReplaceInfo])

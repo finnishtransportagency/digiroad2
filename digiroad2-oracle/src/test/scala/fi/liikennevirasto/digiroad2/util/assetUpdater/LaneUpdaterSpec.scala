@@ -76,7 +76,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
         geometry = List(),
         roadClass = 12312,//WinterRoad MTKClass
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections
       )),
       replaceInfo = Seq.empty[ReplaceInfo])

@@ -45,7 +45,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generatedGeometry._2,
         geometry = generatedGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq.empty[RoadLinkInfo],
       replaceInfo = Seq.empty[ReplaceInfo])
@@ -60,7 +60,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 60,
+        municipality = Some(60),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -69,7 +69,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 60,
+          municipality = Some(60),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =
@@ -88,7 +88,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
-        municipality = 60,
+        municipality = Some(60),
         trafficDirection = TrafficDirection.TowardsDigitizing)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -97,7 +97,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
-          municipality = 60,
+          municipality = Some(60),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =

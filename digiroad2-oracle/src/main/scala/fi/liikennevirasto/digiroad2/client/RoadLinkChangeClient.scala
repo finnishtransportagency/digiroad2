@@ -35,7 +35,7 @@ object RoadLinkChangeType {
 }
 
 case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int,
-                        adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection,
+                        adminClass: AdministrativeClass, municipality: Option[Int], trafficDirection: TrafficDirection,
                         surfaceType: SurfaceType = SurfaceType.Unknown)
 case class ReplaceInfo(oldLinkId: Option[String], newLinkId: Option[String], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
@@ -181,7 +181,7 @@ class RoadLinkChangeClient {
     } catch {
       case e: Throwable =>
         logger.error(e.getMessage)
-        Seq.empty[RoadLinkChange]
+        throw e
     }
   }
 
