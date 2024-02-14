@@ -135,7 +135,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
   protected def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo, newLinkInfo: Option[RoadLinkInfo],
                             newLink: Option[RoadLink]): (Boolean, Option[FloatingReason]) = {
     newLinkInfo match {
-      case Some(linkInfo) if linkInfo.municipality != asset.municipalityCode =>
+      case Some(linkInfo) if linkInfo.municipality.get != asset.municipalityCode =>
         (true, Some(FloatingReason.DifferentMunicipalityCode))
       case Some(linkInfo) if newLink.isEmpty =>
         (true, Some(FloatingReason.NoRoadLinkFound))
