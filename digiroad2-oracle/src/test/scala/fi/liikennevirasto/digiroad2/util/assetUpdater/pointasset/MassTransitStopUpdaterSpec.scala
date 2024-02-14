@@ -79,7 +79,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(newLinkId2, false)).thenReturn(Some(newLink2))
 
       val oldLinkInfo = change.oldLink.get
-      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality,
+      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality.get,
         oldLinkInfo.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
       val stopId1 = massTransitStopService.create(NewMassTransitStop(367475.5758941994, 6673657.346462522, oldLinkId, 341,
         Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "test", oldLink, false)
@@ -207,10 +207,10 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       val change2 = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId2).get
 
       val oldLinkInfo1 = change1.oldLink.get
-      val oldLink1 = RoadLink(oldLinkId1, oldLinkInfo1.geometry, oldLinkInfo1.linkLength, oldLinkInfo1.adminClass, oldLinkInfo1.municipality,
+      val oldLink1 = RoadLink(oldLinkId1, oldLinkInfo1.geometry, oldLinkInfo1.linkLength, oldLinkInfo1.adminClass, oldLinkInfo1.municipality.get,
         oldLinkInfo1.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
       val oldLinkInfo2 = change2.oldLink.get
-      val oldLink2 = RoadLink(oldLinkId2, oldLinkInfo2.geometry, oldLinkInfo2.linkLength, oldLinkInfo2.adminClass, oldLinkInfo2.municipality,
+      val oldLink2 = RoadLink(oldLinkId2, oldLinkInfo2.geometry, oldLinkInfo2.linkLength, oldLinkInfo2.adminClass, oldLinkInfo2.municipality.get,
         oldLinkInfo2.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
 
       val newLinkInfo = change1.newLinks.find(_.linkId == newLinkId).get
@@ -247,10 +247,10 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
       val oldLinkInfo1 = change1.oldLink.get
-      val oldLink1 = RoadLink(oldLinkId1, oldLinkInfo1.geometry, oldLinkInfo1.linkLength, oldLinkInfo1.adminClass, oldLinkInfo1.municipality,
+      val oldLink1 = RoadLink(oldLinkId1, oldLinkInfo1.geometry, oldLinkInfo1.linkLength, oldLinkInfo1.adminClass, oldLinkInfo1.municipality.get,
         oldLinkInfo1.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
       val oldLinkInfo2 = change2.oldLink.get
-      val oldLink2 = RoadLink(oldLinkId2, oldLinkInfo2.geometry, oldLinkInfo2.linkLength, oldLinkInfo2.adminClass, oldLinkInfo2.municipality,
+      val oldLink2 = RoadLink(oldLinkId2, oldLinkInfo2.geometry, oldLinkInfo2.linkLength, oldLinkInfo2.adminClass, oldLinkInfo2.municipality.get,
         oldLinkInfo2.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
 
       val stopId1 = massTransitStopService.create(NewMassTransitStop(391922.1567866767, 6672845.986092816, oldLinkId1, 341,
@@ -406,7 +406,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       val oldLinkId = "7766bff4-5f02-4c30-af0b-42ad3c0296aa:1"
       val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
       val oldLinkInfo = change.oldLink.get
-      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality,
+      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality.get,
         oldLinkInfo.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
       val stopId = massTransitStopService.create(NewMassTransitStop(378759.66525429586, 6672990.60914197, oldLinkId, 351,
         Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "test", oldLink, false)
@@ -427,7 +427,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
       val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
       val oldLinkInfo = change.oldLink.get
-      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality,
+      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality.get,
         oldLinkInfo.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
       val stopId = massTransitStopService.create(NewMassTransitStop(370243.9245965985, 6670363.935476765, oldLinkId, 3289,
         Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "test", oldLink, false)
@@ -451,7 +451,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
 
       val oldLinkInfo = change.oldLink.get
-      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality,
+      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality.get,
         oldLinkInfo.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
 
       val stopId = massTransitStopService.create(NewMassTransitStop(391942.45320008986, 6672844.827758611, oldLinkId, 23,

@@ -41,7 +41,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_IIIa.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -50,7 +50,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_IIb.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =
@@ -181,7 +181,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
         geometry = oldLinkGeometry1._1,
         roadClass = MTKClassWidth.CarRoad_IIIa.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
@@ -190,7 +190,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_IIb.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections
         )),
       replaceInfo =
@@ -207,7 +207,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
           geometry = oldLinkGeometry2._1,
           roadClass = MTKClassWidth.CarRoad_IIIa.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections)),
         newLinks = Seq(
           RoadLinkInfo(
@@ -216,7 +216,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
             geometry = newLinkGeometry1._1,
             roadClass = MTKClassWidth.CarRoad_IIb.value,
             adminClass = Municipality,
-            municipality = 0,
+            municipality = Some(0),
             trafficDirection = TrafficDirection.BothDirections
           )),
         replaceInfo =

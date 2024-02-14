@@ -54,7 +54,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
         geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_IIb.value,
         adminClass = Municipality,
-        municipality = 0,
+        municipality = Some(0),
         trafficDirection = TrafficDirection.BothDirections,
         surfaceType = SurfaceType.Paved
       )),
@@ -65,7 +65,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
           geometry = newLinkGeometry1._1,
           roadClass = MTKClassWidth.CarRoad_IIb.value,
           adminClass = Municipality,
-          municipality = 0,
+          municipality = Some(0),
           trafficDirection = TrafficDirection.BothDirections,
           surfaceType = SurfaceType.None
         )),

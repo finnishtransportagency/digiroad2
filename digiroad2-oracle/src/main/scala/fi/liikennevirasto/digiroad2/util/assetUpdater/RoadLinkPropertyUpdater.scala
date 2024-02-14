@@ -214,7 +214,7 @@ class RoadLinkPropertyUpdater {
               val functionalClassChange = transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink)
               val linkTypeChange = transferOrGenerateLinkType(change.changeType, change.oldLink, newLink)
               if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
-                incompleteLinks += IncompleteLink(newLink.linkId, newLink.municipality, newLink.adminClass)
+                incompleteLinks += IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
               }
               createdProperties += functionalClassChange
               createdProperties += linkTypeChange
@@ -260,7 +260,7 @@ class RoadLinkPropertyUpdater {
           createdProperties += linkTypeChange
         }
         if (transferedFunctionalClasses.isEmpty || transferedLinkTypes.isEmpty) {
-          incompleteLink += IncompleteLink(newLink.linkId, newLink.municipality, newLink.adminClass)
+          incompleteLink += IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
         }
       }
     }
