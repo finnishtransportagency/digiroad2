@@ -175,9 +175,20 @@ class RoadLinkChangeClient {
   }
 
   def convertToRoadLinkChange(changeJson: String) : Seq[RoadLinkChange] = {
+    
+    def filterNullMunicipality(a: RoadLinkChange) = {
+      if (a.newLinks.nonEmpty) {
+        val linksB = a.newLinks.map(_.municipality.isDefined)
+        linksB.toSet.size == 1 && linksB.head
+      } else {
+        val linksB = a.oldLink.map(_.municipality.isDefined)
+        linksB.toSet.size == 1 && linksB.head
+      }
+    }
+
     val json = parseJson(changeJson)
     try {
-      json.extract[Seq[RoadLinkChange]]
+       json.extract[Seq[RoadLinkChange]].filter(filterNullMunicipality)
     } catch {
       case e: Throwable =>
         logger.error(e.getMessage)
