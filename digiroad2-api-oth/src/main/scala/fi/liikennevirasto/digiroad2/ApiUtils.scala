@@ -153,7 +153,7 @@ object ApiUtils {
             Future {
               s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType)
             }.onComplete {
-              case Failure(e) => saveErrror(workId, queryId, e)
+              case Failure(e) => saveError(workId, queryId, e)
               case Success(t) => ""
             }
             redirectToUrl(path, queryId, Some(1))
@@ -162,7 +162,7 @@ object ApiUtils {
     } catch {
       case _: TimeoutException =>
           ret.onComplete {
-            case Failure(e) => saveErrror(workId, queryId, e)
+            case Failure(e) => saveError(workId, queryId, e)
             case Success(t) => 
               val responseBody = formatResponse(t, responseType, queryId)
               s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
@@ -171,7 +171,7 @@ object ApiUtils {
     }
   }
 
-  private def saveErrror[T](workId: String, queryId: String, e: Throwable): Unit = {
+  private def saveError[T](workId: String, queryId: String, e: Throwable): Unit = {
     logger.error(s"API LOG $queryId: error with message ${e.getMessage}, stacktrace: ", e);
     // Save the error message to S3, so that the caller gets the error feedback from there,
     // and does not stay stuck waiting forever in the case of a failure.
