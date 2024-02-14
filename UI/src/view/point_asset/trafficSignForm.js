@@ -102,13 +102,15 @@
     };
 
     var renderBearingElement = function (asset) {
+      var assetIsOutsideRoadNetwork = asset.validityDirection === validitydirections.outsideRoadNetwork;
       var bearingElement = $('' +
           '    <div class="form-group editable form-point-asset">' +
           '        <label class="control-label">Suuntima</label>' +
           '        <input type="number" min=0, max=360 class="form-control" id=bearing required>' +
+          '        <p class="form-control-static">' + (assetIsOutsideRoadNetwork ? asset.bearing : '') + '</p>' +
           '    </div>');
-      bearingElement.find('input').prop("disabled", asset.validityDirection != validitydirections.outsideRoadNetwork);
-      bearingElement.find('input').prop("valueAsNumber", asset.validityDirection != validitydirections.outsideRoadNetwork ? NaN : asset.bearing);
+      bearingElement.find('input').prop("disabled", !assetIsOutsideRoadNetwork);
+      bearingElement.find('input').prop("valueAsNumber", assetIsOutsideRoadNetwork ? asset.bearing : NaN);
       return bearingElement;
     };
 
