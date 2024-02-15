@@ -988,20 +988,20 @@ class AssetFillerSpec extends FunSuite with Matchers {
     )
     val (filledTopology, combineTestChangeSet) = assetFiller.fillTopologyChangesGeometry(roadLinks.map(assetFiller.toRoadLinkForFillTopology),assets.groupBy(_.linkId), RoadWidth.typeId)
 
-    val sorted = filledTopology.sortBy(_.endMeasure)
+    filledTopology.size should be(1)
 
-    sorted.size should be(1)
-
-    sorted(0).startMeasure should be(0)
-    sorted(0).endMeasure should be(400)
-    sorted(0).value should be(Some(NumericValue(1)))
+    filledTopology.head.startMeasure should be(0)
+    filledTopology.head.endMeasure should be(400)
+    filledTopology.head.value should be(Some(NumericValue(1)))
 
     val adjustedMValues = combineTestChangeSet.adjustedMValues
     adjustedMValues.sortBy(_.assetId) should be(Seq(
-      MValueAdjustment(1, linkId1, 0, 400))
+      MValueAdjustment(filledTopology.head.id, linkId1, 0, 400))
     )
-    
-    combineTestChangeSet.expiredAssetIds.toSeq.sortBy(a=> a).toSet should be (Set(2,3,4))
+
+    val expiredAssetIds = assets.map(_.id).filterNot(id => id == filledTopology.head.id).sorted.toSet
+
+    combineTestChangeSet.expiredAssetIds.toSeq.sortBy(a=> a).toSet should be (expiredAssetIds)
   }
   test("Fill hole in middle of links and merge similar parts, last part has different value, roadlink long assets") {
     val roadLinks = Seq(
