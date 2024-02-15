@@ -10,6 +10,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import scala.util.Try
 
 case class serviceRoadApiResponseOnGetExample(`type`: String, geometry: geometryFields, properties: propertiesFields)
 case class geometryFields(`type`: String, coordinates: Seq[Seq[(Double, Double, Double)]])
@@ -95,7 +96,8 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
       val areaId = params("areaId")
-      val maintenanceAssets = maintenanceService.getActiveMaintenanceRoadByPolygon(areaId.toInt)
+      val maintenanceAssets = maintenanceService.getActiveMaintenanceRoadByPolygon(Try(areaId.toInt)
+        .getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"areaId parameter is not in number format")))
       val linkIdMap = maintenanceAssets.groupBy(_.linkId).mapValues(_.map(_.id))
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linkIdMap.keySet)
 
