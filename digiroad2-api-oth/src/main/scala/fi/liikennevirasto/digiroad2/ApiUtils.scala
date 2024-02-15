@@ -97,8 +97,9 @@ object RequestMiddleware {
     val (path: String, id: String) = prepare(request)
     logger.info(s"$title $id: Received query $path at ${DateTime.now}")
     try {
-      f(params)
+      val r = f(params)
       logger.info(s"$title $id: Completed the query at ${DateTime.now}")
+      r
     } catch { // handle imminent error
       case e: DigiroadApiError => ReturnResponse.error(id, e, logger)
       case e: Throwable =>
