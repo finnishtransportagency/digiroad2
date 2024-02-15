@@ -40,6 +40,74 @@ object HttpStatusCodeError {
   case object GATEWAY_TIMEOUT extends HttpStatusCodeError { val value = 504 }
 }
 
+
+object ReturnResponse{
+  def error[T](queryId: String, e: DigiroadApiError,logger: Logger): ActionResult = {
+    logger.error(s"API LOG $queryId: error with message ${e.msg} and stacktrace: ", e);
+
+    e.httpCode match {
+      case HttpStatusCodeError.BAD_REQUEST => BadRequest(e.msg)
+      case HttpStatusCodeError.UNAUTHORIZED => Unauthorized(e.msg)
+      case HttpStatusCodeError.FORBIDDEN => Forbidden(e.msg)
+      case HttpStatusCodeError.NOT_FOUND => NotFound(e.msg)
+      case HttpStatusCodeError.METHOD_NOT_ALLOWED => MethodNotAllowed(e.msg)
+      case HttpStatusCodeError.NOT_ACCEPTABLE => NotAcceptable(e.msg)
+      case HttpStatusCodeError.REQUEST_TIMEOUT => RequestTimeout(e.msg)
+      case HttpStatusCodeError.REQUEST_TOO_LONG => RequestEntityTooLarge(e.msg)
+      case HttpStatusCodeError.THROTTLING => TooManyRequests(e.msg)
+      case HttpStatusCodeError.INTERNAL_SERVER_ERROR => InternalServerError(e.msg)
+      case HttpStatusCodeError.BAD_GATEWAY => BadGateway(e.msg)
+      case HttpStatusCodeError.SERVICE_UNAVAILABLE => ServiceUnavailable(e.msg)
+      case HttpStatusCodeError.GATEWAY_TIMEOUT => GatewayTimeout(e.msg)
+    }
+  }
+  
+}
+
+object RequestMiddleware {
+  def prepare(request: HttpServletRequest) = {
+    val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
+    val path = "/digiroad" + request.getRequestURI + queryString
+    val id = Integer.toHexString(new Random().nextInt)
+    (path, id)
+  }
+  /**
+    * Small middleware which handle request. For security reason for unknown exception return only HTTP 500.
+    * For handling validation exception throw [[DigiroadApiError]].
+    * @param title Header when logging.
+    */
+  def handleRequest[T](params: Params, logger: Logger,request: HttpServletRequest, title:String = "API LOG")(f: Params => T): Any = {
+    val (path: String, id: String) = prepare(request)
+    try {f(params)} 
+    catch { // handle imminent error
+      case e: DigiroadApiError => ReturnResponse.error(id, e, logger)
+      case e: Throwable =>
+        logger.error(s"$title Received query $path $id: error with message ${e.getMessage} and stacktrace: ", e);
+        InternalServerError(s"Request with id $id failed.")
+    }
+  }
+
+  /**
+    * Small middleware which handle request and log it. For security reason for unknown exception return only HTTP 500.
+    * For handling validation exception throw [[DigiroadApiError]].
+    *
+    * @param title Header when logging.
+    */
+  def handleRequestLog[T](params: Params, logger: Logger, request: HttpServletRequest, title: String = "API LOG")(f: Params => T): Any = {
+    val (path: String, id: String) = prepare(request)
+    logger.info(s"$title $id: Received query $path at ${DateTime.now}")
+    try {
+      f(params)
+      logger.info(s"$title $id: Completed the query at ${DateTime.now}")
+    } catch { // handle imminent error
+      case e: DigiroadApiError => ReturnResponse.error(id, e, logger)
+      case e: Throwable =>
+        logger.error(s"$title $id: error with message ${e.getMessage} and stacktrace: ", e);
+        InternalServerError(s"Request with id $id failed.")
+    }
+  }
+}
+
 case class DigiroadApiError(httpCode:HttpStatusCodeError, msg:String) extends Throwable(msg)
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -67,28 +135,8 @@ object ApiUtils {
    */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
                            responseType: String = "json")(f: Params => T): Any = {
-    def prepare = {
-      val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
-      val path = "/digiroad" + request.getRequestURI + queryString
-      val id = Integer.toHexString(new Random().nextInt)
-      (path, id)
-    }
-    
-    def handleRequest: Any = {
-      val (path: String, id: String) = prepare
-      logger.info(s"API LOG $id: Received query $path at ${DateTime.now}")
-      try {
-        f(params)
-      } catch { // handle imminent error
-        case e: DigiroadApiError => handleError(id, e)
-        case e: Throwable =>
-          logger.error(s"API LOG $id: error with message ${e.getMessage} and stacktrace: ", e);
-          InternalServerError(s"Request with id $id failed.")
-      }
-    }
-
-    if (!Digiroad2Properties.awsConnectionEnabled) return  handleRequest
-    val (path: String, id: String) = prepare
+    if (!Digiroad2Properties.awsConnectionEnabled) return  RequestMiddleware.handleRequestLog(params,logger,request){f}
+    val (path: String, id: String) = RequestMiddleware.prepare(request)
     val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
     val queryId = params.get("queryId") match {             // Used to identify requests in logs
       case Some(id) => id
@@ -108,7 +156,7 @@ object ApiUtils {
       case (None, false) =>
         try {newQuery(workId, queryId, path, f, params, responseType)} catch {
           // handle imminent error
-          case e: DigiroadApiError => handleError(queryId, e)
+          case e: DigiroadApiError => ReturnResponse.error(queryId, e,logger)
           case e: Throwable => 
             logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: ", e);
             InternalServerError(s"Request with id $queryId failed.")
@@ -123,26 +171,7 @@ object ApiUtils {
         }
     }
   }
-
-  private def handleError[T](queryId: String, e: DigiroadApiError): ActionResult = {
-    logger.error(s"API LOG $queryId: error with message ${e.msg} and stacktrace: ", e);
-
-    e.httpCode match {
-      case HttpStatusCodeError.BAD_REQUEST => BadRequest(e.msg)
-      case HttpStatusCodeError.UNAUTHORIZED => Unauthorized(e.msg)
-      case HttpStatusCodeError.FORBIDDEN => Forbidden(e.msg)
-      case HttpStatusCodeError.NOT_FOUND => NotFound(e.msg)
-      case HttpStatusCodeError.METHOD_NOT_ALLOWED => MethodNotAllowed(e.msg)
-      case HttpStatusCodeError.NOT_ACCEPTABLE => NotAcceptable(e.msg)
-      case HttpStatusCodeError.REQUEST_TIMEOUT => RequestTimeout(e.msg)
-      case HttpStatusCodeError.REQUEST_TOO_LONG => RequestEntityTooLarge(e.msg)
-      case HttpStatusCodeError.THROTTLING => TooManyRequests(e.msg)
-      case HttpStatusCodeError.INTERNAL_SERVER_ERROR => InternalServerError(e.msg)
-      case HttpStatusCodeError.BAD_GATEWAY => BadGateway(e.msg)
-      case HttpStatusCodeError.SERVICE_UNAVAILABLE => ServiceUnavailable(e.msg)
-      case HttpStatusCodeError.GATEWAY_TIMEOUT => GatewayTimeout(e.msg)
-    }
-  }
+  
   /** Work id formed of request id (i.e. "integration") and query params */
   def getWorkId(requestId: String, params: Params, contentType: String): String = {
     val sortedParams = params.toSeq.filterNot(param => param._1 == "retry" || param._1 == "queryId").sortBy(_._1)
