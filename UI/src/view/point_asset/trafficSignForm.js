@@ -194,7 +194,7 @@
           validityDirectionButton.prop("disabled", false);
           bearingElement.prop("disabled", true);
           bearingElement.val(null);
-          var nearestLine = geometrycalculator.findNearestLine(me.roadCollection.getRoadsForPointAssets(), selectedAsset.get().lon, selectedAsset.get().lat);
+          var nearestLine = geometrycalculator.findNearestLine(me.roadCollection.getRoadsForCarPedestrianCycling(), selectedAsset.get().lon, selectedAsset.get().lat);
           selectedAsset.set({validityDirection: validitydirections.sameDirection, bearing: geometrycalculator.getLineDirectionDegAngle(nearestLine)});
         }
       });
