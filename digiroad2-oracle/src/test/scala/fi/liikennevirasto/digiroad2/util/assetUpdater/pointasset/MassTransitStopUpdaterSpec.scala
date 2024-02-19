@@ -232,8 +232,8 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       corrected.floating should be(false)
 
       massTransitStopService.adjustmentOperation(terminalStop, corrected, newLinkInfo)
-      val adjustedAsset1 = massTransitStopService.getPersistedAssetsByIds(Set(terminalStopId)).head
-      adjustedAsset1.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
+      val adjustedTerminalStop = massTransitStopService.getPersistedAssetsByIds(Set(terminalStopId)).head
+      adjustedTerminalStop.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = terminalStop.propertyData.find(_.publicId == property.publicId).get
         property should be(oldProperty)
       }
