@@ -285,7 +285,8 @@ export class ChangeSet {
             adminClass:         link.adminClass,
             municipality:       link.municipality,
             surfaceType:        link.surfaceType,
-            trafficDirection:   link.directionType
+            trafficDirection:   link.directionType,
+            lifeCycleStatus:    link.lifeCycleStatus
         }
     }
 
@@ -324,4 +325,5 @@ export interface KeyLinkProperties {
     municipality            : number | null;
     surfaceType             : number | null;
     trafficDirection        : number | null;
+    lifeCycleStatus         : number | null;
 }
