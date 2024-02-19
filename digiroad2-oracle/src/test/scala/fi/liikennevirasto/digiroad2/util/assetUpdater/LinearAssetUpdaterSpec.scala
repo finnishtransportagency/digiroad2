@@ -2215,5 +2215,33 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetLength2 should be(newRoadLink2.length)
     }
   }
+  
+  test("Small rounding error between our asset length and roadlink length, corrected with 0.001 tolerance") {
+    val oldLinkID = "8e3393a1-56ae-4f4a-bd49-d7aa601acd7f:1"
+    val newLinkID = "f951ad53-6cfd-4e55-bf5f-5f8916fd69df:1"
+
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.newLinks.map(_.linkId).contains(newLinkID) && change.changeType == RoadLinkChangeType.Replace)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+
+      val id = service.createWithoutTransaction(CareClass.typeId, oldLinkID, NumericValue(1), SideCode.BothDirections.value, Measures(0.0,  2065.317), "testuser", 0L, Some(oldRoadLink), false, None, None)
+   
+      val assetsBefore = service.getPersistedAssetsByIds(CareClass.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(CareClass.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(CareClass.typeId, Set(id), false).sortBy(_.startMeasure)
+      assetsAfter.size should be(1)
+      
+      assetsAfter.head.startMeasure should be(0)
+      assetsAfter.head.endMeasure should be(2065.538)
+      assetsAfter.head.value.get should be(NumericValue(1))
+    }
+  }
 
 }
