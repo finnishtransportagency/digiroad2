@@ -19,10 +19,10 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
     } else Seq()
     filterChanges ++ remove
   }
-  protected override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
+  protected override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Unit = {
     newMaintenanceAssets.foreach { linearAsset =>
-      val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
-      val area = service.getAssetArea(roadLinks.find(_.linkId == linearAsset.linkId), Measures(linearAsset.startMeasure, linearAsset.endMeasure))
+      val roadLink = onlyNeededNewRoadLinks.find(_.linkId == linearAsset.linkId)
+      val area = service.getAssetArea(onlyNeededNewRoadLinks.find(_.linkId == linearAsset.linkId), Measures(linearAsset.startMeasure, linearAsset.endMeasure))
 
       val id =
         (linearAsset.createdBy, linearAsset.createdDateTime) match {
