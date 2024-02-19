@@ -219,7 +219,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getExistingOrExpiredRoadLinkByLinkId(newLinkId, false)).thenReturn(Some(newLink))
 
       val terminalStopId = massTransitStopService.create(NewMassTransitStop(391922.1567866767, 6672845.986092816, oldLinkId1, 341,
-        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3"))), SimplePointAssetProperty(MassTransitStopOperations.MassTransitStopTypePublicId,
+        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("1"))), SimplePointAssetProperty(MassTransitStopOperations.MassTransitStopTypePublicId,
           Seq(PropertyValue(BusStopType.Terminal.value.toString))))), "test", oldLink1, false)
       val childStopId = massTransitStopService.create(NewMassTransitStop(391942.45320008986, 6672844.827758611, oldLinkId2, 23,
         Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "test", oldLink2, false)
@@ -230,6 +230,13 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       val corrected = updater.correctPersistedAsset(terminalStop, change1)
       corrected.linkId should be(newLinkId)
       corrected.floating should be(false)
+
+      massTransitStopService.adjustmentOperation(terminalStop, corrected, newLinkInfo)
+      val adjustedAsset1 = massTransitStopService.getPersistedAssetsByIds(Set(terminalStopId)).head
+      adjustedAsset1.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
+        val oldProperty = terminalStop.propertyData.find(_.publicId == property.publicId).get
+        property should be(oldProperty)
+      }
     }
   }
 
