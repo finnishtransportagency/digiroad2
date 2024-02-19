@@ -15,9 +15,9 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
 
   override def assetFiller: AssetFiller = SpeedLimitFiller
   
-  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
+  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
-    val filteredLinks = newRoadLinks.filterNot(link => Seq(HardShoulder, CycleOrPedestrianPath, TractorRoad).contains(link.linkType))
+    val filteredLinks = onlyNeededNewRoadLinks.filterNot(link => Seq(HardShoulder, CycleOrPedestrianPath, TractorRoad).contains(link.linkType))
     val roadLinkFound = filteredLinks.exists(_.linkId == newLinkInfo.linkId)
     if(roadLinkFound) {
       service.persistUnknown(Seq(UnknownSpeedLimit(newLinkInfo.linkId, newLinkInfo.municipality.getOrElse(throw new NoSuchElementException(s"${newLinkInfo.linkId} does not have municipality code")), newLinkInfo.adminClass)),newTransaction = false)
@@ -66,7 +66,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
    assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
   }
 
-  protected override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
+  protected override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Unit = {
     service.createMultipleLinearAssetsSpeedLimit(newLinearAssets.map(createMassOperationRow))
     LogUtils.time(logger,s"purgeUnknown for newlimits ${newLinearAssets.size}"){
       service.purgeUnknown(newLinearAssets.map(_.linkId).toSet, Seq(), newTransaction = false)
