@@ -2216,7 +2216,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     }
   }
   
-  test("Small rounding error between our asset length and roadlink length, corrected with 0.001 tolerance") {
+  test("Small rounding error between our asset length and roadlink length, corrected with using tolerance") {
     val oldLinkID = "8e3393a1-56ae-4f4a-bd49-d7aa601acd7f:1"
     val newLinkID = "f951ad53-6cfd-4e55-bf5f-5f8916fd69df:1"
 
