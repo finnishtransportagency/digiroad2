@@ -13,9 +13,9 @@ import org.joda.time.DateTime
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
 
   override def assetFiller: AssetFiller = PavedRoadFiller
-  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
+  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
-    val roadLinkFound = newRoadLinks.exists(_.linkId == newLinkInfo.linkId)
+    val roadLinkFound = onlyNeededNewRoadLinks.exists(_.linkId == newLinkInfo.linkId)
 
     if (newLinkInfo.surfaceType == SurfaceType.Paved && roadLinkFound) {
       val defaultMultiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("99")))))
