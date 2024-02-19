@@ -155,7 +155,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param asset       The asset to be evaluated.
     * @return `true` if the asset meets the fallIn criteria, `false` otherwise.
     */
-  def fallInReplaceInfoOld(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
+ private def fallInReplaceInfoOld(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
     val hasMatchingLinkId = replaceInfo.oldLinkId.getOrElse("") == asset.linkId
     if (replaceInfo.digitizationChange && replaceInfo.oldFromMValue.getOrElse(0.0) > replaceInfo.oldToMValue.getOrElse(0.0)) {
       val startMeasureIsSmallerThanOldFomValue = replaceInfo.oldFromMValue.getOrElse(0.0) >= asset.startMeasure
@@ -163,10 +163,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       hasMatchingLinkId && startMeasureIsSmallerThanOldFomValue && endMeasureIsSmallerThanOldToValue
     } else {
       val startMeasureIsGreaterThanOldFomValue = replaceInfo.oldFromMValue.getOrElse(0.0) <= asset.startMeasure
-      /**  if asset is longer than replaceInfo.oldToMValue, it need to be split in [[LinearAssetUpdater.slicer]] */
-        
-      val difference = Math.abs(replaceInfo.oldToMValue.getOrElse(0.0)-asset.endMeasure)
-      val endMeasureIsGreaterThanOldToValue = replaceInfo.oldToMValue.getOrElse(0.0) >= asset.endMeasure || difference>= 0.001
+      /** if asset is longer than replaceInfo.oldToMValue, it need to be split in [[LinearAssetUpdater.slicer]] */
+      def roundMeasures(value: Double): Double = {
+        val exponentOfTen = Math.pow(10, 3)
+        Math.round(value * exponentOfTen).toDouble / exponentOfTen
+      }
+      val difference = roundMeasures(Math.abs(replaceInfo.oldToMValue.getOrElse(0.0)-asset.endMeasure))
+      // See [AssetFiller.MaxAllowedMValueError]
+      val inTolerance = difference <= 0.1
+      val endMeasureIsGreaterThanOldToValue = replaceInfo.oldToMValue.getOrElse(0.0) >= asset.endMeasure || inTolerance
       hasMatchingLinkId && startMeasureIsGreaterThanOldFomValue && endMeasureIsGreaterThanOldToValue
     }
   }
