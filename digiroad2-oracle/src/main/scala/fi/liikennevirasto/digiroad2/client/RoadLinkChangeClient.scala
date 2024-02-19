@@ -175,20 +175,30 @@ class RoadLinkChangeClient {
   }
 
   def convertToRoadLinkChange(changeJson: String) : Seq[RoadLinkChange] = {
-    
-    def filterNullMunicipality(a: RoadLinkChange) = {
-      if (a.newLinks.nonEmpty) {
-        val linksB = a.newLinks.map(_.municipality.isDefined)
-        linksB.toSet.size == 1 && linksB.head
-      } else {
-        val linksB = a.oldLink.map(_.municipality.isDefined)
-        linksB.toSet.size == 1 && linksB.head
+
+    def filterChanges(changes: Seq[RoadLinkChange]) = {
+      def changeMissingMunicipality(a: RoadLinkChange): Boolean = {
+        val newLinksEmptyMunicipality = a.newLinks.exists(_.municipality.isEmpty)
+        val oldLinkEmptyMunicipality = a.oldLink.exists(_.municipality.isEmpty)
+        newLinksEmptyMunicipality || oldLinkEmptyMunicipality
       }
+
+      val (changesWithNullMunicipality, changesWithMunicipality) = changes.partition(changeMissingMunicipality)
+      val linkIdsInNullMunicipalityChanges = changesWithNullMunicipality.flatMap(change => {
+        change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
+      }).distinct
+
+      changesWithMunicipality.filterNot(change => {
+        val linkIdsInChange = change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
+        linkIdsInChange.exists(linkId => linkIdsInNullMunicipalityChanges.contains(linkId))
+      })
+
     }
 
     val json = parseJson(changeJson)
     try {
-       json.extract[Seq[RoadLinkChange]].filter(filterNullMunicipality)
+      val extractedChanges = json.extract[Seq[RoadLinkChange]]
+      filterChanges(extractedChanges)
     } catch {
       case e: Throwable =>
         logger.error(e.getMessage)
