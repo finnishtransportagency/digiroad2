@@ -155,7 +155,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param asset       The asset to be evaluated.
     * @return `true` if the asset meets the fallIn criteria, `false` otherwise.
     */
-  private def fallInReplaceInfoOld(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
+  def fallInReplaceInfoOld(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
     val hasMatchingLinkId = replaceInfo.oldLinkId.getOrElse("") == asset.linkId
     if (replaceInfo.digitizationChange && replaceInfo.oldFromMValue.getOrElse(0.0) > replaceInfo.oldToMValue.getOrElse(0.0)) {
       val startMeasureIsSmallerThanOldFomValue = replaceInfo.oldFromMValue.getOrElse(0.0) >= asset.startMeasure
@@ -164,7 +164,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     } else {
       val startMeasureIsGreaterThanOldFomValue = replaceInfo.oldFromMValue.getOrElse(0.0) <= asset.startMeasure
       /**  if asset is longer than replaceInfo.oldToMValue, it need to be split in [[LinearAssetUpdater.slicer]] */
-      val endMeasureIsGreaterThanOldToValue = replaceInfo.oldToMValue.getOrElse(0.0) >= asset.endMeasure
+        
+      val difference = Math.abs(replaceInfo.oldToMValue.getOrElse(0.0)-asset.endMeasure)
+      val endMeasureIsGreaterThanOldToValue = replaceInfo.oldToMValue.getOrElse(0.0) >= asset.endMeasure || difference>= 0.001
       hasMatchingLinkId && startMeasureIsGreaterThanOldFomValue && endMeasureIsGreaterThanOldToValue
     }
   }
@@ -670,7 +672,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def handleReplacements(changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
     val roadLinkInfo = change.newLinks.head
     val roadLinkFound = newRoadLinks.exists(_.linkId == roadLinkInfo.linkId)
-    if(!roadLinkFound) {
+    if(!roadLinkFound) { //TODO better name for variables
       assets.map(a => {
         val expireStep = OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(a.id))), assetsBefore = Seq(a))
         Some(reportAssetChanges(Some(a), None, Seq(change), expireStep, Some(ChangeTypeReport.Deletion),useGivenChange = true))
@@ -709,7 +711,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   @tailrec
   private def slicer(assets: Seq[PersistedLinearAsset], fitIntoRoadLinkPrevious: Seq[PersistedLinearAsset], change: RoadLinkChange): Seq[PersistedLinearAsset] = {
     def slice(change: RoadLinkChange, asset: PersistedLinearAsset): Seq[PersistedLinearAsset] = {
-      val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw new NoSuchElementException(s"Replace info for asset ${asset.id} on link ${asset.linkId} not found from change ${change}"))
+      val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(errorMessage(change, asset))
 
       val shorted = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
       val oldId = if(asset.id != 0) asset.id else asset.oldId
@@ -776,7 +778,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def projectByUsingReplaceInfo(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset) = {
-    val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw new NoSuchElementException(s"Replace info for asset ${asset.id} on link ${asset.linkId} not found from change ${change}"))
+    val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(errorMessage(change, asset))
     val newId = info.newLinkId.getOrElse("")
     val maybeLink = change.newLinks.find(_.linkId == newId)
     val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
@@ -789,6 +791,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       changeSets, info.digitizationChange)
     (newId, projected, changeSet)
   }
+  private def errorMessage(c: RoadLinkChange, a: PersistedLinearAsset) = {
+    throw new NoSuchElementException(s"Replace info for asset ${a.id} with start measure ${a.startMeasure} and end measure ${a.endMeasure} on link ${a.linkId} not found from change ${c}")
+  }
+  
   private def projectLinearAsset(asset: PersistedLinearAsset, projection: Projection, changedSet: ChangeSet, digitizationChanges: Boolean): (PersistedLinearAsset, ChangeSet) = {
     val newLinkId = projection.linkId
     val assetId = asset.linkId match {
