@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, getDefaultEpsilon}
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Add
@@ -13,15 +13,13 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures, NewLinearAssetMassOperation}
 import fi.liikennevirasto.digiroad2.util.CustomIterableOperations.IterableOperation
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LinearAssetUtils, LogUtils, Parallel}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils, Parallel}
 import org.joda.time.DateTime
 import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
-import scala.collection.parallel.immutable
 import scala.collection.{Seq, mutable}
 import scala.util.{Failure, Success, Try}
 
@@ -43,6 +41,8 @@ sealed case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[
 sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], changeType: ChangeType)
 
 sealed case class LinkAndOperation(newLinkId: String, operation: OperationStepSplit)
+
+case class FailedToFindReplaceInfo(msg:String) extends  NoSuchElementException(msg)
 
 /**
   * System use [[OperationStep]] class as state object when doing samuutus process. Each operation step or phase update [[OperationStep]] or gives [[OperationStep]] as return object.
@@ -574,14 +574,25 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           if (assets.nonEmpty) {
             change.changeType match {
               case RoadLinkChangeType.Replace =>
-                handleReplacements(changeSets, initStep, change, assets, onlyNeededNewRoadLinks)
+                try {handleReplacements(changeSets, initStep, change, assets, onlyNeededNewRoadLinks)} catch {
+                  case _: FailedToFindReplaceInfo=> None
+                  case e: Throwable => logErrorAndReturnNone(change, assets, e); throw e
+                }
               case RoadLinkChangeType.Split =>
-                handleSplits(changeSets, initStepSplit, change, assets, onlyNeededNewRoadLinks)
+                try {handleSplits(changeSets, initStepSplit, change, assets, onlyNeededNewRoadLinks)} catch {
+                  case _: FailedToFindReplaceInfo=> None
+                  case e: Throwable => logErrorAndReturnNone(change, assets, e); throw e
+                }
               case _ => None
             }
           } else None
       }
     }
+  }
+  private def logErrorAndReturnNone(change: RoadLinkChange, assets: Seq[PersistedLinearAsset], e: Throwable) = {
+    logger.error(s"Samuutus failled with RoadlinkChange: $change", e)
+    assets.foreach(a => logger.error(s"Samuutus failled for asset ${a.id} with start measure ${a.startMeasure} and end measure ${a.endMeasure} on link ${a.linkId}"))
+    None
   }
   private def adjustAndReport(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                               assetUnderReplace: Seq[Option[OperationStep]], changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
@@ -717,7 +728,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   @tailrec
   private def slicer(assets: Seq[PersistedLinearAsset], fitIntoRoadLinkPrevious: Seq[PersistedLinearAsset], change: RoadLinkChange): Seq[PersistedLinearAsset] = {
     def slice(change: RoadLinkChange, asset: PersistedLinearAsset): Seq[PersistedLinearAsset] = {
-      val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(errorMessage(change, asset))
+      val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
 
       val shorted = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
       val oldId = if(asset.id != 0) asset.id else asset.oldId
@@ -784,7 +795,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def projectByUsingReplaceInfo(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset) = {
-    val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(errorMessage(change, asset))
+    val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
     val newId = info.newLinkId.getOrElse("")
     val maybeLink = change.newLinks.find(_.linkId == newId)
     val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
@@ -797,8 +808,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       changeSets, info.digitizationChange)
     (newId, projected, changeSet)
   }
-  private def errorMessage(c: RoadLinkChange, a: PersistedLinearAsset) = {
-    throw new NoSuchElementException(s"Replace info for asset ${a.id} with start measure ${a.startMeasure} and end measure ${a.endMeasure} on link ${a.linkId} not found from change ${c}")
+  private def errorMessage(c: RoadLinkChange, a: PersistedLinearAsset): String = {
+    s"Replace info for asset ${a.id} with start measure ${a.startMeasure} and end measure ${a.endMeasure} on link ${a.linkId} not found from change ${c}"
   }
   
   private def projectLinearAsset(asset: PersistedLinearAsset, projection: Projection, changedSet: ChangeSet, digitizationChanges: Boolean): (PersistedLinearAsset, ChangeSet) = {
