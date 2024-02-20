@@ -12,5 +12,8 @@ class RoadLinkReplacementFinderSpec extends FunSuite with Matchers {
   val testChanges: Seq[RoadLinkChange] = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
 
+  test("Link is removed, other replacing link is added as new. Find match") {
+    RoadLinkReplacementFinder.findMissingReplacements(testChanges)
+  }
 
 }

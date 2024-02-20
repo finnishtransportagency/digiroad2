@@ -88,7 +88,7 @@ drop table if exists samuutus_success cascade;
 drop table if exists manouvre_samuutus_work_list cascade;
 drop table if exists assets_on_expired_road_links cascade;
 drop table if exists automatically_processed_lanes_work_list cascade;
-drop table if exists replace_info cascade;
+drop table if exists matched_road_links_work_list cascade;
 drop sequence if exists grouped_id_seq cascade;
 drop sequence if exists lrm_position_primary_key_seq cascade;
 drop sequence if exists manoeuvre_id_seq cascade;

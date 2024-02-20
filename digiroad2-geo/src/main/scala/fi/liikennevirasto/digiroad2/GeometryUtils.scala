@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import com.vividsolutions.jts.algorithm.`match`.HausdorffSimilarityMeasure
+import com.vividsolutions.jts.algorithm.`match`.{AreaSimilarityMeasure, HausdorffSimilarityMeasure}
+import com.vividsolutions.jts.geom.{Geometry => JtsGeometry}
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, LineString}
 import com.vividsolutions.jts.io.WKTReader
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
@@ -16,6 +17,7 @@ object GeometryUtils {
   final private val defaultDecimalPrecision = 3
   lazy val geometryFactory: GeometryFactory = JTSFactoryFinder.getGeometryFactory(null)
   lazy val hausdorffSimilarityMeasure: HausdorffSimilarityMeasure =  new HausdorffSimilarityMeasure()
+  lazy val areaSimilarityMeasure: AreaSimilarityMeasure = new AreaSimilarityMeasure()
   lazy val wktReader: WKTReader = new WKTReader()
 
 
@@ -406,8 +408,20 @@ object GeometryUtils {
     hausdorffSimilarityMeasure.measure(geom1, geom2)
   }
 
-  def getFrechetDistance(geom1: LineString, geom2: LineString) = {
-    ???
+  /**
+    * Measures the degree of similarity between two Geometries
+    * using the area of intersection between the geometries.
+    * The measure is normalized to lie in the range [0, 1].
+    * Higher measures indicate a great degree of similarity.
+    *
+    * When used with Road Links, use buffer
+    * @param geom1 geometry 1 to compare
+    * @param geom2 geometry 2 to compare
+    * @return Normalized measure in range [0, 1] measuring the similarity of given geometries.
+    *         0 = No intersection, 1 = Full intersection
+    */
+  def getAreaSimilarityMeasure(geom1: JtsGeometry, geom2: JtsGeometry): Double = {
+    areaSimilarityMeasure.measure(geom1, geom2)
   }
 
   /**
