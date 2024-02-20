@@ -199,18 +199,26 @@ class RoadLinkPropertyUpdater {
     changes.foreach { change =>
       change.changeType match {
         case Replace =>
+
+          val constructionTypeChanges = change.newLinks.map(a => ConstructionTypeChange(a.linkId, roadLinkChangeToChangeType(change.changeType), Some(change.oldLink.get.lifeCycleStatus), Some(a.lifeCycleStatus))).headOption
+
+
           val newLink = change.newLinks.head
           val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
           if ((!iteratedNewLinks.exists(_.linkId == newLink.linkId)) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
             val relatedMerges = changes.filter(change => change.changeType == Replace && change.newLinks.head == newLink)
             val (created, failed) = transferFunctionalClassesAndLinkTypesForSingleReplace(relatedMerges, newLink, timeStamp)
             createdProperties ++= created
+            createdProperties ++= Seq(constructionTypeChanges)
             incompleteLinks ++= failed
             iteratedNewLinks += newLink
           }
         case _ =>
           change.newLinks.filter(isProcessableLink).foreach { newLink =>
             if (!iteratedNewLinks.exists(_.linkId == newLink.linkId)) {
+              val constructionTypeChanges = Some(newLink).map(a => ConstructionTypeChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), Some(change.oldLink.get.lifeCycleStatus), Some(a.lifeCycleStatus)))
+
+
               val functionalClassChange = transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink)
               val linkTypeChange = transferOrGenerateLinkType(change.changeType, change.oldLink, newLink)
               if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
@@ -218,6 +226,7 @@ class RoadLinkPropertyUpdater {
               }
               createdProperties += functionalClassChange
               createdProperties += linkTypeChange
+              createdProperties ++= Seq(constructionTypeChanges)
               iteratedNewLinks += newLink
             }
           }
@@ -286,6 +295,10 @@ class RoadLinkPropertyUpdater {
       val oldLink = change.oldLink.get
       val versionChange = oldLink.linkId.substring(0, 36) == change.newLinks.head.linkId.substring(0, 36)
       if (versionChange) {
+        val constructionTypeChanges= change.newLinks.map(a=>ConstructionTypeChange(a.linkId, roadLinkChangeToChangeType(change.changeType), Some(oldLink.lifeCycleStatus), Some(a.lifeCycleStatus))).toSet
+        
+        transferredProperties += constructionTypeChanges.head
+        
         val optionalOverriddenTrafficDirection = TrafficDirectionDao.getExistingValue(oldLink.linkId)
         optionalOverriddenTrafficDirection match {
           case Some(overriddenTrafficDirection) =>
@@ -378,7 +391,11 @@ class RoadLinkPropertyUpdater {
       val oldAttributes = LinkAttributesDao.getExistingValues(linkId)
       RoadLinkAttributeChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), oldAttributes, Map())
     })
-    val deletedProperties: Seq[ReportedChange] = deletedTrafficDirections ++ deletedAdministrativeClasses ++ deletedFunctionalClasses ++ deletedLinkTypes ++ deletedAttributes
+
+    val removeContructionType = removeChanges.map(c => {
+      ConstructionTypeChange(c.oldLink.get.linkId, roadLinkChangeToChangeType(c.changeType),Some(c.oldLink.get.lifeCycleStatus),None)
+    })
+    val deletedProperties: Seq[ReportedChange] = deletedTrafficDirections ++ deletedAdministrativeClasses ++ deletedFunctionalClasses ++ deletedLinkTypes ++ deletedAttributes ++removeContructionType
 
     deletedProperties
   }
