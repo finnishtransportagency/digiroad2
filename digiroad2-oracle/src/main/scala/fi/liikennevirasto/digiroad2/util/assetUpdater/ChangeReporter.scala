@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import com.github.tototoshi.csv.CSVWriter
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, RoadLinkProperties, UnknownAssetTypeId}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, ConstructionType, RoadLinkProperties, UnknownAssetTypeId}
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType
 import fi.liikennevirasto.digiroad2.service.AwsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
@@ -24,6 +24,7 @@ import java.nio.file.{Files, Paths}
   * @param length asset length, zero for point assets
   */
 sealed case class LinearReferenceForReport(linkId: String, startMValue: Double, endMValue: Option[Double], sideCode: Option[Int] = None, validityDirection: Option[Int] = None, length: Double) extends ILinearReference
+sealed case class LinkInfo(constructionType:ConstructionType)
 
 /**
   * 
@@ -35,7 +36,7 @@ sealed case class LinearReferenceForReport(linkId: String, startMValue: Double, 
   * @param isPointAsset
   */
 sealed case class Asset(assetId: Long, values: String, municipalityCode: Option[Int], geometry: Option[Seq[Point]],
-                        linearReference: Option[LinearReferenceForReport], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None) {
+                        linearReference: Option[LinearReferenceForReport], linkInfo: Option[LinkInfo], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None) {
 
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -107,6 +108,10 @@ sealed trait ReportedChange {
   def changeType: ChangeType
 }
 
+sealed trait WithConstructionType {
+  def constructionType:ConstructionType
+}
+
 /**
   *
   * @param linkId link in which the changes have been applied
@@ -115,11 +120,11 @@ sealed trait ReportedChange {
   * @param newValue new property value, no value if the link is removed
   * @param source source for new functionalClass or linkType, either "oldLink" or "mtkClass"
   */
-case class AdministrativeClassChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int]) extends ReportedChange
-case class TrafficDirectionChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int]) extends ReportedChange
-case class RoadLinkAttributeChange(linkId: String, changeType: ChangeType, oldValues: Map[String, String], newValues: Map[String, String]) extends ReportedChange
-case class FunctionalClassChange(linkId: String, changeType: ChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "") extends ReportedChange
-case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "") extends ReportedChange
+case class AdministrativeClassChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int],constructionType: ConstructionType) extends ReportedChange with  WithConstructionType
+case class TrafficDirectionChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int],constructionType: ConstructionType) extends ReportedChange with  WithConstructionType
+case class RoadLinkAttributeChange(linkId: String, changeType: ChangeType, oldValues: Map[String, String], newValues: Map[String, String],constructionType: ConstructionType) extends ReportedChange with  WithConstructionType
+case class FunctionalClassChange(linkId: String, changeType: ChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "",constructionType: ConstructionType) extends ReportedChange with  WithConstructionType
+case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "",constructionType: ConstructionType) extends ReportedChange with  WithConstructionType
 
 
 /**
