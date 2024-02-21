@@ -67,8 +67,10 @@ object LaneUpdater {
     val lanesOnNewLinks = replacementResults.flatMap(_.lanesOnAdjustedLink)
     val lanesGroupedByNewLinkId = lanesOnNewLinks.groupBy(_.linkId)
     val initialChangeSet = changeSets.foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
+    var percentageProcessed = 0
 
-    val (lanesAfterFuse, changeSet) = newLinkIds.foldLeft(Seq.empty[PersistedLane], initialChangeSet) { case (accumulatedAdjustments, linkId) =>
+    val (lanesAfterFuse, changeSet) = newLinkIds.zipWithIndex.foldLeft(Seq.empty[PersistedLane], initialChangeSet) { case (accumulatedAdjustments, (linkId, index)) =>
+      percentageProcessed = LogUtils.logArrayProgress(logger, "Fusing lane sections", newLinkIds.size, index, percentageProcessed)
       val (existingAssets, changedSet) = accumulatedAdjustments
       val assetsOnRoadLink = lanesGroupedByNewLinkId.getOrElse(linkId, Nil)
       val (adjustedAssets, assetAdjustments) = fuseLanesOnMergedRoadLink(assetsOnRoadLink, changedSet)
@@ -471,23 +473,30 @@ object LaneUpdater {
     val workListMainLanes = lanesOnWorkListLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
     val (trafficDirectionChangeSet, trafficDirectionCreatedMainLanes) = handleTrafficDirectionChange(workListChanges, workListMainLanes)
 
-    val changeSetsAndAdjustedLanes = filteredChanges.map(change => {
-      change.changeType match {
-        case RoadLinkChangeType.Add =>
-          handleAddChange(change, newRoadLinks)
-        case RoadLinkChangeType.Remove =>
-          handleRemoveChange(change, lanesOnOldRoadLinks)
-        case RoadLinkChangeType.Replace =>
-          handleReplaceChange(change, newRoadLinks, lanesOnOldRoadLinks)
-        case RoadLinkChangeType.Split =>
-          handleSplitChange(change, newRoadLinks, lanesOnOldRoadLinks)
-      }
-    })
+    var percentageProcessed = 0
+    val changeSetsAndAdjustedLanes = LogUtils.time(logger, s"Core samuutus handling for ${filteredChanges.size} changes") {
+      filteredChanges.zipWithIndex.map(changeWithIndex => {
+        val (change, index) = changeWithIndex
+        percentageProcessed = LogUtils.logArrayProgress(logger, "Core samuutus handling", filteredChanges.size, index, percentageProcessed)
+        change.changeType match {
+          case RoadLinkChangeType.Add =>
+            handleAddChange(change, newRoadLinks)
+          case RoadLinkChangeType.Remove =>
+            handleRemoveChange(change, lanesOnOldRoadLinks)
+          case RoadLinkChangeType.Replace =>
+            handleReplaceChange(change, newRoadLinks, lanesOnOldRoadLinks)
+          case RoadLinkChangeType.Split =>
+            handleSplitChange(change, newRoadLinks, lanesOnOldRoadLinks)
+        }
+      })
+    }
 
     val linksPartOfReplacement = changeSetsAndAdjustedLanes.filter(_.roadLinkChange.changeType == RoadLinkChangeType.Replace)
       .flatMap(_.roadLinkChange.newLinks.map(_.linkId))
     
-    val (_, changeSetAfterFuse) = fuseLaneSections(changeSetsAndAdjustedLanes)
+    val (_, changeSetAfterFuse) = LogUtils.time(logger, s"Fusing lane sections"){
+      fuseLaneSections(changeSetsAndAdjustedLanes)
+    }
     val finalChangeSet = Seq(trafficDirectionChangeSet, changeSetAfterFuse).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
     val removedSplit = removeSplitWhichAreAlsoPartOfMerger(finalChangeSet,linksPartOfReplacement)
     finalChangeSet.copy(splitLanes = removedSplit)
@@ -506,7 +515,6 @@ object LaneUpdater {
           RoadLinkChangeWithResults(change, ChangeSet(generatedPersistedLanes = createdMainLanes), createdMainLanes)
         }
       case None =>
-        logger.info(s"Could not find added roadlink with ID: ${newRoadLinkInfo.linkId}, lanes will not be generated on link")
         RoadLinkChangeWithResults(change, ChangeSet(), Seq())
     }
   }
@@ -526,7 +534,6 @@ object LaneUpdater {
     replacementRoadLinkOption match {
       case Some(roadLink) =>
         if (roadLink.linkType == TractorRoad) {
-          logger.info(s"Lanes on linkId: ${change.oldLink.get.linkId} will be expired due to replacement road link having link type TractorRoad, new linkId: $newLinkId")
           RoadLinkChangeWithResults(change, ChangeSet(expiredLaneIds = lanesOnReplacedLink.map(_.id).toSet), Seq())
         } else {
           val adjustmentsAndAdjustedLanes = fillReplacementLinksWithExistingLanes(lanesOnReplacedLink, change)
@@ -535,7 +542,6 @@ object LaneUpdater {
           RoadLinkChangeWithResults(change, ChangeSet(positionAdjustments = adjustments), adjustedLanes)
         }
       case None =>
-        logger.info(s"Lanes on linkId: ${change.oldLink.get.linkId} will be expired due to not finding replacement road link with new linkId: $newLinkId")
         RoadLinkChangeWithResults(change, ChangeSet(expiredLaneIds = lanesOnReplacedLink.map(_.id).toSet), Seq())
     }
 
@@ -622,7 +628,6 @@ object LaneUpdater {
         newRoadLinkOption match {
           case Some(roadLink) => roadLink.linkType != TractorRoad
           case None =>
-            logger.info(s"No new split road link found with linkID: ${laneToCreate.linkId}")
             false
         }
       })
