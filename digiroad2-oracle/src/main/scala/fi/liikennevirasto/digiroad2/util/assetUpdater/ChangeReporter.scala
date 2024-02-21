@@ -268,9 +268,9 @@ object ChangeReporter {
         }
 
         
-        val constructionTypeAfter = Try(assetAfter.linkInfo.get.constructionType.value).getOrElse("")
+        val constructionTypeAfter = Try(assetAfter.linkInfo.get.constructionType.value.toString).getOrElse("")
 
-        val constructionTypeBefore =Try(assetBefore.linkInfo.get.constructionType.value).getOrElse("")
+        val constructionTypeBefore =Try(assetBefore.linkInfo.get.constructionType.value.toString).getOrElse("")
         
         val csvRow = Seq(assetTypeId, changedAsset.changeType.value, floatingReason, changedAsset.roadLinkChangeType.value,
 
@@ -283,7 +283,7 @@ object ChangeReporter {
         if (withGeometry) {
           csvRow
         } else {
-          csvRow.slice(0,5) ++ csvRow.slice(6, 15) ++ csvRow.slice(16, csvRow.size)
+          csvRow.slice(0,6) ++ csvRow.slice(7, 17) ++ csvRow.slice(18, csvRow.size)
         }
       }
     } catch {
@@ -301,12 +301,12 @@ object ChangeReporter {
       val beforeFields = assetBefore match {
         case Some(before) =>
           val linearReference = before.linearReference.get
-          val constructionType = Try(before.linkInfo.get.constructionType.value).getOrElse("")
+          val constructionType:String = Try(before.linkInfo.get.constructionType.value.toString).getOrElse("")
           Seq(constructionType,before.assetId, before.geometryToString, before.values, before.municipalityCode.getOrElse(0), linearReference.sideCode.getOrElse(0), linearReference.linkId,
             linearReference.startMValue.toString, linearReference.endMValue.getOrElse(0).toString, linearReference.length.toString, before.getUrl)
         case None => Seq("", "", "", "", "", "", "","", "", "", "")
       }
-      val beforeFieldsWithoutGeometry = beforeFields.patch(1, Nil, 1)
+      val beforeFieldsWithoutGeometry = beforeFields.patch(2, Nil, 1)
       if (changedAsset.after.isEmpty) {
         val emptyAfterFields =  Seq("", "", "", "", "", "", "","", "", "","")
         if(withGeometry) Seq(metaFields ++ beforeFields ++ emptyAfterFields)
@@ -314,10 +314,10 @@ object ChangeReporter {
       } else {
         changedAsset.after.map { after =>
           val linearReference = after.linearReference.get
-          val constructionType = Try(constructionType,after.linkInfo.get.constructionType.value).getOrElse("")
-          val afterFields = Seq(after.assetId, after.geometryToString, after.values, after.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
+          val constructionType :String = Try(after.linkInfo.get.constructionType.value.toString).getOrElse("")
+          val afterFields = Seq(constructionType,after.assetId, after.geometryToString, after.values, after.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
             linearReference.startMValue.toString, linearReference.endMValue.get.toString, linearReference.length.toString, after.getUrl)
-          val afterFieldsWithoutGeometry = afterFields.patch(1, Nil, 1)
+          val afterFieldsWithoutGeometry = afterFields.patch(2, Nil, 1)
           if (withGeometry) {
             metaFields ++ beforeFields ++ afterFields
           } else {
@@ -357,12 +357,12 @@ object ChangeReporter {
         }
         linkIds.size
       case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "point" =>
-        val labels = Seq("asset_type_id", "change_type","before_constructionType","after_constructionType", "floating_reason", "roadlink_change", "before_asset_id",
+        val labels = Seq("asset_type_id", "change_type", "floating_reason", "roadlink_change", "before_constructionType","before_asset_id",
           "before_geometry", "before_value", "before_municipality_code", "before_validity_direction", "before_link_id",
-          "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "after_asset_id",
+          "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url","after_constructionType", "after_asset_id",
           "after_geometry", "after_value", "after_municipality_code", "after_validity_direction", "after_link_id",
           "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url")
-        val labelsWithoutGeometry = labels.slice(0, 5) ++ labels.slice(6, 15) ++ labels.slice(16, labels.size)
+        val labelsWithoutGeometry =  labels.slice(0,6) ++ labels.slice(7, 17) ++ labels.slice(18, labels.size)
         if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
         val contentRowCount = changes.map { change =>
           val csvRows = getCSVRowForPointAssetChanges(change, assetTypeId, withGeometry)
