@@ -199,10 +199,7 @@ class RoadLinkPropertyUpdater {
     changes.foreach { change =>
       change.changeType match {
         case Replace =>
-
           val constructionTypeChanges = change.newLinks.map(a => ConstructionTypeChange(a.linkId, roadLinkChangeToChangeType(change.changeType), Some(change.oldLink.get.lifeCycleStatus), Some(a.lifeCycleStatus))).headOption
-
-
           val newLink = change.newLinks.head
           val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
           if ((!iteratedNewLinks.exists(_.linkId == newLink.linkId)) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
@@ -217,8 +214,6 @@ class RoadLinkPropertyUpdater {
           change.newLinks.filter(isProcessableLink).foreach { newLink =>
             if (!iteratedNewLinks.exists(_.linkId == newLink.linkId)) {
               val constructionTypeChanges = Some(newLink).map(a => ConstructionTypeChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), Some(change.oldLink.get.lifeCycleStatus), Some(a.lifeCycleStatus)))
-
-
               val functionalClassChange = transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink)
               val linkTypeChange = transferOrGenerateLinkType(change.changeType, change.oldLink, newLink)
               if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
