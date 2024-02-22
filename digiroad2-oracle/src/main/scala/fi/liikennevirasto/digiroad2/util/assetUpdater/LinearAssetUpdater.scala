@@ -363,7 +363,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     // Assets on totally new links is already reported.
     val pairs= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
     LogUtils.time(logger,"Adding to changesForReport"){
-    for (pair <- pairs) {createRow(assetsInNewLink.changeInfo, changes, pair)}
+    var percentageProcessed = 0
+    for (pairWithIndex <- pairs.zipWithIndex) {
+      val (pair, index) = pairWithIndex
+      percentageProcessed = LogUtils.logArrayProgress(logger, "Adding to changesForReport", pairs.size, index, percentageProcessed)
+      createRow(assetsInNewLink.changeInfo, changes, pair)
+    }
     }
 
     Some(assetsInNewLink)
@@ -533,7 +538,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"Projecting ${assetsAll.size} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
       val assetsGroup= IterableOperation.groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
-      val rawData = changes.map(goThroughChanges(assetsGroup,assetsAll,onlyNeededNewRoadLinks, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
+
+      var percentageProcessed = 0
+      val rawData = changes.zipWithIndex.map(changeWithIndex => {
+        val (change, index) = changeWithIndex
+        percentageProcessed = LogUtils.logArrayProgress(logger, "Projecting assets to new links", changes.size, index, percentageProcessed)
+        goThroughChanges(assetsGroup,assetsAll,onlyNeededNewRoadLinks, changeSet, initStep, change,OperationStepSplit(Seq(), Some(changeSet)))
+      })
       LogUtils.time(logger, "Filter empty and empty afters away from projected") {
         rawData.filter(_.nonEmpty)
       }
