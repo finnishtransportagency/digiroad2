@@ -134,72 +134,74 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     
     header.length should be(23)
     row1.length should be(23)
-    row1(0) should be("450")
+    
     header(0) should be("asset_type_id")
+    row1(0) should be("450")
     
-    row1(1) should be(Replaced.value.toString)
     header(1) should be("change_type")
+    row1(1) should be(Replaced.value.toString)
     
-    row1(2) should be(RoadLinkChangeType.Replace.value)
     header(2) should be("roadlink_change")
+    row1(2) should be(RoadLinkChangeType.Replace.value)
     
-    row1(3) should be(lifecycleChange.get.constructionType.value.toString)
     header(3) should be("before_constructionType")
+    row1(3) should be(lifecycleChange.get.constructionType.value.toString)
     
-    row1(4) should be("123")
     header(4) should be("before_asset_id")
+    row1(4) should be("123")
     
-    row1(5) should be(values)
     header(5) should be("before_value")
+    row1(5) should be(values)
     
-    row1(6) should be("49")
     header(6) should be("before_municipality_code")
+    row1(6) should be("49")
     
-    row1(7) should be("2")
     header(7) should be("before_side_code")
+    row1(7) should be("2")
     
-    row1(8) should be(oldLinkId)
     header(8) should be("before_link_id")
+    row1(8) should be(oldLinkId)
     
-    row1(9) should be("0.0")
     header(9) should be("before_start_m_value")
+    row1(9) should be("0.0")
     
-    row1(10) should be("432.253")
     header(10) should be("before_end_m_value")
+    row1(10) should be("432.253")
     
-    row1(11) should be("423.235")
     header(11) should be("before_length")
+    row1(11) should be("423.235")
     
-    //row1(12) should be("")
     header(12) should be("before_roadlink_url")
+    //row1(12) should be("")
     
-    row1(13) should be(lifecycleChange.get.constructionType.value.toString)
     header(13) should be("after_constructionType")
+    row1(13) should be(lifecycleChange.get.constructionType.value.toString)
     
-    row1(14) should be("124")
     header(14) should be("after_asset_id")
+    row1(14) should be("124")
     
-    row1(15) should be(values)
     header(15) should be("after_value")
+    row1(15) should be(values)
     
-    row1(16) should be("49")
     header(16) should be("after_municipality_code")
+    row1(16) should be("49")
     
-    row1(17) should be("2")
     header(17) should be("after_side_code")
+    row1(17) should be("2")
     
-    row1(18) should be(newLinkId1)
     header(18) should be("after_link_id")
+    row1(18) should be(newLinkId1)
     
-    row1(19) should be("0.0")
     header(19) should be("after_start_m_value")
+    row1(19) should be("0.0")
     
-    row1(20) should be("156.867")
     header(20) should be("after_end_m_value")
+    row1(20) should be("156.867")
     
-    row1(21) should be("156.867")
-    header(21) should be("after_length")
 
+    header(21) should be("after_length")
+    row1(21) should be("156.867")
+    
     //row1(22) should be("after_roadlink_url")
     header(22) should be("after_roadlink_url\r")
   }
@@ -230,76 +232,78 @@ class ChangeReporterSpec extends FunSuite with Matchers{
 
     header.length should be(24)
     row1.length should be(24)
-    row1(0) should be("10")
+    
     header(0) should be("asset_type_id")
-
-    row1(1) should be(Replaced.value.toString)
+    row1(0) should be("10")
+    
     header(1) should be("change_type")
-
-    row1(2) should be(FloatingReason.RoadOwnerChanged.value.toString)
+    row1(1) should be(Replaced.value.toString)
+    
     header(2) should be("floating_reason")
-
-    row1(3) should be(RoadLinkChangeType.Replace.value)
+    row1(2) should be(FloatingReason.RoadOwnerChanged.value.toString)
+    
     header(3) should be("roadlink_change")
-
-    row1(4) should be(lifecycleChange.get.constructionType.value.toString)
+    row1(3) should be(RoadLinkChangeType.Replace.value)
+    
     header(4) should be("before_constructionType")
-
-    row1(5) should be("123")
+    row1(4) should be(lifecycleChange.get.constructionType.value.toString)
+    
     header(5) should be("before_asset_id")
-
-    row1(6) should be(values)
+    row1(5) should be("123")
+    
     header(6) should be("before_value")
-
-    row1(7) should be("49")
+    row1(6) should be(values)
+    
     header(7) should be("before_municipality_code")
-
-    row1(8) should be("1")
+    row1(7) should be("49")
+    
     header(8) should be("before_validity_direction")
+    row1(8) should be("1")
     
-    row1(9) should be(oldLinkId)
     header(9) should be("before_link_id")
-
-    row1(10) should be("1.0")
-    header(10) should be("before_start_m_value")
-
-    row1(11) should be("0.0")
-    header(11) should be("before_end_m_value")
-
-    row1(12) should be("1.0")
-    header(12) should be("before_length")
+    row1(9) should be(oldLinkId)
     
-    //row1(13) should be("")
+    header(10) should be("before_start_m_value")
+    row1(10) should be("1.0")
+    
+    header(11) should be("before_end_m_value")
+    row1(11) should be("0.0")
+    
+    header(12) should be("before_length")
+    row1(12) should be("1.0")
+    
     header(13) should be("before_roadlink_url")
-
-    row1(14) should be(lifecycleChange.get.constructionType.value.toString)
+    //row1(13) should be("")
+    
     header(14) should be("after_constructionType")
-
-    row1(15) should be("124")
+    row1(14) should be(lifecycleChange.get.constructionType.value.toString)
+    
     header(15) should be("after_asset_id")
-
-    row1(16) should be(values)
+    row1(15) should be("124")
+    
     header(16) should be("after_value")
-
-    row1(17) should be("49")
+    row1(16) should be(values)
+    
     header(17) should be("after_municipality_code")
-
-    row1(18) should be("1")
+    row1(17) should be("49")
+    
     header(18) should be("after_validity_direction")
-
-    row1(19) should be(newLinkId1)
+    row1(18) should be("1")
+    
     header(19) should be("after_link_id")
-
-    row1(20) should be("1.0")
+    row1(19) should be(newLinkId1)
+   
     header(20) should be("after_start_m_value")
-
-    row1(21) should be("0.0")
+    row1(20) should be("1.0")
+    
     header(21) should be("after_end_m_value")
-
-    row1(22) should be("1.0")
+    row1(21) should be("0.0")
+    
     header(22) should be("after_length")
-
-    //row1(23) should be("after_roadlink_url")
+    row1(22) should be("1.0")
+    
     header(23) should be("after_roadlink_url\r")
+    //row1(23) should be("after_roadlink_url")
+    
   }
 }
