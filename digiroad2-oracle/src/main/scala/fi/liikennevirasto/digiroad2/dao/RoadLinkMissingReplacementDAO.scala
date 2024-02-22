@@ -48,4 +48,8 @@ class RoadLinkMissingReplacementDAO {
     sql"""SELECT id, removed_link_id, added_link_id, hausdorff_similarity_measure, area_similarity_measure FROM matched_road_links_work_list""".as[MatchedRoadLinkWorkListItem].list
   }
 
+  def deleteFromWorkList(idsToDelete: Seq[Long]) = {
+    sqlu"""DELETE FROM matched_road_links_work_list WHERE id IN (#${idsToDelete.mkString(",")})""".execute
+  }
+
 }
