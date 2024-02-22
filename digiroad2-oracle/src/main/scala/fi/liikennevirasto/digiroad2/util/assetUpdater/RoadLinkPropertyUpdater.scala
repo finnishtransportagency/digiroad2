@@ -363,16 +363,16 @@ class RoadLinkPropertyUpdater {
 
     val list = transferredProperties ++ createdProperties ++ removeReports
     val constructionTypeChanges = list.map {
-      case AdministrativeClassChange(newLinkId, _, _, _, oldLinkId) => addContructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
-      case TrafficDirectionChange(newLinkId, _, _, _, oldLinkId) => addContructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
-      case RoadLinkAttributeChange(newLinkId, _, _, _, oldLinkId) => addContructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
-      case FunctionalClassChange(newLinkId, _, _, _, _, oldLinkId) => addContructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
-      case LinkTypeChange(newLinkId, _, _, _, _, oldLinkId) => addContructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
+      case AdministrativeClassChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
+      case TrafficDirectionChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
+      case RoadLinkAttributeChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
+      case FunctionalClassChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
+      case LinkTypeChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList,newLinkList, newLinkId, oldLinkId)
       case _ => None
     }.filter(_.isDefined).map(_.get).distinct
    ChangeReport(RoadLinkProperties.typeId, transferredProperties ++ createdProperties ++ removeReports ++ constructionTypeChanges)
   }
-  private def addContructionTypeChange(oldLinkList: ListBuffer[RoadLinkInfo], newLinkList:ListBuffer[RoadLinkInfo], newLinkId: String, oldLinkId: Option[String]): Option[ConstructionTypeChange] = {
+  private def addConstructionTypeChange(oldLinkList: ListBuffer[RoadLinkInfo], newLinkList:ListBuffer[RoadLinkInfo], newLinkId: String, oldLinkId: Option[String]): Option[ConstructionTypeChange] = {
     val oldLink = oldLinkList.find(_.linkId == oldLinkId.getOrElse(""))
     val newLink = newLinkList.find(_.linkId == newLinkId)
     val lifeCycleStatusOld = if (oldLink.nonEmpty) Some(oldLink.get.lifeCycleStatus) else None
