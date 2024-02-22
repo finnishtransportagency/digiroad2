@@ -458,7 +458,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Test that process work roadlink lifecycle info is in") {
+  test("Test that process work with roadlink lifecycle info") {
     val newLinkId1 = "fba10b89-94f3-4857-95a9-ae8d3c1c276d:1"
     val newLinkId2 = "cd4f0b7f-e916-4b6a-99ac-3c56516b691c:1"
     val newLinkId3 = "b3539f88-88ac-4a92-8582-ef012cb0dbf3:1"
