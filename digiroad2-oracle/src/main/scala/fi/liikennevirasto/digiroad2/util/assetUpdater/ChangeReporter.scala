@@ -102,6 +102,10 @@ object ChangeTypeReport {
   case object Floating extends ChangeType {
     def value: Int = 7
   }
+  
+  case object Dummy extends ChangeType {
+    def value: Int = 99
+  }
 }
 
 sealed trait ReportedChange {
@@ -109,8 +113,8 @@ sealed trait ReportedChange {
   def changeType: ChangeType
 }
 
-sealed trait WithConstructionType {
-  def constructionType:ConstructionType
+sealed trait WithOldLinkId {
+  def linkIdOld:Option[String]
 }
 
 /**
@@ -121,11 +125,11 @@ sealed trait WithConstructionType {
   * @param newValue new property value, no value if the link is removed
   * @param source source for new functionalClass or linkType, either "oldLink" or "mtkClass"
   */
-case class AdministrativeClassChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int]) extends ReportedChange
-case class TrafficDirectionChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int]) extends ReportedChange
-case class RoadLinkAttributeChange(linkId: String, changeType: ChangeType, oldValues: Map[String, String], newValues: Map[String, String]) extends ReportedChange
-case class FunctionalClassChange(linkId: String, changeType: ChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "") extends ReportedChange
-case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "") extends ReportedChange
+case class AdministrativeClassChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int],linkIdOld:Option[String]=None) extends ReportedChange  with WithOldLinkId
+case class TrafficDirectionChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int],linkIdOld:Option[String]=None) extends ReportedChange  with WithOldLinkId
+case class RoadLinkAttributeChange(linkId: String, changeType: ChangeType, oldValues: Map[String, String], newValues: Map[String, String],linkIdOld:Option[String]=None) extends ReportedChange  with WithOldLinkId
+case class FunctionalClassChange(linkId: String, changeType: ChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "",linkIdOld:Option[String]=None) extends ReportedChange  with WithOldLinkId
+case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "",linkIdOld:Option[String]=None) extends ReportedChange  with WithOldLinkId
 case class ConstructionTypeChange(linkId: String, changeType: ChangeType, before: Option[ConstructionType], after: Option[ConstructionType]) extends ReportedChange
 
 /**
