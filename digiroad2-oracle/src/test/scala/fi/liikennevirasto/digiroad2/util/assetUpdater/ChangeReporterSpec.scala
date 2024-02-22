@@ -21,7 +21,7 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     LinkTypeChange(linkId,Replaced,None,Some(3),"mtkClass"),
     RoadLinkAttributeChange(linkId,Replaced,Map("ADDITIONAL_INFO" -> "1", "PRIVATE_ROAD_ASSOCIATION" -> "test association"),
       Map("ADDITIONAL_INFO" -> "1", "PRIVATE_ROAD_ASSOCIATION" -> "test association"))
-    ,ConstructionTypeChange(linkId,Replaced,Some(ConstructionType.InUse),Some(ConstructionType.InUse))
+    ,ConstructionTypeChange(linkId,ChangeTypeReport.Dummy,Some(ConstructionType.InUse),Some(ConstructionType.InUse))
     )
       
     )
