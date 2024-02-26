@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LogUtils}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
-import fi.liikennevirasto.digiroad2.util.assetUpdater.{Asset, ChangeReport, ChangeReporter, ChangeType, ChangedAsset, LinearReferenceForReport, SamuutusFailed, ValidateSamuutus}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.{Asset, ChangeReport, ChangeReporter, ChangeType, ChangedAsset, LinearReferenceForReport, LinkInfo, SamuutusFailed, ValidateSamuutus}
 import org.joda.time.DateTime
 import org.json4s.JsonDSL._
 import org.json4s.jackson.compactJson
@@ -97,18 +97,23 @@ class PointAssetUpdater(service: PointAssetOperations) {
                    changeType: ChangeType, roadLinkChange: RoadLinkChange, assetUpdate: AssetUpdate): ChangedAsset = {
     val oldLinearReference = LinearReferenceForReport(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, 0.0)
     val oldValues = compactJson(oldPersistedAsset.propertyData.map(_.toJson))
+    val linkInfo = if (roadLinkChange.oldLink.nonEmpty) Some(LinkInfo(roadLinkChange.oldLink.get.lifeCycleStatus)) else None
+    
     val oldAsset = Asset(oldPersistedAsset.id, oldValues, Some(oldPersistedAsset.municipalityCode),
-      Some(Seq(Point(oldPersistedAsset.lon, oldPersistedAsset.lat))), Some(oldLinearReference), true, None)
+      Some(Seq(Point(oldPersistedAsset.lon, oldPersistedAsset.lat))), Some(oldLinearReference),linkInfo, true, None)
 
     val newValues = compactJson(newPersistedAsset.propertyData.map(_.toJson))
     val newAsset = changeType match {
       case Floating =>
-        Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode), None, None, true, assetUpdate.floatingReason)
+        val newLink = roadLinkChange.newLinks.find(_.linkId == newPersistedAsset.linkId)
+        val linkInfo = if (newLink.nonEmpty) Some(LinkInfo(newLink.get.lifeCycleStatus)) else None
+        Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode), None, None,linkInfo, true, assetUpdate.floatingReason)
       case _ =>
         val newLink = roadLinkChange.newLinks.find(_.linkId == newPersistedAsset.linkId).get
+        val linkInfo = Some(LinkInfo(newLink.lifeCycleStatus))
         val newLinearReference = LinearReferenceForReport(newLink.linkId, newPersistedAsset.mValue, None, None, assetUpdate.validityDirection, 0.0)
         Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode),
-          Some(Seq(Point(newPersistedAsset.lon, newPersistedAsset.lat))), Some(newLinearReference), true, None)
+          Some(Seq(Point(newPersistedAsset.lon, newPersistedAsset.lat))), Some(newLinearReference),linkInfo, true, None)
     }
     ChangedAsset(oldPersistedAsset.linkId, oldPersistedAsset.id, changeType, roadLinkChange.changeType, Some(oldAsset), Seq(newAsset))
   }
