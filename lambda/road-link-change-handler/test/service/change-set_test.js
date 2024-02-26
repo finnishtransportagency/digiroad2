@@ -28,7 +28,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 149,
                     "surfaceType": null,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 }
             ],
             "replaceInfo": [
@@ -67,7 +68,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 149,
                     "surfaceType": null,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 }
             ],
             "replaceInfo": [
@@ -107,7 +109,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 149,
                     "surfaceType": null,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 }
             ],
             "replaceInfo": [
@@ -146,7 +149,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 149,
                     "surfaceType": null,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 }
             ],
             "replaceInfo": [
@@ -186,7 +190,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 149,
                     "surfaceType": null,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 }
             ],
             "replaceInfo": [
@@ -219,7 +224,8 @@ describe('Change Set', function () {
                 "adminClass": 3,
                 "municipality": 149,
                 "surfaceType": null,
-                "trafficDirection": 0
+                "trafficDirection": 0,
+                "lifeCycleStatus": null
             },
             "new": [],
             "replaceInfo": [
@@ -254,7 +260,8 @@ describe('Change Set', function () {
                 "adminClass": 3,
                 "municipality": 149,
                 "surfaceType": 1,
-                "trafficDirection": 0
+                "trafficDirection": 0,
+                "lifeCycleStatus": null
             },
             "new": [
                 {
@@ -265,7 +272,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 149,
                     "surfaceType": 2,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 }
             ],
             "replaceInfo": [
@@ -311,7 +319,8 @@ describe('Change Set', function () {
                 "adminClass": oldLink.adminClass,
                 "municipality": oldLink.municipality,
                 "surfaceType": null,
-                "trafficDirection": oldLink.directionType
+                "trafficDirection": oldLink.directionType,
+                "lifeCycleStatus": null
             },
             "new": [
                 {
@@ -322,7 +331,8 @@ describe('Change Set', function () {
                     "adminClass": newLink1.adminClass,
                     "municipality": newLink1.municipality,
                     "surfaceType": null,
-                    "trafficDirection": newLink1.directionType
+                    "trafficDirection": newLink1.directionType,
+                    "lifeCycleStatus": null
                 },
                 {
                     "linkId": newLink2.id,
@@ -332,7 +342,8 @@ describe('Change Set', function () {
                     "adminClass": newLink2.adminClass,
                     "municipality": newLink2.municipality,
                     "surfaceType": null,
-                    "trafficDirection": newLink2.directionType
+                    "trafficDirection": newLink2.directionType,
+                    "lifeCycleStatus": null,
                 },
                 {
                     "linkId": newLink3.id,
@@ -342,7 +353,8 @@ describe('Change Set', function () {
                     "adminClass": newLink3.adminClass,
                     "municipality": newLink3.municipality,
                     "surfaceType": null,
-                    "trafficDirection": newLink3.directionType
+                    "trafficDirection": newLink3.directionType,
+                    "lifeCycleStatus": null,
                 }
             ],
             "replaceInfo": [
@@ -402,7 +414,8 @@ describe('Change Set', function () {
                 "adminClass": oldLink.adminClass,
                 "municipality": oldLink.municipality,
                 "surfaceType": null,
-                "trafficDirection": oldLink.directionType
+                "trafficDirection": oldLink.directionType,
+                "lifeCycleStatus": null,
             },
             "new": [
                 {
@@ -413,7 +426,8 @@ describe('Change Set', function () {
                     "adminClass": newLink1.adminClass,
                     "municipality": newLink1.municipality,
                     "surfaceType": null,
-                    "trafficDirection": newLink1.directionType
+                    "trafficDirection": newLink1.directionType,
+                    "lifeCycleStatus": null,
                 },
             ],
             "replaceInfo": [
@@ -467,7 +481,8 @@ describe('Change Set', function () {
                     "adminClass": oldLink1.adminClass,
                     "municipality": oldLink1.municipality,
                     "surfaceType": null,
-                    "trafficDirection": oldLink1.directionType
+                    "trafficDirection": oldLink1.directionType,
+                    "lifeCycleStatus": null
                 },
                 "new": [
                     {
@@ -478,7 +493,8 @@ describe('Change Set', function () {
                         "adminClass": newLink.adminClass,
                         "municipality": newLink.municipality,
                         "surfaceType": null,
-                        "trafficDirection": newLink.directionType
+                        "trafficDirection": newLink.directionType,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
@@ -503,7 +519,8 @@ describe('Change Set', function () {
                     "adminClass": oldLink2.adminClass,
                     "municipality": oldLink2.municipality,
                     "surfaceType": null,
-                    "trafficDirection": oldLink2.directionType
+                    "trafficDirection": oldLink2.directionType,
+                    "lifeCycleStatus": null
                 },
                 "new": [
                     {
@@ -514,7 +531,8 @@ describe('Change Set', function () {
                         "adminClass": newLink.adminClass,
                         "municipality": newLink.municipality,
                         "surfaceType": null,
-                        "trafficDirection": newLink.directionType
+                        "trafficDirection": newLink.directionType,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
@@ -560,7 +578,8 @@ describe('Change Set', function () {
                     "adminClass": 1,
                     "municipality": 761,
                     "surfaceType": 1,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 },
                 "new": [
                     {
@@ -571,7 +590,8 @@ describe('Change Set', function () {
                         "adminClass": 1,
                         "municipality": 761,
                         "surfaceType": 1,
-                        "trafficDirection": 0
+                        "trafficDirection": 0,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
@@ -616,7 +636,8 @@ describe('Change Set', function () {
                     "adminClass": null,
                     "municipality": 149,
                     "surfaceType": 1,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 },
                 "new": [
                     {
@@ -627,7 +648,8 @@ describe('Change Set', function () {
                         "adminClass": null,
                         "municipality": 149,
                         "surfaceType": 1,
-                        "trafficDirection": 0
+                        "trafficDirection": 0,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
@@ -690,7 +712,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 761,
                     "surfaceType": 1,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 },
                 "new": [
                     {
@@ -701,7 +724,8 @@ describe('Change Set', function () {
                         "adminClass": 3,
                         "municipality": 761,
                         "surfaceType": 1,
-                        "trafficDirection": 0
+                        "trafficDirection": 0,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
@@ -759,7 +783,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 761,
                     "surfaceType": 1,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 },
                 "new": [
                     {
@@ -770,7 +795,8 @@ describe('Change Set', function () {
                         "adminClass": 3,
                         "municipality": 761,
                         "surfaceType": 1,
-                        "trafficDirection": 0
+                        "trafficDirection": 0,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
@@ -841,7 +867,8 @@ describe('Change Set', function () {
                         "adminClass": 3,
                         "municipality": 271,
                         "surfaceType": 1,
-                        "trafficDirection": 0
+                        "trafficDirection": 0,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
@@ -881,7 +908,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 149,
                     "surfaceType": null,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 },
                 "new": [
                     {
@@ -892,7 +920,8 @@ describe('Change Set', function () {
                         "adminClass": 3,
                         "municipality": 149,
                         "surfaceType": null,
-                        "trafficDirection": 0
+                        "trafficDirection": 0,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
@@ -931,7 +960,8 @@ describe('Change Set', function () {
                     "adminClass": 3,
                     "municipality": 149,
                     "surfaceType": null,
-                    "trafficDirection": 0
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
                 },
                 "new": [
                     {
@@ -942,7 +972,8 @@ describe('Change Set', function () {
                         "adminClass": 3,
                         "municipality": 149,
                         "surfaceType": null,
-                        "trafficDirection": 0
+                        "trafficDirection": 0,
+                        "lifeCycleStatus": null
                     }
                 ],
                 "replaceInfo": [
