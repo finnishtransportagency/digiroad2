@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.client
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, TrafficDirection, Unknown}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.SurfaceType
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -36,7 +36,7 @@ object RoadLinkChangeType {
 
 case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int,
                         adminClass: AdministrativeClass, municipality: Option[Int], trafficDirection: TrafficDirection,
-                        surfaceType: SurfaceType = SurfaceType.Unknown)
+                        surfaceType: SurfaceType = SurfaceType.Unknown, lifeCycleStatus:ConstructionType = ConstructionType.UnknownConstructionType)
 case class ReplaceInfo(oldLinkId: Option[String], newLinkId: Option[String], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
 case class ChangeSetId(key: String, statusDate: DateTime, targetDate: DateTime)
@@ -127,6 +127,29 @@ class RoadLinkChangeClient {
       }
   }
   ))
+  object ConstructionTypeSerializer extends CustomSerializer[ConstructionType](_ => ( {
+    case JInt(value) =>
+      value.toInt match {
+        case 1 => ConstructionType.Planned
+        case 2 => ConstructionType.UnderConstruction
+        case 3 => ConstructionType.InUse
+        case 4 => ConstructionType.TemporarilyOutOfUse
+        case 5 => ConstructionType.ExpiringSoon
+        case _ => ConstructionType.UnknownConstructionType
+      }
+  }, {
+    case c: ConstructionType =>
+      c match {
+        case ConstructionType.Planned =>  JInt(1)
+        case ConstructionType.UnderConstruction =>  JInt(2)
+        case ConstructionType.InUse =>  JInt(3)
+        case ConstructionType.TemporarilyOutOfUse =>  JInt(4)
+        case ConstructionType.ExpiringSoon =>  JInt(5)
+        case ConstructionType.UnknownConstructionType =>  JInt(6)
+        case _ => JNull
+      }
+  }
+  ))
 
   object GeometrySerializer extends CustomSerializer[List[Point]](_ => (
     {
@@ -140,7 +163,7 @@ class RoadLinkChangeClient {
   ))
 
   implicit val formats = DefaultFormats + changeItemSerializer + RoadLinkChangeTypeSerializer + GeometrySerializer +
-    AdminClassSerializer + TrafficDirectionSerializer + SurfaceTypeSerializer
+    AdminClassSerializer + TrafficDirectionSerializer + SurfaceTypeSerializer + ConstructionTypeSerializer
 
   def fetchLatestSuccessfulUpdateDate(): DateTime = {
     // placeholder value as long as fetching this date from db is possible
