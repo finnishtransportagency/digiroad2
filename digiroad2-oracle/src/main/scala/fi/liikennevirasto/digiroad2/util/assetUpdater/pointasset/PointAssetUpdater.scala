@@ -95,7 +95,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
   
   def reportChange(oldPersistedAsset: PersistedPointAsset, newPersistedAsset: PersistedPointAsset,
                    changeType: ChangeType, roadLinkChange: RoadLinkChange, assetUpdate: AssetUpdate): ChangedAsset = {
-    val oldLinearReference = LinearReferenceForReport(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, assetUpdate.bearing, 0.0)
+    val oldLinearReference = LinearReferenceForReport(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, oldPersistedAsset.getBearing, 0.0)
     val oldValues = compactJson(oldPersistedAsset.propertyData.map(_.toJson))
     val linkInfo = if (roadLinkChange.oldLink.nonEmpty) Some(LinkInfo(roadLinkChange.oldLink.get.lifeCycleStatus)) else None
 
