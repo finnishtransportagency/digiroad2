@@ -95,7 +95,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
   
   def reportChange(oldPersistedAsset: PersistedPointAsset, newPersistedAsset: PersistedPointAsset,
                    changeType: ChangeType, roadLinkChange: RoadLinkChange, assetUpdate: AssetUpdate): ChangedAsset = {
-    val oldLinearReference = LinearReferenceForReport(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, 0.0)
+    val oldLinearReference = LinearReferenceForReport(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, assetUpdate.bearing, 0.0)
     val oldValues = compactJson(oldPersistedAsset.propertyData.map(_.toJson))
     val oldAsset = Asset(oldPersistedAsset.id, oldValues, Some(oldPersistedAsset.municipalityCode),
       Some(Seq(Point(oldPersistedAsset.lon, oldPersistedAsset.lat))), Some(oldLinearReference), true, None)
@@ -106,7 +106,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
         Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode), None, None, true, assetUpdate.floatingReason)
       case _ =>
         val newLink = roadLinkChange.newLinks.find(_.linkId == newPersistedAsset.linkId).get
-        val newLinearReference = LinearReferenceForReport(newLink.linkId, newPersistedAsset.mValue, None, None, assetUpdate.validityDirection, 0.0)
+        val newLinearReference = LinearReferenceForReport(newLink.linkId, newPersistedAsset.mValue, None, None, assetUpdate.validityDirection, assetUpdate.bearing, 0.0)
         Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode),
           Some(Seq(Point(newPersistedAsset.lon, newPersistedAsset.lat))), Some(newLinearReference), true, None)
     }
