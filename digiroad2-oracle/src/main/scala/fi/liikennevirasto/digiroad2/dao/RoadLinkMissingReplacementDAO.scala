@@ -25,20 +25,18 @@ class RoadLinkMissingReplacementDAO {
   def insertMatchedLinksToWorkList(matchedRoadLinks: Seq[MatchedRoadLinks]): Unit = {
     val ids = Sequences.nextPrimaryKeySeqValues(matchedRoadLinks.size)
     val matchedRoadLinksWithIds = matchedRoadLinks.zipWithIndex.map { case (matchedLinks, index) =>
-      matchedLinks.copy(id = ids(index))
+      (matchedLinks, ids(index))
     }
 
     val insertMatchedLinks =
-      s"""insert into matched_road_links_work_list (id, removed_link_id, added_link_id, hausdorff_similarity_measure,
-         | area_similarity_measure) values ((?), (?), (?), (?), (?), (?), (?))""".stripMargin
+      s"""insert into matched_road_links_work_list (id, removed_link_id, added_link_id) values ((?), (?), (?))""".stripMargin
 
     MassQuery.executeBatch(insertMatchedLinks) { statement =>
-      matchedRoadLinksWithIds.foreach { ml =>
-        statement.setLong(1, ml.id)
-        statement.setString(2, ml.removedLink.linkId)
-        statement.setString(3, ml.addedLink.linkId)
-        statement.setDouble(4, ml.hausdorffSimilarityMeasure)
-        statement.setDouble(5, ml.areaSimilarityMeasure)
+      matchedRoadLinksWithIds.foreach { mlWithId =>
+        val (matchedLinks, id) = mlWithId
+        statement.setLong(1, id)
+        statement.setString(2, matchedLinks.removedLinkId)
+        statement.setString(3, matchedLinks.addedLinkId)
         statement.addBatch()
       }
     }

@@ -449,6 +449,10 @@ object GeometryUtils {
     centeredPoints
   }
 
+  def isAnyPointInsideRadius(point: Point, radius: Double, geometry: Seq[Point]): Boolean = {
+    geometry.exists(geomPoint => point.distance2DTo(geomPoint) <= radius)
+  }
+
   def withinTolerance(geom1: Seq[Point], geom2: Seq[Point], tolerance: Double): Boolean = {
     geom1.size == geom2.size &&
       geom1.zip(geom2).forall {
