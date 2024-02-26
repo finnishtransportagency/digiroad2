@@ -22,9 +22,7 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     RoadLinkAttributeChange(linkId,Replaced,Map("ADDITIONAL_INFO" -> "1", "PRIVATE_ROAD_ASSOCIATION" -> "test association"),
       Map("ADDITIONAL_INFO" -> "1", "PRIVATE_ROAD_ASSOCIATION" -> "test association"))
     ,ConstructionTypeChange(linkId,ChangeTypeReport.Dummy,Some(ConstructionType.InUse),Some(ConstructionType.InUse))
-    )
-      
-    )
+    ))
     val (csv, contentRows) = ChangeReporter.generateCSV(changeReport)
     val contents = csv.split("\\\n")(2)
     contents.startsWith(s"41cca8ff-4644-41aa-8de1-2702f1a57f80:2") should be(true)
