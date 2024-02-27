@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.client
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, TrafficDirection, Unknown}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.SurfaceType
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -35,8 +35,8 @@ object RoadLinkChangeType {
 }
 
 case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int,
-                        adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection,
-                        surfaceType: SurfaceType = SurfaceType.Unknown)
+                        adminClass: AdministrativeClass, municipality: Option[Int], trafficDirection: TrafficDirection,
+                        surfaceType: SurfaceType = SurfaceType.Unknown, lifeCycleStatus:ConstructionType = ConstructionType.UnknownConstructionType)
 case class ReplaceInfo(oldLinkId: Option[String], newLinkId: Option[String], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class ReplaceInfoWithGeometry(oldLinkId: Option[String], oldGeometry: List[Point], newLinkId: Option[String], newGeometry: List[Point], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
@@ -128,6 +128,29 @@ class RoadLinkChangeClient {
       }
   }
   ))
+  object ConstructionTypeSerializer extends CustomSerializer[ConstructionType](_ => ( {
+    case JInt(value) =>
+      value.toInt match {
+        case 1 => ConstructionType.Planned
+        case 2 => ConstructionType.UnderConstruction
+        case 3 => ConstructionType.InUse
+        case 4 => ConstructionType.TemporarilyOutOfUse
+        case 5 => ConstructionType.ExpiringSoon
+        case _ => ConstructionType.UnknownConstructionType
+      }
+  }, {
+    case c: ConstructionType =>
+      c match {
+        case ConstructionType.Planned =>  JInt(1)
+        case ConstructionType.UnderConstruction =>  JInt(2)
+        case ConstructionType.InUse =>  JInt(3)
+        case ConstructionType.TemporarilyOutOfUse =>  JInt(4)
+        case ConstructionType.ExpiringSoon =>  JInt(5)
+        case ConstructionType.UnknownConstructionType =>  JInt(6)
+        case _ => JNull
+      }
+  }
+  ))
 
   object GeometrySerializer extends CustomSerializer[List[Point]](_ => (
     {
@@ -141,7 +164,7 @@ class RoadLinkChangeClient {
   ))
 
   implicit val formats = DefaultFormats + changeItemSerializer + RoadLinkChangeTypeSerializer + GeometrySerializer +
-    AdminClassSerializer + TrafficDirectionSerializer + SurfaceTypeSerializer
+    AdminClassSerializer + TrafficDirectionSerializer + SurfaceTypeSerializer + ConstructionTypeSerializer
 
   def fetchLatestSuccessfulUpdateDate(): DateTime = {
     // placeholder value as long as fetching this date from db is possible
@@ -176,13 +199,34 @@ class RoadLinkChangeClient {
   }
 
   def convertToRoadLinkChange(changeJson: String) : Seq[RoadLinkChange] = {
+
+    def filterChanges(changes: Seq[RoadLinkChange]) = {
+      def changeMissingMunicipality(a: RoadLinkChange): Boolean = {
+        val newLinksEmptyMunicipality = a.newLinks.exists(_.municipality.isEmpty)
+        val oldLinkEmptyMunicipality = a.oldLink.exists(_.municipality.isEmpty)
+        newLinksEmptyMunicipality || oldLinkEmptyMunicipality
+      }
+
+      val (changesWithNullMunicipality, changesWithMunicipality) = changes.partition(changeMissingMunicipality)
+      val linkIdsInNullMunicipalityChanges = changesWithNullMunicipality.flatMap(change => {
+        change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
+      }).distinct
+
+      changesWithMunicipality.filterNot(change => {
+        val linkIdsInChange = change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
+        linkIdsInChange.exists(linkId => linkIdsInNullMunicipalityChanges.contains(linkId))
+      })
+
+    }
+
     val json = parseJson(changeJson)
     try {
-      json.extract[Seq[RoadLinkChange]]
+      val extractedChanges = json.extract[Seq[RoadLinkChange]]
+      filterChanges(extractedChanges)
     } catch {
       case e: Throwable =>
         logger.error(e.getMessage)
-        Seq.empty[RoadLinkChange]
+        throw e
     }
   }
 

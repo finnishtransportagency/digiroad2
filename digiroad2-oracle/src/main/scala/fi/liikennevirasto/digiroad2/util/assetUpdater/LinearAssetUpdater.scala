@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, getDefaultEpsilon}
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Add
@@ -13,15 +13,13 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures, NewLinearAssetMassOperation}
 import fi.liikennevirasto.digiroad2.util.CustomIterableOperations.IterableOperation
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LinearAssetUtils, LogUtils, Parallel}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils, Parallel}
 import org.joda.time.DateTime
 import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
-import scala.collection.parallel.immutable
 import scala.collection.{Seq, mutable}
 import scala.util.{Failure, Success, Try}
 
@@ -43,6 +41,8 @@ sealed case class Pair(oldAsset: Option[PersistedLinearAsset], newAsset: Option[
 sealed case class PairAsset(oldAsset: Option[Asset], newAsset: Option[Asset], changeType: ChangeType)
 
 sealed case class LinkAndOperation(newLinkId: String, operation: OperationStepSplit)
+
+case class FailedToFindReplaceInfo(msg:String) extends  NoSuchElementException(msg)
 
 /**
   * System use [[OperationStep]] class as state object when doing samuutus process. Each operation step or phase update [[OperationStep]] or gives [[OperationStep]] as return object.
@@ -155,7 +155,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param asset       The asset to be evaluated.
     * @return `true` if the asset meets the fallIn criteria, `false` otherwise.
     */
-  private def fallInReplaceInfoOld(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
+ private def fallInReplaceInfoOld(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
     val hasMatchingLinkId = replaceInfo.oldLinkId.getOrElse("") == asset.linkId
     if (replaceInfo.digitizationChange && replaceInfo.oldFromMValue.getOrElse(0.0) > replaceInfo.oldToMValue.getOrElse(0.0)) {
       val startMeasureIsSmallerThanOldFomValue = replaceInfo.oldFromMValue.getOrElse(0.0) >= asset.startMeasure
@@ -163,8 +163,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       hasMatchingLinkId && startMeasureIsSmallerThanOldFomValue && endMeasureIsSmallerThanOldToValue
     } else {
       val startMeasureIsGreaterThanOldFomValue = replaceInfo.oldFromMValue.getOrElse(0.0) <= asset.startMeasure
-      /**  if asset is longer than replaceInfo.oldToMValue, it need to be split in [[LinearAssetUpdater.slicer]] */
-      val endMeasureIsGreaterThanOldToValue = replaceInfo.oldToMValue.getOrElse(0.0) >= asset.endMeasure
+      /** if asset is longer than replaceInfo.oldToMValue, it need to be split in [[LinearAssetUpdater.slicer]] */
+      def roundMeasures(value: Double): Double = {
+        val exponentOfTen = Math.pow(10, 3)
+        Math.round(value * exponentOfTen).toDouble / exponentOfTen
+      }
+      val difference = roundMeasures(Math.abs(replaceInfo.oldToMValue.getOrElse(0.0)-asset.endMeasure))
+      // See [AssetFiller.MaxAllowedMValueError]
+      val inTolerance = difference <= 0.1
+      val endMeasureIsGreaterThanOldToValue = replaceInfo.oldToMValue.getOrElse(0.0) >= asset.endMeasure || inTolerance
       hasMatchingLinkId && startMeasureIsGreaterThanOldFomValue && endMeasureIsGreaterThanOldToValue
     }
   }
@@ -276,25 +283,28 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       case Some(ol) =>
         val values = compactJson(ol.toJson)
         val linkOld = relevantRoadLinkChange.oldLink.get
+        val linkInfo = Some(LinkInfo(linkOld.lifeCycleStatus))
         val assetGeometry = GeometryUtils.truncateGeometry3D(linkOld.geometry, ol.startMeasure, ol.endMeasure)
         val measures = Measures(ol.startMeasure, ol.endMeasure).roundMeasures()
-        val linearReference = LinearReferenceForReport(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, measures.length())
-        Some(Asset(ol.id, values, Some(linkOld.municipality), Some(assetGeometry), Some(linearReference)))
+        val linearReference = LinearReferenceForReport(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, None, measures.length())
+        Some(Asset(ol.id, values, Some(linkOld.municipality.getOrElse(throw new NoSuchElementException(s"${linkOld.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo))
       case None =>
         val linkOld = relevantRoadLinkChange.oldLink
         if (linkOld.nonEmpty) {
-          val linearReference = LinearReferenceForReport(linkOld.get.linkId, 0, None, None, None, 0)
-          Some(Asset(0, "", Some(linkOld.get.municipality), None, Some(linearReference)))
+          val linkInfo = Some(LinkInfo(linkOld.get.lifeCycleStatus))
+          val linearReference = LinearReferenceForReport(linkOld.get.linkId, 0, None, None, None, None, 0)
+          Some(Asset(0, "", Some(linkOld.get.municipality.getOrElse(throw new NoSuchElementException(s"${linkOld.get.linkId} does not have municipality code"))), None, Some(linearReference),linkInfo))
         } else None
     }
 
     val after = newAsset.map(asset => {
       val newLink = relevantRoadLinkChange.newLinks.find(_.linkId == asset.linkId).get
+      val linkInfo = Some(LinkInfo(newLink.lifeCycleStatus))
       val values = compactJson(asset.toJson)
       val assetGeometry = GeometryUtils.truncateGeometry3D(newLink.geometry, asset.startMeasure, asset.endMeasure)
       val measures = Measures(asset.startMeasure, asset.endMeasure).roundMeasures()
-      val linearReference = LinearReferenceForReport(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, measures.length())
-      Asset(asset.id, values, Some(newLink.municipality), Some(assetGeometry), Some(linearReference))
+      val linearReference = LinearReferenceForReport(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, None, measures.length())
+      Asset(asset.id, values, Some(newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo)
     })
 
     if (propertyChange) {
@@ -356,7 +366,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     // Assets on totally new links is already reported.
     val pairs= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
     LogUtils.time(logger,"Adding to changesForReport"){
-    for (pair <- pairs) {createRow(assetsInNewLink.changeInfo, changes, pair)}
+    var percentageProcessed = 0
+    for (pairWithIndex <- pairs.zipWithIndex) {
+      val (pair, index) = pairWithIndex
+      percentageProcessed = LogUtils.logArrayProgress(logger, "Adding to changesForReport", pairs.size, index, percentageProcessed)
+      createRow(assetsInNewLink.changeInfo, changes, pair)
+    }
     }
 
     Some(assetsInNewLink)
@@ -424,7 +439,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changeSets
     * @return
     */
-  def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = None
+  def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = None
   /**
     * 4.3) Add additional operation based on removed link when something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -485,7 +500,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
     logger.info("Fetching road links and assets")
-    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, false)
+    // FeatureClass HardShoulder or WinterRoads, and ExpiringSoon filtered away 
+    val onlyNeededNewRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, false)
 
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
     val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
@@ -494,7 +510,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${addedLinksCount}")
     logger.info("Starting to process changes")
     val (projectedAssets, changedSet) = LogUtils.time(logger, s"Samuuting logic finished: ") {
-      fillNewRoadLinksWithPreviousAssetsData(typeId, newRoadLinks, existingAssets, changes, initChangeSet)
+      fillNewRoadLinksWithPreviousAssetsData(typeId, onlyNeededNewRoadLinks, existingAssets, changes, initChangeSet)
     }
 
     additionalRemoveOperationMass(deletedLinks)
@@ -505,27 +521,33 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     logger.info("Starting to save generated")
     LogUtils.time(logger, s"Saving generated took: ") {
-      persistProjectedLinearAssets(projectedAssets.filter(_.id == 0L),newRoadLinks)
+      persistProjectedLinearAssets(projectedAssets.filter(_.id == 0L),onlyNeededNewRoadLinks)
     }
   }
 
   /**
     * 4) Start projecting everything into new links based on replace info.
     * @param typeId
-    * @param links
+    * @param onlyNeededNewRoadLinks
     * @param assetsAll
     * @param changes
     * @param changeSet
     * @return
     */
-  private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, links: Seq[RoadLink],
-                                                       assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
-                                                       changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+  private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
+                                                     assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
+                                                     changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val initStep = OperationStep(Seq(), Some(changeSet))
     logger.info(s"Projecting ${assetsAll.size} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
       val assetsGroup= IterableOperation.groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
-      val rawData = changes.map(goThroughChanges(assetsGroup,assetsAll,links, changeSet, initStep, _,OperationStepSplit(Seq(), Some(changeSet))))
+
+      var percentageProcessed = 0
+      val rawData = changes.zipWithIndex.map(changeWithIndex => {
+        val (change, index) = changeWithIndex
+        percentageProcessed = LogUtils.logArrayProgress(logger, "Projecting assets to new links", changes.size, index, percentageProcessed)
+        goThroughChanges(assetsGroup,assetsAll,onlyNeededNewRoadLinks, changeSet, initStep, change,OperationStepSplit(Seq(), Some(changeSet)))
+      })
       LogUtils.time(logger, "Filter empty and empty afters away from projected") {
         rawData.filter(_.nonEmpty)
       }
@@ -533,7 +555,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
     val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
-      adjustAndReport(typeId, links, projectedToNewLinks,changes,changeSet).get
+      adjustAndReport(typeId, onlyNeededNewRoadLinks, projectedToNewLinks,changes,changeSet).get
     }
     LogUtils.time(logger, "Reporting removed") {
       changeInfo.get.expiredAssetIds.map(asset => {
@@ -548,14 +570,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     (assetsOperated, changeInfo.get)
   }
 
-  private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], assetsAll: Seq[PersistedLinearAsset], newRoadlinks: Seq[RoadLink], changeSets: ChangeSet,
+  private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet,
                                initStep: OperationStep, change: RoadLinkChange, initStepSplit:OperationStepSplit): Option[OperationStep] = {
 
     nonAssetUpdate(change, Seq(), null)
     LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
       change.changeType match {
         case RoadLinkChangeType.Add =>
-          val operation = operationForNewLink(change, assetsAll, newRoadlinks, changeSets).getOrElse(initStep)
+          val operation = operationForNewLink(change, assetsAll, onlyNeededNewRoadLinks, changeSets).getOrElse(initStep)
           Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ =>
@@ -566,40 +588,51 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           if (assets.nonEmpty) {
             change.changeType match {
               case RoadLinkChangeType.Replace =>
-                handleReplacements(changeSets, initStep, change, assets, newRoadlinks)
+                try {handleReplacements(changeSets, initStep, change, assets, onlyNeededNewRoadLinks)} catch {
+                  case _: FailedToFindReplaceInfo=> None
+                  case e: Throwable => logErrorAndReturnNone(change, assets, e); throw e
+                }
               case RoadLinkChangeType.Split =>
-                handleSplits(changeSets, initStepSplit, change, assets, newRoadlinks)
+                try {handleSplits(changeSets, initStepSplit, change, assets, onlyNeededNewRoadLinks)} catch {
+                  case _: FailedToFindReplaceInfo=> None
+                  case e: Throwable => logErrorAndReturnNone(change, assets, e); throw e
+                }
               case _ => None
             }
           } else None
       }
     }
   }
-  private def adjustAndReport(typeId: Int, links: Seq[RoadLink],
+  private def logErrorAndReturnNone(change: RoadLinkChange, assets: Seq[PersistedLinearAsset], e: Throwable) = {
+    logger.error(s"Samuutus failled with RoadlinkChange: $change", e)
+    assets.foreach(a => logger.error(s"Samuutus failled for asset ${a.id} with start measure ${a.startMeasure} and end measure ${a.endMeasure} on link ${a.linkId}"))
+    None
+  }
+  private def adjustAndReport(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                               assetUnderReplace: Seq[Option[OperationStep]], changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
     val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(initChangeSet))))(mergerOperations)}
-    val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, links, merged,changes)}
+    val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
 
-  private def adjustAndAdditionalOperations(typeId: Int, links: Seq[RoadLink],
+  private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                                             assets: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
-    val adjusted = adjustAssets(typeId, links, assets.get)
+    val adjusted = adjustAssets(typeId, onlyNeededNewRoadLinks, assets.get)
     val additionalSteps = additionalOperations(adjusted, changes)
     if (additionalSteps.isDefined) additionalSteps.get else adjusted
   }
   /**
     * 6) Run fillTopology to adjust assets based on link length and other assets on link.
     * @param typeId
-    * @param links
+    * @param onlyNeededNewRoadLinks
     * @param operationStep
     * @return
     */
-  private def adjustAssets(typeId: Int, links: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
+  private def adjustAssets(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
     val OperationStep(assetsAfter, changeSetFromOperation, assetsBefore) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
     val groupedAssets = LogUtils.time(logger, "Convert to right format") {
-      assetFiller.mapLinkAndAssets(assetsOperated, links)
+      assetFiller.mapLinkAndAssets(assetsOperated, onlyNeededNewRoadLinks)
     }
     val (adjusted, changeSet) = LogUtils.time(logger, "Run fillTopology") {
       adjustLinearAssetsLoop(typeId, groupedAssets, changeSetFromOperation)
@@ -667,10 +700,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
   }
 
-  private def handleReplacements(changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
+  private def handleReplacements(changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
     val roadLinkInfo = change.newLinks.head
-    val roadLinkFound = newRoadLinks.exists(_.linkId == roadLinkInfo.linkId)
-    if(!roadLinkFound) {
+    val assetInInvalidLink = !onlyNeededNewRoadLinks.exists(_.linkId == roadLinkInfo.linkId)
+    if(assetInInvalidLink) { // assets is now in invalid link, expire
       assets.map(a => {
         val expireStep = OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(a.id))), assetsBefore = Seq(a))
         Some(reportAssetChanges(Some(a), None, Seq(change), expireStep, Some(ChangeTypeReport.Deletion),useGivenChange = true))
@@ -683,10 +716,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  private def handleSplits(changeSet: ChangeSet, initStep:  OperationStepSplit, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
+  private def handleSplits(changeSet: ChangeSet, initStep:  OperationStepSplit, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
     val divided = operationForSplit(change, assets, changeSet).map(a=>LinkAndOperation(a.newLinkId,a))
-    val updatedAdjustments = updateSplitsWithExpiredIds(divided, change, newRoadLinks)
-    val filterByValidRoadLinks = filterLinkAndOperationByValidRoadLinks(updatedAdjustments, change, newRoadLinks)
+    val updatedAdjustments = updateSplitsWithExpiredIds(divided, change, onlyNeededNewRoadLinks)
+    val filterByValidRoadLinks = filterLinkAndOperationByValidRoadLinks(updatedAdjustments, change, onlyNeededNewRoadLinks)
     val splitOperation = filterByValidRoadLinks.map(a=>Some(a.operation)).foldLeft(Some(initStep))(mergerOperationsSplit)
     val updatedSplitOperation = updateSplitOperationWithExpiredIds(splitOperation, getIdsForAssetsOutsideSplitGeometry(filterByValidRoadLinks))
     reportAssetExpirationAfterSplit(filterByValidRoadLinks,change)
@@ -709,7 +742,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   @tailrec
   private def slicer(assets: Seq[PersistedLinearAsset], fitIntoRoadLinkPrevious: Seq[PersistedLinearAsset], change: RoadLinkChange): Seq[PersistedLinearAsset] = {
     def slice(change: RoadLinkChange, asset: PersistedLinearAsset): Seq[PersistedLinearAsset] = {
-      val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw new NoSuchElementException(s"Replace info for asset ${asset.id} on link ${asset.linkId} not found from change ${change}"))
+      val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
 
       val shorted = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
       val oldId = if(asset.id != 0) asset.id else asset.oldId
@@ -776,7 +809,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def projectByUsingReplaceInfo(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset) = {
-    val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw new NoSuchElementException(s"Replace info for asset ${asset.id} on link ${asset.linkId} not found from change ${change}"))
+    val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
     val newId = info.newLinkId.getOrElse("")
     val maybeLink = change.newLinks.find(_.linkId == newId)
     val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
@@ -789,6 +822,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       changeSets, info.digitizationChange)
     (newId, projected, changeSet)
   }
+  private def errorMessage(c: RoadLinkChange, a: PersistedLinearAsset): String = {
+    s"Replace info for asset ${a.id} with start measure ${a.startMeasure} and end measure ${a.endMeasure} on link ${a.linkId} not found from change ${c}"
+  }
+  
   private def projectLinearAsset(asset: PersistedLinearAsset, projection: Projection, changedSet: ChangeSet, digitizationChanges: Boolean): (PersistedLinearAsset, ChangeSet) = {
     val newLinkId = projection.linkId
     val assetId = asset.linkId match {
@@ -851,13 +888,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     adjustedSideCode(adjustedSideCodes, assets, roadLinks)
   }
 
-  protected def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Unit = {
+  protected def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Unit = {
     if (newLinearAssets.nonEmpty)
       logger.info(s"Saving projected linear assets, count: ${newLinearAssets.size}")
     
     logger.info(s"insert assets count: ${newLinearAssets.size}")
     newLinearAssets.foreach { linearAsset =>
-      val roadlink = roadLinks.find(_.linkId == linearAsset.linkId)
+      val roadlink = onlyNeededNewRoadLinks.find(_.linkId == linearAsset.linkId)
       val id =
         (linearAsset.createdBy, linearAsset.createdDateTime) match {
           case (Some(createdBy), Some(createdDateTime)) =>
@@ -906,7 +943,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * @param linksAndOperations sequence of RoadLink and related OperationStep pairs
    * @return Seq[LinkAndOperation] returns an updated copy of original parameter
    */
-  private def updateSplitsWithExpiredIds(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange, newRoadLinks: Seq[RoadLink]): Seq[LinkAndOperation] = {
+  private def updateSplitsWithExpiredIds(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange, onlyNeededNewRoadLinks: Seq[RoadLink]): Seq[LinkAndOperation] = {
     def updateLinkAndOperationWithExpiredIds(linkAndOperation: LinkAndOperation, expiredIds: Set[Long]): LinkAndOperation = {
       val updatedOperation = updateSplitOperationWithExpiredIds(Some(linkAndOperation.operation),expiredIds).get
       val updatedLinkAndOperation = linkAndOperation.copy(operation = updatedOperation)
@@ -915,7 +952,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     linksAndOperations.map(linkAndOperation => {
         val idsToExpireByGeometry = if (linkAndOperation.newLinkId.isEmpty) getIdsForAssetsOutsideSplitGeometry(linksAndOperations) else Set.empty[Long]
-        val idsToBeExpiredByInvalidRoadLinks = getIdsForSplitAssetsOnInvalidLinks(linkAndOperation,linksAndOperations, change, newRoadLinks)
+        val idsToBeExpiredByInvalidRoadLinks = getIdsForSplitAssetsOnInvalidLinks(linkAndOperation,linksAndOperations, change, onlyNeededNewRoadLinks)
         updateLinkAndOperationWithExpiredIds(linkAndOperation, idsToExpireByGeometry ++ idsToBeExpiredByInvalidRoadLinks)
     })
   }
@@ -988,17 +1025,17 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  def getIdsForSplitAssetsOnInvalidLinks(linkAndOperation: LinkAndOperation, linksAndOperations: Seq[LinkAndOperation], 
-                                         change: RoadLinkChange, newRoadLinks: Seq[RoadLink]): Seq[Long] = {
+  def getIdsForSplitAssetsOnInvalidLinks(linkAndOperation: LinkAndOperation, linksAndOperations: Seq[LinkAndOperation],
+                                         change: RoadLinkChange, onlyNeededNewRoadLinks: Seq[RoadLink]): Seq[Long] = {
     val roadLinkInfo = change.newLinks.find(_.linkId == linkAndOperation.newLinkId)
     if (roadLinkInfo.nonEmpty) {
-      val roadLinkFound = newRoadLinks.exists(_.linkId == roadLinkInfo.get.linkId)
+      val roadLinkFound = onlyNeededNewRoadLinks.exists(_.linkId == roadLinkInfo.get.linkId)
       val oldAssetId = linkAndOperation.operation.assetsBefore.head.id
       val otherSplits = linksAndOperations.filter(_.newLinkId.nonEmpty).filter(lao =>
         lao.operation.assetsBefore.head.id == oldAssetId && lao.newLinkId != linkAndOperation.newLinkId)
       val otherSplitsToBeIgnoredAlso = otherSplits.forall(split => {
         val splitRoadLinkInfo = change.newLinks.find(_.linkId == split.newLinkId).get
-        val roadLinkFound = newRoadLinks.exists(_.linkId == splitRoadLinkInfo.linkId)
+        val roadLinkFound = onlyNeededNewRoadLinks.exists(_.linkId == splitRoadLinkInfo.linkId)
         !roadLinkFound
       })
 

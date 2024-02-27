@@ -16,8 +16,8 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   val jsonFile = Source.fromFile(filePath).mkString
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
-  test("test json convert with whole set") {
-    changes.size should be(65)
+  test("test json convert with whole set and filter changes missing municipality") {
+    changes.size should be(68)
   }
 
   test("RoadLinkChange for 'add' contains correct info") {
@@ -32,7 +32,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     addChange.newLinks.head.geometry.last should be(Point(372330.456, 6680485.857, 41.831))
     addChange.newLinks.head.roadClass should be(12314)
     addChange.newLinks.head.adminClass should be(State)
-    addChange.newLinks.head.municipality should be(49)
+    addChange.newLinks.head.municipality.get should be(49)
     addChange.newLinks.head.trafficDirection should be(BothDirections)
     addChange.newLinks.head.surfaceType should be(SurfaceType.Paved)
     addChange.replaceInfo should be(Seq.empty)
@@ -48,7 +48,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     removeChange.oldLink.get.geometry.last should be(Point(366425.832, 6674457.102, 5.957))
     removeChange.oldLink.get.roadClass should be(12314)
     removeChange.oldLink.get.adminClass should be(Unknown)
-    removeChange.oldLink.get.municipality should be(49)
+    removeChange.oldLink.get.municipality.get should be(49)
     removeChange.oldLink.get.trafficDirection should be(BothDirections)
     removeChange.oldLink.get.surfaceType should be(SurfaceType.Paved)
     removeChange.replaceInfo should be(Seq.empty)
@@ -64,7 +64,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceChange.oldLink.get.geometry.last should be(Point(367068.125, 6675190.727, 18.792))
     replaceChange.oldLink.get.roadClass should be(12122)
     replaceChange.oldLink.get.adminClass should be(Municipality)
-    replaceChange.oldLink.get.municipality should be(49)
+    replaceChange.oldLink.get.municipality.get should be(49)
     replaceChange.oldLink.get.trafficDirection should be(BothDirections)
     replaceChange.oldLink.get.surfaceType should be(SurfaceType.Paved)
 
@@ -76,7 +76,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceChange.newLinks.head.geometry.last should be(Point(367068.125, 6675190.727, 18.792))
     replaceChange.newLinks.head.roadClass should be(12122)
     replaceChange.newLinks.head.adminClass should be(Municipality)
-    replaceChange.newLinks.head.municipality should be(49)
+    replaceChange.newLinks.head.municipality.get should be(49)
     replaceChange.newLinks.head.trafficDirection should be(BothDirections)
     replaceChange.newLinks.head.surfaceType should be(SurfaceType.Paved)
 
@@ -100,7 +100,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.oldLink.get.geometry.last should be(Point(370624.618, 6678469.114, 14.312))
     splitChange.oldLink.get.roadClass should be(12131)
     splitChange.oldLink.get.adminClass should be(State)
-    splitChange.oldLink.get.municipality should be(49)
+    splitChange.oldLink.get.municipality.get should be(49)
     splitChange.oldLink.get.trafficDirection should be(TowardsDigitizing)
     splitChange.oldLink.get.surfaceType should be(SurfaceType.Paved)
 
@@ -113,7 +113,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.newLinks.head.geometry.last should be(Point(370507.036, 6678446.659, 15.777))
     splitChange.newLinks.head.roadClass should be(12131)
     splitChange.newLinks.head.adminClass should be(State)
-    splitChange.newLinks.head.municipality should be(49)
+    splitChange.newLinks.head.municipality.get should be(49)
     splitChange.newLinks.head.trafficDirection should be(AgainstDigitizing)
     splitChange.newLinks.head.surfaceType should be(SurfaceType.Paved)
 
@@ -124,7 +124,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.newLinks(1).geometry.last should be(Point(370624.618, 6678469.114, 14.312))
     splitChange.newLinks(1).roadClass should be(12131)
     splitChange.newLinks(1).adminClass should be(State)
-    splitChange.newLinks(1).municipality should be(49)
+    splitChange.newLinks(1).municipality.get should be(49)
     splitChange.newLinks(1).trafficDirection should be(TowardsDigitizing)
     splitChange.newLinks(1).surfaceType should be(SurfaceType.Paved)
 
@@ -135,7 +135,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.newLinks.last.geometry.last should be(Point(370541.665, 6678445.318, 14.602))
     splitChange.newLinks.last.roadClass should be(12131)
     splitChange.newLinks.last.adminClass should be(State)
-    splitChange.newLinks.last.municipality should be(49)
+    splitChange.newLinks.last.municipality.get should be(49)
     splitChange.newLinks.last.trafficDirection should be(TowardsDigitizing)
     splitChange.newLinks.last.surfaceType should be(SurfaceType.Paved)
 

@@ -56,6 +56,11 @@ root.PointAssetForm = function() {
       rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
       rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
       rootElement.find('button#save-button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
+      if (layerName === 'trafficSigns') {
+        var bearingElement = rootElement.find('.form-point-asset input#bearing');
+        rootElement.find('button#save-button').prop('disabled', bearingElement.prop('disabled') === false &&
+            (bearingElement.val() < 0 || bearingElement.val() > 360 || _.isEmpty(bearingElement.val())));
+      }
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
@@ -383,7 +388,7 @@ root.PointAssetForm = function() {
   };
 
   me.renderValidityDirection = function (selectedAsset) {
-    if(selectedAsset.validityDirection){
+    if(!_.isUndefined(selectedAsset.validityDirection)){
       return '' +
           '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
           '      <label class="control-label">Vaikutussuunta</label>' +

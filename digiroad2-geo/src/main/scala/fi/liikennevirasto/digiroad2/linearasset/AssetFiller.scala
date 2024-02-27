@@ -777,22 +777,22 @@ class AssetFiller {
     * @param changeSet   Set of changes
     * @return List of asset and change set so that there are no small gaps between asset
     */
-  def fillHoles(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  private def fillHolesSteps(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet, takesAccountSidCode:Boolean= true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     def fillBySideCode(assets: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFillTopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       if (assets.size > 1) {
         val left = assets.head
-        val right = assets.find(sl => sl.startMeasure >= left.endMeasure && sl.sideCode.value == left.sideCode.value)
-        val middleParts = if(right.nonEmpty) assets.filter(a=> 
-          a.startMeasure>=left.endMeasure && a.endMeasure<=right.get.startMeasure && !Set(left.id,right.get.id).contains(a.id)
+        val right = if (takesAccountSidCode) assets.find(sl => sl.startMeasure >= left.endMeasure && sl.sideCode.value == left.sideCode.value)
+        else assets.find(sl => sl.startMeasure >= left.endMeasure)
+        val middleParts = if (right.nonEmpty) assets.filter(a =>
+          a.startMeasure >= left.endMeasure && a.endMeasure <= right.get.startMeasure && !Set(left.id, right.get.id).contains(a.id)
         ) else Seq()
-        
+
         val notTooShortGap = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon
         val gapIsSmallerThanTolerance = right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength
         val valuesAreSame = right.nonEmpty && left.value.equals(right.get.value)
         val condition = if (!roadLinkLongAssets.contains(assets.head.typeId)) gapIsSmallerThanTolerance else {
           if (gapIsSmallerThanTolerance) true else valuesAreSame // do not check is same value if gap is 2 meter or smaller
         }
-        
         if (middleParts.isEmpty && notTooShortGap && condition) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
@@ -811,6 +811,31 @@ class AssetFiller {
 
     val (geometrySegments, geometryAdjustments) = fillBySideCode(assets.sortBy(_.startMeasure), roadLink, changeSet)
     (geometrySegments, geometryAdjustments)
+  }
+
+  /**
+    * Fills any missing pieces in the middle of assets.
+    * @param roadLink  Road link being handled
+    * @param assets    List of asset limits
+    * @param changeSet Set of changes
+    * @return List of asset and change set so that there are no small gaps between asset
+    */
+  def fillHolesTwoSteps(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val (geometrySegments, geometryAdjustments) = fillHolesSteps(roadLink, assets, changeSet)
+    fillHolesSteps(roadLink, geometrySegments, geometryAdjustments, takesAccountSidCode = false)
+  }
+  
+  /**
+    * Fills any missing pieces in the middle of assets.
+    * First fill hole. Merge parts if possible by calling [[fuse]].
+    * @param roadLink  Road link being handled
+    * @param assets    List of asset limits
+    * @param changeSet Set of changes
+    * @return List of asset and change set so that there are no small gaps between asset
+    */
+  def fillHolesWithFuse(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val (geometrySegments,geometryAdjustments) = fillHolesTwoSteps(roadLink, assets, changeSet)
+    fuse(roadLink, geometrySegments, geometryAdjustments)
   }
 
   def fillTopology(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
@@ -869,10 +894,8 @@ class AssetFiller {
       debugLogging("adjustSegmentSideCodes"),
       droppedSegmentWrongDirection,
       debugLogging("droppedSegmentWrongDirection"),
-      fillHoles,
+      fillHolesWithFuse,
       debugLogging("fillHoles"),
-      fuse,
-      debugLogging("fuse after filling hole"),
       clean
     )
 
