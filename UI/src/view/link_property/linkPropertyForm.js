@@ -264,7 +264,7 @@
 
     var renderLinkToRoadLinkReplacementWorkList = function renderLinktoWorkList() {
       $('ul[class=information-content]').append('' +
-          '<li><button id="work-list-link-assts-on-expired-links" class="road-link-replacement-work-list btn btn-tertiary" onclick=location.href="#work-list/roadLinkReplacementWorkList">Mahdollisesti puuttuvat korvaavuudet</button></li>');
+          '<li><button id="work-list-link-road-link-replacement" class="road-link-replacement-work-list btn btn-tertiary" onclick=location.href="#work-list/roadLinkReplacementWorkList">Mahdollisesti puuttuvat korvaavuudet</button></li>');
     };
 
     var trafficDirectionChangePopUpConditional = function(originalValue, selectedValue) {

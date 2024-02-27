@@ -31,13 +31,13 @@
             };
 
             var removedAndAddedLinkIds = function (item) {
-                return $('<dd class="laneWorkListTextSize"/>')
+                return $('<dd class="roadLinkReplacementWorkListTextSize"/>')
                     .html("Poistetun tielinkin ID: " + item.removedLinkId +
                         "<br> Lisätyn tielinkin ID: " + item.addedLinkId);
             };
 
             var checkbox = function (itemId) {
-                return $('<td class="laneWorkListCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+                return $('<td class="roadLinkReplacementCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
             };
 
             var deleteBtn = function () {
