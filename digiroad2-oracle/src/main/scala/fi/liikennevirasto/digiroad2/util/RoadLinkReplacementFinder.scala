@@ -37,20 +37,6 @@ object RoadLinkReplacementFinder {
     })
   }
 
-  def withLinkGeometry(replaceInfos: Seq[ReplaceInfo], changes: Seq[RoadLinkChange]): Seq[ReplaceInfoWithGeometry] = {
-    val oldLinks = changes.flatMap(_.oldLink)
-    val newLinks = changes.flatMap(_.newLinks)
-    replaceInfos.map(ri => {
-      val oldLinkGeom = if(ri.oldLinkId.nonEmpty)  {
-        oldLinks.find(_.linkId == ri.oldLinkId.get).get.geometry
-      } else Nil
-      val newLinkgeom = if(ri.newLinkId.nonEmpty)  {
-        newLinks.find(_.linkId == ri.newLinkId.get).get.geometry
-      } else Nil
-      ReplaceInfoWithGeometry(ri.oldLinkId, oldLinkGeom, ri.newLinkId, newLinkgeom, ri.oldFromMValue, ri.oldToMValue, ri.newFromMValue, ri.newToMValue, ri.digitizationChange)
-    })
-  }
-
   def processChangeSets(): Unit = {
     val lastSuccess = PostGISDatabase.withDynSession(Queries.getLatestSuccessfulSamuutus(roadLinkReplacementTypeId))
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(lastSuccess)
@@ -68,7 +54,7 @@ object RoadLinkReplacementFinder {
   def findMissingReplacements(changes: Seq[RoadLinkChange]): Seq[MatchedRoadLinks] = {
     val replaceInfos = changes.flatMap(_.replaceInfo)
     val replaceInfosWithoutReplacement = replaceInfos.filter(ri => ri.newLinkId.isEmpty || ri.oldLinkId.isEmpty)
-    val replaceInfosWithGeometry = withLinkGeometry(replaceInfosWithoutReplacement, changes)
+    val replaceInfosWithGeometry = roadLinkChangeClient.withLinkGeometry(replaceInfosWithoutReplacement, changes)
     val matchedLinks = matchRemovesAndAdds(replaceInfosWithGeometry)
     matchedLinks
   }

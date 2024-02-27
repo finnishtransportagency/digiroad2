@@ -51,6 +51,21 @@ class RoadLinkChangeClient {
 
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
+
+  def withLinkGeometry(replaceInfos: Seq[ReplaceInfo], changes: Seq[RoadLinkChange]): Seq[ReplaceInfoWithGeometry] = {
+    val oldLinks = changes.flatMap(_.oldLink)
+    val newLinks = changes.flatMap(_.newLinks)
+    replaceInfos.map(ri => {
+      val oldLinkGeom = if(ri.oldLinkId.nonEmpty)  {
+        oldLinks.find(_.linkId == ri.oldLinkId.get).get.geometry
+      } else Nil
+      val newLinkgeom = if(ri.newLinkId.nonEmpty)  {
+        newLinks.find(_.linkId == ri.newLinkId.get).get.geometry
+      } else Nil
+      ReplaceInfoWithGeometry(ri.oldLinkId, oldLinkGeom, ri.newLinkId, newLinkgeom, ri.oldFromMValue, ri.oldToMValue, ri.newFromMValue, ri.newToMValue, ri.digitizationChange)
+    })
+  }
+
   private def lineStringToPoints(lineString: String): List[Point] = {
     val geometry = PGgeometry.geomFromString(lineString)
     val pointsList = ListBuffer[List[Double]]()
