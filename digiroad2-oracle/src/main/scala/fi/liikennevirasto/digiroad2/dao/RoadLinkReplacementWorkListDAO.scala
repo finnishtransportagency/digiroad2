@@ -45,7 +45,9 @@ class RoadLinkReplacementWorkListDAO {
   }
 
   def deleteFromWorkList(idsToDelete: Set[Long]) = {
-    sqlu"""DELETE FROM road_link_replacement_work_list WHERE id IN (#${idsToDelete.mkString(",")})""".execute
+    if(idsToDelete.nonEmpty) {
+      sqlu"""DELETE FROM road_link_replacement_work_list WHERE id IN (#${idsToDelete.mkString(",")})""".execute
+    }
   }
 
 }
