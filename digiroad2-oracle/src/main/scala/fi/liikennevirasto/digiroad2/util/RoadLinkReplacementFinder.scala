@@ -76,7 +76,10 @@ object RoadLinkReplacementFinder {
   def matchRemovesAndAdds(replaceInfosWithGeometry: Seq[ReplaceInfoWithGeometry]): Seq[MatchedRoadLinks] = {
     val (removed, added) = replaceInfosWithGeometry.partition(_.newLinkId.isEmpty)
 
-    val matchedLinks = added.map(addedLink => {
+    var percentageProcessed = 0
+    val matchedLinks = added.zipWithIndex.map(addedLinkAndIndex => {
+      val (addedLink, index) = addedLinkAndIndex
+      percentageProcessed = LogUtils.logArrayProgress(logger, "Find matches for added road links", added.size, index, percentageProcessed)
       val addedLinkCentroid = GeometryUtils.calculateCentroid(addedLink.newGeometry)
       val nearbyRemovedLinks = removed.filter(removedRoadLink => {
         GeometryUtils.isAnyPointInsideRadius(addedLinkCentroid, replacementSearchRadius, removedRoadLink.oldGeometry)
