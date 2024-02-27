@@ -13,7 +13,10 @@ class RoadLinkReplacementFinderSpec extends FunSuite with Matchers {
 
 
   test("Link is removed, other replacing link is added as new. Find match") {
-    RoadLinkReplacementFinder.findMissingReplacements(testChanges)
+    val matchedRoadLinks = RoadLinkReplacementFinder.findMissingReplacements(testChanges)
+    matchedRoadLinks.size should equal(1)
+    matchedRoadLinks.head.addedLinkId should equal ("2b99971a-b8c8-42ad-bbb4-b3985e2c312b:1")
+    matchedRoadLinks.head.removedLinkId should equal ("91ac78c9-7a6d-44b3-aefe-7f76cc345f5d:1")
   }
 
 }
