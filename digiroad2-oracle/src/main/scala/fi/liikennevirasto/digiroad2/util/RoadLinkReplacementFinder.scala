@@ -1,13 +1,10 @@
 package fi.liikennevirasto.digiroad2.util
 
-import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkReplacementWorkListService
-
-import scala.io.Source
 
 case class MatchedRoadLinks(removedLinkId: String, addedLinkId: String)
 
@@ -34,28 +31,6 @@ object RoadLinkReplacementFinder {
       val areaSimilarityMeasure = GeometryUtils.getAreaSimilarityMeasure(addedLineStringCentered, removedLineStringCentered)
 
       hausdorffSimilarityMeasure >= hausdorffMeasureThreshold || areaSimilarityMeasure >= areaMeasureThreshold
-    })
-  }
-
-  def polygonWithBuffer(replaceInfoWithGeometry: ReplaceInfoWithGeometry): Polygon = {
-    val geomToUse = if(replaceInfoWithGeometry.oldGeometry.nonEmpty) replaceInfoWithGeometry.oldGeometry
-    else replaceInfoWithGeometry.newGeometry
-    val lineString = GeometryUtils.pointsToLineString(geomToUse)
-    lineString.buffer(bufferWidth).asInstanceOf[Polygon]
-  }
-
-  def findMatchesWithBuffer(addedLink: ReplaceInfoWithGeometry, removedLinks: Seq[ReplaceInfoWithGeometry]) = {
-    removedLinks.filter(removedLink => {
-      val addedLinkPolygonWithBuffer = polygonWithBuffer(addedLink)
-      val removedLinkPolygonWithBuffer = polygonWithBuffer(removedLink)
-
-      // Check if polygons overlap
-      val intersection = addedLinkPolygonWithBuffer.intersection(removedLinkPolygonWithBuffer)
-      val addedLinkArea = addedLinkPolygonWithBuffer.getArea
-      val removedLinkArea = removedLinkPolygonWithBuffer.getArea
-      val overlapPercentage = (intersection.getArea / math.min(addedLinkArea, removedLinkArea)) * 100.0
-
-      overlapPercentage > 50.0
     })
   }
 
