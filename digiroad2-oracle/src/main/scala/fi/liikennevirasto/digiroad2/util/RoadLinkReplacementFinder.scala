@@ -14,10 +14,9 @@ object RoadLinkReplacementFinder {
 
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   lazy val roadLinkReplacementTypeId = 1
-  lazy val bufferWidth: Double = 15.0
-  lazy val replacementSearchRadius: Double = 200.0
-  lazy val hausdorffMeasureThreshold: Double = 0.6
-  lazy val areaMeasureThreshold: Double = 0.6
+  lazy val replacementSearchRadius: Double = 200.0 // Radius in meters for searching nearby links
+  lazy val hausdorffMeasureThreshold: Double = 0.6 // Threshold value for matching links by Hausdorff measure (0-1)
+  lazy val areaMeasureThreshold: Double = 0.6 // Threshold value for matching links by area measure (0-1)
   lazy val missingReplacementService: RoadLinkReplacementWorkListService = new RoadLinkReplacementWorkListService
 
   def findMatchesWithSimilarity(addedLink: ReplaceInfoWithGeometry, removedLinks: Seq[ReplaceInfoWithGeometry]): Seq[ReplaceInfoWithGeometry] = {
