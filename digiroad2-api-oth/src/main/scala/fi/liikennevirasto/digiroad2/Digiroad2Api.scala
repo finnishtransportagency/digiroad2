@@ -94,7 +94,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService,
                    val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = Digiroad2Context.autoProcessedLanesWorkListService,
                    val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = Digiroad2Context.assetsOnExpiredLinksService,
-                   val roadLinkMissingReplacementService: RoadLinkMissingReplacementService = Digiroad2Context.roadLinkMissingReplacementService)
+                   val roadLinkMissingReplacementService: RoadLinkReplacementWorkListService = Digiroad2Context.roadLinkReplacementWorkListService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -1604,13 +1604,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/roadLinksMissingReplacementWorkList") {
+  get("/roadLinkReplacementWorkList") {
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isOperator()
     val workListItems = if (userHasRights) {
       roadLinkMissingReplacementService.getMatchedLinksWorkList()
     } else {
-      halt(Forbidden("User not authorized for roadLinksMissingReplacementWorkList"))
+      halt(Forbidden("User not authorized for roadLinkReplacementWorkList"))
     }
 
     Map("items" -> workListItems.map { item =>
@@ -1620,15 +1620,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       })
   }
 
-  delete("/roadLinksMissingReplacementWorkList") {
+  delete("/roadLinkReplacementWorkList") {
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isOperator()
-    val assetIdsToDeleteFromList = if (userHasRights) {
+    val idsToDeleteFromList = if (userHasRights) {
       parsedBody.extractOpt[Set[Long]]
     } else {
       halt(Forbidden("User not authorized to delete items from work list"))
     }
-    assetIdsToDeleteFromList match {
+    idsToDeleteFromList match {
       case Some(assetIds) =>
         roadLinkMissingReplacementService.deleteFromWorkList(assetIds, newTransaction = true)
       case None => halt(BadRequest("No ids to delete provided"))

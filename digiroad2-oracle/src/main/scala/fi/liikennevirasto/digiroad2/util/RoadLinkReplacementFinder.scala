@@ -5,7 +5,9 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkMissingReplacementService
+import fi.liikennevirasto.digiroad2.service.RoadLinkReplacementWorkListService
+
+import scala.io.Source
 
 case class MatchedRoadLinks(removedLinkId: String, addedLinkId: String)
 
@@ -16,7 +18,7 @@ object RoadLinkReplacementFinder {
   lazy val replacementSearchRadius: Double = 200.0
   lazy val hausdorffMeasureThreshold: Double = 0.6
   lazy val areaMeasureThreshold: Double = 0.6
-  lazy val missingReplacementService: RoadLinkMissingReplacementService = new RoadLinkMissingReplacementService
+  lazy val missingReplacementService: RoadLinkReplacementWorkListService = new RoadLinkReplacementWorkListService
 
   def findMatchesWithSimilarity(addedLink: ReplaceInfoWithGeometry, removedLinks: Seq[ReplaceInfoWithGeometry]): Seq[ReplaceInfoWithGeometry] = {
     removedLinks.filter(removedLink => {
