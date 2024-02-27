@@ -5,10 +5,12 @@ import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkReplacementWorkListService
+import org.slf4j.{Logger, LoggerFactory}
 
 case class MatchedRoadLinks(removedLinkId: String, addedLinkId: String)
 
 object RoadLinkReplacementFinder {
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   lazy val roadLinkReplacementTypeId = 1
@@ -54,8 +56,13 @@ object RoadLinkReplacementFinder {
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(lastSuccess)
     val changes = changeSets.flatMap(_.changes)
 
-    val matchedRoadLinks = findMissingReplacements(changes)
-    missingReplacementService.insertMatchedLinksToWorkList(matchedRoadLinks)
+    val matchedRoadLinks = LogUtils.time(logger, "Find possible road link replacements") {
+      findMissingReplacements(changes)
+    }
+
+    LogUtils.time(logger, s"Insert ${matchedRoadLinks.size} matched road links to work list") {
+      missingReplacementService.insertMatchedLinksToWorkList(matchedRoadLinks)
+    }
   }
 
   def findMissingReplacements(changes: Seq[RoadLinkChange]): Seq[MatchedRoadLinks] = {
