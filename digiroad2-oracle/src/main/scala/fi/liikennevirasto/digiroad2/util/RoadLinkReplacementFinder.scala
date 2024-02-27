@@ -11,6 +11,7 @@ case class MatchedRoadLinks(removedLinkId: String, addedLinkId: String)
 object RoadLinkReplacementFinder {
 
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
+  lazy val roadLinkReplacementTypeId = 1
   lazy val bufferWidth: Double = 15.0
   lazy val replacementSearchRadius: Double = 200.0
   lazy val hausdorffMeasureThreshold: Double = 0.6
@@ -49,7 +50,7 @@ object RoadLinkReplacementFinder {
   }
 
   def processChangeSets(): Unit = {
-    val lastSuccess = PostGISDatabase.withDynSession(Queries.getLatestSuccessfulSamuutus(???))
+    val lastSuccess = PostGISDatabase.withDynSession(Queries.getLatestSuccessfulSamuutus(roadLinkReplacementTypeId))
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(lastSuccess)
     val changes = changeSets.flatMap(_.changes)
 
