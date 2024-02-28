@@ -2219,6 +2219,8 @@ object DataFixture {
         ResolvingFrozenRoadLinks.process()
       case Some("topology_validation") =>
         ValidateAssets.validateAll()
+      case Some("find_assets_expired_on_expired_road_links") =>
+        ExpiredRoadLinkHandlingProcess.process(cleanRoadLinkTable= false)
       case Some("handle_expired_road_links") =>
         ExpiredRoadLinkHandlingProcess.process()
       case Some("find_missing_road_link_replacements") =>
