@@ -240,6 +240,7 @@
         'work-list/csvReports': 'csvReports',
         'work-list/laneChecklist': 'laneWorkList',
         'work-list/autoProcessedLanesWorkList': 'autoProcessedLanesWorkList',
+        'work-list/roadLinkReplacementWorkList': 'roadLinkReplacementWorkList',
         'work-list/assetsOnExpiredLinks': 'assetsOnExpiredLinks',
         'work-list/:layerName': 'unverifiedLinearAssetWorkList',
         ':layerName/linkId/:linkId': 'mapMoving'
@@ -503,6 +504,10 @@
 
       autoProcessedLanesWorkList: function () {
           eventbus.trigger('autoProcessedLanesWorkList-laneModellingTool:select', 'lanes', backend.getAutoProcessedLanesWorkList());
+      },
+
+        roadLinkReplacementWorkList: function () {
+          eventbus.trigger('roadLinkReplacementWorkList-linkProperty:select', 'roadLinkReplacement', backend.getRoadLinkReplacementWorkList());
       },
 
         assetsOnExpiredLinks: function () {

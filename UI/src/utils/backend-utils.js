@@ -598,6 +598,10 @@
       return $.getJSON('api/autoProcessedLanesWorkList');
     };
 
+    this.getRoadLinkReplacementWorkList = function () {
+      return $.getJSON('api/roadLinkReplacementWorkList');
+    };
+
     this.getAssetsOnExpiredLinksWorkList = function () {
       return $.getJSON('api/assetsOnExpiredLinksWorkList');
     };
@@ -1100,6 +1104,18 @@
     };
 
     this.deleteAutoProcessedLanesWorkListItems = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/autoProcessedLanesWorkList",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.deleteRoadLinkReplacementWorkListItems = function (data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "DELETE",

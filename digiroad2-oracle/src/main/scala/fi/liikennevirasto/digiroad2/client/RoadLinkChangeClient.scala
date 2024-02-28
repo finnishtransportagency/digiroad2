@@ -38,6 +38,7 @@ case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point
                         adminClass: AdministrativeClass, municipality: Option[Int], trafficDirection: TrafficDirection,
                         surfaceType: SurfaceType = SurfaceType.Unknown, lifeCycleStatus:ConstructionType = ConstructionType.UnknownConstructionType)
 case class ReplaceInfo(oldLinkId: Option[String], newLinkId: Option[String], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
+case class ReplaceInfoWithGeometry(oldLinkId: Option[String], oldGeometry: List[Point], newLinkId: Option[String], newGeometry: List[Point], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
 case class ChangeSetId(key: String, statusDate: DateTime, targetDate: DateTime)
 case class RoadLinkChangeSet(key: String, statusDate: DateTime, targetDate: DateTime, changes: Seq[RoadLinkChange])
@@ -49,6 +50,21 @@ class RoadLinkChangeClient {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+
+
+  def withLinkGeometry(replaceInfos: Seq[ReplaceInfo], changes: Seq[RoadLinkChange]): Seq[ReplaceInfoWithGeometry] = {
+    val oldLinks = changes.flatMap(_.oldLink)
+    val newLinks = changes.flatMap(_.newLinks)
+    replaceInfos.map(ri => {
+      val oldLinkGeom = if(ri.oldLinkId.nonEmpty)  {
+        oldLinks.find(_.linkId == ri.oldLinkId.get).get.geometry
+      } else Nil
+      val newLinkgeom = if(ri.newLinkId.nonEmpty)  {
+        newLinks.find(_.linkId == ri.newLinkId.get).get.geometry
+      } else Nil
+      ReplaceInfoWithGeometry(ri.oldLinkId, oldLinkGeom, ri.newLinkId, newLinkgeom, ri.oldFromMValue, ri.oldToMValue, ri.newFromMValue, ri.newToMValue, ri.digitizationChange)
+    })
+  }
 
   private def lineStringToPoints(lineString: String): List[Point] = {
     val geometry = PGgeometry.geomFromString(lineString)
