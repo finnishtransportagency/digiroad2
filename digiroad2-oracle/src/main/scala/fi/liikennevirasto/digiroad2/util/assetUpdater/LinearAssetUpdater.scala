@@ -843,7 +843,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           if (asset.sideCode == newSideCode) {
             changedSet.adjustedSideCodes
           } else {
-            changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode), asset.typeId))
+            changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newLinkId, SideCode.apply(newSideCode), asset.typeId))
           }
       )
     }
