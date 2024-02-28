@@ -5,6 +5,7 @@ import com.vividsolutions.jts.geom.{Geometry => JtsGeometry}
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, LineString}
 import com.vividsolutions.jts.io.WKTReader
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
+import com.vividsolutions.jts.geom._
 import org.geotools.geometry.jts.JTSFactoryFinder
 
 
@@ -56,7 +57,7 @@ object GeometryUtils {
     val geometryWKT = "POINT (" + doubleToDefaultPrecision(lon) + " " + doubleToDefaultPrecision(lat) + ")"
     GeometryString( "geometryWKT", geometryWKT)
   }
-  
+
 
   def areMeasuresCloseEnough(measure1: Double, measure2: Double, tolerance: Double): Boolean ={
     val difference = math.abs(measure2 - measure1)
@@ -605,4 +606,23 @@ object GeometryUtils {
     else
       headPoint
   }
+
+  def isPointInsideGeometry(point: Point, geometry: Geometry): Boolean = {
+    val jtsPoint = new GeometryFactory().createPoint(new Coordinate(point.x, point.y))
+    convertToJTSGeometry(geometry).contains(jtsPoint)
+  }
+
+  def convertToJTSGeometry(geometry: Geometry): Polygon = {
+    val coordinates = geometry.`type` match {
+      case "Polygon" => List(geometry.coordinates)
+      case "MultiPolygon" => geometry.coordinates
+      case _ => List.empty[List[Double]]
+    }
+
+    val polygonCoordinates = coordinates.flatMap(coordList =>
+      coordList.map(coords => new Coordinate(coords.asInstanceOf[List[Double]](0), coords.asInstanceOf[List[Double]](1)))
+    ).toArray
+    new GeometryFactory().createPolygon(polygonCoordinates)
+  }
+
 }

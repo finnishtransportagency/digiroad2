@@ -215,16 +215,8 @@
               propertyDisplayValue: "Linja-autopysäkki"
             },
             {
-              propertyValue: "3",
-              propertyDisplayValue: "Kaukoliikenne (vanha tll)"
-            },
-            {
               propertyValue: "99",
               propertyDisplayValue: "Ei tietoa"
-            },
-            {
-              propertyValue: "4",
-              propertyDisplayValue: "Pikavuoro (vanha tll)"
             }
           ]
         },

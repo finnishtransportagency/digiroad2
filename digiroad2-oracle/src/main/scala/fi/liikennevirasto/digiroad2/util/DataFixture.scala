@@ -180,6 +180,8 @@ object DataFixture {
 
   lazy val roadWidthGenerator = new RoadWidthGenerator
 
+  lazy val unknownSpeedLimitUpdater = new UnknownSpeedLimitUpdater
+
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -1251,48 +1253,6 @@ object DataFixture {
     }
   }
 
-  def removeUnnecessaryUnknownSpeedLimits(): Unit = {
-    println("\nStart delete/update unknown speedLimits")
-    println(DateTime.now())
-
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-      PostGISDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
-
-    PostGISDatabase.withDynTransaction {
-      municipalities.foreach { municipality =>
-        println(s"Obtaining all Road Links and unknown SpeedLimits for Municipality: $municipality")
-
-        val unknownSpeedLimitByMunicipality = speedLimitDao.getMunicipalitiesWithUnknown(municipality)
-        val allUnknownSpeedLimitLinkIds = unknownSpeedLimitByMunicipality.map(_._1)
-
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(allUnknownSpeedLimitLinkIds.toSet, false)
-        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad).map(_.linkId) ++ allUnknownSpeedLimitLinkIds.diff(roadLinks.map(_.linkId))
-
-        if (filterRoadLinks.nonEmpty) {
-          println(s"Deleting linkIds - $filterRoadLinks")
-          speedLimitDao.deleteUnknownSpeedLimits(filterRoadLinks)
-        }
-
-        // Validate and update AdminClass/MunicipalityCode at unknown SpeedLimit table
-        unknownSpeedLimitByMunicipality.foreach { case (unknownLinkId, unknownAdminClass) =>
-          roadLinks.find(_.linkId == unknownLinkId) match {
-            case Some(r) if r.administrativeClass != AdministrativeClass.apply(unknownAdminClass) | r.municipalityCode != municipality =>
-              println("Updated link " + unknownLinkId + " admin class to " + r.administrativeClass.value + " and municipality code to " + r.municipalityCode)
-              speedLimitDao.updateUnknownSpeedLimitAdminClassAndMunicipality(unknownLinkId, r.administrativeClass, r.municipalityCode)
-            case _ => None
-          }
-        }
-      }
-    }
-
-    println("\n")
-    println("Complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
 
   def printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks(): Unit = {
     println("\nStart checking unknown speedLimits on top on wrong links")
@@ -2163,7 +2123,7 @@ object DataFixture {
       case Some("traffic_sign_extract") =>
         extractTrafficSigns(args.lastOption)
       case Some("remove_unnecessary_unknown_speedLimits") =>
-        removeUnnecessaryUnknownSpeedLimits()
+        unknownSpeedLimitUpdater.updateUnknownSpeedLimits()
       case Some("list_incorrect_SpeedLimits_created") =>
         printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
       case Some("create_prohibition_using_traffic_signs") =>
