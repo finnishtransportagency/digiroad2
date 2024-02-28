@@ -203,7 +203,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def getPersistedAssetsByLinkId(linkId: String): Seq[PersistedAsset] = {
-    val filter = s"where a.asset_type_id = $typeId and lrm.link_Id = '$linkId'"
+    val filter = s"where a.asset_type_id = $typeId and pos.link_Id = '$linkId'"
     fetchPointAssets(withFilter(filter)).map { asset =>
       val strategy = getStrategy(asset)
       val (enrichedStop, _) = strategy.enrichBusStop(asset)
