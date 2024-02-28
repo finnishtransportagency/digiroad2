@@ -83,11 +83,9 @@ object ExpiredRoadLinkHandlingProcess {
     logger.info(s"Empty expired links count: ${emptyExpiredLinks.size}")
     logger.info(s"Assets on expired links count: ${assetsOnExpiredLinks.size}")
     
-    if (cleanRoadLinkTable) {
-      if (emptyExpiredLinks.nonEmpty) {
-        LogUtils.time(logger, "Delete and expire road links and properties") {
-          roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
-        }
+    if (cleanRoadLinkTable && emptyExpiredLinks.nonEmpty) {
+      LogUtils.time(logger, "Delete and expire road links and properties") {
+        roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
       }
     }
     
