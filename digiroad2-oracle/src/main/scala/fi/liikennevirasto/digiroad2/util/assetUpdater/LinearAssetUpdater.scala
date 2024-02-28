@@ -286,13 +286,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         val linkInfo = Some(LinkInfo(linkOld.lifeCycleStatus))
         val assetGeometry = GeometryUtils.truncateGeometry3D(linkOld.geometry, ol.startMeasure, ol.endMeasure)
         val measures = Measures(ol.startMeasure, ol.endMeasure).roundMeasures()
-        val linearReference = LinearReferenceForReport(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, measures.length())
+        val linearReference = LinearReferenceForReport(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, None, measures.length())
         Some(Asset(ol.id, values, Some(linkOld.municipality.getOrElse(throw new NoSuchElementException(s"${linkOld.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo))
       case None =>
         val linkOld = relevantRoadLinkChange.oldLink
         if (linkOld.nonEmpty) {
           val linkInfo = Some(LinkInfo(linkOld.get.lifeCycleStatus))
-          val linearReference = LinearReferenceForReport(linkOld.get.linkId, 0, None, None, None, 0)
+          val linearReference = LinearReferenceForReport(linkOld.get.linkId, 0, None, None, None, None, 0)
           Some(Asset(0, "", Some(linkOld.get.municipality.getOrElse(throw new NoSuchElementException(s"${linkOld.get.linkId} does not have municipality code"))), None, Some(linearReference),linkInfo))
         } else None
     }
@@ -303,7 +303,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val values = compactJson(asset.toJson)
       val assetGeometry = GeometryUtils.truncateGeometry3D(newLink.geometry, asset.startMeasure, asset.endMeasure)
       val measures = Measures(asset.startMeasure, asset.endMeasure).roundMeasures()
-      val linearReference = LinearReferenceForReport(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, measures.length())
+      val linearReference = LinearReferenceForReport(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, None, measures.length())
       Asset(asset.id, values, Some(newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo)
     })
 

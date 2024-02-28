@@ -536,6 +536,10 @@ object Digiroad2Context {
     new AssetsOnExpiredLinksService()
   }
 
+  lazy val roadLinkReplacementWorkListService: RoadLinkReplacementWorkListService = {
+    new RoadLinkReplacementWorkListService()
+  }
+
   lazy val municipalityAssetMappingService: MunicipalityAssetMappingService = {
     new MunicipalityAssetMappingService()
   }

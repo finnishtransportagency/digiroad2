@@ -321,8 +321,8 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     SimplePointAssetProperty("trafficLight_municipality_id", List(PropertyValue("")), 2),
     SimplePointAssetProperty("trafficLight_state", List(PropertyValue("3")), 2),
     SimplePointAssetProperty("suggest_box", List(PropertyValue("0")), 2),
-    SimplePointAssetProperty("bearing", List(PropertyValue("")), 2),
-    SimplePointAssetProperty("sidecode", List(PropertyValue("2")), 2)
+    SimplePointAssetProperty("bearing", List(PropertyValue("300")), 2),
+    SimplePointAssetProperty("sidecode", List(PropertyValue("3")), 2)
   )
 
 

@@ -702,12 +702,12 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   /**
-   * Update adjusted geometry of the asset
-   *
-   * @param adjustment
-   * @param linkSource
-   * @return
-   */
+    * Update adjusted geometry of the asset
+    *
+    * @param adjustment
+    * @param linkSource
+    * @return
+    */
   private def updateAdjustedGeometry(adjustment: AssetUpdate, linkSource: LinkGeomSource) = {
     massTransitStopDao.updateLrmPosition(adjustment.assetId, adjustment.mValue, adjustment.linkId, linkSource, Some(adjustment.timeStamp))
     updateAssetGeometry(adjustment.assetId, Point(adjustment.lon, adjustment.lat))

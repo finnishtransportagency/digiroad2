@@ -439,7 +439,7 @@ object LaneUpdater {
         val linkGeometry = relevantRoadLinkChange.oldLink.get.geometry
         val linkInfo = Some(LinkInfo(relevantRoadLinkChange.oldLink.get.lifeCycleStatus))
         val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, ol.startMeasure, ol.endMeasure)
-        val linearReference = LinearReferenceForReport(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, ol.endMeasure - ol.startMeasure)
+        val linearReference = LinearReferenceForReport(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, None, ol.endMeasure - ol.startMeasure)
         Some(Asset(ol.id, values, Some(ol.municipalityCode.toInt), Some(laneGeometry), Some(linearReference),linkInfo))
       case None => None
     }
@@ -450,7 +450,7 @@ object LaneUpdater {
       val values = compactJson(JObject(nl.attributes.flatMap(_.toJson).toList))
       val linkGeometry = if (maybeLink.nonEmpty) maybeLink.get.geometry else Seq.empty[Point]
       val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, nl.startMeasure, nl.endMeasure)
-      val linearReference = LinearReferenceForReport(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, nl.endMeasure - nl.startMeasure)
+      val linearReference = LinearReferenceForReport(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, None, nl.endMeasure - nl.startMeasure)
       Asset(nl.id, values, Some(nl.municipalityCode.toInt), Some(laneGeometry), Some(linearReference),linkInfo)
     })
 
