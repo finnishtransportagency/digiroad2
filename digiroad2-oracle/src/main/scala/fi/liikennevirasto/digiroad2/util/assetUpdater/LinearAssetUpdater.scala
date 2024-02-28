@@ -872,9 +872,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     
     if (changeSet.adjustedSideCodes.nonEmpty) {
       logger.debug(s"Saving SideCode adjustments for asset/link ids=${changeSet.adjustedSideCodes.map(a => s"${a.assetId}").mkString(", ")}")
-      adjustedSideCodes(changeSet.adjustedSideCodes)
+      dao.updateSideCodes(changeSet.adjustedSideCodes)
     }
-    
+
     if (changeSet.valueAdjustments.nonEmpty) {
       logger.debug(s"Saving value adjustments for assets: ${changeSet.valueAdjustments.map(a => s"${a.asset.id}").mkString(", ")}")
       changeSet.valueAdjustments.foreach { adjustment =>

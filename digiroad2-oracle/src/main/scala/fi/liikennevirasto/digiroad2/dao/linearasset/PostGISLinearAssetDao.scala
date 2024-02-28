@@ -10,6 +10,7 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewLinearAssetMassOperation}
 import fi.liikennevirasto.digiroad2.util.DataFixture.linearAssetService.getLinkSource
@@ -689,6 +690,31 @@ class PostGISLinearAssetDao() {
         ps.setDouble(2, a.linkMeasures.startMeasure)
         ps.setDouble(3, a.linkMeasures.endMeasure)
         ps.setLong(4, a.id)
+        ps.addBatch()
+      })
+    }
+  }
+
+  def updateSideCodes(list: Seq[SideCodeAdjustment]) = {
+    val statement =
+      """
+      update LRM_POSITION
+      set
+        link_id = (?),
+        side_code = (?),
+        modified_date = current_timestamp
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = (?))
+    """
+    MassQuery.executeBatch(statement) { ps =>
+      list.foreach(a => {
+        ps.setString(1, a.linkId)
+        ps.setInt(2, a.sideCode.value)
+        ps.setLong(3, a.assetId)
         ps.addBatch()
       })
     }
