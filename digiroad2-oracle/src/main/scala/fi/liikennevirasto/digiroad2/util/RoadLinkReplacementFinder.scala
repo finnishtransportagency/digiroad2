@@ -15,9 +15,9 @@ object RoadLinkReplacementFinder {
 
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   lazy val roadLinkReplacementTypeId = 1
-  lazy val replacementSearchRadius: Double = 10.0 // Radius in meters for searching nearby links
+  lazy val replacementSearchRadius: Double = 2.0 // Radius in meters for searching nearby links
   lazy val hausdorffMeasureThreshold: Double = 0.6 // Threshold value for matching links by Hausdorff measure (0-1)
-  lazy val areaMeasureBuffer: Double = 5 // Buffer size in meters for comparing geometries with area measure
+  lazy val areaMeasureBuffer: Double = 3 // Buffer size in meters for comparing geometries with area measure
   lazy val areaMeasureThreshold: Double = 0.6 // Threshold value for matching links by area measure (0-1)
   lazy val missingReplacementService: RoadLinkReplacementWorkListService = new RoadLinkReplacementWorkListService
   lazy val eventBus: DigiroadEventBus = new DummyEventBus
@@ -28,14 +28,16 @@ object RoadLinkReplacementFinder {
     removedLinks.flatMap(removedLink => {
       val addedLinkCentroid = GeometryUtils.calculateCentroid(addedLink.geometry)
       val addedLinkCentered = GeometryUtils.centerGeometry(addedLink.geometry, addedLinkCentroid)
+      val addedLineString = GeometryUtils.pointsToLineString(addedLink.geometry)
       val addedLineStringCentered = GeometryUtils.pointsToLineString(addedLinkCentered)
 
       val removedLinkCentroid = GeometryUtils.calculateCentroid(removedLink.geometry)
       val removedLinkCentered = GeometryUtils.centerGeometry(removedLink.geometry, removedLinkCentroid)
+      val removedLineString = GeometryUtils.pointsToLineString(removedLink.geometry)
       val removedLineStringCentered = GeometryUtils.pointsToLineString(removedLinkCentered)
 
       val hausdorffSimilarityMeasure = GeometryUtils.getHausdorffSimilarityMeasure(addedLineStringCentered, removedLineStringCentered)
-      val areaSimilarityMeasure = GeometryUtils.getAreaSimilarityMeasure(addedLineStringCentered.buffer(areaMeasureBuffer), removedLineStringCentered.buffer(areaMeasureBuffer))
+      val areaSimilarityMeasure = GeometryUtils.getAreaSimilarityMeasure(addedLineString.buffer(areaMeasureBuffer), removedLineString.buffer(areaMeasureBuffer))
 
       if(hausdorffSimilarityMeasure >= hausdorffMeasureThreshold || areaSimilarityMeasure >= areaMeasureThreshold) {
         Some(MatchedRoadLinks(removedLink, addedLink, hausdorffSimilarityMeasure, areaSimilarityMeasure))
