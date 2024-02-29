@@ -62,15 +62,15 @@ object ExpiredRoadLinkHandlingProcess {
   }
 
 
-  def process(): Unit = {
+  def process(cleanRoadLinkTable: Boolean = true): Unit = {
     withDynTransaction{
       logger.info("Starting to process expired road links")
-      handleExpiredRoadLinks()
+      handleExpiredRoadLinks(cleanRoadLinkTable)
       logger.info("Finished processing expired road links")
     }
   }
 
-  def handleExpiredRoadLinks(): Unit = {
+  def handleExpiredRoadLinks(cleanRoadLinkTable:Boolean = true): Unit = {
     val expiredRoadLinksWithExpireDates = roadLinkService.getAllExpiredRoadLinksWithExpiredDates()
     logger.info(s"Expired road links count: ${expiredRoadLinksWithExpireDates.size}")
     val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
@@ -82,13 +82,13 @@ object ExpiredRoadLinkHandlingProcess {
 
     logger.info(s"Empty expired links count: ${emptyExpiredLinks.size}")
     logger.info(s"Assets on expired links count: ${assetsOnExpiredLinks.size}")
-
-    if (emptyExpiredLinks.nonEmpty) {
+    
+    if (cleanRoadLinkTable && emptyExpiredLinks.nonEmpty) {
       LogUtils.time(logger, "Delete and expire road links and properties") {
         roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
       }
-
     }
+    
     if (assetsOnExpiredLinks.nonEmpty) {
       LogUtils.time(logger, s"Insert ${assetsOnExpiredLinks.size} assets to worklist") {
         assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
