@@ -70,9 +70,7 @@ object LaneUpdater {
   }
 
   def fuseLaneSections(replacementResults: Seq[RoadLinkChangeWithResults]): (Seq[PersistedLane], ChangeSet) = {
-    val newLinkIds = replacementResults.flatMap(_.roadLinkChange.newLinks.map(_.linkId)).distinct
-    val changeSets = replacementResults.map(_.changeSet)
-    val lanesOnNewLinks = replacementResults.flatMap(_.lanesOnAdjustedLink)
+    val (newLinkIds: Seq[String], changeSets: Seq[LaneFiller.ChangeSet], lanesOnNewLinks: Seq[PersistedLane]) = extractNeededValues(replacementResults)
     val lanesGroupedByNewLinkId = lanesOnNewLinks.groupBy(_.linkId)
     val initialChangeSet = changeSets.foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
     val linksCount = lanesGroupedByNewLinkId.size
@@ -83,7 +81,19 @@ object LaneUpdater {
     }
     (lanesAfterFuse, changeSet)
   }
-  
+
+  private def extractNeededValues(replacementResults: Seq[RoadLinkChangeWithResults]) = {
+    val newLinkIds = new ListBuffer[String]()
+    val changeSets = new ListBuffer[ChangeSet]()
+    val lanesOnNewLinks = new ListBuffer[PersistedLane]()
+    for ( r <-replacementResults) {
+      newLinkIds.appendAll(r.roadLinkChange.newLinks.map(_.linkId))
+      changeSets.append(r.changeSet)
+      lanesOnNewLinks.appendAll(r.lanesOnAdjustedLink)
+    }
+    
+    (newLinkIds, changeSets, lanesOnNewLinks)
+  }
   private def fusingLoop(newLinkIds: Seq[String], initialChangeSet: ChangeSet, lanesGroupedByNewLinkId: Map[String, Seq[PersistedLane]]) = {
     var percentageProcessed = 0
 
@@ -439,14 +449,12 @@ object LaneUpdater {
     })
   }
 
-  def handleTrafficDirectionChange(workListChanges: Seq[RoadLinkChange], workListMainLanes: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
+  def handleTrafficDirectionChange(workListChanges: Seq[RoadLinkChange], workListMainLanes: Seq[PersistedLane],addedRoadLinks: Seq[RoadLink]): (ChangeSet, Seq[PersistedLane]) = {
     val laneIdsToExpire = workListMainLanes.map(_.id).toSet
-
     val createdMainLanes = workListChanges.flatMap(change => {
       val newLinkIds = change.newLinks.map(_.linkId)
-      // Need to fetch RoadLinks because Link Type is needed for main lane creation
-      val addedRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
-      val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(addedRoadLinks, saveResult = false)
+      val neededLinks = addedRoadLinks.filter(a=> newLinkIds.contains(a.linkId))
+      val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(neededLinks, saveResult = false)
       createdMainLanes
     })
 
@@ -500,36 +508,46 @@ object LaneUpdater {
  
     val linkIdsWithExistingLane = new ListBuffer[PersistedLane]
     val lanesOnOldRoadLinks     = new ListBuffer[PersistedLane]
-    val lanesOnWorkListLinks    = new ListBuffer[PersistedLane]
+    val workListMainLanes       = new ListBuffer[PersistedLane]
     LogUtils.time(logger, "partition lanes into three list") {
       for (lane <- lanes) {
         if (oldLinkIds.contains(lane.linkId)) lanesOnOldRoadLinks.append(lane)
-        if (oldWorkListLinkIds.contains(lane.linkId)) lanesOnWorkListLinks.append(lane)
+        // Additional lanes can't be processed if link is on the lane work list, only handle main lanes on those links
+        if (oldWorkListLinkIds.contains(lane.linkId) && LaneNumber.isMainLane(lane.laneCode)) workListMainLanes.append(lane)
         if (newLinkIds.contains(lane.linkId)) linkIdsWithExistingLane.append(lane)
       }
     }
 
-    (linkIdsWithExistingLane, lanesOnOldRoadLinks, lanesOnWorkListLinks)
+    (linkIdsWithExistingLane, lanesOnOldRoadLinks, workListMainLanes)
+  }
+
+  private def splitOldAndNewIds(roadLinkChanges: Seq[RoadLinkChange]): (ListBuffer[String], ListBuffer[String]) = {
+    val newLinkIds = new ListBuffer[String]()
+    val oldLinkIds = new ListBuffer[String]()
+    for (r <- roadLinkChanges) {
+      newLinkIds.appendAll(r.newLinks.map(_.linkId))
+      oldLinkIds.appendAll(r.oldLink.map(_.linkId))
+    }
+
+    (newLinkIds, oldLinkIds)
   }
   
   def handleChanges(roadLinkChanges: Seq[RoadLinkChange], workListChanges: Seq[RoadLinkChange] = Seq()): ChangeSet = {
-    val oldLinkIds = roadLinkChanges.flatMap(_.oldLink).map(_.linkId)
+    val (oldLinkIds, newLinkIds) = splitOldAndNewIds(roadLinkChanges)
     val oldWorkListLinkIds = workListChanges.flatMap(_.oldLink).map(_.linkId)
 
-    val newLinkIds = roadLinkChanges.flatMap(_.newLinks.map(_.linkId))
-    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
-    val allLanes =  laneService.fetchAllLanesByLinkIds(newLinkIds++ oldLinkIds ++ oldWorkListLinkIds, newTransaction = false)
+    val newLinkIdsString = newLinkIds.toSet ++ workListChanges.flatMap(_.newLinks.map(_.linkId)).toSet
+    val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIdsString, newTransaction = false)
+    val allLanes =  laneService.fetchAllLanesByLinkIds(newLinkIds ++ oldLinkIds ++ oldWorkListLinkIds, newTransaction = false)
     
-    val (linkWithExistingLane,lanesOnOldRoadLinks,lanesOnWorkListLinks) = partitionLanes(allLanes,oldLinkIds,newLinkIds,oldWorkListLinkIds)
+    val (linkWithExistingLane,lanesOnOldRoadLinks,workListMainLanes) = partitionLanes(allLanes,oldLinkIds,newLinkIds,oldWorkListLinkIds)
     val linkIdsWithExistingLane = linkWithExistingLane.map(_.linkId)
     
     if (linkIdsWithExistingLane.nonEmpty) logger.info(s"found already created lanes on new links ${linkIdsWithExistingLane.mkString(", ")}")
 
     val filteredChanges = roadLinkChanges.filterNot(c => c.changeType == Add && linkIdsWithExistingLane.contains(c.newLinks.head.linkId))
     
-    // Additional lanes can't be processed if link is on the lane work list, only handle main lanes on those links
-    val workListMainLanes = lanesOnWorkListLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
-    val (trafficDirectionChangeSet, trafficDirectionCreatedMainLanes) = handleTrafficDirectionChange(workListChanges, workListMainLanes)
+    val (trafficDirectionChangeSet, trafficDirectionCreatedMainLanes) = handleTrafficDirectionChange(workListChanges, workListMainLanes,newRoadLinks)
     var percentageProcessed = 0
     val lanesGroup = IterableOperation.groupByPropertyHashMap(lanesOnOldRoadLinks, (elem: PersistedLane) => elem.linkId)
     
@@ -548,8 +566,7 @@ object LaneUpdater {
       case _ => operateChangeLoop()
     }
 
-    val linksPartOfReplacement = changeSetsAndAdjustedLanes.filter(_.roadLinkChange.changeType == RoadLinkChangeType.Replace)
-      .flatMap(_.roadLinkChange.newLinks.map(_.linkId))
+    val linksPartOfReplacement = extractOnlyReplacementLinkIds(changeSetsAndAdjustedLanes)
     
     val (_, changeSetAfterFuse) = LogUtils.time(logger, s"Fusing lane sections"){
       fuseLaneSections(changeSetsAndAdjustedLanes)
@@ -559,6 +576,15 @@ object LaneUpdater {
     finalChangeSet.copy(splitLanes = removedSplit)
   }
 
+  private def extractOnlyReplacementLinkIds(changeSetsAndAdjustedLanes: Seq[RoadLinkChangeWithResults]): Seq[String] = {
+    val newLinkIds = new ListBuffer[String]()
+    for (r <- changeSetsAndAdjustedLanes) {
+      if(r.roadLinkChange.changeType == RoadLinkChangeType.Replace ) {
+        newLinkIds.appendAll(r.roadLinkChange.newLinks.map(_.linkId))
+      }
+    }
+    newLinkIds
+  }
   private def parLoopChanges(newRoadLinks: Seq[RoadLink], filteredChanges: Seq[RoadLinkChange], lanesGroup: mutable.HashMap[String, Set[PersistedLane]]): ParIterable[RoadLinkChangeWithResults] = {
     val grouped = filteredChanges.grouped(groupSizeForParallelRun).toList.par
     LogUtils.time(logger, s"Core samuutus handling for ${filteredChanges.size} changes, multithreaded") {
