@@ -402,7 +402,9 @@ object ChangeReporter {
     val untilDate = changesProcessedUntil.toString("YYYY-MM-dd")
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
     val path = s"$date/${assetName}_${untilDate}_${contentRowCount}content_rows$withGeometry.csv"
+    logger.info(s"Saving ${assetName}-report to S3")
     s3Service.saveFileToS3(s3Bucket, path, body, "csv")
+    logger.info(s"${assetName}-report saved successfully")
   }
 
   // Used for testing CSV report. Saves file locally to directory 'samuutus-reports-local-test' created in project root directory

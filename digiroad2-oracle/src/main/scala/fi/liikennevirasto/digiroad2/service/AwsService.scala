@@ -5,27 +5,33 @@ import software.amazon.awssdk.core.exception.SdkClientException
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.{GetObjectRequest, HeadObjectRequest, ListObjectsV2Request, PutObjectRequest, S3Object}
+import software.amazon.awssdk.services.s3.model.{AbortMultipartUploadRequest, CompleteMultipartUploadRequest, CompletedMultipartUpload, CompletedPart, CreateMultipartUploadRequest, GetObjectRequest, HeadObjectRequest, ListObjectsV2Request, PutObjectRequest, S3Object, UploadPartRequest}
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 
+import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.io.Source.fromInputStream
+import scala.collection.mutable.Map
 
 class AwsService {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   object S3 {
     val s3: S3Client = S3Client.create()
+    val CHUNK_SIZE = 5 * 1024 * 1024 // 5MB
+
+    private def getContentType(responseType: String): String = responseType match {
+      case "csv" => "text/csv"
+      case _ => "application/json"
+    }
 
     def saveFileToS3(s3Bucket: String, id: String, body: String, responseType: String): Unit = {
-      val contentType = responseType match {
-        case "csv" => "text/csv"
-        case _ => "application/json"
-      }
+      val contentType = getContentType(responseType)
       try {
         val putRequest = PutObjectRequest.builder()
                                          .bucket(s3Bucket)
@@ -37,6 +43,83 @@ class AwsService {
         case e: Throwable =>
           logger.error("Unable to save to s3", e)
       }
+    }
+
+    def saveFileToS3Multipart(s3Bucket: String, id: String, body: String, responseType: String): Unit = {
+      val contentType = getContentType(responseType)
+      val totalChunks = Math.ceil(body.length.toDouble / CHUNK_SIZE).toInt
+      val uploadId = initiateMultipartUpload(s3Bucket, id, contentType)
+
+      try {
+        val uploadedETags = uploadParts(s3Bucket, id, uploadId, body, totalChunks)
+        completeMultipartUpload(s3Bucket, id, uploadId, uploadedETags)
+      } catch {
+        case e: Throwable =>
+          abortMultipartUpload(s3Bucket, id, uploadId)
+          throw e
+      }
+    }
+
+    private def initiateMultipartUpload(s3Bucket: String, id: String, contentType: String): String = {
+      val uploadRequest = CreateMultipartUploadRequest.builder()
+        .bucket(s3Bucket)
+        .key(id)
+        .contentType(contentType)
+        .build()
+      val createResponse = s3.createMultipartUpload(uploadRequest)
+      createResponse.uploadId()
+    }
+
+    private def uploadParts(s3Bucket: String, id: String, uploadId: String, body: String, totalChunks: Int): Map[Int, String] = {
+      var partNumber = 1
+      var offset = 0
+      val uploadedETags = Map[Int, String]()
+
+      for (i <- 0 until totalChunks) {
+        val chunkData = body.substring(offset, Math.min(offset + CHUNK_SIZE, body.length))
+        val eTag = uploadPart(s3Bucket, id, uploadId, partNumber, chunkData)
+        uploadedETags += (partNumber -> eTag)
+        partNumber += 1
+        offset += CHUNK_SIZE
+      }
+      uploadedETags
+    }
+
+    private def uploadPart(s3Bucket: String, id: String, uploadId: String, partNumber: Int, chunkData: String): String = {
+      val partRequest = UploadPartRequest.builder()
+        .bucket(s3Bucket)
+        .key(id)
+        .uploadId(uploadId)
+        .partNumber(partNumber)
+        .build()
+      val chunkInputStream = new ByteArrayInputStream(chunkData.getBytes(StandardCharsets.UTF_8))
+      val requestBody = RequestBody.fromInputStream(chunkInputStream, chunkData.length.toLong)
+      val uploadPartResponse = s3.uploadPart(partRequest, requestBody)
+      uploadPartResponse.eTag()
+    }
+
+    private def completeMultipartUpload(s3Bucket: String, id: String, uploadId: String, uploadedETags: Map[Int, String]): Unit = {
+      val completedParts = uploadedETags.map { case (partNumber, eTag) =>
+        CompletedPart.builder().partNumber(partNumber).eTag(eTag).build()
+      }.toList.asJava
+
+      val completeRequest = CompleteMultipartUploadRequest.builder()
+        .bucket(s3Bucket)
+        .key(id)
+        .uploadId(uploadId)
+        .multipartUpload(CompletedMultipartUpload.builder().parts(completedParts).build())
+        .build()
+
+      s3.completeMultipartUpload(completeRequest)
+    }
+
+    private def abortMultipartUpload(s3Bucket: String, id: String, uploadId: String): Unit = {
+      val abortRequest = AbortMultipartUploadRequest.builder()
+        .bucket(s3Bucket)
+        .key(id)
+        .uploadId(uploadId)
+        .build()
+      s3.abortMultipartUpload(abortRequest)
     }
 
     def getPreSignedUrl(s3Bucket: String, jobId: String): String = {
