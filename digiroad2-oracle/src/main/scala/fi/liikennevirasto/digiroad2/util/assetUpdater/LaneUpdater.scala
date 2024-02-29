@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LaneUtils, LogUtils, MainLanePopulationProcess}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LaneUtils, LogUtils, MainLanePopulationProcess, Parallel}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Add
@@ -27,6 +27,7 @@ import org.json4s.jackson.compactJson
 import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
+import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 object LaneUpdater {
@@ -41,6 +42,9 @@ object LaneUpdater {
   private val logger = LoggerFactory.getLogger(getClass)
   lazy val laneFiller: LaneFiller = new LaneFiller
   private var changes: Seq[ReportedChange] = Seq()
+  val groupSizeForParallelRun = 1500
+  val parallelizationThreshold = 20000
+  val parallelizationLevel = 30
   
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   case class RoadLinkChangeWithResults(roadLinkChange: RoadLinkChange, changeSet: ChangeSet, lanesOnAdjustedLink: Seq[PersistedLane])
@@ -67,6 +71,16 @@ object LaneUpdater {
     val lanesOnNewLinks = replacementResults.flatMap(_.lanesOnAdjustedLink)
     val lanesGroupedByNewLinkId = lanesOnNewLinks.groupBy(_.linkId)
     val initialChangeSet = changeSets.foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
+    val linksCount = lanesGroupedByNewLinkId.size
+
+    val (lanesAfterFuse: Seq[PersistedLane], changeSet: ChangeSet) = linksCount match {
+      case a if a >= parallelizationThreshold => parallelFusing(lanesGroupedByNewLinkId,initialChangeSet)
+      case _ => fusingLoop(newLinkIds, initialChangeSet,lanesGroupedByNewLinkId)
+    }
+    (lanesAfterFuse, changeSet)
+  }
+  
+  private def fusingLoop(newLinkIds: Seq[String], initialChangeSet: ChangeSet, lanesGroupedByNewLinkId: Map[String, Seq[PersistedLane]]) = {
     var percentageProcessed = 0
 
     val (lanesAfterFuse, changeSet) = newLinkIds.zipWithIndex.foldLeft(Seq.empty[PersistedLane], initialChangeSet) { case (accumulatedAdjustments, (linkId, index)) =>
@@ -77,11 +91,32 @@ object LaneUpdater {
 
       (existingAssets ++ adjustedAssets, assetAdjustments)
     }
-
     (lanesAfterFuse, changeSet)
   }
 
-  def fuseLanesOnMergedRoadLink(lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
+  private def parallelFusing(lanesGroupedByNewLinkId: Map[String, Seq[PersistedLane]], initialChangeSet: ChangeSet): (ListBuffer[PersistedLane], ChangeSet) = {
+    val fused = new ListBuffer[PersistedLane]()
+    val changeSetList = new ListBuffer[ChangeSet]()
+    val grouped = lanesGroupedByNewLinkId.grouped(groupSizeForParallelRun).toList.par
+    new Parallel().operation(grouped, parallelizationLevel) {
+      _.map { al =>
+        val ids = al.flatMap(_._2.map(_.id)).toSet
+        val links = al.keys.toSet
+        val lane = al.flatMap(_._2).toSeq
+        val excludeUnneededChangSetItems = ChangeSet( // TODO unittest for duplication error
+          adjustedMValues = initialChangeSet.adjustedMValues.filter(a => links.contains(a.linkId)),
+          adjustedSideCodes = initialChangeSet.adjustedSideCodes.filter(a => ids.contains(a.laneId)),
+          expiredLaneIds = initialChangeSet.expiredLaneIds.intersect(ids)
+        )
+        val (adjustedAssets, assetAdjustments) = fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
+        fused.appendAll(adjustedAssets)
+        changeSetList.append(assetAdjustments)
+      }
+    }
+    (fused, changeSetList.foldLeft(ChangeSet())(LaneFiller.combineChangeSets))
+  }
+  
+  def fuseLanesOnMergedRoadLink(lanesOnRoadLink: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
 
     def equalAttributes(lane: PersistedLane, targetLane: PersistedLane): Boolean = {
       if(LaneNumber.isMainLane(lane.laneCode)) {
@@ -90,9 +125,9 @@ object LaneUpdater {
     }
     def partsAreContinues(origin: PersistedLane, sl: PersistedLane) = Math.abs(sl.startMeasure - origin.endMeasure) < 0.1
     
-    val sortedList = lanes.sortBy(_.startMeasure)
+    val sortedList = lanesOnRoadLink.sortBy(_.startMeasure)
 
-    if (lanes.nonEmpty) {
+    if (lanesOnRoadLink.nonEmpty) {
       val origin = sortedList.head
       val target = sortedList.tail.find(sl =>
         (partsAreContinues(origin, sl) || (LaneNumber.isMainLane(origin.laneCode) && LaneNumber.isMainLane(sl.laneCode)))
@@ -144,7 +179,7 @@ object LaneUpdater {
         (Seq(origin) ++ fused._1, fused._2)
       }
     } else {
-      (lanes, changeSet)
+      (lanesOnRoadLink, changeSet)
     }
   }
 
@@ -475,7 +510,7 @@ object LaneUpdater {
     val workListMainLanes = lanesOnWorkListLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
     val (trafficDirectionChangeSet, trafficDirectionCreatedMainLanes) = handleTrafficDirectionChange(workListChanges, workListMainLanes)
 
-    var percentageProcessed = 0
+    var percentageProcessed = 0 // TODO paraller loop
     val changeSetsAndAdjustedLanes = LogUtils.time(logger, s"Core samuutus handling for ${filteredChanges.size} changes") {
       filteredChanges.zipWithIndex.map(changeWithIndex => {
         val (change, index) = changeWithIndex
