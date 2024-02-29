@@ -15,7 +15,7 @@ object RoadLinkReplacementFinder {
 
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   lazy val roadLinkReplacementTypeId = 1
-  lazy val replacementSearchRadius: Double = 200.0 // Radius in meters for searching nearby links
+  lazy val replacementSearchRadius: Double = 10.0 // Radius in meters for searching nearby links
   lazy val hausdorffMeasureThreshold: Double = 0.6 // Threshold value for matching links by Hausdorff measure (0-1)
   lazy val areaMeasureBuffer: Double = 5 // Buffer size in meters for comparing geometries with area measure
   lazy val areaMeasureThreshold: Double = 0.6 // Threshold value for matching links by area measure (0-1)
@@ -72,9 +72,9 @@ object RoadLinkReplacementFinder {
     val matchedLinks = addedRoadLinks.zipWithIndex.flatMap(addedLinkAndIndex => {
       val (addedLink, index) = addedLinkAndIndex
       percentageProcessed = LogUtils.logArrayProgress(logger, "Find matches for added road links", addedRoadLinks.size, index, percentageProcessed)
-      val addedLinkCentroid = GeometryUtils.calculateCentroid(addedLink.geometry)
       val nearbyRemovedLinks = removedRoadLinks.filter(removedRoadLink => {
-        GeometryUtils.isAnyPointInsideRadius(addedLinkCentroid, replacementSearchRadius, removedRoadLink.geometry)
+        GeometryUtils.isAnyPointInsideRadius(addedLink.geometry.head, replacementSearchRadius, removedRoadLink.geometry) ||
+          GeometryUtils.isAnyPointInsideRadius(addedLink.geometry.last, replacementSearchRadius, removedRoadLink.geometry)
       })
       findMatchesWithSimilarity(addedLink, nearbyRemovedLinks)
     })
