@@ -52,6 +52,8 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       TestDynamicLinearAssetUpdater.updateByRoadLinks(DamagedByThaw.typeId, changes)
       val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(DamagedByThaw.typeId, newLinks, false)
       assetsAfter.size should be(3)
+      assetsAfter.map(_.id).contains(id)
+
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9.334)
@@ -116,6 +118,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, Seq(newLinkId), false)
 
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id)
       assetsAfter.head.value.get.toString should be(cyclingAndWalkingValue.toString)
     }
   }
@@ -143,6 +146,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, newLinkIds, false)
 
       assetsAfter.size should be(3)
+      assetsAfter.map(_.id).contains(id)
       assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
       assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
       assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
@@ -177,6 +181,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, Seq(newLinkId), false)
 
       assetsAfter.size should be(2)
+      assetsAfter.map(_.id).sorted should be(assetsBefore.map(_.id).sorted)
       val sortedAssets = assetsAfter.sortBy(_.startMeasure)
       sortedAssets.head.value.get.toString should be(cyclingAndWalkingValue.toString)
       sortedAssets.head.startMeasure should be(0.0)
@@ -211,6 +216,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, Seq(newLinkId), false)
 
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id)
       assetsAfter.head.value.get.toString should be(cyclingAndWalkingValue.toString)
       assetsAfter.head.startMeasure should be(0.0)
       assetsAfter.head.endMeasure should be(35.212)
@@ -257,6 +263,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, Seq(newLinkId), false)
 
       assetsAfter.size should be(2)
+      assetsAfter.forall(a => assetsBefore.map(_.id).contains(a.id))
       val sortedAssets = assetsAfter.sortBy(_.startMeasure)
       sortedAssets.head.value.get.toString should be(cyclingAndWalkingValue.toString)
       sortedAssets.head.startMeasure should be(0.0)
@@ -307,6 +314,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       val assetsAfter = serviceDynamic.getPersistedAssetsByLinkIds(CyclingAndWalking.typeId, Seq(newLinkId), false)
 
       assetsAfter.size should be(4)
+      assetsAfter.map(_.id).sorted should be(assetsBefore.map(_.id).sorted)
       val sortedAssets = assetsAfter.sortBy(_.startMeasure)
       sortedAssets.head.value.get.toString should be(cyclingAndWalkingValue.toString)
       sortedAssets.head.startMeasure should be(0.0)
