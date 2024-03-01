@@ -563,7 +563,7 @@ trait LinearAssetOperations {
 
     if (adjust) adjustAssets(ids)else ids
   }
-  def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
+  def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None, fromAssetUpdater: Boolean = false): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -575,7 +575,7 @@ trait LinearAssetOperations {
 
       value match {
         case NumericValue(intValue) =>
-          if ((validateMinDistance(newMeasures.startMeasure, oldLinearAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) || newSideCode != oldLinearAsset.sideCode) {
+          if (((validateMinDistance(newMeasures.startMeasure, oldLinearAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) || newSideCode != oldLinearAsset.sideCode) && !fromAssetUpdater) {
             dao.updateExpiration(id)
             Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue.apply(intValue), newSideCode, newMeasures, username, createTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldLinearAsset.verifiedBy, informationSource = informationSource))
           }

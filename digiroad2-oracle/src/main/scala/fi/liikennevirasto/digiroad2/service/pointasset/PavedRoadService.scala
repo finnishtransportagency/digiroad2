@@ -69,19 +69,6 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
-  override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
-    if (ids.isEmpty)
-      return ids
-
-    ids.flatMap { id =>
-      value match {
-        case DynamicValue(multiTypeProps) =>
-          updateValueByExpiration(id, DynamicValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, timeStamp, sideCode, informationSource = informationSource)
-        case _ =>
-          Some(id)
-      }
-    }
-  }
 
   override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, timeStamp: Long = createTimeStamp()): Seq[Long] = {
     withDynTransaction {

@@ -115,7 +115,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
 
   }
 
-  override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None): Seq[Long] = {
+  override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None, fromAssetUpdater: Boolean = false): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -131,7 +131,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
 
       value match {
         case TextualValue(textValue) =>
-          if ((validateMinDistance(newMeasures.startMeasure, oldLinearAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) || newSideCode != oldLinearAsset.sideCode) {
+          if (((validateMinDistance(newMeasures.startMeasure, oldLinearAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) || newSideCode != oldLinearAsset.sideCode) && !fromAssetUpdater) {
             dao.updateExpiration(id)
             Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, TextualValue.apply(textValue), newSideCode, newMeasures, username, createTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldLinearAsset.verifiedBy, informationSource = informationSource))
           }
