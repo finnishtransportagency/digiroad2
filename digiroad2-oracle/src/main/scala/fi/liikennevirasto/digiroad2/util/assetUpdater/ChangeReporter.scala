@@ -158,6 +158,7 @@ object ChangeReporter {
   implicit lazy val serializationFormats: Formats = DefaultFormats
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
   val localReportDirectoryName = "samuutus-reports-local-test"
+  val SINGLE_UPLOAD_MAX_SIZE = 100 * 1024 * 1024 // files greater than 100MB should be uploaded using MultipartUpload
 
 
 
@@ -396,15 +397,27 @@ object ChangeReporter {
     (stringWriter.toString, contentRows)
   }
 
+  def requiresMultipartUpload(body: String): Boolean = {
+    if (body.length > SINGLE_UPLOAD_MAX_SIZE) {
+      true
+    } else {
+      // double check, as body size might still exceed the limit due to multi-byte characters
+      val sizeInBytes = body.getBytes("UTF-8").length
+      sizeInBytes > SINGLE_UPLOAD_MAX_SIZE
+    }
+  }
+
   def saveReportToS3(assetName: String, changesProcessedUntil: DateTime, body: String, contentRowCount: Int,
                      hasGeometry: Boolean = false): Unit = {
     val date = DateTime.now().toString("YYYY-MM-dd")
     val untilDate = changesProcessedUntil.toString("YYYY-MM-dd")
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
     val path = s"$date/${assetName}_${untilDate}_${contentRowCount}content_rows$withGeometry.csv"
-    logger.info(s"Saving ${assetName}-report to S3")
-    s3Service.saveFileToS3(s3Bucket, path, body, "csv")
-    logger.info(s"${assetName}-report saved successfully")
+    logger.info(s"Saving ${path} to S3")
+    requiresMultipartUpload(body) match {
+      case true => s3Service.saveFileToS3Multipart(s3Bucket, path, body, "csv")
+      case false => s3Service.saveFileToS3(s3Bucket, path, body, "csv")
+    }
   }
 
   // Used for testing CSV report. Saves file locally to directory 'samuutus-reports-local-test' created in project root directory

@@ -16,14 +16,18 @@ import java.time.temporal.ChronoUnit
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.io.Source.fromInputStream
+import scala.collection.mutable
 import scala.collection.mutable.Map
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class AwsService {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   object S3 {
     val s3: S3Client = S3Client.create()
-    val CHUNK_SIZE = 5 * 1024 * 1024 // 5MB
+    val CHUNK_SIZE = 100 * 1024 * 1024 // 100MB
 
     private def getContentType(responseType: String): String = responseType match {
       case "csv" => "text/csv"
@@ -47,16 +51,16 @@ class AwsService {
 
     def saveFileToS3Multipart(s3Bucket: String, id: String, body: String, responseType: String): Unit = {
       val contentType = getContentType(responseType)
-      val totalChunks = Math.ceil(body.length.toDouble / CHUNK_SIZE).toInt
       val uploadId = initiateMultipartUpload(s3Bucket, id, contentType)
 
       try {
-        val uploadedETags = uploadParts(s3Bucket, id, uploadId, body, totalChunks)
+        val uploadedETags = Await.result(uploadParts(s3Bucket, id, uploadId, body), 15.minutes)
         completeMultipartUpload(s3Bucket, id, uploadId, uploadedETags)
+        logger.info(s"Successfully saved ${id} to S3")
       } catch {
         case e: Throwable =>
           abortMultipartUpload(s3Bucket, id, uploadId)
-          throw e
+          logger.error(s"Unable to save ${id} to s3", e)
       }
     }
 
@@ -70,22 +74,24 @@ class AwsService {
       createResponse.uploadId()
     }
 
-    private def uploadParts(s3Bucket: String, id: String, uploadId: String, body: String, totalChunks: Int): Map[Int, String] = {
-      var partNumber = 1
-      var offset = 0
-      val uploadedETags = Map[Int, String]()
 
-      for (i <- 0 until totalChunks) {
+    def uploadParts(s3Bucket: String, id: String, uploadId: String, body: String): Future[mutable.Map[Int, String]] = {
+      val totalChunks = Math.ceil(body.length.toDouble / CHUNK_SIZE).toInt
+      val uploadedETags = mutable.Map[Int, String]()
+
+      Future.traverse(1 to totalChunks) { partNumber =>
+        val offset = (partNumber - 1) * CHUNK_SIZE
         val chunkData = body.substring(offset, Math.min(offset + CHUNK_SIZE, body.length))
-        val eTag = uploadPart(s3Bucket, id, uploadId, partNumber, chunkData)
-        uploadedETags += (partNumber -> eTag)
-        partNumber += 1
-        offset += CHUNK_SIZE
-      }
-      uploadedETags
+        uploadPart(s3Bucket, id, uploadId, partNumber, chunkData).map { eTag =>
+          uploadedETags.synchronized {
+            uploadedETags += (partNumber -> eTag)
+          }
+          (partNumber, eTag)
+        }
+      }.map(_ => uploadedETags)
     }
 
-    private def uploadPart(s3Bucket: String, id: String, uploadId: String, partNumber: Int, chunkData: String): String = {
+    private def uploadPart(s3Bucket: String, id: String, uploadId: String, partNumber: Int, chunkData: String): Future[String] = {
       val partRequest = UploadPartRequest.builder()
         .bucket(s3Bucket)
         .key(id)
@@ -94,13 +100,16 @@ class AwsService {
         .build()
       val chunkInputStream = new ByteArrayInputStream(chunkData.getBytes(StandardCharsets.UTF_8))
       val requestBody = RequestBody.fromInputStream(chunkInputStream, chunkData.length.toLong)
-      val uploadPartResponse = s3.uploadPart(partRequest, requestBody)
-      uploadPartResponse.eTag()
+
+      Future {
+        val uploadPartResponse = s3.uploadPart(partRequest, requestBody)
+        uploadPartResponse.eTag()
+      }
     }
 
     private def completeMultipartUpload(s3Bucket: String, id: String, uploadId: String, uploadedETags: Map[Int, String]): Unit = {
-      val completedParts = uploadedETags.map { case (partNumber, eTag) =>
-        CompletedPart.builder().partNumber(partNumber).eTag(eTag).build()
+      val completedParts = uploadedETags.map {
+        case (partNumber, eTag) => CompletedPart.builder().partNumber(partNumber).eTag(eTag).build()
       }.toList.asJava
 
       val completeRequest = CompleteMultipartUploadRequest.builder()
