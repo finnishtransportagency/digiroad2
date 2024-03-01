@@ -876,9 +876,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
 
     if (changeSet.valueAdjustments.nonEmpty) {
-      logger.debug(s"Saving value adjustments for assets: ${changeSet.valueAdjustments.map(a => s"${a.asset.id}").mkString(", ")}")
+      logger.debug(s"Saving value adjustments for assets: ${changeSet.valueAdjustments.map(a => s"${a.assetId}").mkString(", ")}")
       changeSet.valueAdjustments.foreach { adjustment =>
-        service.updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
+        service.updateWithoutTransaction(Seq(adjustment.assetId), adjustment.value, adjustment.modifiedBy)
       }
     }
   }

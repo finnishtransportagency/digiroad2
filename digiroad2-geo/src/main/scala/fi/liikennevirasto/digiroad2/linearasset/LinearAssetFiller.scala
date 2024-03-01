@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 object LinearAssetFiller {
   case class MValueAdjustment(assetId: Long, linkId: String, startMeasure: Double, endMeasure: Double,timeStamp: Long=0)
   case class SideCodeAdjustment(assetId: Long, linkId: String, sideCode: SideCode, typeId: Int,oldId:Long = 0 )
-  case class ValueAdjustment(asset: PieceWiseLinearAsset)
+  case class ValueAdjustment(assetId: Long, value: Value, modifiedBy: String)
   case class ChangeSet(droppedAssetIds: Set[Long],
                        adjustedMValues: Seq[MValueAdjustment],
                        adjustedSideCodes: Seq[SideCodeAdjustment],
@@ -23,7 +23,7 @@ object LinearAssetFiller {
         this.adjustedMValues.filterNot(_.assetId <= 0),
         this.adjustedSideCodes.filterNot(_.assetId <= 0),
         this.expiredAssetIds.filterNot(_ <= 0),
-        this.valueAdjustments.filterNot(_.asset.id <= 0))
+        this.valueAdjustments.filterNot(_.assetId <= 0))
     }
   }
 
