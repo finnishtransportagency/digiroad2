@@ -33,6 +33,14 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.ParIterable
 import scala.util.{Failure, Random, Success, Try}
 
+
+object ParConstant {
+  val groupSizeForParallelRun = 1500
+  val parallelizationThreshold = 20000
+  val parallelizationLevel = 30
+}
+
+
 object LaneUpdater {
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -45,9 +53,9 @@ object LaneUpdater {
   private val logger = LoggerFactory.getLogger(getClass)
   lazy val laneFiller: LaneFiller = new LaneFiller
   private var changes: Seq[ReportedChange] = Seq()
-  val groupSizeForParallelRun = 1
-  val parallelizationThreshold = 1
-  val maximumParallelismLevel = 30
+  var groupSizeForParallelRun = ParConstant.groupSizeForParallelRun
+  var parallelizationThreshold = ParConstant.parallelizationThreshold
+  var maximumParallelismLevel = ParConstant.parallelizationLevel
   
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   case class RoadLinkChangeWithResults(roadLinkChange: RoadLinkChange, changeSet: ChangeSet, lanesOnAdjustedLink: Seq[PersistedLane])
