@@ -34,7 +34,7 @@ object LaneFiller {
 
   def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (changeSet1, changeSet2) => {
      val mergedSplit = (changeSet1.splitLanes ++ changeSet2.splitLanes).distinct.groupBy(_.originalLane.id).map(
-       a=> {LaneSplit(originalLane = a._2.head.originalLane,lanesToCreate= a._2.flatMap(_.lanesToCreate).distinct)}
+       a=> LaneSplit(originalLane = a._2.head.originalLane,lanesToCreate= a._2.flatMap(_.lanesToCreate).distinct)
     )
     changeSet1.copy(
       adjustedMValues = (changeSet1.adjustedMValues ++ changeSet2.adjustedMValues).distinct,

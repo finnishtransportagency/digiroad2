@@ -46,13 +46,12 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     override def historyDao: LaneHistoryDao = laneHistoryDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
   }
-
-
+  //change parallelism level, call resetParLevel after running samuutus
   private def setParLevel(): Unit = {
     LaneUpdater.groupSizeForParallelRun = 1
     LaneUpdater.parallelizationThreshold = 1
   }
-  private def setParConstant(): Unit = {
+  private def resetParLevel(): Unit = {
     LaneUpdater.groupSizeForParallelRun = ParConstant.groupSizeForParallelRun
     LaneUpdater.parallelizationThreshold = ParConstant.parallelizationThreshold
     LaneUpdater.maximumParallelismLevel = ParConstant.parallelizationLevel
@@ -466,7 +465,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val changeSet = LaneUpdater.handleChanges(relevantChange)
       LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChange)
 
-      setParConstant()
+      resetParLevel()
 
       // Verify that Lanes within deleted Link are removed, and the Main Lane is copied to New Link
       val lanesOnOldLinkAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkID)).sortBy(lane => (lane.laneCode, lane.sideCode))
@@ -1443,7 +1442,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val changeSet = LaneUpdater.handleChanges(relevantChanges)
       LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChanges)
 
-      setParConstant()
+      resetParLevel()
 
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(newLinkIds)
       lanesAfterChanges.size should equal(11)

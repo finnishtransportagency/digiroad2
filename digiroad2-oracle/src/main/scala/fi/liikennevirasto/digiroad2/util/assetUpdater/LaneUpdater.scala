@@ -40,7 +40,6 @@ object ParConstant {
   val parallelizationLevel = 30
 }
 
-
 object LaneUpdater {
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -161,8 +160,7 @@ object LaneUpdater {
       generatedPersistedLanes = initialChangeSet.generatedPersistedLanes,
       splitLanes = initialChangeSet.splitLanes.filter(_.lanesToCreate.isEmpty)
     )
-    changeSetList.append(otherChanges)
-    val merged = changeSetList.foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
+    val merged = (Seq(otherChanges) ++ changeSetList).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
     (fused.distinct,merged)
   }
   
@@ -231,18 +229,7 @@ object LaneUpdater {
       (lanesOnRoadLink, changeSet)
     }
   }
-
-  private def checkDuplicate(changeSetWithFused: ChangeSet): Unit = {
-    val test3 = changeSetWithFused.positionAdjustments.groupBy(_.laneId)
-    val test4 = test3.map(a => (a._1, a._2.size)).toSeq.sortBy(_._2).reverse
-
-    val test = changeSetWithFused.splitLanes.flatMap(_.lanesToCreate).groupBy(_.id)
-    val test2 = test.map(a => (a._1, a._2.size)).toSeq.sortBy(_._2).reverse
-
-    if ((test2.nonEmpty && test2.head._2 > 1) || (test4.nonEmpty && test4.head._2 > 1)) {
-      println("")
-    }
-  }
+  
   def updateSamuutusChangeSet(changeSet: ChangeSet, roadLinkChanges: Seq[RoadLinkChange]): Seq[ChangedAsset] = {
 
     def expireLanes(laneIdsToExpire: Set[Long]): Seq[ChangedAsset] = {
@@ -551,7 +538,6 @@ object LaneUpdater {
   }
 
   private def partitionLanes(lanes: Seq[PersistedLane], oldLinkIds: Seq[String], newLinkIds: Seq[String], oldWorkListLinkIds: Seq[String]) = {
- 
     val linkIdsWithExistingLane = new ListBuffer[PersistedLane]
     val lanesOnOldRoadLinks     = new ListBuffer[PersistedLane]
     val workListMainLanes       = new ListBuffer[PersistedLane]
@@ -568,13 +554,10 @@ object LaneUpdater {
   }
 
   private def splitOldAndNewIds(roadLinkChanges: Seq[RoadLinkChange]): (ListBuffer[String], ListBuffer[String]) = {
-    val newLinkIds = new ListBuffer[String]()
-    val oldLinkIds = new ListBuffer[String]()
+   val (newLinkIds,oldLinkIds) = (new ListBuffer[String](),new ListBuffer[String]())
     for (r <- roadLinkChanges) {
-      newLinkIds.appendAll(r.newLinks.map(_.linkId))
-      oldLinkIds.appendAll(r.oldLink.map(_.linkId))
+      newLinkIds.appendAll(r.newLinks.map(_.linkId)); oldLinkIds.appendAll(r.oldLink.map(_.linkId))
     }
-
     (oldLinkIds,newLinkIds )
   }
   
