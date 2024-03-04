@@ -18,6 +18,7 @@ import org.joda.time.DateTime
 import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
 
+import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Seq, mutable}
@@ -84,6 +85,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private val emptyStep: OperationStep = OperationStep(Seq(), None, Seq())
   val groupSizeForParallelRun = 1500
   val parallelizationThreshold = 20000
+  val maximumParallelismLevel = 30
 
   // Mark generated part to be removed. Used when removing pavement in PaveRoadUpdater
   protected val removePart: Int = -1
@@ -651,26 +653,38 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     /**
       *
-      * @param level default five is arbitrary, adjust as needed
       * [[groupSizeForParallelRun]] if we assume one link will be operated in ~ 43ms then 1500 links will be operated about in one minute.
       * @return
       */
-    def parallelLoop(level: Int = 5):List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
+    def parallelLoop(): List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
       val grouped = assetsByLink.grouped(groupSizeForParallelRun).toList.par
-      new Parallel().operation(grouped, level){_.map{al=>
-        val ids = al.flatMap(_._2.assets.map(_.id)).toSet
-        val links =  al.keys.toSet
-        val excludeUnneededChangSetItems = changeSet match { 
-          case Some(x) => Some(ChangeSet(
-            droppedAssetIds = x.droppedAssetIds.intersect(ids),
-            adjustedMValues = x.adjustedMValues.filter(a => links.contains(a.linkId)),
-            adjustedSideCodes = x.adjustedSideCodes.filter(a => ids.contains(a.assetId)),
-            expiredAssetIds = x.expiredAssetIds.intersect(ids),
-            valueAdjustments = x.valueAdjustments
-          ))
-          case None => None
+      val totalTasks = grouped.size
+      val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
+      logger.info(s"Asset groups: $totalTasks, parallelism level used: $level")
+      val processedLinksCounter = new AtomicInteger(0)
+      val progressTenPercentCounter = new AtomicInteger(0)
+
+      new Parallel().operation(grouped, level) { tasks =>
+        tasks.map { al =>
+          val ids = al.flatMap(_._2.assets.map(_.id)).toSet
+          val links = al.keys.toSet
+          val excludeUnneededChangeSetItems = changeSet match {
+            case Some(x) => Some(ChangeSet(
+              droppedAssetIds = x.droppedAssetIds.intersect(ids),
+              adjustedMValues = x.adjustedMValues.filter(a => links.contains(a.linkId)),
+              adjustedSideCodes = x.adjustedSideCodes.filter(a => ids.contains(a.assetId)),
+              expiredAssetIds = x.expiredAssetIds.intersect(ids),
+              valueAdjustments = x.valueAdjustments
+            ))
+            case None => None
+          }
+
+          val totalLinksProcessed = processedLinksCounter.getAndIncrement()
+          progressTenPercentCounter.set(LogUtils.logArrayProgress(logger, "Adjusting assets parallel", totalTasks, totalLinksProcessed, progressTenPercentCounter.get()))
+
+          adjusting(typeId, excludeUnneededChangeSetItems, al)
         }
-        adjusting(typeId, excludeUnneededChangSetItems,al)}}.toList
+      }.toList
     }
 
     val linksCount = assetsByLink.size
