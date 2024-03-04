@@ -130,7 +130,7 @@ object LaneUpdater {
         val ids = al.flatMap(_._2.map(_.id)).toSet
         val links = al.keys.toSet
         val lane = al.flatMap(_._2).toSeq
-        val excludeUnneededChangSetItems = ChangeSet( // TODO unittest for duplication error
+        val excludeUnneededChangSetItems = ChangeSet(
           adjustedMValues = initialChangeSet.adjustedMValues.filter(a => links.contains(a.linkId)),
           adjustedSideCodes = initialChangeSet.adjustedSideCodes.filter(a => ids.contains(a.laneId)),
           positionAdjustments = initialChangeSet.positionAdjustments.filter(a => ids.contains(a.laneId)),
@@ -146,14 +146,12 @@ object LaneUpdater {
       }
     }
 
-    for (t <-operated) {
-      fused.appendAll(t._1)
-      changeSetList.append(t._2)
-    }
+    for (t <-operated) {fused.appendAll(t._1); changeSetList.append(t._2)}
     
     val otherChanges = ChangeSet(
       expiredLaneIds = initialChangeSet.expiredLaneIds, 
-      generatedPersistedLanes = initialChangeSet.generatedPersistedLanes
+      generatedPersistedLanes = initialChangeSet.generatedPersistedLanes,
+      splitLanes = initialChangeSet.splitLanes.filter(_.lanesToCreate.isEmpty)
     )
     changeSetList.append(otherChanges)
     val merged = changeSetList.foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
