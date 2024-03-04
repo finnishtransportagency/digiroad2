@@ -94,6 +94,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       massTransitStopService.adjustmentOperation(createdStop1, corrected1, change.newLinks.find(_.linkId == newLinkId1).get)
       val adjustedAsset1 = massTransitStopService.getPersistedAssetsByIds(Set(stopId1)).head
       val distanceToOldLocation1 = Point(adjustedAsset1.lon, adjustedAsset1.lat).distance2DTo(Point(createdStop1.lon, createdStop1.lat))
+      adjustedAsset1.id should be(createdStop1.id)
       adjustedAsset1.linkId should be(newLinkId1)
       adjustedAsset1.nationalId should be(createdStop1.nationalId)
       adjustedAsset1.floating should be(false)
@@ -109,6 +110,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       massTransitStopService.adjustmentOperation(createdStop2, corrected2, change.newLinks.find(_.linkId == newLinkId2).get)
       val adjustedAsset2 = massTransitStopService.getPersistedAssetsByIds(Set(stopId2)).head
       val distanceToOldLocation2 = Point(adjustedAsset2.lon, adjustedAsset2.lat).distance2DTo(Point(createdStop2.lon, createdStop2.lat))
+      adjustedAsset2.id should be(createdStop2.id)
       adjustedAsset2.linkId should be(newLinkId2)
       adjustedAsset2.nationalId should be(createdStop2.nationalId)
       adjustedAsset2.floating should be(false)
@@ -233,6 +235,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
 
       massTransitStopService.adjustmentOperation(terminalStop, corrected, newLinkInfo)
       val adjustedTerminalStop = massTransitStopService.getPersistedAssetsByIds(Set(terminalStopId)).head
+      adjustedTerminalStop.id should be(terminalStopId)
       adjustedTerminalStop.propertyData.filterNot(_.publicId == "muokattu_viimeksi").foreach{ property =>
         val oldProperty = terminalStop.propertyData.find(_.publicId == property.publicId).get
         property should be(oldProperty)
@@ -283,6 +286,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       massTransitStopService.adjustmentOperation(createdStop1, corrected1, change1.newLinks.head)
       val adjustedAsset1 = massTransitStopService.getPersistedAssetsByIds(Set(stopId1)).head
       val distanceToOldLocation1 = Point(adjustedAsset1.lon, adjustedAsset1.lat).distance2DTo(Point(createdStop1.lon, createdStop1.lat))
+      adjustedAsset1.id should be(createdStop1.id)
       adjustedAsset1.linkId should be(newLinkId)
       adjustedAsset1.nationalId should be(createdStop1.nationalId)
       adjustedAsset1.floating should be(false)
@@ -301,6 +305,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
       massTransitStopService.adjustmentOperation(createdStop2, corrected2, change2.newLinks.head)
       val adjustedAsset2 = massTransitStopService.getPersistedAssetsByIds(Set(stopId2)).head
       val distanceToOldLocation2 = Point(adjustedAsset2.lon, adjustedAsset2.lat).distance2DTo(Point(createdStop2.lon, createdStop2.lat))
+      adjustedAsset2.id should be(createdStop2.id)
       adjustedAsset2.linkId should be(newLinkId)
       adjustedAsset2.nationalId should be(createdStop2.nationalId)
       adjustedAsset2.floating should be(false)
