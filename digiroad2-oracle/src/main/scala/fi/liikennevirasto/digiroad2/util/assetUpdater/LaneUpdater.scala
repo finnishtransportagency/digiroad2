@@ -594,21 +594,23 @@ object LaneUpdater {
     }
   }
   private def operateChanges(newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks:  mutable.HashMap[String, Set[PersistedLane]], change: RoadLinkChange) = {
+    val relevantLinksIds = change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
+    val relevantLinks = newRoadLinks.filter(a=>relevantLinksIds.contains(a.linkId))
     change.changeType match {
       case RoadLinkChangeType.Add =>
-        handleAddChange(change, newRoadLinks)
+        handleAddChange(change, relevantLinks)
       case RoadLinkChangeType.Remove =>
         handleRemoveChange(change, lanesOnOldRoadLinks)
       case RoadLinkChangeType.Replace =>
-        handleReplaceChange(change, newRoadLinks, lanesOnOldRoadLinks)
+        handleReplaceChange(change, relevantLinks, lanesOnOldRoadLinks)
       case RoadLinkChangeType.Split =>
-        handleSplitChange(change, newRoadLinks, lanesOnOldRoadLinks)
+        handleSplitChange(change, relevantLinks, lanesOnOldRoadLinks)
     }
   }
-  private def handleAddChange(change: RoadLinkChange, newRoadLinks: Seq[RoadLink]): RoadLinkChangeWithResults = {
+  private def handleAddChange(change: RoadLinkChange, relevantLinks: Seq[RoadLink]): RoadLinkChangeWithResults = {
     val newRoadLinkInfo = change.newLinks.headOption
       .getOrElse(throw new NoSuchElementException(s"Replacement change is missing new link info, old linkID: ${change.oldLink.get.linkId}"))
-    val addedRoadLinkOption = newRoadLinks.find(_.linkId == newRoadLinkInfo.linkId)
+    val addedRoadLinkOption = relevantLinks.find(_.linkId == newRoadLinkInfo.linkId)
     addedRoadLinkOption match {
       case Some(roadLink) =>
         if (roadLink.linkType == TractorRoad) {
@@ -627,12 +629,12 @@ object LaneUpdater {
     RoadLinkChangeWithResults(change, ChangeSet(expiredLaneIds = lanesToExpireOnRemovedLink), Seq())
   }
 
-  private def handleReplaceChange(change: RoadLinkChange, newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks:  mutable.HashMap[String, Set[PersistedLane]]): RoadLinkChangeWithResults = {
+  private def handleReplaceChange(change: RoadLinkChange, relevantLinks: Seq[RoadLink], lanesOnOldRoadLinks:  mutable.HashMap[String, Set[PersistedLane]]): RoadLinkChangeWithResults = {
     val lanesOnReplacedLink = extractLanes(lanesOnOldRoadLinks, change.oldLink.get)
     val newRoadLinkInfo = change.newLinks.headOption
       .getOrElse(throw new NoSuchElementException(s"Replacement change is missing new link info, old linkID: ${change.oldLink.get.linkId}"))
     val newLinkId = newRoadLinkInfo.linkId
-    val replacementRoadLinkOption = newRoadLinks.find(_.linkId == newLinkId)
+    val replacementRoadLinkOption = relevantLinks.find(_.linkId == newLinkId)
     replacementRoadLinkOption match {
       case Some(roadLink) =>
         if (roadLink.linkType == TractorRoad) {
@@ -649,9 +651,9 @@ object LaneUpdater {
 
   }
 
-  private def handleSplitChange(change: RoadLinkChange, newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks:  mutable.HashMap[String, Set[PersistedLane]]): RoadLinkChangeWithResults= {
+  private def handleSplitChange(change: RoadLinkChange, relevantLinks: Seq[RoadLink], lanesOnOldRoadLinks:  mutable.HashMap[String, Set[PersistedLane]]): RoadLinkChangeWithResults= {
     val oldRoadLink = change.oldLink.get
-    val newSplitRoadLinks = newRoadLinks.filter(link => change.newLinks.map(_.linkId).contains(link.linkId))
+    val newSplitRoadLinks = relevantLinks.filter(link => change.newLinks.map(_.linkId).contains(link.linkId))
     val lanesOnSplitLink = extractLanes(lanesOnOldRoadLinks, oldRoadLink)
     val adjustmentsAndAdjustedLanes = fillSplitLinksWithExistingLanes(lanesOnSplitLink, newSplitRoadLinks, change)
     val adjustments = adjustmentsAndAdjustedLanes._1
