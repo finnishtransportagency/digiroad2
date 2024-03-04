@@ -15,13 +15,12 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LaneUtils, LogUtils, MainLanePopulationProcess, Parallel}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, LogUtils, MainLanePopulationProcess, Parallel}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Add
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.util.CustomIterableOperations.IterableOperation
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LaneUpdater.fusingLoop
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.json4s.JsonAST.JObject
@@ -29,10 +28,9 @@ import org.json4s.jackson.compactJson
 import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
-import scala.collection.immutable.HashMap
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.collection.parallel.{ParIterable, ParSeq}
+import scala.collection.parallel.ParIterable
 import scala.util.{Failure, Random, Success, Try}
 
 object LaneUpdater {
@@ -92,12 +90,7 @@ object LaneUpdater {
       case a if a >= parallelizationThreshold => parallelFusing(lanesGroupedByNewLinkId,initialChangeSet)
       case _ => fusingLoop(newLinkIds, initialChangeSet,lanesGroupedByNewLinkId)
     }
-    
- /*   val (lanesAfterFuse2: Seq[PersistedLane], changeSet2: ChangeSet) = fusingLoop(newLinkIds, initialChangeSet,lanesGroupedByNewLinkId)
-
-    val splitLane1 =changeSet.splitLanes.flatMap(_.lanesToCreate)
-    val splitLane2 =changeSet2.splitLanes.flatMap(_.lanesToCreate)*/
-      (lanesAfterFuse, changeSet)
+    (lanesAfterFuse, changeSet)
   }
 
   private def extractNeededValues(replacementResults: Seq[RoadLinkChangeWithResults]) = {
@@ -132,8 +125,7 @@ object LaneUpdater {
     val totalTasks = grouped.size
     val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
     logger.info(s"Asset groups: $totalTasks, parallelism level used: $level")
-    
-    new Parallel().operation(grouped, level) {
+    val operated =  new Parallel().operation(grouped, level) {
       _.map { al =>
         val ids = al.flatMap(_._2.map(_.id)).toSet
         val links = al.keys.toSet
@@ -150,10 +142,13 @@ object LaneUpdater {
             }  else  None
           }).filter(_.nonEmpty).map(_.get)
         )
-        val (adjustedAssets, assetAdjustments) = fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
-        fused.appendAll(adjustedAssets)
-        changeSetList.append(assetAdjustments)
+       fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
       }
+    }
+
+    for (t <-operated) {
+      fused.appendAll(t._1)
+      changeSetList.append(t._2)
     }
     
     val otherChanges = ChangeSet(
@@ -162,7 +157,7 @@ object LaneUpdater {
     )
     changeSetList.append(otherChanges)
     val merged = changeSetList.foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
-    (fused,merged)
+    (fused.distinct,merged)
   }
   
   def fuseLanesOnMergedRoadLink(lanesOnRoadLink: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
