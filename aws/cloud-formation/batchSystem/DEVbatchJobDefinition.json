@@ -12,10 +12,13 @@
   ],
   "containerProperties": {
     "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:latest",
+    "fargatePlatformConfiguration": {
+      "platformVersion": "1.4.0"
+    },
     "resourceRequirements" : [
       {
         "type": "MEMORY",
-        "value": "30720"
+        "value": "32768"
       },
       {
         "type": "VCPU",
