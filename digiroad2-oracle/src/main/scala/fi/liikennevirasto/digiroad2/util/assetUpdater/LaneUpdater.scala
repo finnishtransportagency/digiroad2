@@ -121,9 +121,9 @@ object LaneUpdater {
       val (existingAssets, changedSet) = accumulatedAdjustments
       val assetsOnRoadLink = lanesGroupedByNewLinkId.getOrElse(linkId, Nil)
       val (adjustedAssets, assetAdjustments) = fuseLanesOnMergedRoadLink(assetsOnRoadLink, changedSet)
-      (existingAssets ++ adjustedAssets, assetAdjustments)
+      ((existingAssets ++ adjustedAssets).distinct, assetAdjustments)
     }
-    (lanesAfterFuse.distinct, changeSet)
+    (lanesAfterFuse, changeSet)
   }
 
   private def parallelFusing(lanesGroupedByNewLinkId: Map[String, Seq[PersistedLane]], initialChangeSet: ChangeSet): (ListBuffer[PersistedLane], ChangeSet) = {
@@ -239,7 +239,7 @@ object LaneUpdater {
       (lanesOnRoadLink, changeSet)
     }
   }
-  
+
   def updateSamuutusChangeSet(changeSet: ChangeSet, roadLinkChanges: Seq[RoadLinkChange]): Seq[ChangedAsset] = {
 
     def expireLanes(laneIdsToExpire: Set[Long]): Seq[ChangedAsset] = {
