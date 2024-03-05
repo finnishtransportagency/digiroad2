@@ -511,8 +511,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of changes in the sets: ${changes.size}")
     logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${addedLinksCount}")
     logger.info("Starting to process changes")
+    val assetsGrouped = IterableOperation.groupByPropertyHashMap(existingAssets, (elem: PersistedLinearAsset) => elem.linkId )
     val (projectedAssets, changedSet) = LogUtils.time(logger, s"Samuuting logic finished: ") {
-      fillNewRoadLinksWithPreviousAssetsData(typeId, onlyNeededNewRoadLinks, existingAssets, changes, initChangeSet)
+      fillNewRoadLinksWithPreviousAssetsData(typeId, onlyNeededNewRoadLinks,assetsGrouped, existingAssets, changes, initChangeSet)
     }
 
     additionalRemoveOperationMass(deletedLinks)
@@ -529,27 +530,54 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   /**
     * 4) Start projecting everything into new links based on replace info.
-    * @param typeId
-    * @param onlyNeededNewRoadLinks
-    * @param assetsAll
-    * @param changes
-    * @param changeSet
-    * @return
+    * @param typeId Asset typeId
+    * @param onlyNeededNewRoadLinks Filtered new road links from changes
+    * @param assetsGroup Assets grouped by linkId
+    * @param assetsAll All assets from old road links
+    * @param changes Road link changes to process
+    * @param changeSet changeSet with expired asset ids
+    * @return Assets moved to new links and adjusted, changeSet for saving adjustments
     */
-  private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
+  private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]],
                                                      assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
                                                      changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    val initStep = OperationStep(Seq(), Some(changeSet))
-    logger.info(s"Projecting ${assetsAll.size} assets to new links")
-    val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
-      val assetsGroup= IterableOperation.groupByPropertyHashMap(assetsAll, (elem: PersistedLinearAsset) => elem.linkId )
+    def goTroughChangesParallelLoop() = {
+      val changesGroped = changes.grouped(groupSizeForParallelRun).toList.par
+      val totalTasks = changesGroped.size
+      val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
+      logger.info(s"Change groups: $totalTasks, parallelism level used: $level")
 
+      val processedLinksCounter = new AtomicInteger(0)
+      val progressTenPercentCounter = new AtomicInteger(0)
+
+      val initStep = OperationStep(Seq(), Some(changeSet))
+      new Parallel().operation(changesGroped, level) { tasks =>
+        tasks.flatMap { changes =>
+          changes.map(change => {
+            val totalChangesProcessed = processedLinksCounter.getAndIncrement()
+            progressTenPercentCounter.set(LogUtils.logArrayProgress(logger, "Processing changes", totalTasks, totalChangesProcessed, progressTenPercentCounter.get()))
+            goThroughChanges(assetsGroup, assetsAll, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
+          })
+        }
+      }.seq.toSeq
+    }
+
+    def goTroughChangesLinearly() = {
       var percentageProcessed = 0
-      val rawData = changes.zipWithIndex.map(changeWithIndex => {
+      val initStep = OperationStep(Seq(), Some(changeSet))
+      changes.zipWithIndex.map(changeWithIndex => {
         val (change, index) = changeWithIndex
         percentageProcessed = LogUtils.logArrayProgress(logger, "Projecting assets to new links", changes.size, index, percentageProcessed)
         goThroughChanges(assetsGroup,assetsAll,onlyNeededNewRoadLinks, changeSet, initStep, change,OperationStepSplit(Seq(), Some(changeSet)))
       })
+    }
+
+    logger.info(s"Projecting ${assetsAll.size} assets to new links")
+    val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
+      val rawData = changes.size match {
+        case a if a >= parallelizationThreshold => goTroughChangesParallelLoop()
+        case _ => goTroughChangesLinearly()
+      }
       LogUtils.time(logger, "Filter empty and empty afters away from projected") {
         rawData.filter(_.nonEmpty)
       }
@@ -651,11 +679,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       adjustLinearAssets(typeId,roadLinks, assets, changeSet)
     }
 
-    /**
-      *
-      * [[groupSizeForParallelRun]] if we assume one link will be operated in ~ 43ms then 1500 links will be operated about in one minute.
-      * @return
-      */
     def parallelLoop(): List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
       val grouped = assetsByLink.grouped(groupSizeForParallelRun).toList.par
       val totalTasks = grouped.size
