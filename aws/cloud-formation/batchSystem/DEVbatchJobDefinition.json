@@ -19,7 +19,7 @@
       },
       {
         "type": "VCPU",
-        "value": "4"
+        "value": "8"
       }
     ],
     "executionRoleArn": "arn:aws:iam::475079312496:role/DEV-batchSystem-BatchTaskRole-VGL42N9TANTI",
@@ -27,7 +27,7 @@
     "environment": [
       {
         "name": "containerCPU",
-        "value": "-XX:ActiveProcessorCount=4"
+        "value": "-XX:ActiveProcessorCount=8"
       },
       {
         "name": "speedLimitProvider",
