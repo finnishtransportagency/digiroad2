@@ -32,15 +32,20 @@ object LaneFiller {
     }
   }
 
-  def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (changeSet1, changeSet2) =>
+  def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (changeSet1, changeSet2) => {
+     val mergedSplit = (changeSet1.splitLanes ++ changeSet2.splitLanes).distinct.groupBy(_.originalLane.id).map(
+       a=> LaneSplit(originalLane = a._2.head.originalLane,lanesToCreate= a._2.flatMap(_.lanesToCreate).distinct)
+    )
     changeSet1.copy(
       adjustedMValues = (changeSet1.adjustedMValues ++ changeSet2.adjustedMValues).distinct,
-      adjustedSideCodes = ( changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes).distinct,
-      positionAdjustments = ( changeSet1.positionAdjustments ++ changeSet2.positionAdjustments).distinct,
-      expiredLaneIds =  changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
-      generatedPersistedLanes = ( changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes).distinct,
-      splitLanes =  (changeSet1.splitLanes ++ changeSet2.splitLanes).distinct
+      adjustedSideCodes = (changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes).distinct,
+      positionAdjustments = (changeSet1.positionAdjustments ++ changeSet2.positionAdjustments).distinct,
+      expiredLaneIds = changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
+      generatedPersistedLanes = (changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes).distinct,
+      splitLanes = mergedSplit.toSeq
     )
+  }
+    
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
 }
