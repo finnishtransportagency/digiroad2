@@ -129,10 +129,11 @@ object LaneUpdater {
   private def parallelFusing(lanesGroupedByNewLinkId: Map[String, Seq[PersistedLane]], initialChangeSet: ChangeSet): (ListBuffer[PersistedLane], ChangeSet) = {
     val grouped = lanesGroupedByNewLinkId.grouped(groupSizeForParallelRun).toList.par
     val (totalTasks: Int, level: Int) = setParallelismLevel(grouped.size)
+    val totalItems = lanesGroupedByNewLinkId.size
     val setsProgressCounter = new AtomicInteger(0)
     val progressTenPercentCounter = new AtomicInteger(0)
-    val operated =  new Parallel().operation(grouped, level) {
-      _.map { al =>
+    val operated =  new Parallel().operation(grouped, level) { tasks =>
+      tasks.map { al =>
         val ids = al.flatMap(_._2.map(_.id)).toSet
         val links = al.keys.toSet
         val lane = al.flatMap(_._2).toSeq
@@ -148,9 +149,13 @@ object LaneUpdater {
             }  else  None
           }).filter(_.nonEmpty).map(_.get)
         )
-        val totalSetsProcessed = setsProgressCounter.getAndIncrement()
-        progressTenPercentCounter.set(LogUtils.logArrayProgress(logger, "Fusing assets parallel", totalTasks, totalSetsProcessed, progressTenPercentCounter.get()))
-        fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
+        val fuseResult = fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
+        synchronized{
+          val totalSetsProcessed = setsProgressCounter.getAndIncrement()
+          val currentTenPercent = LogUtils.logArrayProgress(logger, "Fusing assets parallel", totalItems, totalSetsProcessed, progressTenPercentCounter.get())
+          progressTenPercentCounter.set(currentTenPercent)
+        }
+        fuseResult
       }
     }
 
@@ -629,14 +634,19 @@ object LaneUpdater {
   private def parLoopChanges(newRoadLinks: Seq[RoadLink], filteredChanges: Seq[RoadLinkChange], lanesGroup: mutable.HashMap[String, Set[PersistedLane]]): ParIterable[RoadLinkChangeWithResults] = {
     val grouped = filteredChanges.grouped(groupSizeForParallelRun).toList.par
     val (totalTasks: Int, level: Int) = setParallelismLevel(grouped.size)
+    val totalItems = filteredChanges.size
     val setsProgressCounter = new AtomicInteger(0)
     val progressTenPercentCounter = new AtomicInteger(0)
     LogUtils.time(logger, s"Core samuutus handling for ${filteredChanges.size} changes, multithreaded") {
-      new Parallel().operation(grouped, level) {
-        _.map { al =>
-          val totalSetsProcessed = setsProgressCounter.getAndIncrement()
-          progressTenPercentCounter.set(LogUtils.logArrayProgress(logger, "Samuuting assets parallel", totalTasks, totalSetsProcessed, progressTenPercentCounter.get()))
-          al.map(operateChanges(newRoadLinks, lanesGroup, _))
+      new Parallel().operation(grouped, level) { tasks =>
+        tasks.map { al =>
+          val results = al.map(operateChanges(newRoadLinks, lanesGroup, _))
+          synchronized{
+            val totalSetsProcessed = setsProgressCounter.getAndIncrement()
+            val currentTenPercent = LogUtils.logArrayProgress(logger, "Samuuting assets parallel", totalItems, totalSetsProcessed, progressTenPercentCounter.get())
+            progressTenPercentCounter.set(currentTenPercent)
+          }
+          results
         }
       }.flatten
     }
