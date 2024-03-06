@@ -1013,8 +1013,8 @@ object AssetTypeInfo {
   val physicalObjectsWithValidityDirection = Seq(MassTransitLane.typeId, NumberOfLanes.typeId, CyclingAndWalking.typeId,
     ParkingProhibition.typeId)
 
-  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
-    CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId, PavedRoad.typeId)
+  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId, CyclingAndWalking.typeId,
+    CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId, PavedRoad.typeId, HazmatTransportProhibition.typeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
