@@ -28,13 +28,31 @@ class AwsService {
   object S3 {
     val s3: S3Client = S3Client.create()
     val CHUNK_SIZE = 100 * 1024 * 1024 // 100MB
+    val SINGLE_UPLOAD_MAX_SIZE = 100 * 1024 * 1024 // files greater than 100MB should be uploaded using MultipartUpload
+
+    def saveFileToS3(s3Bucket: String, id: String, body: String, responseType: String) = {
+      requiresMultipartUpload(body) match {
+        case true => saveFileToS3Multipart(s3Bucket, id, body, responseType)
+        case false => saveFileToS3Singlepart(s3Bucket, id, body, responseType)
+      }
+    }
+
+    def requiresMultipartUpload(body: String): Boolean = {
+      if (body.length > SINGLE_UPLOAD_MAX_SIZE) {
+        true
+      } else {
+        // double check, as body size might still exceed the limit due to multi-byte characters
+        val sizeInBytes = body.getBytes("UTF-8").length
+        sizeInBytes > SINGLE_UPLOAD_MAX_SIZE
+      }
+    }
 
     private def getContentType(responseType: String): String = responseType match {
       case "csv" => "text/csv"
       case _ => "application/json"
     }
 
-    def saveFileToS3(s3Bucket: String, id: String, body: String, responseType: String): Unit = {
+    def saveFileToS3Singlepart(s3Bucket: String, id: String, body: String, responseType: String): Unit = {
       val contentType = getContentType(responseType)
       try {
         val putRequest = PutObjectRequest.builder()
