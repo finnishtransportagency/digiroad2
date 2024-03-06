@@ -38,17 +38,17 @@ class LogUtilsSpec extends FunSuite with Matchers {
 
   }
 
-  def simpleParallelLoop(changes: Seq[Int], groupSizeForParallelRun: Int, maximumParallelismLevel: Int, logger: Logger): Unit = {
-    val changesGrouped = changes.grouped(groupSizeForParallelRun).toList.par
-    val totalTasks = changesGrouped.size
-    val totalItems = changes.size
+  def simpleParallelLoop(numbersToProcess: Seq[Int], groupSizeForParallelRun: Int, maximumParallelismLevel: Int, logger: Logger): Unit = {
+    val numbersGrouped = numbersToProcess.grouped(groupSizeForParallelRun).toList.par
+    val totalTasks = numbersGrouped.size
+    val totalItems = numbersToProcess.size
     val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
     println(s"Change groups: $totalTasks, parallelism level used: $level")
 
     val processedLinksCounter = new AtomicInteger(0)
     val progressTenPercentCounter = new AtomicInteger(0)
 
-    new Parallel().operation(changesGrouped, level) { tasks =>
+    new Parallel().operation(numbersGrouped, level) { tasks =>
       tasks.flatMap { elems =>
         elems.map(elem => {
           synchronized {
