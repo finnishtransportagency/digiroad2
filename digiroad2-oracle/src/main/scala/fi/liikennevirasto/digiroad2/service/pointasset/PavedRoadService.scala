@@ -69,29 +69,6 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
-  override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None, fromAssetUpdater: Boolean = false): Seq[Long] = {
-    if (ids.isEmpty)
-      return ids
-
-    ids.flatMap { id =>
-
-      val oldLinearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id)).head
-
-      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new NoSuchElementException(
-        "RoadLink no longer available: " + oldLinearAsset.linkId + " For asset: " + oldLinearAsset.id + ",Expired: " + oldLinearAsset.expired))
-
-      value match {
-        case DynamicValue(multiTypeProps) =>
-          if (!fromAssetUpdater) {
-            updateValueByExpiration(id, DynamicValue(multiTypeProps), LinearAssetTypes.numericValuePropertyId, username, measures, timeStamp, sideCode, informationSource = informationSource)
-          }
-          else
-            Some(updateValues(id, PavedRoad.typeId, DynamicValue(multiTypeProps), username, Some(roadLink)))
-        case _ =>
-          Some(id)
-      }
-    }
-  }
 
   override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, timeStamp: Long = createTimeStamp()): Seq[Long] = {
     withDynTransaction {

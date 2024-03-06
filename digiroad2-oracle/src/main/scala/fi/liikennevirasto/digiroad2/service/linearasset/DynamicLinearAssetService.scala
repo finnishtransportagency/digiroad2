@@ -126,7 +126,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     properties ++ defaultValues.toSet
   }
 
-  protected def updateValues(id: Long, typeId: Int, value: Value, username: String, roadLink: Option[RoadLinkLike]): Long ={
+  private def updateValues(id: Long, typeId: Int, value: Value, username: String, roadLink: Option[RoadLinkLike]): Long ={
     value match {
       case DynamicValue(multiTypeProps) =>
         val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, typeId)
