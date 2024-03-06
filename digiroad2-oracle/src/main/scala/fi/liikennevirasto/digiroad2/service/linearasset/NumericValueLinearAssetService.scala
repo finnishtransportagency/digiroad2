@@ -78,7 +78,7 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
     Some(newAssetIDcreate)
   }
 
-  override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None, fromAssetUpdater: Boolean = false): Seq[Long] = {
+  override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -89,11 +89,7 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
       val typeId = assetTypeById(id)
       value match {
         case NumericValue(intValue) =>
-          if (!fromAssetUpdater) {
-            updateValueByExpiration(id, NumericValue(intValue), LinearAssetTypes.numericValuePropertyId, username, measures, timeStamp, sideCode)
-          } else {
-            dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, username)
-          }
+          updateValueByExpiration(id, NumericValue(intValue), LinearAssetTypes.numericValuePropertyId, username, measures, timeStamp, sideCode)
         case _ =>
           Some(id)
       }
