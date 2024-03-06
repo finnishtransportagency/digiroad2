@@ -10,7 +10,10 @@ object PavedRoadFiller extends AssetFiller {
     val (filteredAssets, updatedChangeSet) = (linearAssets.size > 1) match {
       case true =>
         val (redundantAssets, validAssets) = linearAssets.partition(asset => isRedundantUnknownPavementAsset(asset, roadLink))
-        (validAssets, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ redundantAssets.map(_.id).toSet))
+        if (validAssets.nonEmpty) {
+          logger.info(s"LinearAsset ${redundantAssets.map(_.id)} removed from process due to having Unknown PavementClass and not filling whole RoadLink")
+          (validAssets, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ redundantAssets.map(_.id).toSet))
+        } else (linearAssets, changeSet) // return all unknowns if no valid assets.
       case false => (linearAssets, changeSet)
     }
     super.adjustAssets(roadLink, filteredAssets, updatedChangeSet)
@@ -23,17 +26,10 @@ object PavedRoadFiller extends AssetFiller {
    * @param roadLink
    * @return
    */
-  def isRedundantUnknownPavementAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): Boolean = {
+  private def isRedundantUnknownPavementAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): Boolean = {
     val assetLength = asset.endMeasure - asset.startMeasure
     val linkLength = roadLink.length
     val pavementClass = PavementClass.extractPavementClass(asset.value).getOrElse(DynamicPropertyValue(""))
-    (assetLength - linkLength).abs > MaxAllowedMValueError &&
-      PavementClass.applyFromDynamicPropertyValue(pavementClass.value) == PavementClass.Unknown match {
-      case true =>
-        logger.info(s"LinearAsset ${asset.id} removed from process due to having Unknown PavementClass and not filling whole RoadLink")
-        true
-      case _ =>
-        false
-    }
+    (assetLength - linkLength).abs > MaxAllowedMValueError && PavementClass.applyFromDynamicPropertyValue(pavementClass.value) == PavementClass.Unknown 
   }
 }
