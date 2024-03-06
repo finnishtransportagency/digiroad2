@@ -59,7 +59,8 @@ class AssetFiller {
   }
 
   def debugLogging(operationName:String)(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) ={
-    logger.debug(operationName)
+    logger.debug(operationName + ": " + roadLink.linkId)
+    logger.debug("asset count on link: " + segments.size)
     logger.debug(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
     logger.debug(s"mValue adjustment count: ${changeSet.adjustedMValues.size}")
     logger.debug(s"expire adjustment count: ${changeSet.expiredAssetIds.size}")
