@@ -411,7 +411,11 @@ object LaneUpdater {
     LogUtils.time(logger, "Update Lane Work List with possible traffic direction changes") {
       updateTrafficDirectionChangesLaneWorkList(filteredRoadLinkChanges)
     }
-    val (workListChanges, roadLinkChanges) = filteredRoadLinkChanges.partition(change => isOldLinkOnLaneWorkLists(change))
+    
+    
+    val linkIdsOnLaneWorkList = laneWorkListService.getLaneWorkList(false).map(_.linkId)
+    val linkIdsOnAutoProcessedLanesWorkList = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false).map(_.linkId)
+    val (workListChanges, roadLinkChanges) = filteredRoadLinkChanges.partition(change => isOldLinkOnLaneWorkLists(change,linkIdsOnLaneWorkList, linkIdsOnAutoProcessedLanesWorkList))
     logger.info("Starting to process changes")
     val changeSet = LogUtils.time(logger, s"Process ${workListChanges.size} workListChanges and ${roadLinkChanges.size} roadLinkChanges") {
       handleChanges(roadLinkChanges, workListChanges)
@@ -466,9 +470,7 @@ object LaneUpdater {
 
   // If lanes from old roadLink are currently on Lane work list or Automatically processed lanes work list
   // then only process the main lanes on changed link
-  def isOldLinkOnLaneWorkLists(change: RoadLinkChange): Boolean = {
-    val linkIdsOnLaneWorkList = laneWorkListService.getLaneWorkList(false).map(_.linkId)
-    val linkIdsOnAutoProcessedLanesWorkList = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false).map(_.linkId)
+  def isOldLinkOnLaneWorkLists(change: RoadLinkChange,linkIdsOnLaneWorkList: Seq[String],linkIdsOnAutoProcessedLanesWorkList: Seq[String]): Boolean = {
     change.oldLink match {
       case Some(oldLink) =>
         linkIdsOnLaneWorkList.contains(oldLink.linkId) || linkIdsOnAutoProcessedLanesWorkList.contains(oldLink.linkId)
