@@ -542,8 +542,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                                      assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
                                                      changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     def goTroughChangesParallelLoop() = {
-      val changesGroped = changes.grouped(groupSizeForParallelRun).toList.par
-      val totalTasks = changesGroped.size
+      val changesGrouped = changes.grouped(groupSizeForParallelRun).toList.par
+      val totalTasks = changesGrouped.size
+      val totalItems = changes.size
       val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
       logger.info(s"Change groups: $totalTasks, parallelism level used: $level")
 
@@ -551,12 +552,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val progressTenPercentCounter = new AtomicInteger(0)
 
       val initStep = OperationStep(Seq(), Some(changeSet))
-      new Parallel().operation(changesGroped, level) { tasks =>
+      new Parallel().operation(changesGrouped, level) { tasks =>
         tasks.flatMap { changes =>
           changes.map(change => {
-            val totalChangesProcessed = processedLinksCounter.getAndIncrement()
-            progressTenPercentCounter.set(LogUtils.logArrayProgress(logger, "Processing changes", totalTasks, totalChangesProcessed, progressTenPercentCounter.get()))
-            goThroughChanges(assetsGroup, assetsAll, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
+            val adjustedResult = goThroughChanges(assetsGroup, assetsAll, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
+            synchronized{
+              val totalChangesProcessed = processedLinksCounter.getAndIncrement()
+              val currentTenPercent = LogUtils.logArrayProgress(logger, "Processing changes", totalItems, totalChangesProcessed, progressTenPercentCounter.get())
+              progressTenPercentCounter.set(currentTenPercent)
+            }
+            adjustedResult
           })
         }
       }.seq.toSeq
@@ -682,6 +687,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     def parallelLoop(): List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
       val grouped = assetsByLink.grouped(groupSizeForParallelRun).toList.par
       val totalTasks = grouped.size
+      val totalItems = assetsByLink.size
       val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
       logger.info(s"Asset groups: $totalTasks, parallelism level used: $level")
       val processedLinksCounter = new AtomicInteger(0)
@@ -701,11 +707,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
             ))
             case None => None
           }
-
-          val totalLinksProcessed = processedLinksCounter.getAndIncrement()
-          progressTenPercentCounter.set(LogUtils.logArrayProgress(logger, "Adjusting assets parallel", totalTasks, totalLinksProcessed, progressTenPercentCounter.get()))
-
-          adjusting(typeId, excludeUnneededChangeSetItems, al)
+          val adjustedResult = adjusting(typeId, excludeUnneededChangeSetItems, al)
+          synchronized{
+            val totalLinksProcessed = processedLinksCounter.getAndIncrement()
+            val currentTenPercent = LogUtils.logArrayProgress(logger, "Adjusting assets parallel", totalItems, totalLinksProcessed, progressTenPercentCounter.get())
+            progressTenPercentCounter.set(currentTenPercent)
+          }
+          adjustedResult
         }
       }.toList
     }
