@@ -101,7 +101,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
                                linkSource: LinkGeomSource, username: String, mValue : Option[Double], timeStamp: Option[Long], fromPointAssetUpdater: Boolean = false): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), linkGeom))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
-      case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
+      case old if (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
         dao.create(setAssetPosition(updatedAsset, linkGeom, value), value, username, linkMunicipality,
           timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)

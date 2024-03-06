@@ -716,7 +716,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(1,BothDirections,20), SideCodeAdjustment(2,BothDirections,20)))
+    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(1,linkId1,BothDirections,20), SideCodeAdjustment(2,linkId1,BothDirections,20)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -787,7 +787,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.startMeasure should be(5.9)
     sortedFilledTopology.last.endMeasure should be(10.0)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(2,BothDirections,20), SideCodeAdjustment(3,BothDirections,20)))
+    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(2, linkId1, BothDirections,20), SideCodeAdjustment(3, linkId1, BothDirections,20)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -2195,7 +2195,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   test("clean lots of adjustments") {
     val roadLink = assetFiller.toRoadLinkForFillTopology(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
     val adjustedMValues = List.tabulate(20000)(id => MValueAdjustment(id, generateRandomLinkId(), 0, Random.nextDouble() * 100))
-    val adjustedSideCodes = List.tabulate(20000)(id => SideCodeAdjustment(id, BothDirections, RoadWidth.typeId))
+    val adjustedSideCodes = List.tabulate(20000)(id => SideCodeAdjustment(id, linkId1, BothDirections, RoadWidth.typeId))
     val changeSet = ChangeSet(Set(), adjustedMValues, adjustedSideCodes, Set(), Seq())
     val result = assetFiller.clean(roadLink, Seq(), changeSet)
     result._2.adjustedMValues.size should be(20000)
