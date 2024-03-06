@@ -308,6 +308,16 @@ object PavementClass {
     }
   }
 
+  def extractPavementClassValue(assetValue: Option[Value]): Option[PavementClass] = {
+    assetValue.collect {
+      case dynamicValue: DynamicValue =>
+        dynamicValue.value.properties.collectFirst {
+          case property if property.publicId == "paallysteluokka" && property.values.size > 0 =>
+            applyFromDynamicPropertyValue(property.values.head)
+        }
+    }.flatten
+  }
+  
   def extractPavementClass(assetValue: Option[Value]): Option[DynamicPropertyValue] = {
     assetValue.collect {
       case dynamicValue: DynamicValue =>
