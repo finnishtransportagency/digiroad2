@@ -8,12 +8,14 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId}
+import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
+import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId, propertyIdByPublicId, propertyIdByPublicIdAndTypeId}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, ValueAdjustment}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewLinearAssetMassOperation}
 import fi.liikennevirasto.digiroad2.util.DataFixture.linearAssetService.getLinkSource
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import org.postgis.PGgeometry
 import org.postgresql.geometric.PGcircle
 import org.postgresql.jdbc.PgStatement
@@ -717,6 +719,81 @@ class PostGISLinearAssetDao() {
         ps.setLong(3, a.assetId)
         ps.addBatch()
       })
+    }
+  }
+
+  private def updateNumberPropertiesMass(assetTypeId: Int, publicId: String, props: Seq[(Long, DynamicProperty)]): Unit = {
+    val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(publicId, assetTypeId).first
+    val statement = "update number_property_value set value = (?) where asset_id = (?) and property_id = (?)"
+
+    MassQuery.executeBatch(statement) { ps =>
+      props.foreach { case (assetId, prop) =>
+        ps.setInt(1, prop.values.head.value.toString.toInt)
+        ps.setLong(2, assetId)
+        ps.setLong(3, propertyId)
+        ps.addBatch()
+      }
+    }
+  }
+
+  private def updateDatePeriodMass(assetTypeId: Int, publicId: String, props: Seq[(Long, DynamicProperty)]) = {
+    val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(publicId, assetTypeId).first
+    val statement = "update date_period_value set start_date = TO_TIMESTAMP(?, 'YYYY-MM-DD\"T\"HH24:MI:SS.FF3'), end_date = TO_TIMESTAMP(?, 'YYYY-MM-DD\"T\"HH24:MI:SS.FF3') where asset_id = (?) and property_id = (?)"
+
+    MassQuery.executeBatch(statement) { ps =>
+      props.foreach { case (assetId, prop) =>
+        val startDate = prop.values.head.value.asInstanceOf[Map[String, String]].get("startDate").get
+        val endDate = prop.values.head.value.asInstanceOf[Map[String, String]].get("endDate").get
+        ps.setString(1, DatePropertyFormat.parseDateTime(startDate).toString)
+        ps.setString(2, DatePropertyFormat.parseDateTime(endDate).toString)
+        ps.setLong(3, assetId)
+        ps.setLong(4, propertyId)
+        ps.addBatch()
+      }
+    }
+  }
+
+  private def updateMultipleChoiceMass(assetTypeId: Int, publicId: String, props: Seq[(Long, DynamicProperty)]): Unit = {
+    val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(publicId, assetTypeId).first
+    val statement =
+      "update multiple_choice_value set enumerated_value_id = (select id from enumerated_value where value = (?) and property_id = (?)) where asset_id = (?) and property_id = (?)"
+
+    MassQuery.executeBatch(statement) { ps =>
+      props.foreach { case (assetId, prop) =>
+        ps.setInt(1, prop.values.head.value.toString.toInt)
+        ps.setLong(2, propertyId)
+        ps.setLong(3, assetId)
+        ps.setLong(4, propertyId)
+        ps.addBatch()
+      }
+    }
+  }
+
+  /**
+   * Used to update value adjustments from LinearAssetUpdater.updateChangeSet. The updates supported are number property values
+   * (use case: road width) and date period and checkbox (use case: annual repetition of damaged by thaw period)
+   * @param adjustments Value adjustments from LinearAssetUpdater
+   */
+  def updateValueAdjustments(adjustments: Seq[ValueAdjustment]): Unit = {
+    val assetTypeId = adjustments.head.assetTypeId
+    val properties = adjustments.foldLeft(Seq.empty[(Long, DynamicProperty)]) { (acc, adjustment) =>
+      acc ++ adjustment.value.asInstanceOf[DynamicValue].value.properties.map(prop =>
+        (adjustment.assetId, prop)
+      )
+    }.groupBy { case (_, dynamicProperty) =>
+      (dynamicProperty.propertyType, dynamicProperty.publicId)
+    }
+    properties.foreach { case ((propertyType, publicId), propsByAssetId) =>
+      propertyType match {
+        case IntegerProp =>
+          updateNumberPropertiesMass(assetTypeId, publicId, propsByAssetId)
+        case DatePeriodType =>
+          updateDatePeriodMass(assetTypeId, publicId, propsByAssetId)
+        case CheckBox =>
+          updateMultipleChoiceMass(assetTypeId, publicId, propsByAssetId)
+        case _ =>
+          throw new UnsupportedOperationException(s"Operation not implemented for property $propertyType")
+      }
     }
   }
 

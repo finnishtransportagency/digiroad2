@@ -896,6 +896,8 @@ class AssetFiller {
       debugLogging("droppedSegmentWrongDirection"),
       fillHolesWithFuse,
       debugLogging("fillHoles"),
+      updateValues,
+      debugLogging("updateValues"),
       clean
     )
 

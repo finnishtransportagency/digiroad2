@@ -68,7 +68,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
           )
           val operation = operationStep.copy(
               assetsAfter = Seq(modifiedAsset),
-            changeInfo = Some(changeSets.copy(valueAdjustments = changeSets.valueAdjustments ++ Seq(ValueAdjustment(modifiedAsset.id, modifiedAsset.value.get, modifiedAsset.modifiedBy.get))))
+            changeInfo = Some(changeSets.copy(valueAdjustments = changeSets.valueAdjustments ++ Seq(ValueAdjustment(modifiedAsset.id, modifiedAsset.typeId, modifiedAsset.value.get, modifiedAsset.modifiedBy.get))))
           )
           operation
         } else {
