@@ -416,7 +416,7 @@ object LaneUpdater {
   private def updateByRoadLinks(roadLinkChangeSet: RoadLinkChangeSet) = {
     logger.info(s"Started processing change set ${roadLinkChangeSet.key}")
     val allRoadLinkChanges = roadLinkChangeSet.changes
-    val filteredRoadLinkChanges = filterChanges(allRoadLinkChanges)
+    val filteredRoadLinkChanges = LogUtils.time(logger, "filterChanges ") {filterChanges(allRoadLinkChanges)}
 
     logger.info("Starting to process traffic direction changes")
     LogUtils.time(logger, "Update Lane Work List with possible traffic direction changes") {
