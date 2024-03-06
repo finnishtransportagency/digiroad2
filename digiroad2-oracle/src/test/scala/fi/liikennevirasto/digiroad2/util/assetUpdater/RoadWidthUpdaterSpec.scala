@@ -152,6 +152,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdater.updateByRoadLinks(RoadWidth.typeId, Seq(change))
       val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id1)
       assetsAfter.head.linkId should be(linkIdVersion2)
       val sorted = assetsAfter.sortBy(_.startMeasure)
       sorted.head.startMeasure should be(0)
@@ -252,6 +253,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdater.updateByRoadLinks(RoadWidth.typeId, change)
       val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(linkId2), false)
       assetsAfter.size should be(1)
+      assetsBefore.map(_.id).contains(assetsAfter.head.id) should be(true)
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
@@ -329,6 +331,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdater.updateByRoadLinks(RoadWidth.typeId, Seq(change))
       val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id1)
       assetsAfter.head.linkId should be(linkIdVersion2)
       val sorted = assetsAfter.sortBy(_.startMeasure)
       sorted.head.startMeasure should be(0)
@@ -360,6 +363,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
       val assetsAfter = service.getPersistedAssetsByIds(RoadWidth.typeId, Set(id), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id)
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
@@ -390,6 +394,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id)
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
@@ -484,6 +489,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
       val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(newSplitLinkId1, newSplitLinkId2, newSplitLinkId3), false)
       assetsAfter.size should equal(3)
+      assetsAfter.map(_.id).contains(id1) should be(true)
 
       assetsAfter.foreach(asset => {
         val roadLink = newSplitLinks.find(_.linkId == asset.linkId).get
@@ -521,6 +527,7 @@ class RoadWidthUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers wi
       TestRoadWidthUpdaterNoRoadLinkMock.updateByRoadLinks(RoadWidth.typeId, changes)
       val assetsAfter = roadWidthService.getPersistedAssetsByLinkIds(RoadWidth.typeId, Seq(newLinkId), false).sortBy(_.startMeasure)
       assetsAfter.size should equal(2)
+      assetsAfter.map(_.id).sorted should be(assetsAfter.map(_.id).sorted)
 
       val asset1 = assetsAfter.head
       val asset2 = assetsAfter.last

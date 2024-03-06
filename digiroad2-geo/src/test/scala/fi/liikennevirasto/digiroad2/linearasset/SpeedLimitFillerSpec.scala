@@ -198,7 +198,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.endMeasure should be(10.0)
     sortedFilledTopology.last.sideCode should be(BothDirections)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(2,BothDirections,20)))
+    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(2,linkId1,BothDirections,20)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -302,7 +302,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.endMeasure should be(10.0)
     sortedFilledTopology.last.sideCode should be(BothDirections)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(1,BothDirections,20), SideCodeAdjustment(2,BothDirections,20)))
+    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(1,linkId1,BothDirections,20), SideCodeAdjustment(2,linkId1,BothDirections,20)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -373,7 +373,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     sortedFilledTopology.last.endMeasure should be(10.0)
     sortedFilledTopology.last.sideCode should be(BothDirections)
     changeSet.droppedAssetIds should be(Set.empty)
-    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(2,BothDirections,20,0), SideCodeAdjustment(3,BothDirections,20,0)))
+    changeSet.adjustedSideCodes.sortBy(_.assetId) should be(Seq(SideCodeAdjustment(2,linkId1,BothDirections,20,0), SideCodeAdjustment(3,linkId1,BothDirections,20,0)))
     changeSet.expiredAssetIds should be(Set.empty)
     changeSet.valueAdjustments should be(Nil)
     val adjustedMValues = changeSet.adjustedMValues
@@ -505,7 +505,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     changeSet.adjustedSideCodes should have size 1
-    changeSet.adjustedSideCodes.head should be(SideCodeAdjustment(1, SideCode.BothDirections, SpeedLimitAsset.typeId))
+    changeSet.adjustedSideCodes.head should be(SideCodeAdjustment(1, linkId1, SideCode.BothDirections, SpeedLimitAsset.typeId))
   }
 
   test("adjust one-way speed limits on one-way road link to maintain one-way speed limits") {

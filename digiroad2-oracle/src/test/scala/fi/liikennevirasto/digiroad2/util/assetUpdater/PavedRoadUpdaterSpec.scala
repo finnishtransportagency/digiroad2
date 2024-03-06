@@ -102,7 +102,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       val assets = TestPavedRoadUpdater.getReport().filter(_.linkId ==linkId15).map(a => PairAsset(a.before, a.after.headOption,a.changeType))
 
-      assets.size should  be(1)
+      assets.size should be(1)
       TestPavedRoadUpdater.getReport().head.changeType should be(ChangeTypeReport.Creation)
     }
   }
@@ -127,6 +127,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       TestPavedRoadUpdaterMock.updateByRoadLinks(PavedRoad.typeId, Seq(change))
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id1)
       
       val assets = TestPavedRoadUpdaterMock.getReport().map(a => PairAsset(a.before, a.after.headOption,a.changeType))
       assets.size should be(1)
@@ -183,6 +184,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, newLinks, false)
       assetsAfter.size should be(3)
+      assetsAfter.map(_.id).contains(id) should be(true)
       assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
       assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
       assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
@@ -224,6 +226,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
       val assetsAfter = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id)
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
@@ -253,6 +256,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
       val assetsAfter = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id)
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
@@ -278,6 +282,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId1, newLinkId2), newTransaction = false)
       assetsAfter.size should equal (2)
+      assetsAfter.map(_.id).contains(id) should be(true)
       val assetOnLink1 = assetsAfter.find(_.linkId == newLinkId1).get
       val assetOnLink2 = assetsAfter.find(_.linkId == newLinkId2).get
 
@@ -306,6 +311,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId1, newLinkId2), newTransaction = false)
       assetsAfter.size should equal (1)
+      assetsAfter.map(_.id).contains(id) should be(true)
       val assetOnLink1 = assetsAfter.find(_.linkId == newLinkId1)
       val assetOnLink2 = assetsAfter.find(_.linkId == newLinkId2).get
 
@@ -342,6 +348,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, newLinkIds, false)
       assetsAfter.size should equal(3)
+      assetsAfter.map(_.id).contains(id) should be(true)
       assetsAfter.foreach(asset => {
         asset.sideCode should equal(1)
         asset.startMeasure should equal(0)
@@ -395,6 +402,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId1, newLinkId2), false)
       assetsAfter.size should be(2)
+      assetsAfter.map(_.id).sorted should be(assetsBefore.map(_.id).sorted)
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
       sorted(0).linkId should be(newLinkId1)
@@ -479,6 +487,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(oldAssetId2)
       assetsAfter.head.startMeasure should be(0)
       assetsAfter.head.endMeasure should be(newRoadLink.length)
       assetsAfter.head.value.equals(assetValue2)
@@ -521,6 +530,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
 
       val assetsAfter = dynamicLinearAssetService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(oldAssetId2)
       assetsAfter.head.startMeasure should be(0)
       assetsAfter.head.endMeasure should be(newRoadLink.length)
       assetsAfter.head.value.equals(assetValue2)

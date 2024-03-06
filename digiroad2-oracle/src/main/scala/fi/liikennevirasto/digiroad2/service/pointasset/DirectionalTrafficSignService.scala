@@ -96,7 +96,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
                                linkGeom: Seq[Point], linkMunicipality: Int, username: String, fromPointAssetUpdater: Boolean = false): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), linkGeom))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
-      case old if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
+      case old if (old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon)) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
         PostGISDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, linkGeom, value), value,
           linkMunicipality, username, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
