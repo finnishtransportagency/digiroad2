@@ -45,6 +45,7 @@ class HazMatTransportProhibitionUpdaterSpec extends FunSuite with Matchers with 
       TestHazMatProhibitionUpdater.updateByRoadLinks(HazmatTransportProhibition.typeId, changes)
       val assetsAfter = serviceHazmat.getPersistedAssetsByLinkIds(HazmatTransportProhibition.typeId, newLinks,false)
       assetsAfter.size should be(3)
+      assetsAfter.map(_.id).contains(id) should be(true)
       assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
       assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
       assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)

@@ -275,7 +275,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
   }
 
 
-  test("update due to adjustmentOperation does not change creation or modification data if it's called by PointAssetUpdater") {
+  test("version change does not change asset id, creation or modification data if it's called by PointAssetUpdater") {
     val services = Seq(pedestrianCrossingService, obstacleService)
 
     runWithRollback {
@@ -289,6 +289,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
         val corrected = updater.correctPersistedAsset(asset, change)
         val newId = service.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
         val newAsset = service.getPersistedAssetsByIds(Set(newId)).head.asInstanceOf[PersistedPoint]
+        newAsset.id should be(asset.id)
         newAsset.createdBy.get should be("testCreator")
         newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
         newAsset.modifiedBy.get should be("testModifier")
@@ -298,6 +299,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = railwayCrossingService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
       val newAsset = railwayCrossingService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.id should be(asset.id)
       newAsset.createdBy.get should be("testCreator")
       newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset.modifiedBy.get should be("testModifier")
@@ -305,7 +307,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("create due to adjustmentOperation does not change creation or modification data if it's called by PointAssetUpdater") {
+  test("replace does not change asset id, creation or modification data if it's called by PointAssetUpdater") {
     runWithRollback {
       val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
       val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
@@ -317,6 +319,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
         val corrected = updater.correctPersistedAsset(asset, change)
         val newId = service.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
         val newAsset = service.getPersistedAssetsByIds(Set(newId)).head.asInstanceOf[PersistedPoint]
+        newAsset.id should be(asset.id)
         newAsset.createdBy.get should be("testCreator")
         newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
         newAsset.modifiedBy.get should be("testModifier")
@@ -326,6 +329,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = railwayCrossingService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
       val newAsset = railwayCrossingService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.id should be(asset.id)
       newAsset.createdBy.get should be("testCreator")
       newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset.modifiedBy.get should be("testModifier")

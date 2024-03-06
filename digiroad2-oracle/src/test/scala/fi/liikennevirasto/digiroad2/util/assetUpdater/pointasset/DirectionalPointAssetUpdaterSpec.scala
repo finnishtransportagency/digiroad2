@@ -355,7 +355,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
   }
 
 
-  test("update due to adjustmentOperation does not change creation or modification data if it's called by PointAssetUpdater") {
+  test("version change does not change asset id, creation or modification data if it's called by PointAssetUpdater") {
 
     runWithRollback {
       val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
@@ -367,6 +367,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
       val newAsset = directionalTrafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.id should be(asset.id)
       newAsset.createdBy.get should be("testCreator")
       newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset.modifiedBy.get should be("testModifier")
@@ -376,6 +377,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected2 = updater.correctPersistedAsset(asset2, change)
       val newId2 = trafficLightService.adjustmentOperation(asset2, corrected2, change.newLinks.find(_.linkId == corrected2.linkId).get)
       val newAsset2 = trafficLightService.getPersistedAssetsByIds(Set(newId2)).head
+      newAsset2.id should be(asset2.id)
       newAsset2.createdBy.get should be("testCreator")
       newAsset2.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset2.modifiedBy.get should be("testModifier")
@@ -385,6 +387,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected3 = updater.correctPersistedAsset(asset3, change)
       val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
       val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
+      newAsset3.id should be(asset3.id)
       newAsset3.createdBy.get should be("testCreator")
       newAsset3.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset3.modifiedBy.get should be("testModifier")
@@ -392,7 +395,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("creation due to adjustmentOperation does not change creation or modification data if it's called by PointAssetUpdater") {
+  test("replace does not change asset id, creation or modification data if it's called by PointAssetUpdater") {
 
     runWithRollback {
       val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
@@ -403,6 +406,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
       val newAsset = directionalTrafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.id should be(asset.id)
       newAsset.createdBy.get should be("testCreator")
       newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset.modifiedBy.get should be("testModifier")
@@ -412,6 +416,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected2 = updater.correctPersistedAsset(asset2, change)
       val newId2 = trafficLightService.adjustmentOperation(asset2, corrected2, change.newLinks.find(_.linkId == corrected2.linkId).get)
       val newAsset2 = trafficLightService.getPersistedAssetsByIds(Set(newId2)).head
+      newAsset2.id should be(asset2.id)
       newAsset2.createdBy.get should be("testCreator")
       newAsset2.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset2.modifiedBy.get should be("testModifier")
@@ -421,6 +426,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected3 = updater.correctPersistedAsset(asset3, change)
       val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
       val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
+      newAsset3.id should be(asset3.id)
       newAsset3.createdBy.get should be("testCreator")
       newAsset3.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset3.modifiedBy.get should be("testModifier")
@@ -428,7 +434,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("creation due to adjustmentOperation does not change creation or modification data if it's called by PointAssetUpdater (modification data is null)") {
+  test("replace does not change asset id, creation or modification data if it's called by PointAssetUpdater (modification data is null)") {
 
     runWithRollback {
       val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
@@ -439,6 +445,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = directionalTrafficSignService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
       val newAsset = directionalTrafficSignService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.id should be(asset.id)
       newAsset.createdBy.get should be("testCreator")
       newAsset.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset.modifiedBy should be(None)
@@ -448,6 +455,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected2 = updater.correctPersistedAsset(asset2, change)
       val newId2 = trafficLightService.adjustmentOperation(asset2, corrected2, change.newLinks.find(_.linkId == corrected2.linkId).get)
       val newAsset2 = trafficLightService.getPersistedAssetsByIds(Set(newId2)).head
+      newAsset2.id should be(asset2.id)
       newAsset2.createdBy.get should be("testCreator")
       newAsset2.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset2.modifiedBy should be(None)
@@ -457,6 +465,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected3 = updater.correctPersistedAsset(asset3, change)
       val newId3 = trafficSignService.adjustmentOperation(asset3, corrected3, change.newLinks.find(_.linkId == corrected3.linkId).get)
       val newAsset3 = trafficSignService.getPersistedAssetsByIds(Set(newId3)).head
+      newAsset3.id should be(asset3.id)
       newAsset3.createdBy.get should be("testCreator")
       newAsset3.createdAt.get.toString().startsWith("2021-05-10") should be(true)
       newAsset3.modifiedBy should be(None)
@@ -476,6 +485,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
       val corrected = updater.correctPersistedAsset(asset, change)
       val newId = trafficLightService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
       val newAsset = trafficLightService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.id should be(asset.id)
 
       val oldAssetProperties = asset.propertyData.groupBy(_.groupedId)
       val newAssetProperties = newAsset.propertyData.groupBy(_.groupedId)

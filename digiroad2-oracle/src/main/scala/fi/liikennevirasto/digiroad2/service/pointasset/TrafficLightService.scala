@@ -43,7 +43,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
                                linkSource: LinkGeomSource, fromPointAssetUpdater: Boolean = false): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), linkGeometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
-      case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
+      case old if (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
         PostGISTrafficLightDao.create(setAssetPosition(updatedAsset, linkGeometry, value), value, username, municipality,
           timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)

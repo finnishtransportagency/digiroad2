@@ -127,6 +127,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val assetsAfter = speedLimitService.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, newLinks, false)
       assetsAfter.size should be(3)
+      assetsAfter.map(_.id).contains(id) should be(true)
       assetsAfter.forall(_.createdBy.get == "testCreator") should be(true)
       assetsAfter.forall(_.createdDateTime.get.toString().startsWith("2020-01-01")) should be(true)
       assetsAfter.forall(_.modifiedBy.get == "testModifier") should be(true)
@@ -251,6 +252,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val assetsAfter = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id)
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
@@ -283,6 +285,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val assetsAfter = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       assetsAfter.size should be(1)
+      assetsAfter.head.id should be(id)
 
       val assetLength = (assetsAfter.head.endMeasure - assetsAfter.head.startMeasure)
       assetsAfter.head.linkId should be(newLinkID)
@@ -321,6 +324,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val assetsAfter = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id, id2), false).sortBy(_.startMeasure)
       assetsAfter.size should be(2)
+      assetsAfter.map(_.id).sorted should be(assetsBefore.map(_.id).sorted)
 
       val startAsset = assetsAfter.head
       val endAsset = assetsAfter.last
@@ -373,6 +377,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
       val assetsAfter = speedLimitService.fetchExistingAssetsByLinksIdsString(SpeedLimitAsset.typeId, Set(newLinkID, newLinkID2), Set(), false).sortBy(_.linkId)
       assetsAfter.size should be(2)
+      assetsAfter.map(_.id).contains(id)
 
       assetsAfter.head.sideCode should be(SideCode.BothDirections.value)
       assetsAfter.last.sideCode should be(SideCode.AgainstDigitizing.value)

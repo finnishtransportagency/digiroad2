@@ -52,7 +52,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
     filledTopology.filter(_.id == 4l).map(_.sideCode) should be(Seq(TowardsDigitizing))
     filledTopology.filter(_.id == 4l).map(_.linkId) should be(Seq(linkId2))
 
-    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(4, TowardsDigitizing, 110)))
+    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(4, linkId2, TowardsDigitizing, 110)))
   }
 
   test("generate one-sided asset when two-way road link only has asset on the other side") {
