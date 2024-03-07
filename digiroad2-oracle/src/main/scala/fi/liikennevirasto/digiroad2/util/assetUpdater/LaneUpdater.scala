@@ -90,7 +90,7 @@ object LaneUpdater {
 
   def fuseLaneSections(replacementResults: Seq[RoadLinkChangeWithResults]): (Seq[PersistedLane], ChangeSet) = {
     val (newLinkIds: Seq[String], changeSetMerged: ChangeSet, lanesOnNewLinks: Seq[PersistedLane]) =   LogUtils.time(logger, s"extractNeededValues ") {extractNeededValues(replacementResults)}
-    val lanesGroupedByNewLinkId = lanesOnNewLinks.groupBy(_.linkId)
+    val lanesGroupedByNewLinkId = LogUtils.time(logger, s"groupBy linkid ") {lanesOnNewLinks.groupBy(_.linkId)}
     val initialChangeSet = changeSetMerged
     val linksCount = lanesGroupedByNewLinkId.size
 
