@@ -89,9 +89,9 @@ object LaneUpdater {
   }
 
   def fuseLaneSections(replacementResults: Seq[RoadLinkChangeWithResults]): (Seq[PersistedLane], ChangeSet) = {
-    val (newLinkIds: Seq[String], changeSets: Seq[LaneFiller.ChangeSet], lanesOnNewLinks: Seq[PersistedLane]) =   LogUtils.time(logger, s"extractNeededValues ") {extractNeededValues(replacementResults)}
+    val (newLinkIds: Seq[String], changeSetMerged: ChangeSet, lanesOnNewLinks: Seq[PersistedLane]) =   LogUtils.time(logger, s"extractNeededValues ") {extractNeededValues(replacementResults)}
     val lanesGroupedByNewLinkId = lanesOnNewLinks.groupBy(_.linkId)
-    val initialChangeSet = LogUtils.time(logger, s"combineChangeSets ") {changeSets.foldLeft(ChangeSet())(LaneFiller.combineChangeSets)}
+    val initialChangeSet = changeSetMerged
     val linksCount = lanesGroupedByNewLinkId.size
 
     val (lanesAfterFuse: Seq[PersistedLane], changeSet: ChangeSet) = linksCount match {
@@ -101,17 +101,50 @@ object LaneUpdater {
     (lanesAfterFuse, changeSet)
   }
 
-  private def extractNeededValues(replacementResults: Seq[RoadLinkChangeWithResults]) = {
+  private def extractNeededValues(replacementResults: Seq[RoadLinkChangeWithResults]): (ListBuffer[String], ChangeSet, ListBuffer[PersistedLane]) = {
     val newLinkIds = new ListBuffer[String]()
-    val changeSets = new ListBuffer[ChangeSet]()
     val lanesOnNewLinks = new ListBuffer[PersistedLane]()
-    for ( r <-replacementResults) {
+
+    val adjustedMValues = new ListBuffer[MValueAdjustment]
+    val adjustedSideCodes = new ListBuffer[SideCodeAdjustment]
+    val positionAdjustments = new ListBuffer[LanePositionAdjustment]
+    val expiredLaneIds = new ListBuffer[Long]
+    val generatedPersistedLanes = new ListBuffer[PersistedLane]
+    val splitLanes = new ListBuffer[LaneSplit]
+
+    for (r <- replacementResults) {
       newLinkIds.appendAll(r.roadLinkChange.newLinks.map(_.linkId))
-      changeSets.append(r.changeSet)
       lanesOnNewLinks.appendAll(r.lanesOnAdjustedLink)
+      adjustedMValues.appendAll(r.changeSet.adjustedMValues)
+      adjustedSideCodes.appendAll(r.changeSet.adjustedSideCodes.toList)
+      positionAdjustments.appendAll(r.changeSet.positionAdjustments.toList)
+      expiredLaneIds.appendAll(r.changeSet.expiredLaneIds.toList)
+      generatedPersistedLanes.appendAll(r.changeSet.generatedPersistedLanes.toList)
+      splitLanes.appendAll(r.changeSet.splitLanes.toList)
     }
-    
-    (newLinkIds, changeSets, lanesOnNewLinks)
+
+    val changeSet = createChangeSet(
+      adjustedMValues, adjustedSideCodes,
+      positionAdjustments, expiredLaneIds,
+      generatedPersistedLanes, splitLanes)
+
+    (newLinkIds, changeSet, lanesOnNewLinks)
+  }
+  private def createChangeSet(adjustedMValues: ListBuffer[MValueAdjustment], adjustedSideCodes: ListBuffer[SideCodeAdjustment],
+                              positionAdjustments: ListBuffer[LanePositionAdjustment], expiredLaneIds: ListBuffer[Long],
+                              generatedPersistedLanes: ListBuffer[PersistedLane], splitLanes: ListBuffer[LaneSplit]): ChangeSet = {
+    val merged = LogUtils.time(logger, s"merging split lanes") {splitLanes.distinct.groupBy(_.originalLane.id).map(
+      a => LaneSplit(originalLane = a._2.head.originalLane, lanesToCreate = a._2.flatMap(_.lanesToCreate).distinct)
+    ).toList}
+
+    ChangeSet(
+      adjustedMValues = adjustedMValues.distinct,
+      adjustedSideCodes = adjustedSideCodes.distinct,
+      positionAdjustments = positionAdjustments.distinct,
+      expiredLaneIds = expiredLaneIds.toSet,
+      generatedPersistedLanes = generatedPersistedLanes.distinct,
+      splitLanes = merged
+    )
   }
   private def fusingLoop(newLinkIds: Seq[String], initialChangeSet: ChangeSet, lanesGroupedByNewLinkId: Map[String, Seq[PersistedLane]]) = {
     logger.info(s"Start fuse loop")
@@ -163,18 +196,32 @@ object LaneUpdater {
     }
 
     val fused = new ListBuffer[PersistedLane]()
-    val changeSetList = new ListBuffer[ChangeSet]()
+    val adjustedMValues = new ListBuffer[MValueAdjustment]
+    val adjustedSideCodes = new ListBuffer[SideCodeAdjustment]
+    val positionAdjustments = new ListBuffer[LanePositionAdjustment]
+    val expiredLaneIds = new ListBuffer[Long]
+    val generatedPersistedLanes = new ListBuffer[PersistedLane]
+    val splitLanes = new ListBuffer[LaneSplit]
+    
     LogUtils.time(logger, s"Extracting fused asset ") {
-      for (t <-operated) {fused.appendAll(t._1); changeSetList.append(t._2)}
+      for (t <-operated) {
+        fused.appendAll(t._1);
+        
+        adjustedMValues.appendAll(t._2.adjustedMValues)
+        adjustedSideCodes.appendAll(t._2.adjustedSideCodes.toList)
+        positionAdjustments.appendAll(t._2.positionAdjustments.toList)
+        expiredLaneIds.appendAll(t._2.expiredLaneIds.toList)
+        generatedPersistedLanes.appendAll(t._2.generatedPersistedLanes.toList)
+        splitLanes.appendAll(t._2.splitLanes.toList)
+      }
     }
-    
-    
-    val otherChanges = ChangeSet(
-      expiredLaneIds = initialChangeSet.expiredLaneIds, 
-      generatedPersistedLanes = initialChangeSet.generatedPersistedLanes,
-      splitLanes = initialChangeSet.splitLanes.filter(_.lanesToCreate.isEmpty)
+    val merged = createChangeSet(
+      adjustedMValues, adjustedSideCodes,
+      positionAdjustments,
+      expiredLaneIds ++ initialChangeSet.expiredLaneIds,
+      generatedPersistedLanes ++ initialChangeSet.generatedPersistedLanes,
+      splitLanes ++ initialChangeSet.splitLanes.filter(_.lanesToCreate.isEmpty)
     )
-    val merged = LogUtils.time(logger, s"combineChangeSets ") {(Seq(otherChanges) ++ changeSetList).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)}
     logger.info(s"End parallel fuse")
     (fused.distinct,merged)
   }
