@@ -44,6 +44,7 @@ object LogUtils {
 
     if (currentTenPercent != lastTenPercent) {
       logger.info(s"$operationName is $currentTenPercent% complete")
+      println(s"$operationName is $currentTenPercent% complete")
     }
     currentTenPercent
   }
