@@ -1,20 +1,26 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.DamagedByThawService
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 object DamagedByThawRepeater {
-  val ActivePeriod = "spring_thaw_period"
-  val Repetition = "annual_repetition"
-  val dateFormat = "dd.MM.yyyy"
-  val formatter = DateTimeFormat.forPattern(dateFormat)
-  val today: DateTime = DateTime.now()
-  val damagedByThawService: DamagedByThawService = new DamagedByThawService()
+  lazy val ActivePeriod = "spring_thaw_period"
+  lazy val Repetition = "annual_repetition"
+  lazy val dateFormat = "dd.MM.yyyy"
+  lazy val formatter: DateTimeFormatter = DateTimeFormat.forPattern(dateFormat)
+  lazy val today: DateTime = DateTime.now()
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val dummyEventBus = new DummyEventBus
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, new DummySerializer)
+  lazy val damagedByThawService: DamagedByThawService = new DamagedByThawService(roadLinkService, dummyEventBus)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
