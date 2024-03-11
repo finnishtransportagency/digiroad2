@@ -609,7 +609,9 @@ object LaneUpdater {
         Some(ChangedAsset(linkId, assetId, changeType, relevantRoadLinkChange.changeType, before, after))
       case None =>
         val oldLaneLink = if (oldLane.nonEmpty) oldLane.get.linkId
+        val oldLaneGet = if (oldLane.nonEmpty) oldLane.get
         logger.error(s"Could not find relevant road link change. Lane old linkId: ${oldLaneLink} Lane new linkId: ${newLanes.map(_.linkId).toString()}")
+        logger.error(s"Lanes where old lane : ${oldLaneLink.toString} and new lane: ${newLanes.toString()}")
         None
     }
   }
