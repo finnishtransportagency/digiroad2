@@ -349,7 +349,8 @@ object LaneUpdater {
     def saveDividedLanes(laneSplits: Seq[LaneSplit]): Seq[ChangedAsset] = {
       val lanesToCreate = laneSplits.flatMap(_.lanesToCreate).toSet
 
-      logger.info("Creating " + lanesToCreate.size + " new lanes due to split on link ids: " + lanesToCreate.map(_.linkId).mkString(", "))
+      logger.info(s"Creating ${lanesToCreate.size} new lanes due to split on link ids: ${lanesToCreate.map(_.linkId).toSet.size}")
+      logger.debug(s"Creating ${lanesToCreate.size} new lanes due to split on link ids: ${lanesToCreate.map(_.linkId).mkString(", ")}")
       //TODO If too slow, refactor code to create all split lanes in a single query
       val laneSplitsWithCreatedIds = LogUtils.time(logger, s"Create ${laneSplits.flatMap(_.lanesToCreate).size} lanes due to split") {
         laneSplits.map(split => {
@@ -393,7 +394,8 @@ object LaneUpdater {
 
     // Expire lanes which have been marked to be expired
     val expiredChangedLanes = if(changeSet.expiredLaneIds.nonEmpty) {
-      logger.info("Expiring " + changeSet.expiredLaneIds.size + "ids: " + changeSet.expiredLaneIds.mkString(", "))
+      logger.info(s"Expiring ${changeSet.expiredLaneIds.size}")
+      logger.debug(s"Expiring ${changeSet.expiredLaneIds.size} ids: ${changeSet.expiredLaneIds.mkString(", ")}")
       expireLanes(changeSet.expiredLaneIds)
     } else Seq()
 
