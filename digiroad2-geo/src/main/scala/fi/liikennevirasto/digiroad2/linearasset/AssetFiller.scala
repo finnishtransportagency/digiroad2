@@ -24,8 +24,7 @@ class AssetFiller {
       dropShortSegments,
       adjustAssets,
       droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
-      updateValues
+      adjustSegmentSideCodes
     )
 
     val adjustmentAndNonExistingOperations: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
@@ -34,8 +33,7 @@ class AssetFiller {
       dropShortSegments,
       adjustAssets,
       droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
-      updateValues
+      adjustSegmentSideCodes
     )
 
     if(geometryChanged) fillOperations
@@ -225,8 +223,6 @@ class AssetFiller {
     }
     (segments ++ generated, changeSet)
   }
-
-  protected def updateValues(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = (segments, changeSet)
 
   protected def updateValuesWithoutChangeSet(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset]): Seq[PieceWiseLinearAsset] = segments
 
