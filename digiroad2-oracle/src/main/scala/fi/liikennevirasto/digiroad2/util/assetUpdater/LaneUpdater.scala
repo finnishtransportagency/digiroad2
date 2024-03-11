@@ -67,24 +67,24 @@ object LaneUpdater {
     -Math.abs(randomGen.nextLong)
   }
 
-  def logChangeSetSizes(changeSet: ChangeSet): Unit = {
-    logger.info(s"adjustedMValues size: ${changeSet.adjustedMValues.size}")
-    logger.info(s"adjustedSideCodes size: ${changeSet.adjustedSideCodes.size}")
-    logger.info(s"positionAdjustments size: ${changeSet.positionAdjustments.size}")
-    logger.info(s"expiredLaneIds size: ${changeSet.expiredLaneIds.size}")
-    logger.info(s"generatedPersistedLanes size: ${changeSet.generatedPersistedLanes.size}")
-    logger.info(s"splitLanes size: ${changeSet.splitLanes.size}")
+  def logChangeSetSizes(changeSet: ChangeSet, header:String = ""): Unit = {
+    logger.info(s"${header} adjustedMValues size: ${changeSet.adjustedMValues.size}")
+    logger.info(s"${header} adjustedSideCodes size: ${changeSet.adjustedSideCodes.size}")
+    logger.info(s"${header} positionAdjustments size: ${changeSet.positionAdjustments.size}")
+    logger.info(s"${header} expiredLaneIds size: ${changeSet.expiredLaneIds.size}")
+    logger.info(s"${header} generatedPersistedLanes size: ${changeSet.generatedPersistedLanes.size}")
+    logger.info(s"${header} splitLanes size: ${changeSet.splitLanes.size}")
 
     changeSet.adjustedMValues.groupBy(_.laneId).filter(_._2.size >= 2).foreach(a1 => {
-      logger.error(s"More than one M-Value adjustment for asset ids=${a1._2.sortBy(_.linkId).map(a => s"${a.laneId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
+      logger.error(s"${header} More than one M-Value adjustment for asset ids=${a1._2.sortBy(_.linkId).map(a => s"${a.laneId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
     })
 
     changeSet.adjustedSideCodes.groupBy(_.laneId).filter(_._2.size >= 2).foreach(a1 => {
-      logger.error(s"More than one sideCode change for asset/sidecode ids=${a1._2.map(a => s"${a.laneId}/${a.sideCode}").mkString(", ")}")
+      logger.error(s"${header} More than one sideCode change for asset/sidecode ids=${a1._2.map(a => s"${a.laneId}/${a.sideCode}").mkString(", ")}")
     })
 
     changeSet.positionAdjustments.groupBy(_.laneId).filter(_._2.size >= 2).foreach(a1 => {
-      logger.error(s"More than one position adjustments for asset ids=${a1._2.sortBy(_.linkId).map(a => s"${a.laneId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
+      logger.error(s"${header} More than one position adjustments for asset ids=${a1._2.sortBy(_.linkId).map(a => s"${a.laneId}/${a.linkId} start measure: ${a.startMeasure} end measure: ${a.endMeasure}").mkString(", ")}")
     })
   }
 
@@ -93,11 +93,12 @@ object LaneUpdater {
     val lanesGroupedByNewLinkId = LogUtils.time(logger, s"groupBy linkid ") {lanesOnNewLinks.groupBy(_.linkId)}
     val initialChangeSet = changeSetMerged
     val linksCount = lanesGroupedByNewLinkId.size
-
+    logChangeSetSizes(initialChangeSet,"situation before fuse and after projecting")
     val (lanesAfterFuse: Seq[PersistedLane], changeSet: ChangeSet) = linksCount match {
       case a if a >= parallelizationThreshold => parallelFusing(lanesGroupedByNewLinkId,initialChangeSet)
       case _ => fusingLoop(newLinkIds, initialChangeSet,lanesGroupedByNewLinkId)
     }
+    logChangeSetSizes(changeSet,"situation after fuse")
     (lanesAfterFuse, changeSet)
   }
 
@@ -165,33 +166,26 @@ object LaneUpdater {
     logger.info(s"Start parallel fuse")
     val grouped = lanesGroupedByNewLinkId.grouped(groupSizeForParallelRun).toList.par
     val (totalTasks: Int, level: Int) = setParallelismLevel(grouped.size)
-    val totalItems = lanesGroupedByNewLinkId.size
-    val setsProgressCounter = new AtomicInteger(0)
-    val progressTenPercentCounter = new AtomicInteger(0)
     val operated =  new Parallel().operation(grouped, level) { tasks =>
       tasks.map { al =>
-        val ids = al.flatMap(_._2.map(_.id)).toSet
-        val links = al.keys.toSet
-        val lane = al.flatMap(_._2).toSeq
-        val excludeUnneededChangSetItems = ChangeSet(
-          adjustedMValues = initialChangeSet.adjustedMValues.filter(a => links.contains(a.linkId)),
-          adjustedSideCodes = initialChangeSet.adjustedSideCodes.filter(a => ids.contains(a.laneId)),
-          positionAdjustments = initialChangeSet.positionAdjustments.filter(a => ids.contains(a.laneId)),
-          expiredLaneIds = initialChangeSet.expiredLaneIds.intersect(ids),
-          splitLanes = initialChangeSet.splitLanes.map(a=>
-          {
-            val correctLanes = a.lanesToCreate.filter(a => ids.contains(a.id))
-            if (correctLanes.nonEmpty) {Some(LaneSplit(originalLane = a.originalLane,lanesToCreate = correctLanes))
-            }  else  None
-          }).filter(_.nonEmpty).map(_.get)
-        )
-        val fuseResult = fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
-        synchronized{
-          val totalSetsProcessed = setsProgressCounter.getAndIncrement()
-          val currentTenPercent = LogUtils.logArrayProgress(logger, "Fusing assets parallel", totalItems, totalSetsProcessed, progressTenPercentCounter.get())
-          progressTenPercentCounter.set(currentTenPercent)
+        LogUtils.time(logger, s"Fusing task with items count ${al.size} ") {
+          val ids = al.flatMap(_._2.map(_.id)).toSet
+          val links = al.keys.toSet
+          val lane = al.flatMap(_._2).toSeq
+          val excludeUnneededChangSetItems = ChangeSet(
+            adjustedMValues = initialChangeSet.adjustedMValues.filter(a => links.contains(a.linkId)),
+            adjustedSideCodes = initialChangeSet.adjustedSideCodes.filter(a => ids.contains(a.laneId)),
+            positionAdjustments = initialChangeSet.positionAdjustments.filter(a => ids.contains(a.laneId)),
+            expiredLaneIds = initialChangeSet.expiredLaneIds.intersect(ids),
+            splitLanes = initialChangeSet.splitLanes.map(a => {
+              val correctLanes = a.lanesToCreate.filter(a => ids.contains(a.id))
+              if (correctLanes.nonEmpty) {
+                Some(LaneSplit(originalLane = a.originalLane, lanesToCreate = correctLanes))
+              } else None
+            }).filter(_.nonEmpty).map(_.get)
+          )
+          fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
         }
-        fuseResult
       }
     }
 
@@ -310,7 +304,7 @@ object LaneUpdater {
       }
       persistedLanesToExpire.map(laneToExpire => {
         reportLaneChanges(Some(laneToExpire), Seq(), Deletion, roadLinkChanges)
-      })
+      }).filter(_.nonEmpty).map(_.get)
     }
 
     def saveLanePositionAdjustments(positionAdjustments: Seq[LanePositionAdjustment]): Seq[ChangedAsset] = {
@@ -349,13 +343,14 @@ object LaneUpdater {
         val oldLane = oldAndNewLane._1.lane
         val newLane = oldAndNewLane._2
         reportLaneChanges(Some(oldLane), Seq(newLane), Replaced, roadLinkChanges)
-      })
+      }).filter(_.nonEmpty).map(_.get)
     }
 
     def saveDividedLanes(laneSplits: Seq[LaneSplit]): Seq[ChangedAsset] = {
       val lanesToCreate = laneSplits.flatMap(_.lanesToCreate).toSet
 
-      logger.info("Creating " + lanesToCreate.size + " new lanes due to split on link ids: " + lanesToCreate.map(_.linkId).mkString(", "))
+      logger.info(s"Creating ${lanesToCreate.size} new lanes due to split on link ids: ${lanesToCreate.map(_.linkId).toSet.size}")
+      logger.debug(s"Creating ${lanesToCreate.size} new lanes due to split on link ids: ${lanesToCreate.map(_.linkId).mkString(", ")}")
       //TODO If too slow, refactor code to create all split lanes in a single query
       val laneSplitsWithCreatedIds = LogUtils.time(logger, s"Create ${laneSplits.flatMap(_.lanesToCreate).size} lanes due to split") {
         laneSplits.map(split => {
@@ -382,7 +377,7 @@ object LaneUpdater {
 
       laneSplitsWithCreatedIds.map(split => {
         reportLaneChanges(Some(split.originalLane), split.lanesToCreate, Divided, roadLinkChanges)
-      })
+      }).filter(_.nonEmpty).map(_.get)
     }
 
 
@@ -392,14 +387,15 @@ object LaneUpdater {
       }
       createdLanes.map(createdLane => {
         reportLaneChanges(None, Seq(createdLane), Creation, roadLinkChanges)
-      })
+      }).filter(_.nonEmpty).map(_.get)
     }
 
     logChangeSetSizes(changeSet)
 
     // Expire lanes which have been marked to be expired
     val expiredChangedLanes = if(changeSet.expiredLaneIds.nonEmpty) {
-      logger.info("Expiring " + changeSet.expiredLaneIds.size + "ids: " + changeSet.expiredLaneIds.mkString(", "))
+      logger.info(s"Expiring ${changeSet.expiredLaneIds.size}")
+      logger.debug(s"Expiring ${changeSet.expiredLaneIds.size} ids: ${changeSet.expiredLaneIds.mkString(", ")}")
       expireLanes(changeSet.expiredLaneIds)
     } else Seq()
 
@@ -564,11 +560,11 @@ object LaneUpdater {
     (ChangeSet(expiredLaneIds = laneIdsToExpire, generatedPersistedLanes = createdMainLanes), createdMainLanes)
   }
 
-  def reportLaneChanges(oldLane: Option[PersistedLane], newLanes: Seq[PersistedLane], changeType: ChangeType, roadLinkChanges: Seq[RoadLinkChange]): ChangedAsset = {
+  def reportLaneChanges(oldLane: Option[PersistedLane], newLanes: Seq[PersistedLane], changeType: ChangeType, roadLinkChanges: Seq[RoadLinkChange]): Option[ChangedAsset] = {
     val linkId = if (oldLane.nonEmpty) oldLane.get.linkId else newLanes.head.linkId
     val assetId = if (oldLane.nonEmpty) oldLane.get.id else 0
 
-    val relevantRoadLinkChange = roadLinkChanges.find(change => {
+    val relevantRoadLinkChangeOpt = roadLinkChanges.find(change => {
       val roadLinkChangeOldLinkId = change.oldLink match {
         case Some(oldLink) => Some(oldLink.linkId)
         case None => None
@@ -581,46 +577,36 @@ object LaneUpdater {
       val lanesNewLinkIds = newLanes.map(_.linkId).sorted
 
       ((roadLinkChangeOldLinkId.nonEmpty && laneOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == laneOldLinkId) || roadLinkChangeNewLinkIds == lanesNewLinkIds
-    }).get
-
-    val before = oldLane match {
-      case Some(ol) =>
-        val values = compactJson(JObject(ol.attributes.flatMap(_.toJson).toList))
-        val linkGeometry = relevantRoadLinkChange.oldLink.get.geometry
-        val linkInfo = Some(LinkInfo(relevantRoadLinkChange.oldLink.get.lifeCycleStatus))
-        val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, ol.startMeasure, ol.endMeasure)
-        val linearReference = LinearReferenceForReport(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, None, ol.endMeasure - ol.startMeasure)
-        Some(Asset(ol.id, values, Some(ol.municipalityCode.toInt), Some(laneGeometry), Some(linearReference),linkInfo))
-      case None => None
-    }
-
-    val after = newLanes.map(nl => {
-      val maybeLink = relevantRoadLinkChange.newLinks.find(_.linkId == nl.linkId)
-      val linkInfo = if (maybeLink.nonEmpty) Some(LinkInfo(maybeLink.get.lifeCycleStatus)) else None
-      val values = compactJson(JObject(nl.attributes.flatMap(_.toJson).toList))
-      val linkGeometry = if (maybeLink.nonEmpty) maybeLink.get.geometry else Seq.empty[Point]
-      val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, nl.startMeasure, nl.endMeasure)
-      val linearReference = LinearReferenceForReport(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, None, nl.endMeasure - nl.startMeasure)
-      Asset(nl.id, values, Some(nl.municipalityCode.toInt), Some(laneGeometry), Some(linearReference),linkInfo)
     })
-
-    ChangedAsset(linkId, assetId, changeType, relevantRoadLinkChange.changeType, before, after)
-  }
-
-  private def partitionLanes(lanes: Seq[PersistedLane], oldLinkIds: Seq[String], newLinkIds: Seq[String], oldWorkListLinkIds: Seq[String]) = {
-    val linkIdsWithExistingLane = new ListBuffer[PersistedLane]
-    val lanesOnOldRoadLinks     = new ListBuffer[PersistedLane]
-    val workListMainLanes       = new ListBuffer[PersistedLane]
-    LogUtils.time(logger, "partition lanes into three list") {
-      for (lane <- lanes) {
-        if (oldLinkIds.contains(lane.linkId)) lanesOnOldRoadLinks.append(lane)
-        // Additional lanes can't be processed if link is on the lane work list, only handle main lanes on those links
-        if (oldWorkListLinkIds.contains(lane.linkId) && LaneNumber.isMainLane(lane.laneCode)) workListMainLanes.append(lane)
-        if (newLinkIds.contains(lane.linkId)) linkIdsWithExistingLane.append(lane)
-      }
+    
+   relevantRoadLinkChangeOpt match {
+      case Some(relevantRoadLinkChange) => 
+        val before = oldLane match {
+          case Some(ol) =>
+            val values = compactJson(JObject(ol.attributes.flatMap(_.toJson).toList))
+            val linkGeometry = relevantRoadLinkChange.oldLink.get.geometry
+            val linkInfo = Some(LinkInfo(relevantRoadLinkChange.oldLink.get.lifeCycleStatus))
+            val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, ol.startMeasure, ol.endMeasure)
+            val linearReference = LinearReferenceForReport(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, None, ol.endMeasure - ol.startMeasure)
+            Some(Asset(ol.id, values, Some(ol.municipalityCode.toInt), Some(laneGeometry), Some(linearReference), linkInfo))
+          case None => None
+        }
+        val after = newLanes.map(nl => {
+          val maybeLink = relevantRoadLinkChange.newLinks.find(_.linkId == nl.linkId)
+          val linkInfo = if (maybeLink.nonEmpty) Some(LinkInfo(maybeLink.get.lifeCycleStatus)) else None
+          val values = compactJson(JObject(nl.attributes.flatMap(_.toJson).toList))
+          val linkGeometry = if (maybeLink.nonEmpty) maybeLink.get.geometry else Seq.empty[Point]
+          val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, nl.startMeasure, nl.endMeasure)
+          val linearReference = LinearReferenceForReport(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, None, nl.endMeasure - nl.startMeasure)
+          Asset(nl.id, values, Some(nl.municipalityCode.toInt), Some(laneGeometry), Some(linearReference), linkInfo)
+        })
+        Some(ChangedAsset(linkId, assetId, changeType, relevantRoadLinkChange.changeType, before, after))
+      case None =>
+        val oldLaneLink = if (oldLane.nonEmpty) oldLane.get.linkId else ""
+        logger.error(s"Could not find relevant road link change. Lane old linkId: ${oldLaneLink} Lane new linkId: ${newLanes.map(_.linkId).toString()}")
+        logger.error(s"Lanes where old lane : ${oldLane.toString} and new lane: ${newLanes.toString()}")
+        None
     }
-
-    (linkIdsWithExistingLane, lanesOnOldRoadLinks, workListMainLanes)
   }
 
   private def splitOldAndNewIds(roadLinkChanges: Seq[RoadLinkChange]): (ListBuffer[String], ListBuffer[String]) = {
@@ -699,35 +685,32 @@ object LaneUpdater {
   private def parLoopChanges(newRoadLinks: Seq[RoadLink], filteredChanges: Seq[RoadLinkChange], lanesGroup: mutable.HashMap[String, Set[PersistedLane]]): ParIterable[RoadLinkChangeWithResults] = {
     val grouped = filteredChanges.grouped(groupSizeForParallelRun).toList.par
     val (totalTasks: Int, level: Int) = setParallelismLevel(grouped.size)
-    val totalItems = filteredChanges.size
-    val setsProgressCounter = new AtomicInteger(0)
-    val progressTenPercentCounter = new AtomicInteger(0)
     LogUtils.time(logger, s"Core samuutus handling for ${filteredChanges.size} changes, multithreaded") {
       new Parallel().operation(grouped, level) { tasks =>
         tasks.map { al =>
-          val results = al.map(operateChanges(newRoadLinks, lanesGroup, _))
-          synchronized{
-            val totalSetsProcessed = setsProgressCounter.getAndIncrement()
-            val currentTenPercent = LogUtils.logArrayProgress(logger, "Samuuting assets parallel", totalItems, totalSetsProcessed, progressTenPercentCounter.get())
-            progressTenPercentCounter.set(currentTenPercent)
+          LogUtils.time(logger, s"Samuutus task with items count ${al.size} ") {
+            al.map(operateChanges(newRoadLinks, lanesGroup, _))
           }
-          results
         }
       }.flatten
     }
   }
-  private def operateChanges(newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks:  mutable.HashMap[String, Set[PersistedLane]], change: RoadLinkChange) = {
-    val relevantLinksIds = change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
-    val relevantLinks = newRoadLinks.filter(a=>relevantLinksIds.contains(a.linkId))
-    change.changeType match {
-      case RoadLinkChangeType.Add =>
-        handleAddChange(change, relevantLinks)
-      case RoadLinkChangeType.Remove =>
-        handleRemoveChange(change, lanesOnOldRoadLinks)
-      case RoadLinkChangeType.Replace =>
-        handleReplaceChange(change, relevantLinks, lanesOnOldRoadLinks)
-      case RoadLinkChangeType.Split =>
-        handleSplitChange(change, relevantLinks, lanesOnOldRoadLinks)
+  private def operateChanges(newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks: mutable.HashMap[String, Set[PersistedLane]], change: RoadLinkChange) = {
+    val relevantLinks = LogUtils.time(logger, s"Preparing operateChanges by filtering links") {
+      val relevantLinksIds = change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
+      newRoadLinks.filter(a => relevantLinksIds.contains(a.linkId))
+    }
+    LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
+      change.changeType match {
+        case RoadLinkChangeType.Add =>
+          handleAddChange(change, relevantLinks)
+        case RoadLinkChangeType.Remove =>
+          handleRemoveChange(change, lanesOnOldRoadLinks)
+        case RoadLinkChangeType.Replace =>
+          handleReplaceChange(change, relevantLinks, lanesOnOldRoadLinks)
+        case RoadLinkChangeType.Split =>
+          handleSplitChange(change, relevantLinks, lanesOnOldRoadLinks)
+      }
     }
   }
   private def handleAddChange(change: RoadLinkChange, relevantLinks: Seq[RoadLink]): RoadLinkChangeWithResults = {
