@@ -41,6 +41,8 @@ object ParConstant {
   val parallelizationLevel = 30
 }
 
+
+case class CannotFindRelevantChange(msg:String) extends NoSuchElementException(msg)
 object LaneUpdater {
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -310,7 +312,7 @@ object LaneUpdater {
       }
       persistedLanesToExpire.map(laneToExpire => {
         reportLaneChanges(Some(laneToExpire), Seq(), Deletion, roadLinkChanges)
-      })
+      }).filter(_.nonEmpty).map(_.get)
     }
 
     def saveLanePositionAdjustments(positionAdjustments: Seq[LanePositionAdjustment]): Seq[ChangedAsset] = {
@@ -349,7 +351,7 @@ object LaneUpdater {
         val oldLane = oldAndNewLane._1.lane
         val newLane = oldAndNewLane._2
         reportLaneChanges(Some(oldLane), Seq(newLane), Replaced, roadLinkChanges)
-      })
+      }).filter(_.nonEmpty).map(_.get)
     }
 
     def saveDividedLanes(laneSplits: Seq[LaneSplit]): Seq[ChangedAsset] = {
@@ -382,7 +384,7 @@ object LaneUpdater {
 
       laneSplitsWithCreatedIds.map(split => {
         reportLaneChanges(Some(split.originalLane), split.lanesToCreate, Divided, roadLinkChanges)
-      })
+      }).filter(_.nonEmpty).map(_.get)
     }
 
 
@@ -392,7 +394,7 @@ object LaneUpdater {
       }
       createdLanes.map(createdLane => {
         reportLaneChanges(None, Seq(createdLane), Creation, roadLinkChanges)
-      })
+      }).filter(_.nonEmpty).map(_.get)
     }
 
     logChangeSetSizes(changeSet)
@@ -564,11 +566,11 @@ object LaneUpdater {
     (ChangeSet(expiredLaneIds = laneIdsToExpire, generatedPersistedLanes = createdMainLanes), createdMainLanes)
   }
 
-  def reportLaneChanges(oldLane: Option[PersistedLane], newLanes: Seq[PersistedLane], changeType: ChangeType, roadLinkChanges: Seq[RoadLinkChange]): ChangedAsset = {
+  def reportLaneChanges(oldLane: Option[PersistedLane], newLanes: Seq[PersistedLane], changeType: ChangeType, roadLinkChanges: Seq[RoadLinkChange]): Option[ChangedAsset] = {
     val linkId = if (oldLane.nonEmpty) oldLane.get.linkId else newLanes.head.linkId
     val assetId = if (oldLane.nonEmpty) oldLane.get.id else 0
 
-    val relevantRoadLinkChange = roadLinkChanges.find(change => {
+    val relevantRoadLinkChangeOpt = roadLinkChanges.find(change => {
       val roadLinkChangeOldLinkId = change.oldLink match {
         case Some(oldLink) => Some(oldLink.linkId)
         case None => None
@@ -581,30 +583,35 @@ object LaneUpdater {
       val lanesNewLinkIds = newLanes.map(_.linkId).sorted
 
       ((roadLinkChangeOldLinkId.nonEmpty && laneOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == laneOldLinkId) || roadLinkChangeNewLinkIds == lanesNewLinkIds
-    }).get
-
-    val before = oldLane match {
-      case Some(ol) =>
-        val values = compactJson(JObject(ol.attributes.flatMap(_.toJson).toList))
-        val linkGeometry = relevantRoadLinkChange.oldLink.get.geometry
-        val linkInfo = Some(LinkInfo(relevantRoadLinkChange.oldLink.get.lifeCycleStatus))
-        val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, ol.startMeasure, ol.endMeasure)
-        val linearReference = LinearReferenceForReport(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, None, ol.endMeasure - ol.startMeasure)
-        Some(Asset(ol.id, values, Some(ol.municipalityCode.toInt), Some(laneGeometry), Some(linearReference),linkInfo))
-      case None => None
-    }
-
-    val after = newLanes.map(nl => {
-      val maybeLink = relevantRoadLinkChange.newLinks.find(_.linkId == nl.linkId)
-      val linkInfo = if (maybeLink.nonEmpty) Some(LinkInfo(maybeLink.get.lifeCycleStatus)) else None
-      val values = compactJson(JObject(nl.attributes.flatMap(_.toJson).toList))
-      val linkGeometry = if (maybeLink.nonEmpty) maybeLink.get.geometry else Seq.empty[Point]
-      val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, nl.startMeasure, nl.endMeasure)
-      val linearReference = LinearReferenceForReport(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, None, nl.endMeasure - nl.startMeasure)
-      Asset(nl.id, values, Some(nl.municipalityCode.toInt), Some(laneGeometry), Some(linearReference),linkInfo)
     })
-
-    ChangedAsset(linkId, assetId, changeType, relevantRoadLinkChange.changeType, before, after)
+    
+   relevantRoadLinkChangeOpt match {
+      case Some(relevantRoadLinkChange) => 
+        val before = oldLane match {
+          case Some(ol) =>
+            val values = compactJson(JObject(ol.attributes.flatMap(_.toJson).toList))
+            val linkGeometry = relevantRoadLinkChange.oldLink.get.geometry
+            val linkInfo = Some(LinkInfo(relevantRoadLinkChange.oldLink.get.lifeCycleStatus))
+            val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, ol.startMeasure, ol.endMeasure)
+            val linearReference = LinearReferenceForReport(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, None, ol.endMeasure - ol.startMeasure)
+            Some(Asset(ol.id, values, Some(ol.municipalityCode.toInt), Some(laneGeometry), Some(linearReference), linkInfo))
+          case None => None
+        }
+        val after = newLanes.map(nl => {
+          val maybeLink = relevantRoadLinkChange.newLinks.find(_.linkId == nl.linkId)
+          val linkInfo = if (maybeLink.nonEmpty) Some(LinkInfo(maybeLink.get.lifeCycleStatus)) else None
+          val values = compactJson(JObject(nl.attributes.flatMap(_.toJson).toList))
+          val linkGeometry = if (maybeLink.nonEmpty) maybeLink.get.geometry else Seq.empty[Point]
+          val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, nl.startMeasure, nl.endMeasure)
+          val linearReference = LinearReferenceForReport(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, None, nl.endMeasure - nl.startMeasure)
+          Asset(nl.id, values, Some(nl.municipalityCode.toInt), Some(laneGeometry), Some(linearReference), linkInfo)
+        })
+        Some(ChangedAsset(linkId, assetId, changeType, relevantRoadLinkChange.changeType, before, after))
+      case None =>
+        val oldLaneLink = if (oldLane.nonEmpty) oldLane.get.linkId
+        logger.error(s"Could not find relevant road link change. Lane old linkId: ${oldLaneLink} Lane new linkId: ${newLanes.map(_.linkId).toString()}")
+        None
+    }
   }
 
   private def partitionLanes(lanes: Seq[PersistedLane], oldLinkIds: Seq[String], newLinkIds: Seq[String], oldWorkListLinkIds: Seq[String]) = {
