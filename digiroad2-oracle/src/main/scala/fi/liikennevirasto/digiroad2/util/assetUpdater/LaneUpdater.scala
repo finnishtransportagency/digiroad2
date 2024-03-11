@@ -693,22 +693,22 @@ object LaneUpdater {
       }.flatten
     }
   }
-  private def operateChanges(newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks:  mutable.HashMap[String, Set[PersistedLane]], change: RoadLinkChange) = {
-    val (relevantLinks) = LogUtils.time(logger, s"Preparing operateChanges by filtering links") {
+  private def operateChanges(newRoadLinks: Seq[RoadLink], lanesOnOldRoadLinks: mutable.HashMap[String, Set[PersistedLane]], change: RoadLinkChange) = {
+    val relevantLinks = LogUtils.time(logger, s"Preparing operateChanges by filtering links") {
       val relevantLinksIds = change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
-     newRoadLinks.filter(a => relevantLinksIds.contains(a.linkId))
+      newRoadLinks.filter(a => relevantLinksIds.contains(a.linkId))
     }
     LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
-    change.changeType match {
-      case RoadLinkChangeType.Add =>
-        handleAddChange(change, relevantLinks)
-      case RoadLinkChangeType.Remove =>
-        handleRemoveChange(change, lanesOnOldRoadLinks)
-      case RoadLinkChangeType.Replace =>
-        handleReplaceChange(change, relevantLinks, lanesOnOldRoadLinks)
-      case RoadLinkChangeType.Split =>
-        handleSplitChange(change, relevantLinks, lanesOnOldRoadLinks)
-    }
+      change.changeType match {
+        case RoadLinkChangeType.Add =>
+          handleAddChange(change, relevantLinks)
+        case RoadLinkChangeType.Remove =>
+          handleRemoveChange(change, lanesOnOldRoadLinks)
+        case RoadLinkChangeType.Replace =>
+          handleReplaceChange(change, relevantLinks, lanesOnOldRoadLinks)
+        case RoadLinkChangeType.Split =>
+          handleSplitChange(change, relevantLinks, lanesOnOldRoadLinks)
+      }
     }
   }
   private def handleAddChange(change: RoadLinkChange, relevantLinks: Seq[RoadLink]): RoadLinkChangeWithResults = {
