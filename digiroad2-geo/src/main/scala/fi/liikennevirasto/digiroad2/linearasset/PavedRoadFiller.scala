@@ -22,7 +22,7 @@ object PavedRoadFiller extends AssetFiller {
    *  @return assets and changeSet
    */
   override def adjustAssets(roadLink: RoadLinkForFillTopology, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val(unknownPavementAssets, knownPavementAssets) = linearAssets.partition(asset => PavementClass.hasUnknownPavementClass(asset.value))
+    val(unknownPavementAssets, knownPavementAssets) = linearAssets.partition(asset => PavementClass.isUnknownPavementClass(asset.value))
     val (filteredAssets, updatedChangeSet) = unknownPavementAssets.size match {
       case size if size == linearAssets.size => (linearAssets, changeSet)
       case _ =>

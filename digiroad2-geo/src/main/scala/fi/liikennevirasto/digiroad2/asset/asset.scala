@@ -318,7 +318,7 @@ object PavementClass {
     }.flatten
   }
 
-  def hasUnknownPavementClass(assetValue: Option[Value]) = {
+  def isUnknownPavementClass(assetValue: Option[Value]) = {
     val pavementClass = PavementClass.applyFromDynamicPropertyValue(PavementClass.extractPavementClass(assetValue).getOrElse(DynamicPropertyValue("")).value)
     pavementClass == PavementClass.Unknown
   }
