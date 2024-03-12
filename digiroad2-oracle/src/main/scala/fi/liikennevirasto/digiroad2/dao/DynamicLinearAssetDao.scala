@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.dao
 
 import java.nio.charset.StandardCharsets
 import java.util.Base64
-
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -16,6 +15,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
+import fi.liikennevirasto.digiroad2.util.LogUtils
 
 
 case class DynamicAssetRow(id: Long, linkId: String, sideCode: Int, value: DynamicPropertyRow,
@@ -27,11 +27,12 @@ class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
-    val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
-    val filter = filterFloating + filterExpired
-    val assets = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
-      sql"""
+    LogUtils.time(logger, s"Fetch dynamic linear assets on ${linkIds.size} links, assetType: $assetTypeId") {
+      val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
+      val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
+      val filter = filterFloating + filterExpired
+      val assets = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
+        sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
                when tp.value_fi is not null then tp.value_fi
@@ -56,15 +57,16 @@ class DynamicLinearAssetDao {
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           #$filter""".as[DynamicAssetRow](getDynamicAssetRow).list
-    }
-    assets.groupBy(_.id).map { case (id, assetRows) =>
-      val row = assetRows.head
-      val value: DynamicAssetValue = DynamicAssetValue(assetRowToProperty(assetRows))
+      }
+      assets.groupBy(_.id).map { case (id, assetRows) =>
+        val row = assetRows.head
+        val value: DynamicAssetValue = DynamicAssetValue(assetRowToProperty(assetRows))
 
-      id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
-        createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  timeStamp = row.timeStamp,
-        geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate, informationSource = row.informationSource.map(info => InformationSource.apply(info)))
-    }.values.toSeq
+        id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
+          createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId, timeStamp = row.timeStamp,
+          geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate, informationSource = row.informationSource.map(info => InformationSource.apply(info)))
+      }.values.toSeq
+    }
   }
 
   def fetchDynamicLinearAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
