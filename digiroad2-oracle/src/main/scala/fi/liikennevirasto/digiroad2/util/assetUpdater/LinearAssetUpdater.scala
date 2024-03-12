@@ -713,19 +713,21 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
       new Parallel().operation(grouped, level) { tasks =>
         tasks.map { al =>
-          val ids = al.flatMap(_._2.assets.map(_.id)).toSet
-          val links = al.keys.toSet
-          val excludeUnneededChangeSetItems = changeSet match {
-            case Some(x) => Some(ChangeSet(
-              droppedAssetIds = x.droppedAssetIds.intersect(ids),
-              adjustedMValues = x.adjustedMValues.filter(a => links.contains(a.linkId)),
-              adjustedSideCodes = x.adjustedSideCodes.filter(a => ids.contains(a.assetId)),
-              expiredAssetIds = x.expiredAssetIds.intersect(ids),
-              valueAdjustments = x.valueAdjustments
-            ))
-            case None => None
+          LogUtils.time(logger, s"Adjusting assets on ${al.size} links in a single thread") {
+            val ids = al.flatMap(_._2.assets.map(_.id)).toSet
+            val links = al.keys.toSet
+            val excludeUnneededChangeSetItems = changeSet match {
+              case Some(x) => Some(ChangeSet(
+                droppedAssetIds = x.droppedAssetIds.intersect(ids),
+                adjustedMValues = x.adjustedMValues.filter(a => links.contains(a.linkId)),
+                adjustedSideCodes = x.adjustedSideCodes.filter(a => ids.contains(a.assetId)),
+                expiredAssetIds = x.expiredAssetIds.intersect(ids),
+                valueAdjustments = x.valueAdjustments
+              ))
+              case None => None
+            }
+            adjusting(typeId, excludeUnneededChangeSetItems, al)
           }
-          adjusting(typeId, excludeUnneededChangeSetItems, al)
         }
       }.toList
     }
