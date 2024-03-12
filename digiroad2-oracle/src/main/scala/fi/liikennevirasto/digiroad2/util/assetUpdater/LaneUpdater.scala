@@ -589,8 +589,8 @@ object LaneUpdater {
       }
       val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId).sorted
       val lanesNewLinkIds = newLanes.map(_.linkId).sorted
-
-      ((roadLinkChangeOldLinkId.nonEmpty && laneOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == laneOldLinkId) || roadLinkChangeNewLinkIds == lanesNewLinkIds
+      ((roadLinkChangeOldLinkId.nonEmpty && laneOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == laneOldLinkId) ||
+        lanesNewLinkIds.forall(laneNewLinkId => roadLinkChangeNewLinkIds.contains(laneNewLinkId))
     })
     
    relevantRoadLinkChangeOpt match {
