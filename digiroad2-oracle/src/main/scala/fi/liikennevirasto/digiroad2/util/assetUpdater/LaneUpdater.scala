@@ -209,9 +209,23 @@ object LaneUpdater {
         splitLanes.appendAll(t._2.splitLanes.toList)
       }
     }
+    logger.info(s"merged after parallel fuse adjustedMValues size: ${adjustedMValues.size}")
+    logger.info(s"merged after parallel fuse adjustedSideCodes size: ${adjustedSideCodes.size}")
+    logger.info(s"merged after parallel fuse positionAdjustments size: ${positionAdjustments.size}")
+    logger.info(s"merged after parallel fuse expiredLaneIds size: ${expiredLaneIds.size}")
+    logger.info(s"merged after parallel fuse generatedPersistedLanes size: ${generatedPersistedLanes.size}")
+    logger.info(s"merged after parallel fuse splitLanes size: ${splitLanes.size}")
+    
+    
+    val overtakenByFuse = positionAdjustments.map(_.laneId)
+    
+    val positionAdjustmentsMerged = positionAdjustments ++ 
+      initialChangeSet.positionAdjustments.filterNot(a => 
+        overtakenByFuse.contains(a.laneId) || expiredLaneIds.contains(a.laneId))
+    
     val merged = createChangeSet(
       adjustedMValues, adjustedSideCodes,
-      positionAdjustments,
+      positionAdjustmentsMerged,
       expiredLaneIds ++ initialChangeSet.expiredLaneIds,
       generatedPersistedLanes ++ initialChangeSet.generatedPersistedLanes,
       splitLanes ++ initialChangeSet.splitLanes.filter(_.lanesToCreate.isEmpty)
