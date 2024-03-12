@@ -27,11 +27,11 @@ class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    LogUtils.time(logger, s"Fetch dynamic linear assets on ${linkIds.size} links, assetType: $assetTypeId") {
-      val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
-      val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
-      val filter = filterFloating + filterExpired
-      val assets = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
+    val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
+    val filter = filterFloating + filterExpired
+    val assets = LogUtils.time(logger, s"Fetch dynamic linear assets with MassQuery on ${linkIds.size} links, assetType: $assetTypeId") {
+      MassQuery.withStringIds(linkIds.toSet) { idTableName =>
         sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
@@ -58,6 +58,8 @@ class DynamicLinearAssetDao {
           where a.asset_type_id = $assetTypeId
           #$filter""".as[DynamicAssetRow](getDynamicAssetRow).list
       }
+    }
+    LogUtils.time(logger, s"Forming ${assets.size} asset rows to PersitedLinearAssets") {
       assets.groupBy(_.id).map { case (id, assetRows) =>
         val row = assetRows.head
         val value: DynamicAssetValue = DynamicAssetValue(assetRowToProperty(assetRows))
