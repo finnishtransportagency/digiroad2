@@ -221,6 +221,34 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), (aBefore ++ bBefore).distinct))
   }
 
+  private def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]]) = {
+    val after = new ListBuffer[PersistedLinearAsset]
+    val before = new ListBuffer[PersistedLinearAsset]
+    val droppedAssetIds = new ListBuffer[Long]
+    val adjustedMValues = new ListBuffer[MValueAdjustment]
+    val adjustedSideCodes = new ListBuffer[SideCodeAdjustment]
+    val expiredAssetIds = new ListBuffer[Long]
+    val valueAdjustments = new ListBuffer[ValueAdjustment]
+    for (a <- assetsUnderReplace) {
+      if (a.nonEmpty) {
+        after.appendAll(a.get.assetsAfter)
+        before.appendAll(a.get.assetsBefore)
+        if (a.get.changeInfo.nonEmpty) {
+          droppedAssetIds.appendAll(a.get.changeInfo.get.droppedAssetIds)
+          adjustedMValues.appendAll(a.get.changeInfo.get.adjustedMValues.toList)
+          adjustedSideCodes.appendAll(a.get.changeInfo.get.adjustedSideCodes.toList)
+          expiredAssetIds.appendAll(a.get.changeInfo.get.expiredAssetIds)
+          valueAdjustments.appendAll(a.get.changeInfo.get.valueAdjustments.toList)
+        }
+      }
+    }
+
+    val changeSet = ChangeSet(droppedAssetIds = droppedAssetIds.toSet,
+      adjustedMValues = adjustedMValues.distinct, adjustedSideCodes = adjustedSideCodes.distinct,
+      expiredAssetIds = expiredAssetIds.toSet, valueAdjustments = valueAdjustments.distinct)
+    Some(OperationStep(assetsAfter = after, changeInfo = Some(changeSet), assetsBefore = before))
+  }
+
   def reportAssetChanges(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset],
                          roadLinkChanges: Seq[RoadLinkChange],
                          passThroughStep: OperationStep, rowType: Option[ChangeType] = None, useGivenChange: Boolean = false): OperationStep = {
@@ -634,7 +662,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
   private def adjustAndReport(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                               assetUnderReplace: Seq[Option[OperationStep]], changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
-    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(initChangeSet))))(mergerOperations)}
+    val initStep = Some(OperationStep(Seq(), Some(initChangeSet)))
+    val merged = LogUtils.time(logger, "Merging operation steps before adjustment") {mergeOperationSteps(assetUnderReplace :+ initStep)}
     val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
