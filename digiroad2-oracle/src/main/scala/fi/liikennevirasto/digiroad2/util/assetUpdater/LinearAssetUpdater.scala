@@ -357,11 +357,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def partitionAndAddPairs(assetsAfter: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): Set[Pair] = {
-    val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
+    val alreadyReported = LogUtils.time(logger,"Check already reported changes to be filtered out."){changesForReport.flatMap(_.after).map(_.linearReference.get.linkId)}
     val pairList = new ListBuffer[Set[Pair]]
     LogUtils.time(logger, "Loop and create pair") {
       for (asset <- assetsAfter) {
-        if (!newLinks.contains(asset.linkId)) pairList.append(createPair(Some(asset), assetsBefore))
+        if (!alreadyReported.contains(asset.linkId)) pairList.append(createPair(Some(asset), assetsBefore))
       }
     }
     val distinct = LogUtils.time(logger, "Remove duplicate in pair list") {
@@ -370,18 +370,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     LogUtils.time(logger, "Flatten pair list") {
       distinct.flatten
-    }
-  }
-
-  private def newIdList(changes: Seq[RoadLinkChange]): Seq[String] = {
-    val newLink = new ListBuffer[Seq[String]]
-    LogUtils.time(logger, "Loop and add to new links list") {
-      for (change <- changes) {
-        if (isNew(change)) newLink.append(change.newLinks.map(_.linkId))
-      }
-    }
-    LogUtils.time(logger, "Flatten new link id list") {
-      newLink.flatten
     }
   }
 
