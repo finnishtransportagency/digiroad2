@@ -215,32 +215,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param assetsUnderReplace List of [[OperationStep]] objects containing changes to assets under replacement
     * @return [[OperationStep]] containing merged info
     */
-  private def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]]) = {
-    val after = new ListBuffer[PersistedLinearAsset]
-    val before = new ListBuffer[PersistedLinearAsset]
-    val droppedAssetIds = new ListBuffer[Long]
-    val adjustedMValues = new ListBuffer[MValueAdjustment]
-    val adjustedSideCodes = new ListBuffer[SideCodeAdjustment]
-    val expiredAssetIds = new ListBuffer[Long]
-    val valueAdjustments = new ListBuffer[ValueAdjustment]
-    for (a <- assetsUnderReplace) {
-      if (a.nonEmpty) {
-        after.appendAll(a.get.assetsAfter)
-        before.appendAll(a.get.assetsBefore)
-        if (a.get.changeInfo.nonEmpty) {
-          droppedAssetIds.appendAll(a.get.changeInfo.get.droppedAssetIds)
-          adjustedMValues.appendAll(a.get.changeInfo.get.adjustedMValues.toList)
-          adjustedSideCodes.appendAll(a.get.changeInfo.get.adjustedSideCodes.toList)
-          expiredAssetIds.appendAll(a.get.changeInfo.get.expiredAssetIds)
-          valueAdjustments.appendAll(a.get.changeInfo.get.valueAdjustments.toList)
-        }
-      }
-    }
-
-    val changeSet = ChangeSet(droppedAssetIds = droppedAssetIds.toSet,
-      adjustedMValues = adjustedMValues.distinct, adjustedSideCodes = adjustedSideCodes.distinct,
-      expiredAssetIds = expiredAssetIds.toSet, valueAdjustments = valueAdjustments.distinct)
-    Some(OperationStep(assetsAfter = after, changeInfo = Some(changeSet), assetsBefore = before))
+  private def mergerOperations(a: Option[OperationStep], b: Option[OperationStep]): Some[OperationStep] = {
+    val (aBefore, assetsA, changeInfoA) = (a.get.assetsBefore, a.get.assetsAfter, a.get.changeInfo)
+    val (bBefore, assetsB, changeInfoB) = (b.get.assetsBefore, b.get.assetsAfter, b.get.changeInfo)
+    Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), (aBefore ++ bBefore).distinct))
   }
 
   def reportAssetChanges(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset],
@@ -656,8 +634,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
   private def adjustAndReport(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                               assetUnderReplace: Seq[Option[OperationStep]], changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
-    val initStep = Some(OperationStep(Seq(), Some(initChangeSet)))
-    val merged = LogUtils.time(logger, "Merging operation steps before adjustment") {mergeOperationSteps(assetUnderReplace :+ initStep)}
+    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(initChangeSet))))(mergerOperations)}
     val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
@@ -751,18 +728,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def handleReplacements(changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
     val roadLinkInfo = change.newLinks.head
     val assetInInvalidLink = !onlyNeededNewRoadLinks.exists(_.linkId == roadLinkInfo.linkId)
-    if (assetInInvalidLink) { // assets is now in invalid link, expire
-      val expiredAssets = assets.map(a => {
+    if(assetInInvalidLink) { // assets is now in invalid link, expire
+      assets.map(a => {
         val expireStep = OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(a.id))), assetsBefore = Seq(a))
-        Some(reportAssetChanges(Some(a), None, Seq(change), expireStep, Some(ChangeTypeReport.Deletion), useGivenChange = true))
-      })
-      LogUtils.time(logger, "Merging operation steps, invalid link") {
-        mergeOperationSteps(expiredAssets :+ Some(initStep))
-      }
+        Some(reportAssetChanges(Some(a), None, Seq(change), expireStep, Some(ChangeTypeReport.Deletion),useGivenChange = true))
+      }).foldLeft(Some(initStep))(mergerOperations)
     } else {
-      val projected = assets.map(a => projecting(changeSets, change, a, a)).filter(_.nonEmpty)
-      LogUtils.time(logger, "Merging operation steps after projecting") {
-        mergeOperationSteps(projected :+ Some(initStep))
+      val projected = assets.map(a => projecting(changeSets, change, a, a))
+      LogUtils.time(logger, "Merging steps after projecting") {
+        projected.filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)
       }
     }
   }
