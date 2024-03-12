@@ -597,12 +597,18 @@ object LaneUpdater {
       case Some(relevantRoadLinkChange) => 
         val before = oldLane match {
           case Some(ol) =>
-            val values = compactJson(JObject(ol.attributes.flatMap(_.toJson).toList))
-            val linkGeometry = relevantRoadLinkChange.oldLink.get.geometry
-            val linkInfo = Some(LinkInfo(relevantRoadLinkChange.oldLink.get.lifeCycleStatus))
-            val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, ol.startMeasure, ol.endMeasure)
-            val linearReference = LinearReferenceForReport(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, None, ol.endMeasure - ol.startMeasure)
-            Some(Asset(ol.id, values, Some(ol.municipalityCode.toInt), Some(laneGeometry), Some(linearReference), linkInfo))
+              relevantRoadLinkChange.oldLink match {
+              case Some(oldLink) =>
+                val values = compactJson(JObject(ol.attributes.flatMap(_.toJson).toList))
+                val linkGeometry = oldLink.geometry
+                val linkInfo = Some(LinkInfo(oldLink.lifeCycleStatus))
+                val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, ol.startMeasure, ol.endMeasure)
+                val linearReference = LinearReferenceForReport(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, None, ol.endMeasure - ol.startMeasure)
+                Some(Asset(ol.id, values, Some(ol.municipalityCode.toInt), Some(laneGeometry), Some(linearReference), linkInfo))
+              case None =>
+                logger.error(s"Cannot find old link, Lanes where old lane : ${oldLane.toString} and new lane: ${newLanes.toString()}")
+                None
+            }
           case None => None
         }
         val after = newLanes.map(nl => {
