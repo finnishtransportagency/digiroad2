@@ -219,8 +219,8 @@ object LaneUpdater {
     
     val overtakenByFuse = positionAdjustments.map(_.laneId)
     
-    val positionAdjustmentsMerged = LogUtils.time(logger, s"Merging positionAdjustments with initial values ") {positionAdjustments ++ 
-      initialChangeSet.positionAdjustments.filterNot(a => 
+    val positionAdjustmentsMerged = LogUtils.time(logger, s"Merging positionAdjustments with initial values ") {
+      positionAdjustments ++ initialChangeSet.positionAdjustments.filterNot(a => 
         overtakenByFuse.contains(a.laneId) || expiredLaneIds.contains(a.laneId))}
     
     val merged = createChangeSet(
