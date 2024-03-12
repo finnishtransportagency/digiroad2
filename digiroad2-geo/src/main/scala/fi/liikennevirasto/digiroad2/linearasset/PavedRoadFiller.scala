@@ -5,35 +5,29 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object PavedRoadFiller extends AssetFiller {
 
-  //RoadLinks should contain only 1 pavement asset. If multiple are present, redundant assets should be expired
-  override def adjustAssets(roadLink: RoadLinkForFillTopology, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val (filteredAssets, updatedChangeSet) = (linearAssets.size > 1) match {
-      case true =>
-        val (redundantAssets, validAssets) = linearAssets.partition(asset => isRedundantUnknownPavementAsset(asset, roadLink))
-        (validAssets, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ redundantAssets.map(_.id).toSet))
-      case false => (linearAssets, changeSet)
+  private def expireUnknownPavementAssets(assetsToExpire: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) = {
+    val expiredAssetIds = assetsToExpire.map(_.id).toSet
+    if (expiredAssetIds.nonEmpty) {
+      logger.info(s"LinearAssets ${expiredAssetIds.mkString(", ")} expired due to Unknown PavementClass and being replaced by asset with known PavementClass")
     }
-    super.adjustAssets(roadLink, filteredAssets, updatedChangeSet)
+    changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ assetsToExpire.map(_.id).toSet)
   }
 
-  /** *
-   * Filters out Pavement assets that do not fill the whole RoadLink and have an Unknown value
-   *
-   * @param asset
-   * @param roadLink
-   * @return
+  /**
+   * Filter out assets with Unknown PavementClass if any other PavementClass is present.
+   * If all assets have Unknown PavementClass, do nothing.
+   * @param roadLink  which we are processing
+   * @param linearAssets  assets on link
+   * @param changeSet record of changes for final saving stage
+   *  @return assets and changeSet
    */
-  def isRedundantUnknownPavementAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): Boolean = {
-    val assetLength = asset.endMeasure - asset.startMeasure
-    val linkLength = roadLink.length
-    val pavementClass = PavementClass.extractPavementClass(asset.value).getOrElse(DynamicPropertyValue(""))
-    (assetLength - linkLength).abs > MaxAllowedMValueError &&
-      PavementClass.applyFromDynamicPropertyValue(pavementClass.value) == PavementClass.Unknown match {
-      case true =>
-        logger.info(s"LinearAsset ${asset.id} removed from process due to having Unknown PavementClass and not filling whole RoadLink")
-        true
+  override def adjustAssets(roadLink: RoadLinkForFillTopology, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val(unknownPavementAssets, knownPavementAssets) = linearAssets.partition(asset => PavementClass.hasUnknownPavementClass(asset.value))
+    val (filteredAssets, updatedChangeSet) = unknownPavementAssets.size match {
+      case size if size == linearAssets.size => (linearAssets, changeSet)
       case _ =>
-        false
+        (knownPavementAssets, expireUnknownPavementAssets(unknownPavementAssets, changeSet))
     }
+    super.adjustAssets(roadLink, filteredAssets, updatedChangeSet)
   }
 }

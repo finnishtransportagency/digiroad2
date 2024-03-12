@@ -318,6 +318,11 @@ object PavementClass {
     }.flatten
   }
 
+  def hasUnknownPavementClass(assetValue: Option[Value]) = {
+    val pavementClass = PavementClass.applyFromDynamicPropertyValue(PavementClass.extractPavementClass(assetValue).getOrElse(DynamicPropertyValue("")).value)
+    pavementClass == PavementClass.Unknown
+  }
+
   case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
   case object Cobblestone extends PavementClass { def value = 2; def typeDescription = "Cobblestone";}
   case object HardAsphalt extends PavementClass { def value = 10; def typeDescription = "Hard Asphalt";}
