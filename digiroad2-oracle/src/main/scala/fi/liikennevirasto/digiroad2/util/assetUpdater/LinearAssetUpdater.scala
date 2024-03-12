@@ -576,10 +576,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
       val initStep = OperationStep(Seq(), Some(changeSet))
       new Parallel().operation(changesGrouped, level) { tasks =>
-        tasks.flatMap { changes =>
-          changes.map(change => {
-            goThroughChanges(assetsGroup, assetsAll, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
-          })
+        tasks.flatMap {
+          changesPerThread =>
+            LogUtils.time(logger, s"Processing ${changesPerThread.size} changes in a single thread") {
+              changesPerThread.map(change => {
+                goThroughChanges(assetsGroup, assetsAll, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
+              })
+            }
         }
       }.seq.toSeq
     }
