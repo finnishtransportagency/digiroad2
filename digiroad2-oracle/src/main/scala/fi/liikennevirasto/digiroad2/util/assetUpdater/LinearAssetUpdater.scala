@@ -211,15 +211,42 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   /**
-    * Merge assetsBefore, assetsAfter and changeInfo from two given [[OperationStep]]
-    * @param a
-    * @param b
-    * @return [[Some[OperationStep]]]
+    * Merge assetsBefore, assetsAfter and changeInfo from given list of [[OperationStep]]
+    * @param assetsUnderReplace List of [[OperationStep]] objects containing changes to assets under replacement
+    * @return [[OperationStep]] containing merged info
     */
   private def mergerOperations(a: Option[OperationStep], b: Option[OperationStep]): Some[OperationStep] = {
     val (aBefore, assetsA, changeInfoA) = (a.get.assetsBefore, a.get.assetsAfter, a.get.changeInfo)
     val (bBefore, assetsB, changeInfoB) = (b.get.assetsBefore, b.get.assetsAfter, b.get.changeInfo)
     Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), (aBefore ++ bBefore).distinct))
+  }
+
+  private def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]]) = {
+    val after = new ListBuffer[PersistedLinearAsset]
+    val before = new ListBuffer[PersistedLinearAsset]
+    val droppedAssetIds = new ListBuffer[Long]
+    val adjustedMValues = new ListBuffer[MValueAdjustment]
+    val adjustedSideCodes = new ListBuffer[SideCodeAdjustment]
+    val expiredAssetIds = new ListBuffer[Long]
+    val valueAdjustments = new ListBuffer[ValueAdjustment]
+    for (a <- assetsUnderReplace) {
+      if (a.nonEmpty) {
+        after.appendAll(a.get.assetsAfter)
+        before.appendAll(a.get.assetsBefore)
+        if (a.get.changeInfo.nonEmpty) {
+          droppedAssetIds.appendAll(a.get.changeInfo.get.droppedAssetIds)
+          adjustedMValues.appendAll(a.get.changeInfo.get.adjustedMValues.toList)
+          adjustedSideCodes.appendAll(a.get.changeInfo.get.adjustedSideCodes.toList)
+          expiredAssetIds.appendAll(a.get.changeInfo.get.expiredAssetIds)
+          valueAdjustments.appendAll(a.get.changeInfo.get.valueAdjustments.toList)
+        }
+      }
+    }
+
+    val changeSet = ChangeSet(droppedAssetIds = droppedAssetIds.toSet,
+      adjustedMValues = adjustedMValues.distinct, adjustedSideCodes = adjustedSideCodes.distinct,
+      expiredAssetIds = expiredAssetIds.toSet, valueAdjustments = valueAdjustments.distinct)
+    Some(OperationStep(assetsAfter = after, changeInfo = Some(changeSet), assetsBefore = before))
   }
 
   def reportAssetChanges(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset],
@@ -330,11 +357,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def partitionAndAddPairs(assetsAfter: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): Set[Pair] = {
-    val newLinks = LogUtils.time(logger,"Create new links id list"){newIdList(changes)}
+    val alreadyReported = LogUtils.time(logger,"Check already reported changes to be filtered out."){changesForReport.flatMap(_.after).map(_.linearReference.get.linkId)}
     val pairList = new ListBuffer[Set[Pair]]
     LogUtils.time(logger, "Loop and create pair") {
       for (asset <- assetsAfter) {
-        if (!newLinks.contains(asset.linkId)) pairList.append(createPair(Some(asset), assetsBefore))
+        if (!alreadyReported.contains(asset.linkId)) pairList.append(createPair(Some(asset), assetsBefore))
       }
     }
     val distinct = LogUtils.time(logger, "Remove duplicate in pair list") {
@@ -343,18 +370,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     LogUtils.time(logger, "Flatten pair list") {
       distinct.flatten
-    }
-  }
-
-  private def newIdList(changes: Seq[RoadLinkChange]): Seq[String] = {
-    val newLink = new ListBuffer[Seq[String]]
-    LogUtils.time(logger, "Loop and add to new links list") {
-      for (change <- changes) {
-        if (isNew(change)) newLink.append(change.newLinks.map(_.linkId))
-      }
-    }
-    LogUtils.time(logger, "Flatten new link id list") {
-      newLink.flatten
     }
   }
 
@@ -431,7 +446,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def filterChanges(typeId: Int, changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
     val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
     val linkIdsWithExistingAsset = service.fetchExistingAssetsByLinksIdsString(typeId, newLinkIds.toSet, Set(), newTransaction = false).map(_.linkId)
-    if (linkIdsWithExistingAsset.nonEmpty) logger.info(s"found already created assets on new links ${linkIdsWithExistingAsset}")
+    if (linkIdsWithExistingAsset.nonEmpty) logger.info(s"found already created assets on new links ${linkIdsWithExistingAsset.mkString(",")}")
     changes.filterNot(c => c.changeType == Add && linkIdsWithExistingAsset.contains(c.newLinks.head.linkId))
   }
   /**
@@ -544,25 +559,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     def goTroughChangesParallelLoop() = {
       val changesGrouped = changes.grouped(groupSizeForParallelRun).toList.par
       val totalTasks = changesGrouped.size
-      val totalItems = changes.size
       val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
       logger.info(s"Change groups: $totalTasks, parallelism level used: $level")
 
-      val processedLinksCounter = new AtomicInteger(0)
-      val progressTenPercentCounter = new AtomicInteger(0)
-
       val initStep = OperationStep(Seq(), Some(changeSet))
       new Parallel().operation(changesGrouped, level) { tasks =>
-        tasks.flatMap { changes =>
-          changes.map(change => {
-            val adjustedResult = goThroughChanges(assetsGroup, assetsAll, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
-            synchronized{
-              val totalChangesProcessed = processedLinksCounter.getAndIncrement()
-              val currentTenPercent = LogUtils.logArrayProgress(logger, "Processing changes", totalItems, totalChangesProcessed, progressTenPercentCounter.get())
-              progressTenPercentCounter.set(currentTenPercent)
+        tasks.flatMap {
+          changesPerThread =>
+            LogUtils.time(logger, s"Processing ${changesPerThread.size} changes in a single thread") {
+              changesPerThread.map(change => {
+                goThroughChanges(assetsGroup, assetsAll, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
+              })
             }
-            adjustedResult
-          })
         }
       }.seq.toSeq
     }
@@ -645,7 +653,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
   private def adjustAndReport(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                               assetUnderReplace: Seq[Option[OperationStep]], changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
-    val merged = LogUtils.time(logger, "Merging steps") {assetUnderReplace.foldLeft(Some(OperationStep(Seq(), Some(initChangeSet))))(mergerOperations)}
+    val initStep = Some(OperationStep(Seq(), Some(initChangeSet)))
+    val merged = LogUtils.time(logger, "Merging operation steps before adjustment") {mergeOperationSteps(assetUnderReplace :+ initStep)}
     val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
@@ -687,33 +696,26 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     def parallelLoop(): List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
       val grouped = assetsByLink.grouped(groupSizeForParallelRun).toList.par
       val totalTasks = grouped.size
-      val totalItems = assetsByLink.size
       val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
       logger.info(s"Asset groups: $totalTasks, parallelism level used: $level")
-      val processedLinksCounter = new AtomicInteger(0)
-      val progressTenPercentCounter = new AtomicInteger(0)
 
       new Parallel().operation(grouped, level) { tasks =>
         tasks.map { al =>
-          val ids = al.flatMap(_._2.assets.map(_.id)).toSet
-          val links = al.keys.toSet
-          val excludeUnneededChangeSetItems = changeSet match {
-            case Some(x) => Some(ChangeSet(
-              droppedAssetIds = x.droppedAssetIds.intersect(ids),
-              adjustedMValues = x.adjustedMValues.filter(a => links.contains(a.linkId)),
-              adjustedSideCodes = x.adjustedSideCodes.filter(a => ids.contains(a.assetId)),
-              expiredAssetIds = x.expiredAssetIds.intersect(ids),
-              valueAdjustments = x.valueAdjustments
-            ))
-            case None => None
+          LogUtils.time(logger, s"Adjusting assets on ${al.size} links in a single thread") {
+            val ids = al.flatMap(_._2.assets.map(_.id)).toSet
+            val links = al.keys.toSet
+            val excludeUnneededChangeSetItems = changeSet match {
+              case Some(x) => Some(ChangeSet(
+                droppedAssetIds = x.droppedAssetIds.intersect(ids),
+                adjustedMValues = x.adjustedMValues.filter(a => links.contains(a.linkId)),
+                adjustedSideCodes = x.adjustedSideCodes.filter(a => ids.contains(a.assetId)),
+                expiredAssetIds = x.expiredAssetIds.intersect(ids),
+                valueAdjustments = x.valueAdjustments
+              ))
+              case None => None
+            }
+            adjusting(typeId, excludeUnneededChangeSetItems, al)
           }
-          val adjustedResult = adjusting(typeId, excludeUnneededChangeSetItems, al)
-          synchronized{
-            val totalLinksProcessed = processedLinksCounter.getAndIncrement()
-            val currentTenPercent = LogUtils.logArrayProgress(logger, "Adjusting assets parallel", totalItems, totalLinksProcessed, progressTenPercentCounter.get())
-            progressTenPercentCounter.set(currentTenPercent)
-          }
-          adjustedResult
         }
       }.toList
     }
@@ -725,8 +727,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       case _ => List(adjusting(typeId, changeSet, assetsByLink))
     }
 
-    val changeSetResult = result.map(_._2).foldLeft(LinearAssetFiller.useOrEmpty(None)) { (a, b) =>
-      LinearAssetFiller.combineChangeSets(a, b)
+    val changeSetResult = result.foldLeft(LinearAssetFiller.useOrEmpty(None)) { (a, b) =>
+      LinearAssetFiller.combineChangeSets(a, b._2)
     }
     (result.flatMap(_._1), LinearAssetFiller.removeExpiredMValuesAdjustments(changeSetResult))
   }

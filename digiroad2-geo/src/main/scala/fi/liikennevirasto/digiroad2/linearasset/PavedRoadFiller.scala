@@ -5,12 +5,11 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object PavedRoadFiller extends AssetFiller {
 
-  private def expireUnknownPavementAssets(assetsToExpire: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) = {
-    val expiredAssetIds = assetsToExpire.map(_.id).toSet
-    if (expiredAssetIds.nonEmpty) {
-      logger.info(s"LinearAssets ${expiredAssetIds.mkString(", ")} expired due to Unknown PavementClass and being replaced by asset with known PavementClass")
+  private def expireReplacedUnknownPavementAssets(assetsIdsToExpire: Set[Long], changeSet: ChangeSet) = {
+    if (assetsIdsToExpire.nonEmpty) {
+      logger.info(s"LinearAssets ${assetsIdsToExpire.mkString(", ")} expired due to Unknown PavementClass and being replaced by asset with known PavementClass")
     }
-    changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ assetsToExpire.map(_.id).toSet)
+    changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ assetsIdsToExpire)
   }
 
   /**
@@ -23,10 +22,11 @@ object PavedRoadFiller extends AssetFiller {
    */
   override def adjustAssets(roadLink: RoadLinkForFillTopology, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val(unknownPavementAssets, knownPavementAssets) = linearAssets.partition(asset => PavementClass.isUnknownPavementClass(asset.value))
-    val (filteredAssets, updatedChangeSet) = unknownPavementAssets.size match {
+    val unknownPavementAssetIds = unknownPavementAssets.map(_.id).toSet
+    val (filteredAssets, updatedChangeSet) = unknownPavementAssetIds.size match {
       case size if size == linearAssets.size => (linearAssets, changeSet)
       case _ =>
-        (knownPavementAssets, expireUnknownPavementAssets(unknownPavementAssets, changeSet))
+        (knownPavementAssets, expireReplacedUnknownPavementAssets(unknownPavementAssetIds, changeSet))
     }
     super.adjustAssets(roadLink, filteredAssets, updatedChangeSet)
   }

@@ -294,6 +294,7 @@ sealed trait PavementClass {
   def value: Int
   def typeDescription: String
 }
+case class ConversionIntoPavementClassException(msg:String) extends Exception(msg) 
 object PavementClass {
   val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt, GravelSurface, GravelWearLayer, OtherCoatings, Unknown)
 
@@ -304,10 +305,20 @@ object PavementClass {
   def applyFromDynamicPropertyValue(value: Any): PavementClass = {
     Try(apply(value.toString.toInt)) match {
       case Success(pavementClass) => pavementClass
-      case Failure(_) => Unknown
+      case Failure(_) => throw ConversionIntoPavementClassException(s"Cannot convert value(${value.toString}) into PavementClass")
     }
   }
 
+  def extractPavementClassValue(assetValue: Option[Value]): Option[PavementClass] = {
+    assetValue.collect {
+      case dynamicValue: DynamicValue =>
+        dynamicValue.value.properties.collectFirst {
+          case property if property.publicId == "paallysteluokka" && property.values.size > 0 =>
+            applyFromDynamicPropertyValue(property.values.head.value)
+        }
+    }.flatten
+  }
+  
   def extractPavementClass(assetValue: Option[Value]): Option[DynamicPropertyValue] = {
     assetValue.collect {
       case dynamicValue: DynamicValue =>
@@ -1018,8 +1029,8 @@ object AssetTypeInfo {
   val physicalObjectsWithValidityDirection = Seq(MassTransitLane.typeId, NumberOfLanes.typeId, CyclingAndWalking.typeId,
     ParkingProhibition.typeId)
 
-  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId,
-    CyclingAndWalking.typeId, CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId, PavedRoad.typeId)
+  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId, CyclingAndWalking.typeId,
+    CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId, PavedRoad.typeId, HazmatTransportProhibition.typeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
