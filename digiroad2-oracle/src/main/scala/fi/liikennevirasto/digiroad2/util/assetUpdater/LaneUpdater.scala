@@ -36,9 +36,9 @@ import scala.util.{Failure, Random, Success, Try}
 
 
 object ParConstant {
-  val groupSizeForParallelRun = 1
+  val groupSizeForParallelRun = 1500
   val parallelizationThreshold = 20000
-  val parallelizationLevel = 1
+  val parallelizationLevel = 30
 }
 
 object LaneUpdater {
