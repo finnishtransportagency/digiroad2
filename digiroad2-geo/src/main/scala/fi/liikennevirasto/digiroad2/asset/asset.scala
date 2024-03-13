@@ -318,20 +318,12 @@ object PavementClass {
         }
     }.flatten
   }
-  
-  def extractPavementClass(assetValue: Option[Value]): Option[DynamicPropertyValue] = {
-    assetValue.collect {
-      case dynamicValue: DynamicValue =>
-        dynamicValue.value.properties.collectFirst {
-          case property if property.publicId == "paallysteluokka" && property.values.size > 0 =>
-            property.values.head
-        }
-    }.flatten
-  }
 
-  def isUnknownPavementClass(assetValue: Option[Value]) = {
-    val pavementClass = PavementClass.applyFromDynamicPropertyValue(PavementClass.extractPavementClass(assetValue).getOrElse(DynamicPropertyValue("")).value)
-    pavementClass == PavementClass.Unknown
+  def isReplaceablePavementClass(assetValue: Option[Value]) = {
+    extractPavementClassValue(assetValue) match {
+      case Some(pavementClass) => pavementClass == Unknown
+      case _ => true
+    }
   }
 
   case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
