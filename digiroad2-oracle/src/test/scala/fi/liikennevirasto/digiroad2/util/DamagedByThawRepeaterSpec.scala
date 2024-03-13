@@ -69,8 +69,8 @@ class DamagedByThawRepeaterSpec extends FunSuite with Matchers {
     )
   val topology = Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None))
 
-  when(damagedByThawRepeaterMockServices.damagedByThawService.roadLinkService.getRoadLinksWithComplementaryAndChanges(testMunicipalityCode))
-    .thenReturn((Seq(testRoadLink), Seq()))
+  when(damagedByThawRepeaterMockServices.damagedByThawService.roadLinkService.getRoadLinksByMunicipality(testMunicipalityCode, newTransaction = false))
+    .thenReturn(Seq(testRoadLink))
 
   test("ongoing period is not updated") {
     runWithRollback {
