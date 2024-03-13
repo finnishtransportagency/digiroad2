@@ -36,9 +36,9 @@ import scala.util.{Failure, Random, Success, Try}
 
 
 object ParConstant {
-  val groupSizeForParallelRun = 1500
+  val groupSizeForParallelRun = 1
   val parallelizationThreshold = 20000
-  val parallelizationLevel = 30
+  val parallelizationLevel = 1
 }
 
 object LaneUpdater {
@@ -166,25 +166,30 @@ object LaneUpdater {
     logger.info(s"Start parallel fuse")
     val grouped = lanesGroupedByNewLinkId.grouped(groupSizeForParallelRun).toList.par
     val (totalTasks: Int, level: Int) = setParallelismLevel(grouped.size)
-    val operated =  new Parallel().operation(grouped, level) { tasks =>
-      tasks.map { al =>
+
+    def fuseLanesOnLink(laneOnLink: (String, Seq[PersistedLane])): (Seq[PersistedLane], ChangeSet) = {
+      val lanesIds = laneOnLink._2.map(_.id).toSet
+      val links = laneOnLink._1
+      val lane = laneOnLink._2
+      val excludeUnneededChangSetItems = ChangeSet(
+        adjustedMValues = initialChangeSet.adjustedMValues.filter(a => links.contains(a.linkId)),
+        adjustedSideCodes = initialChangeSet.adjustedSideCodes.filter(a => lanesIds.contains(a.laneId)),
+        positionAdjustments = initialChangeSet.positionAdjustments.filter(a => lanesIds.contains(a.laneId)),
+        expiredLaneIds = initialChangeSet.expiredLaneIds.intersect(lanesIds),
+        splitLanes = initialChangeSet.splitLanes.map(a => {
+          val correctLanes = a.lanesToCreate.filter(a => lanesIds.contains(a.id))
+          if (correctLanes.nonEmpty) {
+            Some(LaneSplit(originalLane = a.originalLane, lanesToCreate = correctLanes))
+          } else None
+        }).filter(_.nonEmpty).map(_.get)
+      )
+      fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
+    }
+    
+    val operated = new Parallel().operation(grouped, level) { tasks =>
+      tasks.flatMap { al =>
         LogUtils.time(logger, s"Fusing task with items count ${al.size} ") {
-          val ids = al.flatMap(_._2.map(_.id)).toSet
-          val links = al.keys.toSet
-          val lane = al.flatMap(_._2).toSeq
-          val excludeUnneededChangSetItems = ChangeSet(
-            adjustedMValues = initialChangeSet.adjustedMValues.filter(a => links.contains(a.linkId)),
-            adjustedSideCodes = initialChangeSet.adjustedSideCodes.filter(a => ids.contains(a.laneId)),
-            positionAdjustments = initialChangeSet.positionAdjustments.filter(a => ids.contains(a.laneId)),
-            expiredLaneIds = initialChangeSet.expiredLaneIds.intersect(ids),
-            splitLanes = initialChangeSet.splitLanes.map(a => {
-              val correctLanes = a.lanesToCreate.filter(a => ids.contains(a.id))
-              if (correctLanes.nonEmpty) {
-                Some(LaneSplit(originalLane = a.originalLane, lanesToCreate = correctLanes))
-              } else None
-            }).filter(_.nonEmpty).map(_.get)
-          )
-          fuseLanesOnMergedRoadLink(lane, excludeUnneededChangSetItems)
+          al.map(fuseLanesOnLink)
         }
       }
     }
@@ -200,7 +205,6 @@ object LaneUpdater {
     LogUtils.time(logger, s"Extracting fused asset ") {
       for (t <-operated) {
         fused.appendAll(t._1);
-        
         adjustedMValues.appendAll(t._2.adjustedMValues)
         adjustedSideCodes.appendAll(t._2.adjustedSideCodes.toList)
         positionAdjustments.appendAll(t._2.positionAdjustments.toList)
@@ -215,7 +219,6 @@ object LaneUpdater {
     logger.info(s"merged after parallel fuse expiredLaneIds size: ${expiredLaneIds.size}")
     logger.info(s"merged after parallel fuse generatedPersistedLanes size: ${generatedPersistedLanes.size}")
     logger.info(s"merged after parallel fuse splitLanes size: ${splitLanes.size}")
-    
     
     val overtakenByFuse = positionAdjustments.map(_.laneId)
     
