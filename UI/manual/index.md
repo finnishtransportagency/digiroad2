@@ -2017,7 +2017,7 @@ _Joukkoliikenteen pys&auml;kin tietojen katselu._
 
 ## 25.3 Kelluvat pys&auml;kit
 
-Joukkoliikenteen pysäkki voi olla kelluva, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei järjestelmä pysty enää päättelemään sen sijaintia geometrialla tai jos alla olevan tielinkin hallinnollinen luokka on muuttunut niin, että pysäkin ylläpitäjä ja tien hallinnollinen luokka ovat ristiriidassa. Karttanäkymässä kelluvan pysäkin tunnistaa siitä, että sen pisteellä on oranssi reunus 15), ja kun sen valitsee, ominaisuustietoikkunassa näkyy kellumisen syyn mukainen huomautus (16). Pysäkin sijainti tulisi tarkistaa ja korjata, jotta kelluvuus poistuu (kts. [Pys&auml;kin siirt&auml;minen](#Pys&auml;kin_siirt&auml;minen)). 
+Joukkoliikenteen pysäkki voi olla kelluva, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei järjestelmä pysty enää päättelemään sen sijaintia geometrialla tai jos alla olevan tielinkin hallinnollinen luokka on muuttunut niin, että pysäkin ylläpitäjä ja tien hallinnollinen luokka ovat ristiriidassa. Karttanäkymässä kelluvan pysäkin tunnistaa siitä, että sen pisteellä on oranssi reunus 15), ja kun sen valitsee, ominaisuustietoikkunassa näkyy kellumisen syyn mukainen huomautus (16). Pysäkin sijainti tulisi tarkistaa ja korjata, jotta kelluvuus poistuu (kts. [Pys&auml;kin siirt&auml;minen](#255-Pys&auml;kin-siirt&auml;minen)). 
 
 ![Kelluva pys&auml;kki](pysäkit_1_4.png)
 
