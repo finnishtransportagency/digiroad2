@@ -1973,11 +1973,11 @@ Tielinkille voi lis&auml;t&auml; liikennem&auml;&auml;r&auml;tiedon valitsemalla
 
 # 25. Joukkoliikenteen pysäkki
 
-\*Tierekisteri poistui käytöstä keväällä 2022 ja sen tilalla on Tievelho*
+_Tierekisteri poistui käytöstä keväällä 2022 ja sen tilalla on Tievelho._
 
 Joukkoliikenteen pysäkit ovat julkisen liikenteen käytössä olevia pysäkkejä. Digiroadissa ylläpidettävät pysäkkityypit ovat linja-autopysäkit, raitiovaunujen pysäkit sekä virtuaalipysäkit. Vanhan tieliikennelain mukaisia linja-autojen paikallisliikenne-, pikavuoro- ja kaukoliikenne -pysäkkityyppejä ei enää ylläpidetä Digiroadissa. Digiroadissa pysäkin sijainti on sidottu keskilinjageometriaan, eikä pysäkki voi olla tieverkon ulkopuolella.
 
-Karttaikkunaan voi valita pysäkkejä valitsemalla tietolajivalikosta (1) "Joukkoliikenteen pysäkki". Pysäkkejä valitaan tietolajipaneelissa (2) karttanäkymään pysäkin voimassaolon mukaan: voimassa olevat, tulevat ja/tai käytöstä poistuneet. Pysäkit näkyvät kartalla, kun mittakaavataso on 1:20 000 tai tarkempi (3).  Pysäkin sijainti ja vaikutussuunta keskilinjageometrialla on visualisoitu pisaran muotoisella pisteellä ja sen tyyppi pysäkkikilpi-kuvakkeella. Pysäkin tyyppi ilmoittaa, minkälaista liikennettä pysäkki palvelee. Linja-autopysäkit (4) kattavat kaikki vanhan tieliikennelain mukaiset linja-autopysäkkityypit, ja raitiovaunupysäkit (5) ovat vain raitiovaunuliikenteen käytössä olevia pysäkkejä. Virtuaalipysäkit ovat maastoon merkitsemättömiä, vakituisia ja sovittuja pysähtymispaikkoja (6). Terminaalipysäkit (7) eivät itsessään ole varsinaisia pysäkkejä, vaan erillisiä pistekohteita, joihin voi liittää samalla terminaalialueella olevat pysäkit (ks. Terminaalipysäkit [25.8](#Terminaalipysäkin lisääminen ja pysäkin liittäminen terminaaliin)).
+Karttaikkunaan voi valita pysäkkejä valitsemalla tietolajivalikosta (1) "Joukkoliikenteen pysäkki". Pysäkkejä valitaan tietolajipaneelissa (2) karttanäkymään pysäkin voimassaolon mukaan: voimassa olevat, tulevat ja/tai käytöstä poistuneet. Pysäkit näkyvät kartalla, kun mittakaavataso on 1:20 000 tai tarkempi (3).  Pysäkin sijainti ja vaikutussuunta keskilinjageometrialla on visualisoitu pisaran muotoisella pisteellä ja sen tyyppi pysäkkikilpi-kuvakkeella. Pysäkin tyyppi ilmoittaa, minkälaista liikennettä pysäkki palvelee. Linja-autopysäkit (4) kattavat kaikki vanhan tieliikennelain mukaiset linja-autopysäkkityypit, ja raitiovaunupysäkit (5) ovat vain raitiovaunuliikenteen käytössä olevia pysäkkejä. Virtuaalipysäkit ovat maastoon merkitsemättömiä, vakituisia ja sovittuja pysähtymispaikkoja (6). Terminaalipysäkit (7) eivät itsessään ole varsinaisia pysäkkejä, vaan erillisiä pistekohteita, joihin voi liittää samalla terminaalialueella olevat pysäkit (ks. Terminaalipysäkit [25.8](#258-Terminaalipysakin-lisaaminen-ja-pysakin-liittaminen-terminaaliin)).
 
 Tielinkeillä on pysäkkinäkymässä oletuksena värillä korostettu Hallinnollinen luokka -valinta päällä. Visualisoinnin saa pois ottamalla tietolajipaneelin valintaruuduista Hallinnollinen luokka -valinnan pois. Sininen väri tarkoittaa yksityisen omistamaa tielinkkiä, vihreä kunnan omistamaa (katu) ja punainen valtion omistamaa (maantie). Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. Lisäksi tietolajipaneelissa on oletuksena näkyvillä palvelupisteet, johon kuuluu erilaisia julkisen liikenteen palvelupisteitä, kuten metroasemat ja rautatieasemat. Täydentävä geometria (8) on myös oletuksena näkyvillä karttanäkymässä, kun joukkoliikenteen pysäkit -tietolaji on valittuna. Digiroad-operaattori tekee pysäkin sijoittamista varten pyynnöstä täydentävää geometriaa alueille, joilla ei ole valmista keskilinjageometriaa, kuten linja-autoasemat ja piha-alueet.
 
@@ -2003,7 +2003,7 @@ _Joukkoliikenteen pys&auml;kkien haku._
 
 ## 25.2 Pys&auml;kin tietojen katselu
 
-Yksittäisen pysäkin tietoja voi tarkastella, kun pysäkki on valittu. Pysäkki valitaan joko napauttamalla pysäkkipistettä karttanäkymässä, kun mittakaavataso on 1:20 000 tai tarkempi, tai hakemalla luvun [25.1](#Joukkoliikenteen pys&auml;kkien haku) mukaisesti, jolloin sivun oikeaan laitaan avautuu ominaisuustietoikkuna (12). Valitulle pysäkille avautuu karttanäkymään tietokupla (13), jossa näkyy pysäkin valtakunnallinen ID, suomenkielinen nimi, liikennöintisuuntima ja pysäkin tyyppi kuvakkeena. Muut pysäkit näkyvät haalennettuna niin kauan, kuin yksittäinen pysäkki on valittu.
+Yksittäisen pysäkin tietoja voi tarkastella, kun pysäkki on valittu. Pysäkki valitaan joko napauttamalla pysäkkipistettä karttanäkymässä, kun mittakaavataso on 1:20 000 tai tarkempi, tai hakemalla luvun [25.1](#251-Joukkoliikenteen-pys&auml;kkien-haku) mukaisesti, jolloin sivun oikeaan laitaan avautuu ominaisuustietoikkuna (12). Valitulle pysäkille avautuu karttanäkymään tietokupla (13), jossa näkyy pysäkin valtakunnallinen ID, suomenkielinen nimi, liikennöintisuuntima ja pysäkin tyyppi kuvakkeena. Muut pysäkit näkyvät haalennettuna niin kauan, kuin yksittäinen pysäkki on valittu.
 
 Jos kaksi tai useampi pysäkki ovat alle kuuden metrin päässä toisistaan, esitetään pysäkit käyttöliittymässä päällekkäin ryhmiteltynä. Päällekkäin asettelu mahdollistaa pysäkin tarkastelun ilman, että samassa sijainnissa olevia pysäkkejä tarvitsee siirtää.
 
@@ -2035,7 +2035,7 @@ Pysäkkien muokkaus tapahtuu muokkaustilassa (18). Pysäkkien valinta ja haku to
 
 Pysäkin ominaisuustietoja muokataan ominaisuustietoikkunassa (20) erilaisiin kenttätyyppeihin. Ominaisuustietokentät ovat tekstikenttiä, joihin ominaisuustieto kirjoitetaan merkkijonona, monivalintoja, josta voi valita oikeat vaihtoehdot tai pudotusvalikkoja, joista voi valita yhden vaihtoehdon. Pysäkin muokkaustoiminnallisuudet poikkeavat hieman kadun ja maantien pysäkkien välillä. Riippuen siitä onko pysäkki kunnan vai ELYn ylläpitämä, eri ominaisuustietojen täyttäminen on sallittua. Pääsääntönä on, että kuntakäyttäjällä muokattavissa on kaikki ne kentät, joita hänen on enimmillään tarpeen muokata. Samoin ELYn pysäkkivastaavalla on muokattavissa ne kentät, joita hänen on tarpeen ylläpitää. Maanteiden pysäkeille ne varustetiedot, joita ei voi muokata sovelluksessa, päivittyvät tulevaisuudessa Tievelhon kautta.
 
-Luvuissa [25.4.1](#Pysäkin vaikutussuunnan muuttaminen) ja [25.4.2](#Pysäkin voimassaolopäivien muokkaus) kerrotaan tarkemmin pysäkin vaikutussuunnan ja voimassaolon muokkauksesta. Kaikki pysäkin ominaisuustiedot sekä lyhyet kuvaukset niistä on listattu luvussa [25.4.3](#Pys&auml;kin ominaisuustiedot).
+Luvuissa [25.4.1](#2541-Pysakin-vaikutussuunnan-muuttaminen) ja [25.4.2](#2542-Pysakin-voimassaolopäivien-muokkaus) kerrotaan tarkemmin pysäkin vaikutussuunnan ja voimassaolon muokkauksesta. Kaikki pysäkin ominaisuustiedot sekä lyhyet kuvaukset niistä on listattu luvussa [25.4.3](#2543-Pys&auml;kin-ominaisuustiedot).
 
 Jos pysäkin tietoihin tekee muutoksen, tiedot tulee joko tallentaa napauttamalla “Tallenna” -painiketta (21) ominaisuustietoikkunan alaosassa tai “Peruuta” -painiketta, jos muokkauksia ei halua tallentaa. Tämän jälkeen pysäkin valinnan saa pois normaalisti napauttamalla karttanäkymää tai valitsemalla toisen pysäkin muokattavaksi. Pysäkkiä ei voi tallentaa, jos siltä puuttuu pakollisia tietoja. Nämä ovat tietojen ylläpitäjä ja pysäkin tyyppi, ja niiden tietokenttien nimet on korostettu oranssilla värillä. Pysäkkien ominaisuustietoikkunassa näkyy ilmoitus, jos pysäkiltä puuttuu pakollisia tietoja. Pysäkin voi tallentaa vain, jos mittakaavataso on 1:20 000 tai tarkempi. Sovellus antaa virheilmoituksen, jos pysäkkiä yrittää, jos pysäkin yrittää tallentaa väärällä mittakaavatasolla.
 
@@ -2065,7 +2065,7 @@ Pysäkin voimassaolo näkyy karttanäkymässä pysäkin kuvakkeen (kilven) eri v
 
 ELYn ylläpitämille pysäkeille tallennetaan lisäksi inventointipäivä. Mikäli inventointipäivä-kenttä jätetään tyhjäksi, tallentaa sovellus siihen automaattisesti pysäkin tallennushetken päivämäärän. Inventointipäivä on muokattavissa sovelluksessa.
 
-Lisää viimeisestä voimassaolopäivästä ja pysäkin määrittämisestä poistuneeksi luvussa [25.7](#Pys&auml;kin m&auml;&auml;ritt&auml;minen k&auml;yt&ouml;st&auml; poistuneeksi).
+Lisää viimeisestä voimassaolopäivästä ja pysäkin määrittämisestä poistuneeksi luvussa [25.7](#257-Pys&auml;kin-m&auml;&auml;ritt&auml;minen-k&auml;yt&ouml;st&auml;-poistuneeksi).
 
 ![Pys&auml;kin voimassaolopäivien muokkaus.](pysäkit_1_8.png)
 
@@ -2081,43 +2081,43 @@ Ominaisuustiedot voivat olla joko järjestelmän generoimia tai käyttäjän sy�
 |Valtakunnallinen ID|Pys&auml;kin valtakunnallinen ID|X|||
 |Lis&auml;tty j&auml;rjestelm&auml;&auml;n|Tiedon luojan k&auml;ytt&auml;j&auml;tunnus tai massaimportin l&auml;hde ja tiedon lis&auml;yshetki.|X|||
 |Muokattu viimeksi|Muokkaajan k&auml;ytt&auml;j&auml;tunnus ja tiedon muokkaushetki.|X|||
-|Nimi suomeksi|Pys&auml;kin nimi suomen kielell&auml;. Nimen tulee olla valtakunnallisesti yksil&ouml;iv&auml;. Esim. Ei "Linja-autoasema" vaan "Porvoo linja-autoasema".||||
+|Nimi suomeksi|Pysäkin nimi suomen kielellä. Nimen tulee olla valtakunnallisesti yksilöivä. Esim. Ei "Linja-autoasema" vaan "Porvoo linja-autoasema". Ei pakollinen, mutta toivottava tieto.||||
 |Nimi ruotsiksi|Pys&auml;kin nimi ruotsin kielell&auml;.||||
-|Osoite suomeksi|Pys&auml;kin osoite suomen kielell&auml;. Tieto haettu pys&auml;keille tielinkilt&auml;. Lis&auml;t&auml;&auml;n manuaalisesti uusille pys&auml;keille ennen tallennusta||||
+|Osoite suomeksi|Pysäkin osoite suomen kielellä. Tieto haetaan automaattisesti uusille pysäkeille tielinkiltä tallennuksen jälkeen. Voidaan lisätä/muokata manuaalisesti.||||
 |Osoite ruotsiksi|Pys&auml;kin osoite ruotsin kielell&auml;.||||
-|Tietojen yll&auml;pit&auml;j&auml;|Yll&auml;pit&auml;v&auml; viranomainen: kunta, ELY-keskus tai Helsingin seudun liikenne||||
-|Yll&auml;pit&auml;j&auml;n tunnus|Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.||||
-|LIVI-tunnus|Pys&auml;kin Livi-tunniste, tallentuu automaattisesti my&ouml;s ~~Tierekisteriin~~\*. K&auml;yt&ouml;ss&auml; vain maanteiden pys&auml;keill&auml;.|x||x|
-|Matkustajatunnus|Pys&auml;kin tunnus, joka n&auml;kyy matkustajalle.||||
+|Tietojen yll&auml;pit&auml;j&auml;<br><br>PAKOLLINEN TIETO|Pakollinen tieto! Ylläpitävä viranomainen: kunta, ELY-keskus tai Helsingin seudun liikenne||||
+|Yll&auml;pit&auml;j&auml;n tunnus|Mahdollinen tietojen ylläpitäjän omassa järjestelmässään käyttämä pysäkin yksilöivä tunnus.||||
+|LIVI-tunnus|Pysäkin Livi-tunniste, käytössä vain ELYn (maanteiden) pysäkeillä. Sovellus generoi, ei voi muokata. |x||x|
+|Matkustajatunnus|Mahdollinen pysäkin tunnus, joka näkyy matkustajalle.||||
 |Laiturinumero| Pysäkin mahdollinen laiturinumero, joka ilmoitettu maastossa.||||
 |Vyöhyketieto|Mahdollinen seudullisen matkustajaliikenteen ilmoittama tieto siitä, mihin liikennöintivyöhykkeeseen pysäkki kuuluu.||||
-|Maastokoordinaatti X|Pys&auml;kin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
 |Vaihtoehtoinen link_ID|Mikäli tieverkon geometrian kuvaus estää pysäkille ohjauksen esim. rampista, vaikka maastossa pysäkkiä on mahdollista käyttää sekä päätien että rampin kautta, tässä kentässä on mahdollista ilmoittaa rampin link_ID, jolta pysäkille on mahdollista kulkea.|||| 
 |Liitetty terminaaliin|Mikäli pysäkki on liitetty johonkin pysäkkiterminaaliin (esim. linja-autoasemaan), näkyy kentässä terminaalipysäkin ID. Jos pysäkki ei kuulu terminaaliin, kenttä ei ole näkyvissä.||||
+|Maastokoordinaatti X|Pys&auml;kin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
 |Maastokoordinaatti Y|Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
 |Maastokoordinaatti Z|Pys&auml;kin sijainnin mitattu Z-koordinaatti: N2000 korkeusj&auml;rjestelm&auml;ss&auml;.||||
 |Liikenn&ouml;intisuunta|Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi: "Keskustaan".||||
-|Vaikutussuunta|Vaikutussuunta on visualisoitu pys&auml;kin liikennevirran suunnaksi pisaralla. Google Street View osoittaa suuntaan, jossa pys&auml;kin kuuluisi olla.||||
+|Vaikutussuunta|Vaikutussuunta on visualisoitu pysäkin liikennevirran suunnaksi pisaralla. Google Street View osoittaa suuntaan, jossa pysäkin kuuluisi olla. Suunta muuttuu painiketta napauttamalla. Näkyy vain muokkaustilassa.||||
 |Liikenn&ouml;intisuuntima|Sovellus laskee itse tiegeometriasta. Pohjoinen on nolla astetta ja koko kierros my&ouml;t&auml;p&auml;iv&auml;&auml;n 360 astetta. Ilmoitetaan asteluvun mukaan pohjoinen, it&auml;, etel&auml; tai l&auml;nsi.|x|||
 |Ensimm&auml;inen voimassaolop&auml;iv&auml;|P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on ensimm&auml;isen kerran k&auml;yt&ouml;ss&auml;.||||
-|Viimeinen voimassaolop&auml;iv&auml;|P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;.||||
-|Inventointip&auml;iv&auml;|Maantien pys&auml;kin muokkausp&auml;iv&auml;m&auml;&auml;r&auml;|||x|
-|Pys&auml;kin tyyppi|Pakollinen tieto! Linja-autojen paikallisliikenne, raitiovaunu, linja-autojen kaukoliikenne, linja-autojen pikavuoro tai virtuaalipys&auml;kki (virtuaalipys&auml;kin kanssa ei voi valita muita tyyppej&auml;).||||
+|Viimeinen voimassaolop&auml;iv&auml;|Päivämäärä, jolloin pysäkki poistuu käytöstä.||||
+|Inventointip&auml;iv&auml;|Maantien (ELY) pysäkin maastoinventointipäivä. Oletuksena pysäkin perustamispäivä.|||x|
+|Pys&auml;kin tyyppi<br><br>PAKOLLINEN TIETO|Pakollinen tieto! Virtuaalipysäkki, raitiovaunu tai linja-autopysäkki.||||
 |Pysäkin palvelutaso|Ilmaisee pysäkin palvelutason. Mahdolliset arvot: "Terminaali", "Keskeinen solmupysäkki", "Vilkas pysäkki", "Peruspysäkki", "Vähän käytetty pysäkki", "Jättöpysäkki", "Virtuaalipysäkki", "Pysäkit, jotka eivät ole linja-autoliikenteen käytössä" & "Ei tietoa" (oletus).||||
 |Korotettu|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Katos|Pys&auml;kkialueella sijaitseva, joukkoliikennev&auml;linett&auml; odottaville matkustajille tarkoitettu s&auml;&auml;lt&auml; suojaava katos. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Mainoskatos|Pys&auml;kkialueella sijaitseva, joukkoliikennev&auml;linett&auml; odottaville matkustajille tarkoitettu s&auml;&auml;lt&auml; suojaava katos, joka sis&auml;lt&auml;&auml; mainoksia. Pys&auml;kin kunnossapidosta vastaa t&auml;ll&ouml;in mainosten yll&auml;pit&auml;j&auml;. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
-|Roska-astia|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
-|Py&ouml;r&auml;teline|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
-|Valaistus|Pys&auml;kin valaistuksella tarkoitetaan yleisimmin pys&auml;kin kattoon upotettuja valoelementtej&auml;, jotka tuottavat valaistuksen pys&auml;kkikatoksen sis&auml;lle. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
-|Penkki|Pys&auml;kkialueella sijaitseva, joukkoliikennett&auml; odottavilla matkustajille tarkoitettu penkki, joka sijaitsee yleisimmin pys&auml;kkikatoksen alla. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
-|Aikataulu|Paperinen, pys&auml;kin sein&auml;&auml;n tai tolppaan aikataulukehikkoon kiinnitetty aikataulu, joka sis&auml;lt&auml;&auml; tiedot pys&auml;kill&auml; liikenn&ouml;ivien reittien l&auml;ht&ouml;ajoista sek&auml; mahdollisesti my&ouml;s pys&auml;kkikohtaisista ohitusajoista. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".  Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
+|Roska-astia|Kyllä, ei tai ei tietoa. Oletuksena on "ei tietoa". ||x||
+|Py&ouml;r&auml;teline|Kyllä, ei tai ei tietoa. Oletuksena on "ei tietoa". ||x||
+|Valaistus|Pysäkin valaistuksella tarkoitetaan yleisimmin pysäkin kattoon upotettuja valoelementtejä, jotka tuottavat valaistuksen pysäkkikatoksen sisälle. Mahdolliset arvot: kyllä, ei tai ei tietoa. Oletuksena on "ei tietoa".||x||
+|Penkki|Pysäkkialueella sijaitseva, joukkoliikennettä odottavilla matkustajille tarkoitettu penkki, joka sijaitsee yleisimmin pysäkkikatoksen alla. Mahdolliset arvot: kyllä, ei tai ei tietoa. Oletuksena on "ei tietoa".||x||
+|Aikataulu|Paperinen, pysäkin seinään tai tolppaan aikataulukehikkoon kiinnitetty aikataulu, joka sisältää tiedot pysäkillä liikennöivien reittien lähtöajoista sekä mahdollisesti myös pysäkkikohtaisista ohitusajoista. Mahdolliset arvot: kyllä, ei tai ei tietoa. Oletuksena on "ei tietoa".||x||
 |S&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;|Pys&auml;kkialueelta l&ouml;ytyv&auml; s&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;, joka tuottaa reaaliaikaisen informaation pys&auml;kill&auml; kulkevasta liikenteest&auml;. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Esteett&ouml;myys liikuntarajoitteiselle|Pys&auml;kki on esteet&ouml;n, mik&auml;li se mahdollistaa itsen&auml;isen, esteett&ouml;m&auml;n matkustamisen ja odottelun my&ouml;s erityisryhmille, esim. py&ouml;r&auml;tuolilla liikkuville. Pys&auml;kin esteett&ouml;myyteen vaikuttavat pys&auml;kki- ja laiturirakenteiden, asema- ja terminaalirakenteiden sek&auml; aikatauluinformaation esteett&ouml;myys. Oletuksena on "ei tiedossa".||||
 |Saattomahdollisuus henkil&ouml;autolla|Ilmaisee, mik&auml;li (valtatien varrella olevaa) pys&auml;ki&auml; varten on rakennettu erillinen matkustajien nouto/saatto-alue. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;|Keskusta-alueen ulkopuolella olevan pys&auml;kki- tai terminaalialueen l&auml;heisyydess&auml; sijaitsevien, auton pys&auml;k&ouml;imist&auml; varten varattujen parkkipaikkojen m&auml;&auml;r&auml;. Kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, mik&auml;li liitynt&auml;pys&auml;k&ouml;intipaikkoja ei ole. Mik&auml;li liitynt&auml;pys&auml;k&ouml;intipaikat palvelevat useampaa pys&auml;kki&auml;, t&auml;ytet&auml;&auml;n tiedot liitynt&auml;pys&auml;k&ouml;innist&auml; erikseen kullekin pys&auml;kille.||||
 |Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot|Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen lis&auml;tiedot.||||
-|Pys&auml;kin omistaja|Kunta, Helsingin seudun liikenne, ELY-keskus tai Väylävirasto. Erikoistapauksia varten (esim. uudenmaan ELY).||||
+|Pys&auml;kin omistaja|Kunta, Helsingin seudun liikenne, ELY-keskus tai Väylävirasto. Erikoistapauksia varten (esim. Uudenmaan ELY).||||
 |Palauteosoite|Osoite, johon pys&auml;kist&auml; voi laittaa palautetta. Esimerkiksi s&auml;hk&ouml;postiosoite.||||
 |Lis&auml;tiedot|Julkiset kommentit. Esimerkiksi: "Alueella tiet&ouml;it&auml;".||||
 
@@ -2127,7 +2127,6 @@ Pysäkkejä voi siirtää muokkaustilassa, kun pysäkki on valittu ja karttanäk
 
 Siirtäminen tapahtuu tarttumalla pysäkkiin kiinni ja raahaamalla se haluttuun paikkaan. Pysäkki liikkuu vain tielinkeillä (ei kävelyn ja pyöräilyn- tai lautta/lossi väylillä) ja käyttäjän päivitysoikeuksien sallimien maantieteellisten rajojen sisäpuolella. Raitiovaunupysäkkejä voi siirtää kävelyn ja pyöräilyn väylille, jos valinta on päällä tietolajipaneelissa (30). Jos pysäkin irrottaa tielinkistä, kiinnittyy se automaattisesti lähimpään mahdolliseen tielinkkiin. Jos riittävän lähellä ei ole toista tielinkkiä, ei pysäkki irtoa linkiltä, jolla se on. Tielinkki, jonka päällä pysäkkiä liikutellaan, näkyy sinisellä korostusvärillä (28). 
 
-
 Ominaisuustietoikkunan Google Street View -näkymä (29) päivittyy siirron mukana. Pysäkin siirtäminen ei muuta pysäkin mahdollisia mitattuja maastokoordinaatteja, vaan ne säilyvät ennallaan. Pysäkkiä siirrettäessä yli 50 metriä sovellus kysyy varmistuksen siirrolle. Pysäkin siirto yli 50 metriä ei muuta pysäkin ominaisuustietoja. Jos pysäkin siirtää linkille, jolla on eri tiennimi kuin mikä pysäkin osoite -kenttään on tallennettu, sovellus kysyy, halutaanko osoitetieto pitää samana vai päivittää linkin tiennimen mukaiseksi.
 
 Siirrettäessä pysäkkiä, joka on pinossa, jää pinoon siirrettävän pysäkin kohdalle rako, kunnes siirron tallentaa tai peruuttaa. Jos pysäkin siirtää alle kuuden metrin päähän toisesta/toisista pysäkeistä, siirtyy pysäkki osaksi pinoa.
@@ -2136,7 +2135,7 @@ Pysäkin uusi sijainti tallentuu napauttamalla Tallenna-painiketta (31). Napautt
 
 Pysäkin siirto (tai muu muokkaus) täytyy tallentaa tai peruuttaa ennen kuin voi siirtyä muokkaamaan muita pysäkkejä tai poistua muokkaustilasta. 
 
-![Pys&auml;kin siirto](pysäkit_1_9.PNG)
+![Pys&auml;kin siirto](pysäkit_1_9.png)
 
 _Joukkoliikenteen pysäkin siirtäminen._
 
@@ -2144,7 +2143,7 @@ _Joukkoliikenteen pysäkin siirtäminen._
 
 Uusia pysäkkejä voi lisätä, kun lisäystyökalu (+) on aktiivisena (32) ja mittakaavataso on 1:20 000 tai tarkempi. Uusi pysäkki luodaan napauttamalla kartan tiestöstä haluttu sijainti pysäkille. Pysäkin voi luoda olemassa olevalle tielinkille käyttäjän päivitysoikeuksien sallimalla maantieteellisellä alueella. Kuntaylläpitäjä ei voi lisätä uutta pysäkkiä maantielle. Jos lisättävä pysäkki on tyypiltään raitiovaunu, voi sen luoda myös kävelyn ja pyöräilyn väylälle, jos valinta on päällä tietolajipaneelissa (edellinen kuva 30). Jos valitulla kohdalla ei ole tielinkkiä, muodostuu pysäkki lähimmälle tielinkille. Jos kyseessä on tavallisen tieverkon ulkopuolelle lisättävä pysäkki (esim. linja-autoasema), eikä halutussa sijainnissa ole valmista geometriaa, voi Digiroad-operaattoria pyytää tekemään täydentävää geometriaa. Pyyntö tehdään lähettämällä sähköpostia osoitteeseen pysakit@digiroad.fi
 
-Kun pysäkki on asetettu, sivun oikealle puolelle avautuu ominaisuustietoikkuna (33), jossa pysäkille tallennetaan tiedossa olevat ominaisuustiedot (ks. luku [25.4](#Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus)).
+Kun pysäkki on asetettu, sivun oikealle puolelle avautuu ominaisuustietoikkuna (33), jossa pysäkille tallennetaan tiedossa olevat ominaisuustiedot (ks. luku [25.4](#254-Joukkoliikenteen-pys&auml;kin-ominaisuustietojen-muokkaus)).
 
 Sovellus muodostaa osan ominaisuustiedoista itse, jos niitä ei määritetä. Valtakunnallinen ID, eli pysäkin valtakunnallisesti yksilöivä tunnus, sekä Livi-tunnus (ELYn/maanteiden pysäkeille) muodostuvat Digiroadin omasta numeroavaruudesta, kun pysäkin tallentaa. Käyttäjä ei voi asettaa tai muokata niitä itse. Ennen tallennusta pysäkin valtakunnallisen ID:n sijaan ominaisuustietoikkunan yläosassa lukee “Uusi pysäkki” (34).
 
