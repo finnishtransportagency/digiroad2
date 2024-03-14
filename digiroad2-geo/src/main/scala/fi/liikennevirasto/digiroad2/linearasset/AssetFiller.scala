@@ -125,12 +125,12 @@ class AssetFiller {
     if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       (segments, changeSet)
     } else {
-      val droppedAssetIds = (roadLink.trafficDirection match {
-        case TrafficDirection.TowardsDigitizing => segments.filter(current => current.sideCode == SideCode.AgainstDigitizing && segmentFoundOnTheOtherSide(current, segments))
-        case _ => segments.filter(current => current.sideCode == SideCode.TowardsDigitizing && segmentFoundOnTheOtherSide(current, segments))
-      }).map(_.id)
+      val (droppedSegments, validSegments) = roadLink.trafficDirection match {
+        case TrafficDirection.TowardsDigitizing => segments.partition(current => current.sideCode == SideCode.AgainstDigitizing && segmentFoundOnTheOtherSide(current, segments))
+        case _ => segments.partition(current => current.sideCode == SideCode.TowardsDigitizing && segmentFoundOnTheOtherSide(current, segments))
+      }
 
-      (segments.filterNot(s => droppedAssetIds.contains(s.id)), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds++ droppedAssetIds))
+      (validSegments, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedSegments.filterNot(_.id == 0L).map(_.id)))
     }
   }
 
