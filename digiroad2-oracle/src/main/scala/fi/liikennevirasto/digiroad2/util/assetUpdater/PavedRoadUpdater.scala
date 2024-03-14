@@ -168,10 +168,4 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     if (newLinearAssets.nonEmpty)
       logger.debug(s"Added assets for linkids ${newLinearAssets.map(_.linkId)}")
   }
-
-  override protected def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
-                                            assets: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
-    val additionalSteps = additionalOperations(assets.get, changes)
-    super.adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.getOrElse(assets.get))
-  }
 }
