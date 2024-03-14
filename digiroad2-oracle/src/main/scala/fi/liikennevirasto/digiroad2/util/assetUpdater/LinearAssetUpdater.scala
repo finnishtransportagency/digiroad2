@@ -658,7 +658,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
 
-  private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
+  protected def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                                             assets: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
     val adjusted = adjustAssets(typeId, onlyNeededNewRoadLinks, assets.get)
     val additionalSteps = additionalOperations(adjusted, changes)
@@ -671,7 +671,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param operationStep
     * @return
     */
-  private def adjustAssets(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
+  protected def adjustAssets(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
     val OperationStep(assetsAfter, changeSetFromOperation, assetsBefore) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
     val groupedAssets = LogUtils.time(logger, "Convert to right format") {

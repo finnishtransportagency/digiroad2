@@ -329,6 +329,13 @@ object PavementClass {
     }.flatten
   }
 
+  def isReplaceablePavementClass(assetValue: Option[Value]) = {
+    extractPavementClassValue(assetValue) match {
+      case Some(pavementClass) => pavementClass == Unknown
+      case _ => true
+    }
+  }
+
   case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
   case object Cobblestone extends PavementClass { def value = 2; def typeDescription = "Cobblestone";}
   case object HardAsphalt extends PavementClass { def value = 10; def typeDescription = "Hard Asphalt";}
