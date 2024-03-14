@@ -670,7 +670,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param operationStep
     * @return
     */
-  protected def adjustAssets(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
+  private def adjustAssets(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
     val OperationStep(assetsAfter, changeSetFromOperation, assetsBefore) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
     val groupedAssets = LogUtils.time(logger, "Convert to right format") {
