@@ -70,7 +70,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     OperationStep(operationStep.assetsAfter ++ newAssets, operationStep.changeInfo, operationStep.assetsBefore)
   }
 
-  override protected def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
     val operationAfterGeneration = generateNewPavementForSplitAndReplace(operationStep, changes)
     val (assetsToBeRemoved, assetsToPersist) = collectRemovablePavementAssets(operationAfterGeneration, changes)
     removePavement(assetsToBeRemoved, assetsToPersist, operationAfterGeneration, changes)
