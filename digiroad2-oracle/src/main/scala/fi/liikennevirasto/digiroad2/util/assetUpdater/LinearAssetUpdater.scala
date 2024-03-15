@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Add
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Remove}
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.linearasset.{MValueUpdate, PostGISLinearAssetDao}
@@ -491,15 +491,21 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     changeSets.foreach(changeSet => {
       logger.info(s"Started processing change set ${changeSet.key}")
 
+      val (addAndRemoveChanges, replaceAndSplitChanges) = LogUtils.time(logger, "Partition changes") {
+        changeSet.changes.partition(change => Seq(Add, Remove).contains(change.changeType))
+      }
+
+      val (key, statusDate, targetDate) = (changeSet.key, changeSet.statusDate, changeSet.targetDate)
       try {
         withDynTransaction {
-          updateByRoadLinks(typeId, changeSet.changes)
-          ValidateSamuutus.validate(typeId, changeSet)
-          generateAndSaveReport(typeId, changeSet.targetDate)
+          updateByRoadLinks(typeId, addAndRemoveChanges)
+          updateByRoadLinks(typeId, replaceAndSplitChanges)
+          ValidateSamuutus.validate(typeId, RoadLinkChangeSet(key, statusDate, targetDate, addAndRemoveChanges ++ replaceAndSplitChanges))
+          generateAndSaveReport(typeId, targetDate)
         }
       } catch {
         case e:SamuutusFailed =>
-          generateAndSaveReport(typeId, changeSet.targetDate)
+          generateAndSaveReport(typeId, targetDate)
           throw e
       }
     })
