@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.MValueCalculator
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport._
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
 import org.joda.time.DateTime
@@ -2302,4 +2303,49 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     }
   }
 
+  test("separated number of lanes is moved to two split links that change to one direction") {
+    val oldLinkId = "4831a2cd-5f7c-4efe-b358-6203bf769569:1"
+    val newLinkId1 = "c18a61d8-18c8-456d-b6be-d44ec0c21acf:1"
+    val newLinkId2 = "9d5500b1-a4fb-4ea5-ba78-c8e2417f7ff3:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId).get
+      val id1 = createAsset(Measures(0, oldRoadLink.length), NumericValue(1), oldRoadLink, SideCode.TowardsDigitizing, NumberOfLanes.typeId)
+      val id2 = createAsset(Measures(0, oldRoadLink.length), NumericValue(2), oldRoadLink, SideCode.AgainstDigitizing, NumberOfLanes.typeId)
+      val assetsBefore = service.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(id1, id2), false)
+      assetsBefore.size should be(2)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(NumberOfLanes.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(NumberOfLanes.typeId, Seq(newLinkId1, newLinkId2), false)
+      val sorted = assetsAfter.sortBy(_.linkId)
+
+      sorted.size should be(2)
+      sorted.map(v => v.value.isEmpty should be(false))
+      val asset1 = sorted.head
+      val asset2 = sorted.last
+
+      asset1.startMeasure should be(0)
+      asset1.endMeasure should be(8.086)
+      asset1.value.get should be(NumericValue(2))
+
+      asset2.startMeasure should be(0)
+      asset2.endMeasure should be(73.444)
+      asset2.value.get should be(NumericValue(2))
+
+      val assets = TestLinearAssetUpdaterNoRoadLinkMock.getReport().map(a => PairAsset(a.before, a.after.headOption, a.changeType))
+
+      assets.size should be(3)
+      val (towards, against) = assets.partition(_.oldAsset.get.assetId == id1)
+      towards.size should be(1)
+      towards.head.changeType should be(Deletion)
+      against.size should be(2)
+      against.map(_.changeType).toSet should be(Set(Divided))
+      val (generated, oldPart) = against.partition(a => a.newAsset.get.assetId == 0)
+      generated.size should be(1)
+      oldPart.size should be(1)
+      oldPart.head.newAsset.get.assetId should be(id2)
+    }
+  }
 }
