@@ -97,10 +97,10 @@ export class ChangeSet {
     private combineReplaceInfo(continuousParts: ReplaceInfo[], fromPartialAdd: boolean = false) {
         const oldId = continuousParts.map(p => p.oldLinkId).find(id => id != null) || undefined
         const newId = continuousParts.map(p => p.newLinkId).find(id => id != null) || undefined
-        const newFromM = _.min(continuousParts.map(p => p.newFromMValue))
-        const newToM = _.max(continuousParts.map(p => p.newToMValue))
-        const oldFromM = fromPartialAdd ? newFromM : _.min(continuousParts.map(p => p.oldFromMValue))
-        const oldToM = fromPartialAdd ? newToM : _.max(continuousParts.map(p => p.oldToMValue))
+        const newFromM = _.head(continuousParts)?.newFromMValue
+        const newToM = _.last(continuousParts)?.newToMValue
+        const oldFromM = fromPartialAdd ? newFromM : _.head(continuousParts)?.oldFromMValue
+        const oldToM = fromPartialAdd ? newToM : _.last(continuousParts)?.oldToMValue
         return new ReplaceInfo(
             oldId,
             newId,
