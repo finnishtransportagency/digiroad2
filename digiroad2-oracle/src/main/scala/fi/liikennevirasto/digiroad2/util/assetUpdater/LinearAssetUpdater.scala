@@ -660,8 +660,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                                             assets: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
-    val additionalSteps = additionalOperations(assets.get, changes)
-    adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.getOrElse(assets.get))
+    val additionalSteps = LogUtils.time(logger, s"Performing additional operations for ${AssetTypeInfo.apply(typeId)}") {
+      additionalOperations(assets.get, changes)
+    }
+    if (additionalSteps.isDefined) {
+      adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
+    } else adjustAssets(typeId, onlyNeededNewRoadLinks, assets.get)
   }
   /**
     * 6) Run fillTopology to adjust assets based on link length and other assets on link.
