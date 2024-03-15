@@ -1017,4 +1017,56 @@ describe('Change Set', function () {
 
         assert.equal(changeSet.toJson(), "[]");
     })
+
+    it("Combine replace info with digitization change", () => {
+        const oldLinkId = "old:1";
+        const newLinkId = "new:1";
+        const oldLink = new KgvLink(oldLinkId, testLinkGeom1, 123, 3, 149, 36.877, 0, 12141);
+        const newLink = new KgvLink(newLinkId, testLinkGeom1, 123, 3, 149, 260.352, 0, 12141);
+        const change = new ReplaceInfo(oldLinkId, newLinkId, 0.0, 18.439, 260.352, 241.913);
+        const change2 = new ReplaceInfo(oldLinkId, newLinkId, 18.439, 36.877, 241.913, 223.475);
+        const changeSet = new ChangeSet([oldLink, newLink], [change, change2]);
+
+        const expected = [
+            {
+                "changeType": "replace",
+                "old": {
+                    "linkId": oldLinkId,
+                    "linkLength": 36.877,
+                    "geometry": testLinkGeom1,
+                    "roadClass": 12141,
+                    "adminClass": 3,
+                    "municipality": 149,
+                    "surfaceType": null,
+                    "trafficDirection": 0,
+                    "lifeCycleStatus": null
+                },
+                "new": [
+                    {
+                        "linkId": newLinkId,
+                        "linkLength": 260.352,
+                        "geometry": testLinkGeom1,
+                        "roadClass": 12141,
+                        "adminClass": 3,
+                        "municipality": 149,
+                        "surfaceType": null,
+                        "trafficDirection": 0,
+                        "lifeCycleStatus": null
+                    }
+                ],
+                "replaceInfo": [
+                    {
+                        "oldLinkId": oldLinkId,
+                        "newLinkId": newLinkId,
+                        "oldFromMValue": 0,
+                        "oldToMValue": 36.877,
+                        "newFromMValue": 260.352,
+                        "newToMValue": 223.475,
+                        "digitizationChange": true
+                    }
+                ]
+            }]
+        assert.equal(changeSet.changeEntries[0].changeType, "replace");
+        assert.equal(changeSet.toJson(), JSON.stringify(expected));
+    })
 });
