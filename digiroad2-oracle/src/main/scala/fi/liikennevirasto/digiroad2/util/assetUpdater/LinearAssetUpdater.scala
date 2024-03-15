@@ -993,7 +993,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   /**
    * Updates ChangeSet by adding expiredIds
    * @param changeSet ChangeSet to be updated
-   * @param expiredIds set of Ids to be added to changeSet
+   * @param expiredId Id to add to expiredIds in changeSet
    * @return updated ChangeSet
    */
   private def updateChangeSetWithExpiredId(changeSet: Option[ChangeSet], expiredId: Long): Option[ChangeSet] = {
