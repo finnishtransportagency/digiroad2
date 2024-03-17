@@ -13,7 +13,7 @@ sealed case class RoadWidthMap(linkId: String, adminClass: AdministrativeClass, 
 
 class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpdater(service) {
   
-  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
+  override def operationForNewLink(change: RoadLinkChange, onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
     val roadWidth = MTKClassWidth(newLinkInfo.roadClass)
     val roadLink = onlyNeededNewRoadLinks.find(_.linkId == newLinkInfo.linkId)

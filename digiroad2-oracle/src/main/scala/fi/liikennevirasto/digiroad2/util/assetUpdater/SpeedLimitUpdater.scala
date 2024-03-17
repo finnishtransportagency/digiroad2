@@ -15,7 +15,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
 
   override def assetFiller: AssetFiller = SpeedLimitFiller
   
-  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
+  override def operationForNewLink(change: RoadLinkChange, onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
     val filteredLinks = onlyNeededNewRoadLinks.filterNot(link => Seq(HardShoulder, CycleOrPedestrianPath, TractorRoad).contains(link.linkType))
     val roadLinkFound = filteredLinks.exists(_.linkId == newLinkInfo.linkId)
