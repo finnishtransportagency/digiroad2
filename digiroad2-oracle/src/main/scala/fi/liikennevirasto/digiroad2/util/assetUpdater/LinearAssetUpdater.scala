@@ -532,15 +532,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     // FeatureClass HardShoulder or WinterRoads, and ExpiringSoon filtered away 
     val onlyNeededNewRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, false)
 
-    val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
-    val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
-
-    logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of changes in the sets: ${changes.size}")
-    logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${addedLinksCount}")
-    logger.info("Starting to process changes")
-    val assetsGrouped = IterableOperation.groupByPropertyHashMap(existingAssets, (elem: PersistedLinearAsset) => elem.linkId )
+    val (existingAssetsSize:Int, initChangeSet: ChangeSet, assetsGrouped: mutable.HashMap[String, Set[PersistedLinearAsset]]) = prepareAssets(typeId, changes, oldIds, deletedLinks, addedLinksCount)
     val (projectedAssets, changedSet) = LogUtils.time(logger, s"Samuuting logic finished: ") {
-      fillNewRoadLinksWithPreviousAssetsData(typeId, onlyNeededNewRoadLinks,assetsGrouped, changes, initChangeSet,existingAssets.size)
+      fillNewRoadLinksWithPreviousAssetsData(typeId, onlyNeededNewRoadLinks,assetsGrouped, changes, initChangeSet,existingAssetsSize)
     }
 
     additionalRemoveOperationMass(deletedLinks)
@@ -555,8 +549,19 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
+  private def prepareAssets(typeId: Int, changes: Seq[RoadLinkChange], oldIds: Seq[String], deletedLinks: Seq[String], addedLinksCount: Int) = {
+    val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
+    val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
+
+    logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of changes in the sets: ${changes.size}")
+    logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${addedLinksCount}")
+    logger.info("Starting to process changes")
+    val assetsGrouped = IterableOperation.groupByPropertyHashMap(existingAssets, (elem: PersistedLinearAsset) => elem.linkId)
+    (existingAssets.size, initChangeSet, assetsGrouped)
+  }
   /**
     * 4) Start projecting everything into new links based on replace info.
+    *
     * @param typeId Asset typeId
     * @param onlyNeededNewRoadLinks Filtered new road links from changes
     * @param assetsBefore All assets from old road links
