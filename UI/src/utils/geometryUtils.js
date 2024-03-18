@@ -68,7 +68,7 @@
   };
 
   root.offsetBySideCode = function (zoom, asset) {
-    if (asset.sideCode === 1) {
+    if (asset.sideCode === 1 || asset.trafficDirection != "BothDirections") {
       return asset;
     }
     asset.points = _.map(asset.points, function (point, index, geometry) {
