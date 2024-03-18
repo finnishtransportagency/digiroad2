@@ -475,22 +475,41 @@ trait  PointAssetOperations{
     }
   }
 
-  def getValidityDirection(point: Point, roadLink: RoadLink, optBearing: Option[Int], twoSided: Boolean = false) : Int = {
-    if (twoSided)
-      BothDirections.value
-    else
-      SideCode.apply(optBearing match {
-        case Some(bearing) => getAssetValidityDirection(bearing)
-        case _ => getValidityDirectionByGeometry(point, roadLink.geometry)
-      }).value
+  def getAssetSideCodeByBearing(assetBearing: Int, roadLinkBearing: Int): Int = {
+    val toleranceInDegrees = 25
+
+    def getAngle(b1: Int, b2: Int): Int = {
+      180 - Math.abs(Math.abs(b1 - b2) - 180)
+    }
+
+    val reverseRoadLinkBearing =
+      if (roadLinkBearing - 180 < 0) {
+        roadLinkBearing + 180
+      } else {
+        roadLinkBearing - 180
+      }
+
+    if(getAngle(assetBearing, roadLinkBearing) <= toleranceInDegrees) SideCode.TowardsDigitizing.value
+    else if(Math.abs(assetBearing - reverseRoadLinkBearing) <= toleranceInDegrees) SideCode.AgainstDigitizing.value
+    else SideCode.Unknown.value
   }
 
-  def getValidityDirectionByGeometry(assetLocation: Point, geometry: Seq[Point]): Int = {
+  def getSideCode(point: Point, roadLink: RoadLink, optBearing: Option[Int], twoSided: Boolean = false) : Int = {
+    if (twoSided)
+      BothDirections.value
+    else {
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(point.x, point.y, 0), roadLink.geometry)
+      val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue)
+      val linkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue))
+      SideCode.apply(optBearing match {
+        case Some(bearing) => getAssetSideCodeByBearing(bearing, linkBearing)
+        case _ => getSideCodeByGeometry(point, roadLinkPoint, linkBearing)
+      }).value
+    }
 
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), geometry)
-    val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue)
-    val linkBearing = GeometryUtils.calculateBearing(geometry, Some(mValue))
+  }
 
+  def getSideCodeByGeometry(assetLocation: Point, roadLinkPoint: Option[Point], linkBearing: Int): Int = {
     val lonDifference = assetLocation.x - roadLinkPoint.get.x
     val latDifference = assetLocation.y - roadLinkPoint.get.y
 

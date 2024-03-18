@@ -35,7 +35,6 @@
       'height',
       'coating_type',
       'sign_material',
-      'location_specifier',
       'terrain_coordinates_x',
       'terrain_coordinates_y',
       'lane',
@@ -46,6 +45,7 @@
       'type_of_damage',
       'urgency_of_repair',
       'lifespan_left',
+      'location_specifier',
       'suggest_box',
       'old_traffic_code',
       'counter'
@@ -101,6 +101,19 @@
       return components + wrongSideInfo + panelCheckbox + renderedPanels;
     };
 
+    var renderBearingElement = function (asset) {
+      var assetIsOutsideRoadNetwork = asset.validityDirection === validitydirections.outsideRoadNetwork;
+      var bearingElement = $('' +
+          '    <div class="form-group editable form-point-asset">' +
+          '        <label class="control-label">Suuntima</label>' +
+          '        <input type="number" min=0, max=360 class="form-control" id=bearing required>' +
+          '        <p class="form-control-static">' + (assetIsOutsideRoadNetwork ? asset.bearing : '') + '</p>' +
+          '    </div>');
+      bearingElement.find('input').prop("disabled", !assetIsOutsideRoadNetwork);
+      bearingElement.find('input').prop("valueAsNumber", assetIsOutsideRoadNetwork ? asset.bearing : NaN);
+      return bearingElement;
+    };
+
     this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
       var id = selectedAsset.getId();
 
@@ -112,6 +125,8 @@
       rootElement.find("#feature-attributes-header").html(header);
       rootElement.find("#feature-attributes-form").html(form);
       rootElement.find(".suggestion-box").before($(me.renderValidityDirection(selectedAsset.get())));
+      rootElement.find('button#change-validity-direction').prop("disabled", selectedAsset.get().validityDirection === validitydirections.outsideRoadNetwork);
+      rootElement.find(".suggestion-box").before(renderBearingElement(selectedAsset.get()));
       dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
       if(me.pointAsset.lanePreview)
         rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
@@ -165,6 +180,36 @@
         selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
         if(me.pointAsset.lanePreview)
           $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
+      });
+
+      rootElement.find('.form-point-asset select#location_specifier').on('change', function () {
+        var currentLocationSpecifier = $(this).val();
+        var validityDirectionButton = rootElement.find('button#change-validity-direction');
+        var bearingElement = rootElement.find('.form-point-asset input#bearing');
+        if (currentLocationSpecifier === "6") {
+          validityDirectionButton.prop("disabled", true);
+          bearingElement.prop("disabled", false);
+          selectedAsset.set({validityDirection: validitydirections.outsideRoadNetwork});
+        } else if (selectedAsset.get().validityDirection === validitydirections.outsideRoadNetwork) {
+          validityDirectionButton.prop("disabled", false);
+          bearingElement.prop("disabled", true);
+          bearingElement.val(null);
+          var nearestLine = geometrycalculator.findNearestLine(me.roadCollection.getRoadsForCarPedestrianCycling(), selectedAsset.get().lon, selectedAsset.get().lat);
+          selectedAsset.set({validityDirection: validitydirections.sameDirection, bearing: geometrycalculator.getLineDirectionDegAngle(nearestLine)});
+        }
+      });
+
+      rootElement.find('.form-point-asset input#bearing').on('change input', function () {
+        selectedAsset.set({bearing: parseInt($(this).val())});
+      });
+
+      eventbus.on('application:readOnly', function(readOnly) {
+        if(!readOnly && selectedAsset.get()) {
+          var assetIsOutsideRoadNetwork = selectedAsset.get().validityDirection === validitydirections.outsideRoadNetwork;
+          rootElement.find('button#change-validity-direction').prop("disabled", assetIsOutsideRoadNetwork);
+          rootElement.find('.form-point-asset input#bearing').prop("disabled", !assetIsOutsideRoadNetwork);
+          rootElement.find('.form-point-asset input#bearing').prop("valueAsNumber", assetIsOutsideRoadNetwork ? selectedAsset.get().bearing : NaN);
+        }
       });
 
       function bindPanelEvents(){
@@ -502,4 +547,5 @@
         '    </div>';
     };
   };
+
 })(this);

@@ -144,14 +144,14 @@ trait LinearAssetOperations {
     )
   }
 
-  def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
+  def getAssetsByMunicipality(typeId: Int, municipality: Int, newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChanges(municipality)
     val linkIds = roadLinks.map(_.linkId)
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
-    withDynTransaction {
-      dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
-    }.filterNot(_.expired)
+    if(newTransaction) withDynTransaction {
+      dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+    } else dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
   }
 
   /**

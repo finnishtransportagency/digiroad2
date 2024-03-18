@@ -33,9 +33,9 @@ class LaneDao(){
     def apply(r: PositionedResult) = {
       val expired = r.nextBoolean()
       val value = r.nextInt()
-      val sideCode = r.nextInt()
+      val sideCode = r.nextIntOption()
 
-      LightLane(value, expired, sideCode)
+      LightLane(value, expired, sideCode.getOrElse(99))
     }
   }
 
@@ -43,7 +43,7 @@ class LaneDao(){
     def apply(r: PositionedResult) : LaneRow = {
       val id = r.nextLong()
       val linkId = r.nextString()
-      val sideCode = r.nextInt()
+      val sideCode = r.nextIntOption()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
       val createdBy = r.nextStringOption()
@@ -61,7 +61,7 @@ class LaneDao(){
       val expiredBy = r.nextStringOption()
       val expiredDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      LaneRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
+      LaneRow(id, linkId, sideCode.getOrElse(99), value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
         expiredBy, expiredDate, expired, timeStamp, municipalityCode, laneCode, geomModifiedDate)
     }
   }

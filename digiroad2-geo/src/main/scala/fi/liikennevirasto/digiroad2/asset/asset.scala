@@ -228,11 +228,12 @@ object PointAssetStructure {
   case object Unknown extends PointAssetStructure { def value = 99; def description = "Ei tiedossa" }
 }
 
+case class SideCodeException(msg:String) extends Exception(msg)
 sealed trait SideCode {
   def value: Int
 }
 object SideCode {
-  val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown)
+  val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown, DoesNotAffectRoadLink)
 
   def apply(intValue: Int): SideCode = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -252,9 +253,20 @@ object SideCode {
       case AgainstDigitizing => TrafficDirection.AgainstDigitizing
       case BothDirections => TrafficDirection.BothDirections
       case Unknown => TrafficDirection.UnknownDirection
+      case DoesNotAffectRoadLink => throw SideCodeException("Cannot convert SideCode 0 into TrafficDirection")
     }
   }
-
+  def toTrafficDirectionForTrafficSign(sideCode: SideCode): Int = {
+    sideCode match {
+      case TowardsDigitizing => TrafficDirection.TowardsDigitizing.value
+      case AgainstDigitizing => TrafficDirection.AgainstDigitizing.value
+      case BothDirections => TrafficDirection.BothDirections.value
+      case Unknown => TrafficDirection.UnknownDirection.value
+      case DoesNotAffectRoadLink => DoesNotAffectRoadLink.value
+    }
+  }
+  
+  case object DoesNotAffectRoadLink extends SideCode { def value = 0 }
   case object BothDirections extends SideCode { def value = 1 }
   case object TowardsDigitizing extends SideCode { def value = 2 }
   case object AgainstDigitizing extends SideCode { def value = 3 }

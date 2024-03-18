@@ -152,9 +152,10 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
       val optBearing = tryToInt(getPropertyValue(csvProperties, "trafficLightBearing").toString)
       val position = getCoordinatesFromProperties(csvProperties)
 
-      val (assetBearing, assetValidityDirection) = trafficLightsService.recalculateBearing(optBearing)
+      val assetValidityDirection = if(optBearing.nonEmpty) Some(trafficLightsService.getAssetValidityDirection(optBearing.get))
+      else None
 
-      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, position, nearbyLinks)
+      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(optBearing, assetValidityDirection, position, nearbyLinks)
 
       val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
       val roadLink = if (roadLinks.nonEmpty) {
@@ -162,15 +163,13 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
       } else
         nearbyLinks.minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
 
-      val validityDirection = if(assetBearing.isEmpty) {
-        trafficLightsService.getValidityDirection(position, roadLink, assetBearing)
-      } else assetValidityDirection.get
-
+      val sideCode = trafficLightsService.getSideCode(position, roadLink, optBearing)
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(position, roadLink.geometry)
+      val bearingToUseForAsset = Some(GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue)))
 
-      val sidecodeProperty = AssetProperty("trafficLightSidecode", validityDirection)
+      val sidecodeProperty = AssetProperty("trafficLightSidecode", sideCode)
 
-      val finalProperties = (assetBearing match {
+      val finalProperties = (bearingToUseForAsset match {
         case Some(bearing) =>
           val bearingProperty = AssetProperty("trafficLightBearing", bearing)
           csvProperties.filterNot(_.columnName == "trafficLightBearing") ++ Seq(bearingProperty)
@@ -179,7 +178,7 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
           csvProperties
       }) ++ Seq(sidecodeProperty)
 
-      (csvProperties, CsvPointAsset(position.x, position.y, roadLink.linkId, generateBaseProperties(finalProperties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
+      (csvProperties, CsvPointAsset(position.x, position.y, roadLink.linkId, generateBaseProperties(finalProperties), sideCode, bearingToUseForAsset, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && bearingToUseForAsset.isEmpty))
     }
 
     val notImportedData: Seq[NotImportedData] = trafficLights.map { case (csvRow, trafficLight) =>

@@ -1,5 +1,6 @@
 (function() {
   window.validitydirections = {
+    outsideRoadNetwork: 0,
     bothDirections: 1,
     sameDirection: 2,
     oppositeDirection: 3,
