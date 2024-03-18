@@ -689,7 +689,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                                             assets: OperationStep, changes: Seq[RoadLinkChange]): OperationStep = {
     val adjusted = adjustAssets(typeId, onlyNeededNewRoadLinks, assets)
-    // TODO additionalOperations need logic to just return changes assets which will be inserted into OperationStep
+    // TODO additionalOperations need logic to just return changes assets which will be inserted into OperationStep or return OperationStep,
+   // If no additionalLogis return inputed OperationStep otherwise update OperationStep and return it.
     val additionalSteps = additionalOperations(adjusted, changes) 
     if (additionalSteps.isDefined) additionalSteps.get else adjusted
   }
