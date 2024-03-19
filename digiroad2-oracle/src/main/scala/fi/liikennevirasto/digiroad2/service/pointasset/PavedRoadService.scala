@@ -37,7 +37,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       withDynTransaction {
         dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, linkIds)
       }.filterNot(_.expired)
-    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
 
     if(generateUnknownBoolean) generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
   }
@@ -54,7 +54,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       try {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
         val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
-        val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+        val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
         val groupedAssets = linearAssets.groupBy(_.linkId)
 
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
@@ -67,56 +67,6 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         case e: Throwable => logger.error(s"Unknown error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
       }
     }
-  }
-  
-  def getPavedRoadAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
-                            changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
-
-    //Group last vvhchanges by link id
-    val lastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.timeStamp))
-
-    //Map all existing assets by roadlink and changeinfo
-    val changedAssets = lastChanges.map{
-      case (linkId, changeInfo) =>
-        (roadLinks.find(_.linkId == linkId), changeInfo, existingLinearAssets.filter(_.linkId == linkId))
-    }
-
-    /* Note: This uses isNotPaved that excludes "unknown" pavement status. In OTH unknown means
-    *  "no pavement" but in case OTH has pavement info with value 1 then VVH "unknown" should not affect OTH.
-    *  Additionally, should there be an override that is later fixed we let the asset expire here as no
-    *  override is needed anymore.
-    */
-    val expiredAssetsIds = changedAssets.flatMap {
-      case (Some(roadLink), changeInfo, assets) =>
-        if (roadLink.isNotPaved && assets.nonEmpty)
-          assets.filter(_.timeStamp < changeInfo.timeStamp).map(_.id)
-        else
-          List()
-      case _ =>
-        List()
-    }.toSet[Long]
-
-    /* Note: This will not change anything if asset is stored using value None (null in database)
-    *  This is the intended consequence as it enables the UI to write overrides to VVH pavement info */
-    val newAndUpdatedAssets = changedAssets.flatMap{
-      case (Some(roadLink), changeInfo, assets) =>
-        if(roadLink.isPaved)
-          if (assets.isEmpty)
-            Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(defaultPropertyData), 0,
-              GeometryUtils.geometryLength(roadLink.geometry), None, None, None, None, false,
-              PavedRoad.typeId, changeInfo.timeStamp, None, linkSource = roadLink.linkSource, None, None, Some(MmlNls)))
-          else
-            assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
-              (a.value.isEmpty || a.timeStamp >= changeInfo.timeStamp)
-            ).map(a => a.copy(timeStamp = changeInfo.timeStamp, value=a.value,
-              startMeasure=0.0, endMeasure=roadLink.length, informationSource = Some(MmlNls)))
-        else
-          None
-      case _ =>
-        None
-    }.toSeq
-
-    (expiredAssetsIds, newAndUpdatedAssets)
   }
 
   override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {

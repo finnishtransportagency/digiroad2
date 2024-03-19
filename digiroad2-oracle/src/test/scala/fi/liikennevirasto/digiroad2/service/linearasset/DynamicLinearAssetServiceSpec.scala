@@ -489,7 +489,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
         verify(mockEventBus, times(1))
-          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Seq(SideCodeAdjustment(assetId,SideCode.BothDirections,assetInfo.typeId), SideCodeAdjustment(0,SideCode.BothDirections,assetInfo.typeId)), Set.empty[Long], valueAdjustments = Seq.empty[ValueAdjustment]))
+          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Seq(SideCodeAdjustment(assetId,newLinkId,SideCode.BothDirections,assetInfo.typeId), SideCodeAdjustment(0,newLinkId,SideCode.BothDirections,assetInfo.typeId)), Set.empty[Long], valueAdjustments = Seq.empty[ValueAdjustment]))
 
         val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
         verify(mockEventBus, times(count)).publish(org.mockito.ArgumentMatchers.eq("dynamicAsset:saveProjectedAssets"), captor.capture())
