@@ -199,7 +199,7 @@ class AssetFiller {
 
   //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
   //   causes an infinite loop when fillTopology is called recursively, this function might need total rework
-  /**<br> <pre> 
+  /**<br> <pre>
     * Combines assets so that there is no overlapping, no consecutive assets with same values and
     * that the speed limits with both directions are preferred.
     * Assets go through the following process
@@ -415,7 +415,7 @@ class AssetFiller {
     }).toSeq
     assets.collect{case asset: PieceWiseLinearAsset => asset}
   }
-  
+
   def mapLinkAndAssets(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): mutable.HashMap[String, LinkAndAssets] = {
     val mapForParallelRun = new mutable.HashMap[String, LinkAndAssets]()
 
@@ -437,7 +437,7 @@ class AssetFiller {
     }
     mapForParallelRun
   }
-  
+
   private def toSegment(PieceWiseLinearAsset: PieceWiseLinearAsset) = {
     (PieceWiseLinearAsset.startMeasure, PieceWiseLinearAsset.endMeasure)
   }
@@ -488,7 +488,7 @@ class AssetFiller {
     }
   }
   /**
-    * Adjust asset so it does not overlaps: <br> <pre> 
+    * Adjust asset so it does not overlaps: <br> <pre>
     * asset 1 -------
     * asset 2    -------
     *     to
@@ -719,12 +719,12 @@ class AssetFiller {
   }
 
   /**
-    * Finally adjust asset length by snapping to links start and endpoint. <br> <pre> 
+    * Finally adjust asset length by snapping to links start and endpoint. <br> <pre>
     * RoadLink -------
-    * Asset    ----    
-    * to                
+    * Asset    ----
+    * to
     * RoadLink ------
-    * Asset    ------   
+    * Asset    ------
     *
     * @see [[adjustAsset]]
     * @param roadLink  which we are processing
@@ -825,7 +825,7 @@ class AssetFiller {
     val (geometrySegments, geometryAdjustments) = fillHolesSteps(roadLink, assets, changeSet)
     fillHolesSteps(roadLink, geometrySegments, geometryAdjustments, takesAccountSidCode = false)
   }
-  
+
   /**
     * Fills any missing pieces in the middle of assets.
     * First fill hole. Merge parts if possible by calling [[fuse]].
@@ -910,7 +910,7 @@ class AssetFiller {
       val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
           operation(roadLink, currentSegments, currentAdjustments)
         }
-      
+
       val filterExpiredAway = LinearAssetFiller.removeExpiredMValuesAdjustments2(assetAdjustments)
 
       val noDuplicate = filterExpiredAway.copy(
@@ -918,12 +918,12 @@ class AssetFiller {
           adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
           valueAdjustments = filterExpiredAway.valueAdjustments.distinct
         )
-      
+
 
       (existingAssets ++ adjustedAssets, noDuplicate)
     }
   }
-  
+
   def adjustSideCodes(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val changeSet = LinearAssetFiller.useOrEmpty(changedSet)
 
@@ -937,7 +937,7 @@ class AssetFiller {
       (existingAssets ++ adjustedAssets, assetAdjustments)
     }
   }
-  
+
   def generateUnknowns(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val changeSet = LinearAssetFiller.emptyChangeSet
 
