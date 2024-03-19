@@ -325,16 +325,15 @@ class LaneDao(){
     val lanePositionIds = LogUtils.time(logger, "nextPrimaryKeySeqValues ") {
       Sequences.nextPrimaryKeySeqValues(newLanes.size)
     }
-    val lanesToCreate = newLanes.zipWithIndex.map{ case (lane, index) =>
+    val lanesToCreate = LogUtils.time(logger, "map lanes with reserved ids ") {newLanes.zipWithIndex.map{ case (lane, index) =>
       NewLaneWithIds(laneIds(index), lanePositionIds(index), lane)
-    }
+    }}
     logger.info(s"Finish reserving ids")
-
-    logger.info(s"Start inserting new lanes")
+    
     val insertLane =
       s"""insert into lane (id, lane_code, created_date, created_by, modified_date, modified_by, municipality_code)
          |values ((?), (?), (?), (?), (?), (?), (?))""".stripMargin
-    val createdLanes = LogUtils.time(logger, "createdLanes "){MassQuery.executeBatch(insertLane) { statement =>
+    val createdLanes = LogUtils.time(logger, "createdLanes ", startLogging = true){MassQuery.executeBatch(insertLane) { statement =>
       lanesToCreate.map { newLane =>
         val createdDate = new Timestamp(newLane.lane.createdDateTime.getOrElse(DateTime.now()).getMillis)
         statement.setLong(1, newLane.laneId)
@@ -355,12 +354,10 @@ class LaneDao(){
       }
     }}
 
-    logger.info(s"Finish inserting new lanes and starting to insert lane position")
-
     val insertLanePosition =
       s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, modified_date)
          |values ((?), (?), (?), (?), (?), current_timestamp)""".stripMargin
-    LogUtils.time(logger, "Create adjusted lanes"){MassQuery.executeBatch(insertLanePosition) { statement =>
+    LogUtils.time(logger, "Create adjusted lanes",  startLogging = true){MassQuery.executeBatch(insertLanePosition) { statement =>
       lanesToCreate.foreach { newLane =>
         statement.setLong(1, newLane.positionId)
         statement.setInt(2, newLane.lane.sideCode)
@@ -370,11 +367,11 @@ class LaneDao(){
         statement.addBatch()
       }
     }}
-    logger.info(s"Finish inserting lane position and starting to insert lane_link")
+    
     val insertLaneLink =
       s"""insert into lane_link (lane_id, lane_position_id)
          |values ((?), (?))""".stripMargin
-    LogUtils.time(logger, "insertLaneLink "){
+    LogUtils.time(logger, "insertLaneLink ", startLogging = true){
       MassQuery.executeBatch(insertLaneLink) { statement =>
       lanesToCreate.foreach { newLane =>
         statement.setLong(1, newLane.laneId)
