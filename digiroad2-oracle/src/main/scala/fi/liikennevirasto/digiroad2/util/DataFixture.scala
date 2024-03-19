@@ -182,6 +182,8 @@ object DataFixture {
 
   lazy val unknownSpeedLimitUpdater = new UnknownSpeedLimitUpdater
 
+  lazy val damagedByThawRepeater: DamagedByThawRepeater = new DamagedByThawRepeater()
+
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -2185,6 +2187,8 @@ object DataFixture {
         ExpiredRoadLinkHandlingProcess.process()
       case Some("find_missing_road_link_replacements") =>
         RoadLinkReplacementFinder.processChangeSets()
+      case Some("repeat_damaged_by_thaw_activity_periods") =>
+        damagedByThawRepeater.updateAllDamagedByThawActivityPeriods()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2202,7 +2206,7 @@ object DataFixture {
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite |" +
         " populate_new_link_with_main_lanes | initial_main_lane_population | redundant_traffic_direction_removal |" +
-        " refresh_road_link_cache | lane_end_date_expirer | resolving_frozen_links | handle_expired_road_links | topology_validation | find_assets_on_expired_road_links | ")
+        " refresh_road_link_cache | lane_end_date_expirer | resolving_frozen_links | handle_expired_road_links | topology_validation | find_assets_on_expired_road_links | repeat_damaged_by_thaw_activity_periods")
     }
   }
 }
