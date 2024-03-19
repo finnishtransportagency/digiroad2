@@ -19,6 +19,7 @@ import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
 
 import scala.collection.mutable
+import scala.util.Try
 
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
@@ -63,14 +64,15 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       authorizations "Contact your service provider for more information"
       description "Example URL: api/changes/mass_transit_stops?since=2019-03-15T09:19:27.424Z&until=2019-03-22T23:55:27.429Z"
       )
-
-
+ 
   get("/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId, request, params) { params =>
-      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-      val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
-      val token = params.get("token").map(_.toString)
+     val since = Try(DateTime.parse(params.get("since").getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST, "Missing mandatory 'since' parameter"))))
+                 .getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST, "Cannot convert to date"))
+     val until = Try(DateTime.parse(params.get("until").getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST, "Missing mandatory 'until' parameter"))))
+                 .getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST, "Cannot convert to date"))
+     val token = params.get("token").map(_.toString)
 
       val withAdjust = params.get("withAdjust") match {
         case Some(value) => true
@@ -98,6 +100,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         case "warning_signs_group" => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until, token), pointAssetWarningSignsGroupProperties)
         case "stop_sign" => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(Set(Stop.OTHvalue), since, until, token), pointAssetStopSignProperties)
         case "lane_information" => laneChangesToGeoJson(laneService.getChanged(since, until, withAdjust, token), withGeometry)
+        case _ => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid asset type")
       }
     }
   }
@@ -105,8 +108,10 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
   get("/mass_transit_stops", operation(getMassTransitStopsPrintedAtValluXML)) {
     contentType = formats("json")
     ApiUtils.avoidRestrictions(apiId + "_mass_transit_stops", request, params) { params =>
-      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-      val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
+     val since = Try(DateTime.parse(params.get("since").getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST, "Missing mandatory 'since' parameter"))))
+       .getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST, "Cannot convert to date"))
+     val until = Try(DateTime.parse(params.get("until").getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST, "Missing mandatory 'until' parameter"))))
+       .getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST, "Cannot convert to date"))
       val token = params.get("token").map(_.toString)
 
       massTransitStopsToGeoJson(since, massTransitStopService.getPublishedOnXml(since, until, token))
