@@ -339,7 +339,7 @@ object LaneUpdater {
     listOut.toList
   }
 
-  private def mapLaneAndAttribute(positionAdjustments: Seq[LanePositionAdjustment], toAdjustLanes: Seq[PersistedLane]) = {
+  private def mapLaneAndAttribute(positionAdjustments: Seq[LanePositionAdjustment], toAdjustLanes: Seq[PersistedLane]): ListBuffer[(PersistedLane, PersistedLane)] = {
     val lanes = new ListBuffer[(PersistedLane, PersistedLane)]
     for (adjustment <- positionAdjustments) {
       val oldLane = LogUtils.time(logger, s"find oldLane", startLogging = true) {
