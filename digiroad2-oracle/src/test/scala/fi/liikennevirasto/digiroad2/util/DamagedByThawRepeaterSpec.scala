@@ -29,7 +29,7 @@ class DamagedByThawRepeaterSpec extends FunSuite with Matchers {
   }
 
   def getChangeSetValue(changeSet: ChangeSet): Seq[Seq[DynamicPropertyValue]] = {
-    changeSet.valueAdjustments.map(_.asset.value.map(_.asInstanceOf[DynamicValue].value).get.properties.find(x => x.publicId === "spring_thaw_period").get.values)
+    changeSet.valueAdjustments.map(_.value.asInstanceOf[DynamicValue].value).map(_.properties.find(x => x.publicId === "spring_thaw_period").get.values)
   }
 
   private def generateRandomLinkId(): String = s"${UUID.randomUUID()}:${Random.nextInt(100)}"
