@@ -524,22 +524,21 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing, SideCode.TowardsDigitizing))
   }
 
-  ignore("merge speed limits with same value on shared road link2") { // check janne are we going maintain this logic
+  test("merge speed limits with same value and same side code on a shared road link2") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(9.0, 0.0))))
-    
-    
+
     val point1 =  Set(Point(0.0, 0.0), Point(3.0, 0.0))
     val point2 =  Set(Point(3.0, 0.0), Point(6.0, 0.0))
     val point3 =  Set(Point(6.0, 0.0), Point(9.0, 0.0))
     
-    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), 
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)),
       geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
       false, 
       startMeasure = 0.0,endMeasure =  3.0, endpoints = Set(Point(0.0, 0.0), Point(3.0, 0.0)), 
       Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
-    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(40)),
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)),
       geometry =  Seq(Point(3.0, 0.0), Point(6.0, 0.0)),
       false,
       startMeasure = 3.0,endMeasure =  6.0,endpoints =  Set(Point(3.0, 0.0), Point(6.0, 0.0)),
@@ -549,17 +548,18 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       geometry = Seq(Point(6.0, 0.0), Point(9.0, 0.0)),
       false,
       startMeasure = 6.0,endMeasure =  9.0, endpoints =  Set(Point(6.0, 0.0), Point(9.0, 0.0)), 
-      Some("latest modifier"), Some(DateTime.now().minus(100)), None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+      Some("latest modifier"), Some(DateTime.now().minus(100)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(
         speedLimit1, speedLimit2, speedLimit3))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
+
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(SpeedLimitValue(40))))
     filledTopology.map(_.modifiedBy) should be(Seq(Some("latest modifier"))) // latest modification should show
-    changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, linkId1, 0.0, 3.0)))
+    changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, linkId1, 0.0, 9.0)))
     changeSet.adjustedSideCodes should be(List())
     changeSet.expiredAssetIds should be(Set(1, 2))
   }
