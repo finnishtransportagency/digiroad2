@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
@@ -60,7 +62,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  ignore("Pedestrian crossing is adjusted on road link") {
+  test("Pedestrian crossing is updated on a road link") {
     val roadLinkGeom = Seq(Point(374380.916,6677290.793),
       Point(374385.234,6677296.0),
       Point(374395.277,6677302.165),
@@ -71,16 +73,14 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       Point(374476.866,6677355.235),
       Point(374490.755,6677366.834),
       Point(374508.979,6677381.08))
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((Seq(
-      RoadLinkFetched(linkId, 235, roadLinkGeom, Municipality,
-        TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+    val roadLink = RoadLink(linkId,roadLinkGeom,157.2503828427074,Municipality,1,BothDirections,UnknownLinkType,None,None,Map("MUNICIPALITYCODE" -> BigInt(235)),InUse,NormalLinkInterface,List())
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((Seq(roadLink), Nil))
 
     runWithRollback {
       val values = Seq(PropertyValue("0"))
       val simpleProperty = SimplePointAssetProperty("suggest_box", values)
-      service.dao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, linkId, Set(simpleProperty)), 31.550, "Hannu", 235, None, linkSource = NormalLinkInterface)
+      service.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, linkId, Set(simpleProperty)), roadLink, "test")
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374406, 6677306.5), Point(374408.5, 6677309.5))).head
-      result.id should equal(600029)
       result.linkId should equal(linkId)
       result.mValue should be (31.549 +- 0.001)
       result.floating should be (false)

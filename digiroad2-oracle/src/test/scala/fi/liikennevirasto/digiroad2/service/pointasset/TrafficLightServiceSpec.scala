@@ -111,11 +111,13 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-  ignore("Expire traffic light") {
+  test("Expire traffic light") {
     runWithRollback {
-      service.getPersistedAssetsByIds(Set(600029)).length should be(1)
-      service.expire(600029, testUser.username)
-      service.getPersistedAssetsByIds(Set(600029)) should be(Nil)
+      val roadLink = RoadLink(randomLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(2, 0.0, randomLinkId1, trafficLightPropertyData), "jakke", roadLink)
+      service.getPersistedAssetsByIds(Set(id)).length should be(1)
+      service.expire(id, testUser.username)
+      service.getPersistedAssetsByIds(Set(id)) should be(Nil)
     }
   }
 
