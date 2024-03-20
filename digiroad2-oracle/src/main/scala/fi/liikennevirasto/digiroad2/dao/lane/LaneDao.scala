@@ -318,16 +318,22 @@ class LaneDao(){
   }
 
   def createMultipleLanes(newLanes: Seq[PersistedLane], username: String): Seq[PersistedLane] = {
-    val laneIds = Sequences.nextPrimaryKeySeqValues(newLanes.size)
-    val lanePositionIds = Sequences.nextPrimaryKeySeqValues(newLanes.size)
-    val lanesToCreate = newLanes.zipWithIndex.map{ case (lane, index) =>
-      NewLaneWithIds(laneIds(index), lanePositionIds(index), lane)
+    logger.info(s"Start reserving ids")
+    val laneIds = LogUtils.time(logger, "nextPrimaryKeySeqValues ") {
+      Sequences.nextPrimaryKeySeqValues(newLanes.size)
     }
-
+    val lanePositionIds = LogUtils.time(logger, "nextPrimaryKeySeqValues ") {
+      Sequences.nextPrimaryKeySeqValues(newLanes.size)
+    }
+    val lanesToCreate = LogUtils.time(logger, "map lanes with reserved ids ") {newLanes.zipWithIndex.map{ case (lane, index) =>
+      NewLaneWithIds(laneIds(index), lanePositionIds(index), lane)
+    }}
+    logger.info(s"Finish reserving ids")
+    
     val insertLane =
       s"""insert into lane (id, lane_code, created_date, created_by, modified_date, modified_by, municipality_code)
          |values ((?), (?), (?), (?), (?), (?), (?))""".stripMargin
-    val createdLanes = MassQuery.executeBatch(insertLane) { statement =>
+    val createdLanes = LogUtils.time(logger, "createdLanes ", startLogging = true){MassQuery.executeBatch(insertLane) { statement =>
       lanesToCreate.map { newLane =>
         val createdDate = new Timestamp(newLane.lane.createdDateTime.getOrElse(DateTime.now()).getMillis)
         statement.setLong(1, newLane.laneId)
@@ -346,12 +352,12 @@ class LaneDao(){
         statement.addBatch()
         newLane.lane.copy(id = newLane.laneId)
       }
-    }
+    }}
 
     val insertLanePosition =
       s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, modified_date)
          |values ((?), (?), (?), (?), (?), current_timestamp)""".stripMargin
-    MassQuery.executeBatch(insertLanePosition) { statement =>
+    LogUtils.time(logger, "Create adjusted lanes",  startLogging = true){MassQuery.executeBatch(insertLanePosition) { statement =>
       lanesToCreate.foreach { newLane =>
         statement.setLong(1, newLane.positionId)
         statement.setInt(2, newLane.lane.sideCode)
@@ -360,18 +366,21 @@ class LaneDao(){
         statement.setString(5, newLane.lane.linkId)
         statement.addBatch()
       }
-    }
-
+    }}
+    
     val insertLaneLink =
       s"""insert into lane_link (lane_id, lane_position_id)
          |values ((?), (?))""".stripMargin
-    MassQuery.executeBatch(insertLaneLink) { statement =>
+    LogUtils.time(logger, "insertLaneLink ", startLogging = true){
+      MassQuery.executeBatch(insertLaneLink) { statement =>
       lanesToCreate.foreach { newLane =>
         statement.setLong(1, newLane.laneId)
         statement.setLong(2, newLane.positionId)
         statement.addBatch()
       }
-    }
+    }}
+
+    logger.info(s"Finish inserting lane_link")
     createdLanes
   }
 

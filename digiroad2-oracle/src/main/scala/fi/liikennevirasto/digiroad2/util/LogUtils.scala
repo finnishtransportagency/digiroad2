@@ -5,17 +5,24 @@ import org.slf4j.Logger
 object LogUtils {
   val timeLoggingThresholdInMs = 100
 
-  def time[R](logger: Logger, operationName: String, noFilter: Boolean = false, url :Option[String] = None)(f: => R): R = {
+  def time[R](logger: Logger, operationName: String, noFilter: Boolean = false, url :Option[String] = None, startLogging:Boolean= false)(f: => R): R = {
     val begin = System.currentTimeMillis()
 
     try {
+      if (startLogging) {
+        logger.info(s"$operationName started")
+      }
       val result = f
       val duration = System.currentTimeMillis() - begin
       val urlString = if (url.isDefined) {
         s"URL: ${url.get}"
       } else ""
+      
       if (noFilter || duration >= timeLoggingThresholdInMs) {
         logger.info(s"$operationName completed in $duration ms and in second ${duration / 1000}, $urlString")
+      }
+      if (startLogging) {
+        logger.info(s"$operationName finished")
       }
       result
     } catch {
