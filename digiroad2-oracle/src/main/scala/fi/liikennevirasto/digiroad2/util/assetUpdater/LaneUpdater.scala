@@ -339,20 +339,20 @@ object LaneUpdater {
     listOut.toList
   }
 
-  private def mapLaneAndAttribute(positionAdjustments: Seq[LanePositionAdjustment], toAdjustLanes: Seq[PersistedLane]): ListBuffer[(PersistedLane, PersistedLane)] = {
+  private def mapLaneAndAttribute(addAttributes: Seq[LanePositionAdjustment], toAdjustLanes: Seq[PersistedLane]): ListBuffer[(PersistedLane, PersistedLane)] = {
     val lanes = new ListBuffer[(PersistedLane, PersistedLane)]
-    for (adjustment <- positionAdjustments) {
+    for (addToThis <- addAttributes) {
       val oldLane = LogUtils.time(logger, s"find oldLane", startLogging = true) {
-        toAdjustLanes.find(_.id == adjustment.laneId)
+        toAdjustLanes.find(_.id == addToThis.laneId)
       }
       // If adjustment has new attributes to update, use them
       // Used for updating fused main lane start dates
-      val attributesToUse = adjustment.attributesToUpdate match {
+      val attributesToUse = addToThis.attributesToUpdate match {
         case Some(attributes) => attributes
         case None => oldLane.get.attributes
       }
-      val laneToCreate = oldLane.get.copy(id = 0, linkId = adjustment.linkId, startMeasure = adjustment.startMeasure,
-        endMeasure = adjustment.endMeasure, sideCode = adjustment.sideCode.value, attributes = attributesToUse)
+      val laneToCreate = oldLane.get.copy(id = 0, linkId = addToThis.linkId, startMeasure = addToThis.startMeasure,
+        endMeasure = addToThis.endMeasure, sideCode = addToThis.sideCode.value, attributes = attributesToUse)
 
       lanes.append((oldLane.get, laneToCreate))
     }
@@ -387,7 +387,7 @@ object LaneUpdater {
             val toAdjustLanes = LogUtils.time(logger, s"Fetch ${positionAdjustments.size} lanes for adjusting and report", startLogging = true) {
               laneService.getPersistedLanesByIds(addAttributes.map(_.laneId).toSet, newTransaction = false)
             }
-            mapLaneAndAttribute(addAttributes, toAdjustLanes)
+            LogUtils.time(logger, s"mapLaneAndAttribute") {mapLaneAndAttribute(addAttributes, toAdjustLanes)}
           }
           ).toList
         }
