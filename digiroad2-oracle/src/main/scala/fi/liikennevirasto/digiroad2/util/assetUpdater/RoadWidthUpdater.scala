@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, RoadWidthService}
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, Parallel}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, Parallel}
 import org.joda.time.DateTime
 
 sealed case class RoadWidthMap(linkId: String, adminClass: AdministrativeClass, mTKClassWidth: MTKClassWidth, linkLength: Double, trafficDirection: TrafficDirection)
@@ -77,7 +77,9 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
 
       new Parallel().operation(newLinksWithAssetsGroups, level) { tasks =>
         tasks.flatMap(newLinksWithAssetsGroup => {
-          adjustValue(newLinksWithAssetsGroup, changeSet)
+          LogUtils.time(logger, s"Adjusting road width values on ${newLinksWithAssetsGroups.size} links in a single thread") {
+            adjustValue(newLinksWithAssetsGroup, changeSet)
+          }
         })
       }.toList
     }
@@ -87,10 +89,12 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     val filteredNewLinks = changesNewLinks.filter(newLink => newLink.adminClass != State && MTKClassWidth(newLink.roadClass).value != MTKClassWidth.Unknown.value)
     val filteredLinkIds = filteredNewLinks.map(_.linkId)
 
-    val (assetsToAdjust, otherAssets) = operationStep.assetsAfter.partition(asset => {
-      val validLinkToAdjust = filteredLinkIds.contains(asset.linkId)
-      selectOnlyMachineCreated(asset) && validLinkToAdjust
-    })
+    val (assetsToAdjust, otherAssets) = LogUtils.time(logger, s"Partition ${operationStep.assetsAfter.size} road widths") {
+      operationStep.assetsAfter.partition(asset => {
+        val validLinkToAdjust = filteredLinkIds.contains(asset.linkId)
+        selectOnlyMachineCreated(asset) && validLinkToAdjust
+      })
+    }
 
     val filteredNewLinksWithAssetsAfter = assetsToAdjust.groupBy(_.linkId).map(assetsByLinkId => {
       val (linkId, assets) = assetsByLinkId
@@ -104,9 +108,11 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         case _ => adjustValue(filteredNewLinksWithAssetsAfter, changeSet)
       }
 
-      val merge = systemEditedUpdated.foldLeft(OperationStep(otherAssets, Some(changeSet)))((a, b) => {
-        OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)), b.assetsBefore)
-      })
+      val merge = LogUtils.time(logger, "Merge operation steps after road width value adjust") {
+        systemEditedUpdated.foldLeft(OperationStep(otherAssets, Some(changeSet)))((a, b) => {
+          OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)), b.assetsBefore)
+        })
+      }
       Some(merge)
     } else None
   }
