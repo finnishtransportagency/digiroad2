@@ -40,7 +40,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
 
   private def adjustWidthsByRoadClass(operationStep: OperationStep,changes: Seq[RoadLinkChange]) = {
 
-    def adjustValue(newLinksWithAssetsGroup: Seq[(RoadLinkInfo, Seq[PersistedLinearAsset])], changeSet: ChangeSet) = {
+    def adjustValue(newLinksWithAssetsGroup: Map[RoadLinkInfo, Seq[PersistedLinearAsset]], changeSet: ChangeSet) = {
       newLinksWithAssetsGroup.flatMap(newLinkWithAssets => {
         val (newLink, assets) = newLinkWithAssets
         assets.map(asset => {
@@ -69,7 +69,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
       })
     }
 
-    def parallelLoop(filteredNewLinksWithAssetsAfter: Seq[(RoadLinkInfo, Seq[PersistedLinearAsset])], changeSet: ChangeSet) = {
+    def parallelLoop(filteredNewLinksWithAssetsAfter: Map[RoadLinkInfo, Seq[PersistedLinearAsset]], changeSet: ChangeSet) = {
       val newLinksWithAssetsGroups = filteredNewLinksWithAssetsAfter.grouped(groupSizeForParallelRun).toList.par
       val totalTasks = newLinksWithAssetsGroups.size
       val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
@@ -85,14 +85,18 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     val changeSet: ChangeSet = operationStep.changeInfo.get
     val changesNewLinks = changes.flatMap(_.newLinks)
     val filteredNewLinks = changesNewLinks.filter(newLink => newLink.adminClass != State && MTKClassWidth(newLink.roadClass).value != MTKClassWidth.Unknown.value)
-    val machineCreatedAssets = operationStep.assetsAfter.filter(selectOnlyMachineCreated)
-    val assetsAfterGrouped = machineCreatedAssets.groupBy(_.linkId)
+    val filteredLinkIds = filteredNewLinks.map(_.linkId)
 
-    val filteredNewLinksWithAssetsAfter = filteredNewLinks.flatMap { newLink =>
-      val linkedAssets = assetsAfterGrouped.getOrElse(newLink.linkId, Seq.empty)
-      if(linkedAssets.nonEmpty) Some((newLink, linkedAssets))
-      else None
-    }
+    val (assetsToAdjust, otherAssets) = operationStep.assetsAfter.partition(asset => {
+      val validLinkToAdjust = filteredLinkIds.contains(asset.linkId)
+      selectOnlyMachineCreated(asset) && validLinkToAdjust
+    })
+
+    val filteredNewLinksWithAssetsAfter = assetsToAdjust.groupBy(_.linkId).map(assetsByLinkId => {
+      val (linkId, assets) = assetsByLinkId
+      val newLink = filteredNewLinks.find(_.linkId == linkId).get
+      (newLink, assets)
+    })
 
     if (filteredNewLinksWithAssetsAfter.nonEmpty) {
       val systemEditedUpdated = filteredNewLinksWithAssetsAfter.size match {
@@ -100,9 +104,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         case _ => adjustValue(filteredNewLinksWithAssetsAfter, changeSet)
       }
 
-
-      val assetsAfterFiltered = operationStep.assetsAfter.filterNot(assetAfter => filteredNewLinksWithAssetsAfter.flatMap(_._2).contains(assetAfter))
-      val merge = systemEditedUpdated.foldLeft(OperationStep(assetsAfterFiltered, Some(changeSet)))((a, b) => {
+      val merge = systemEditedUpdated.foldLeft(OperationStep(otherAssets, Some(changeSet)))((a, b) => {
         OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)), b.assetsBefore)
       })
       Some(merge)
