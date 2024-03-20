@@ -2512,7 +2512,7 @@ Yksitt&auml;isen liikennemerkin voi valita napauttamalla kartalta sen geometriaa
 
 ![Katselu.](lm2.png)
 
-Liikennemerkin katselu._
+Liikennemerkin katselu.
 
 ## 31.2 Liikennemerkin muokkaus
 
@@ -2561,6 +2561,23 @@ _Geometrian ulkopuoliset liikennemerkit löytyvät painikkeen takaa._
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden liikennemerkkien lista._
 
+### Tie- tai katuverkon ulkopuolelle osoittavat liikennemerkit
+
+Digiroadin käyttöliittymässä liikennemerkin vaikutussuunta ilmenee vaikutussuuntanuolella, joka osoittaa pääsääntöisesti joko tielinkin liikennevirran suuntaan tai sitä vasten. Ominaisuustietoikkunan Vaihda suuntaa -painiketta (14) napauttamalla voi kääntää merkin vastakkaiseen suuntaan eli 180 astetta.
+
+![Vaihda suuntaa](lm14.png)
+_Vaihda suuntaa -painike_
+
+Kuitenkin on tilanteita, joissa liikennemerkin vaikutussuunta tulisi ilmaista muulla tavoin kuin tiellä olevan liikenteen suuntaisesti. Tällaisia tilanteita voivat olla esimerkiksi piha- tai parkkialueet, joilla ei ole mallinnettu tielinkkejä. Digiroadin käyttöliittymässä tie- tai katuverkon ulkopuolelle osoittava liikennemerkki tallennetaan seuraavasti:
+
+1.	Valitaan Liikennemerkit-tietolajin ominaisuustietoikkunassa "Tie tai katuverkon ulkopuolella, esimerkiksi parkkialueella tai piha-alueella" Sijaintitarkenne-kohdan (15) alasvetovalikosta.
+2.	Tämän jälkeen "Vaihda suuntaa" -painike poistuu käytöstä, ja voit määrittää Suuntima-ominaisuustietoon (16) liikennemerkin vaikutussuunnan asteina (0-360). Esimerkiksi, jos parkkialue on tielinkin oikealla puolella, aseta suunta-arvoksi 90, jolloin nuoli osoittaa oikealle.
+3.	Tallenna muokkaukset tallenna-painikkeella tai kumoa peruuta-painikkeella.
+4.	Jos haluat palauttaa liikennemerkin vaikutussuunnan takaisin tielinkin suuntaiseksi, valitse sijaintitarkenteesta jokin muu vaihtoehto, jolloin "Vaihda suuntaa" -painike aktivoituu uudelleen ja vaikutussuunnan voi tallentaa liikenteen suuntaiseksi.
+
+![Sijaintitarkenne](lm15.png)
+![Suuntima](lm16.png)
+_Sijaintitarkenne ja suuntima_
 # 32. Palvelupiste
 
 Palvelu on liikenneverkon k&auml;ytt&auml;j&auml;&auml; auttava ja tukeva palvelu kuten pys&auml;k&ouml;intitalo tai linja-autoasema. Palvelulla on geometriapiste (palvelupiste), joka sijaitsee palvelun sijaintikohdassa (rakennuksen tai kiinteist&ouml;n keskikohdassa). Yhdess&auml; palvelupisteess&auml; voi olla useita palveluita. Karttaikkunaan voi valita palvelupisteet tietolajivalikosta (1). Kartalle visualisoituvat palvelupisteet sinisen ympyrän päälle.
