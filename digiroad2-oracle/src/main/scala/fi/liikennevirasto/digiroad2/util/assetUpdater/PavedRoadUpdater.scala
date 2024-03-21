@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.linearasset.SurfaceType.Paved
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
@@ -70,10 +70,10 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     OperationStep(operationStep.assetsAfter ++ newAssets, operationStep.changeInfo, operationStep.assetsBefore)
   }
 
-  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] = {
     val operationAfterGeneration = generateNewPavementForSplitAndReplace(operationStep, changes)
     val (assetsToBeRemoved, assetsToPersist) = collectRemovablePavementAssets(operationAfterGeneration, changes)
-    removePavement(assetsToBeRemoved, assetsToPersist, operationAfterGeneration, changes)
+    removePavement(assetsToBeRemoved, assetsToPersist, operationAfterGeneration, changes, allAssetsBefore)
   }
 
   /**
@@ -96,23 +96,24 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     surfaceTypeIsNone.contains(asset.linkId) && isGeneratedFromMML(asset)
   }
 
-  private def removePavement(assetsToBeRemoved: Seq[PersistedLinearAsset], assetsToPersist: Seq[PersistedLinearAsset], operation: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
-    val changeSets: ChangeSet = operation.changeInfo.get
+  private def removePavement(assetsToBeRemoved: Seq[PersistedLinearAsset], assetsToPersist: Seq[PersistedLinearAsset], operation: OperationStep, changes: Seq[RoadLinkChange], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] = {
+    val changeSets = operation.changeInfo
     val expiredPavementSteps = assetsToBeRemoved.map(asset => {
       if (asset.id != 0) {
-        operation.copy(assetsAfter = Seq(), changeInfo = Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
+        Some(operation.copy(assetsAfter = Seq(), changeInfo = Some(changeSets.get.copy(expiredAssetIds = changeSets.get.expiredAssetIds ++ Set(asset.id)))))
       } else {
         val originalAsset = operation.assetsBefore.find(_.id == asset.oldId)
           .getOrElse(throw new NoSuchElementException(s"Could not find original asset for reporting," +
             s" asset.id: ${asset.id}, asset.oldId: ${asset.oldId}, asset.linkId: ${asset.linkId}"))
-        reportAssetChanges(Some(originalAsset), None, changes, operation.copy(assetsAfter = Seq()), Some(ChangeTypeReport.Deletion))
+        Some(reportAssetChanges(Some(originalAsset), None, changes, operation.copy(assetsAfter = Seq()), Some(ChangeTypeReport.Deletion)))
       }
     })
 
-    val combinedSteps = expiredPavementSteps.foldLeft(OperationStep(assetsToPersist, Some(changeSets), operation.assetsBefore))((a, b) => {
-      OperationStep((a.assetsAfter ++ b.assetsAfter).distinct, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)), b.assetsBefore)
-    })
-    Some(combinedSteps)
+    val initalOperation = Seq(Some(OperationStep(assetsAfter = assetsToPersist, changeInfo = changeSets, assetsBefore = Seq())))
+    val combinedSteps = LogUtils.time(logger, "Merge operation steps after remove pavement") {
+      mergeOperationSteps(expiredPavementSteps ++ initalOperation, allAssetsBefore)
+    }
+    combinedSteps
   }
 
   /**

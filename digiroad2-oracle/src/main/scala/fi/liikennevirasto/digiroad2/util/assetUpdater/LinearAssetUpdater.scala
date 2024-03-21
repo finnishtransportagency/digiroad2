@@ -225,7 +225,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), (aBefore ++ bBefore).distinct))
   }
 
-  private def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]], allAssetsBefore: Seq[PersistedLinearAsset]) = {
+  protected def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]], allAssetsBefore: Seq[PersistedLinearAsset]) = {
     val after = new ListBuffer[PersistedLinearAsset]
     val droppedAssetIds = new ListBuffer[Long]
     val adjustedMValues = new ListBuffer[MValueAdjustment]
@@ -329,7 +329,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
 
     val after = newAsset.map(asset => {
-      val newLink = relevantRoadLinkChange.newLinks.find(_.linkId == asset.linkId).get
+      println(asset.linkId)
+      val newLinkOption = relevantRoadLinkChange.newLinks.find(_.linkId == asset.linkId)
+      val newLink = newLinkOption.get
       val linkInfo = Some(LinkInfo(newLink.lifeCycleStatus))
       val values = compactJson(asset.toJson)
       val assetGeometry = GeometryUtils.truncateGeometry3D(newLink.geometry, asset.startMeasure, asset.endMeasure)
@@ -480,7 +482,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changes
     * @return
     */
-  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = None
+  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] = None
   /**
     * 4.1) Add additional logic if something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -666,14 +668,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                               changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
     val initStep = Some(OperationStep(Seq(), Some(initChangeSet)))
     val merged = LogUtils.time(logger, "Merging operation steps before adjustment") {mergeOperationSteps(assetUnderReplace :+ initStep, allAssetsBefore)}
-    val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes)}
+    val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes, allAssetsBefore)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
 
   private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
-                                            operationStep: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
+                                            operationStep: Option[OperationStep], changes: Seq[RoadLinkChange],
+                                            allAssetsBefore: Seq[PersistedLinearAsset]): OperationStep = {
     val additionalSteps = LogUtils.time(logger, s"Performing additional operations for ${AssetTypeInfo.apply(typeId)}") {
-      additionalOperations(operationStep.get, changes)
+      additionalOperations(operationStep.get, changes, allAssetsBefore)
     }
     if (additionalSteps.isDefined) {
       adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
