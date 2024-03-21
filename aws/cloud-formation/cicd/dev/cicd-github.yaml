@@ -81,7 +81,8 @@ Resources:
     Properties:
       Authentication: GITHUB_HMAC
       AuthenticationConfiguration:
-        SecretToken: !Ref GitHubWebhookSecret
+        SecretToken:
+          Fn::Sub: "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
       Filters:
         - JsonPath: $.ref
           MatchEquals: 'refs/heads/{Branch}'
@@ -114,7 +115,8 @@ Resources:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref GitRepositoryName
                 Branch: !Ref GitBranchName
-                OAuthToken: !Ref GitHubWebhookSecret
+                OAuthToken:
+                  Fn::Sub: "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
                 PollForSourceChanges: false
               RunOrder: 1
         - Name: Build
@@ -187,6 +189,11 @@ Resources:
                   - 'cloudformation:*'
                   - 'ecs:*'
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'secretsmanager:DescribeSecret'
+                  - 'secretsmanager:GetSecretValue'
+                Resource: !Ref GitHubWebhookSecret
   CodeBuildSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
