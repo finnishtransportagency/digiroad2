@@ -359,7 +359,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def partitionAndAddPairs(assetsAfter: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): Set[Pair] = {
-    val alreadyReported = LogUtils.time(logger,"Check already reported changes to be filtered out."){changesForReport.asScala.iterator.flatMap(_.after).map(_.linearReference.get.linkId)}
+    val alreadyReported = LogUtils.time(logger,"Check already reported changes to be filtered out."){
+      changesForReport.asScala.iterator.toList.flatMap(_.after).map(_.linearReference.get.linkId)
+    }
     val pairList = new ListBuffer[Set[Pair]]
     LogUtils.time(logger, "Loop and create pair") {
       for (asset <- assetsAfter) {
@@ -610,7 +612,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     LogUtils.time(logger, "Reporting removed") {
       changeInfo.get.expiredAssetIds.map(asset => {
-        val alreadyReported = changesForReport.asScala.iterator.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
+        val alreadyReported = changesForReport.asScala.iterator.toList.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
         if (!alreadyReported.contains(asset)) {
           val expiringAsset = assetsAll.find(_.id == asset)
           reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, Some(ChangeTypeReport.Deletion))
