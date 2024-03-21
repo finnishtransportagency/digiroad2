@@ -329,9 +329,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
 
     val after = newAsset.map(asset => {
-      println(asset.linkId)
-      val newLinkOption = relevantRoadLinkChange.newLinks.find(_.linkId == asset.linkId)
-      val newLink = newLinkOption.get
+      val newLink = relevantRoadLinkChange.newLinks.find(_.linkId == asset.linkId).get
       val linkInfo = Some(LinkInfo(newLink.lifeCycleStatus))
       val values = compactJson(asset.toJson)
       val assetGeometry = GeometryUtils.truncateGeometry3D(newLink.geometry, asset.startMeasure, asset.endMeasure)
