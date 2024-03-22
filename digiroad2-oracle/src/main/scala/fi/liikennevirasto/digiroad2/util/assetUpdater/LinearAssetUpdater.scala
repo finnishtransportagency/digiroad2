@@ -270,7 +270,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           case Some(asset) => Some(asset.linkId)
           case None => None
         }
-        val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId).sorted
+        val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId)
 
         val checkByOldAsset = (roadLinkChangeOldLinkId.nonEmpty && assetOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == assetOldLinkId
 
