@@ -78,18 +78,16 @@ object MainLanePopulationProcess {
     }
   }
 
-  private def mainLanesForMunicipality(municipality: Int, initialProcessing: Boolean): Unit = {
+  private def mainLanesForMunicipality(municipality: Int): Unit = {
     logger.info("Working on municipality -> " + municipality)
 
     val roadLinks = roadLinkService.getRoadLinksByMunicipality(municipality).filterNot(_.linkType == TractorRoad)
 
     // If not initial process, filter out roadLinks that already have main lanes
-    val roadLinksWithoutMainLanes =
-      if (initialProcessing) roadLinks
-      else {
-        val existingLanes = laneService.fetchExistingMainLanesByRoadLinks(roadLinks, Seq()).groupBy(_.linkId)
-        roadLinks.filterNot(roadLink => existingLanes.exists(_._1 == roadLink.linkId))
-      }
+    val roadLinksWithoutMainLanes = {
+      val existingLanes = laneService.fetchExistingMainLanesByRoadLinks(roadLinks, Seq()).groupBy(_.linkId)
+      roadLinks.filterNot(roadLink => existingLanes.exists(_._1 == roadLink.linkId))
+    }
 
     logger.info(roadLinksWithoutMainLanes.length + " road links without main lanes.")
 
@@ -105,8 +103,7 @@ object MainLanePopulationProcess {
     }
   }
 
-  // Main process
-  def process(initialProcessing: Boolean = false): Unit = {
+  def process(): Unit = {
     logger.info(s"Start to populate main lanes from road links ${DateTime.now()}")
 
     val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
@@ -114,21 +111,10 @@ object MainLanePopulationProcess {
     }
 
     municipalities.foreach { municipality =>
-      mainLanesForMunicipality(municipality, initialProcessing)
+      mainLanesForMunicipality(municipality)
     }
 
     logger.info(s"Finished populating main lanes ${DateTime.now()}")
   }
 
-  // Moves all existing lanes to history and creates new main lanes from vvh road links
-  def initialProcess(): Unit = {
-    logger.info(s"Truncate all lane tables ${DateTime.now()}")
-
-    PostGISDatabase.withDynTransaction(laneService.deleteAllPreviousLaneData())
-
-    logger.info(s"Finished removing all lane data ${DateTime.now()}")
-
-    // Populate main lanes from road links
-    process(initialProcessing = true)
-  }
 }

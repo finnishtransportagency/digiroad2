@@ -429,10 +429,6 @@ class LaneDao(){
     }
   }
 
-  //Deletes all lane info, only to be used in MainLanePopulation initial process
-  def truncateLaneTables(): Unit = {
-    sqlu"""TRUNCATE TABLE LANE, LANE_ATTRIBUTE, LANE_LINK, LANE_POSITION, LANE_HISTORY, LANE_HISTORY_ATTRIBUTE, LANE_HISTORY_LINK, LANE_HISTORY_POSITION""".execute
-  }
 
   def updateEntryLane( lane: PersistedLane, username: String ): Long = {
 

@@ -1345,19 +1345,4 @@ trait LaneOperations {
     dao.expireAdditionalLanes(username)
   }
 
-  // Used by initial main lane population process
-  def expireAllMunicipalityLanes(municipality: Int, username: String): Unit = {
-    val laneIds = dao.fetchLanesByMunicipality(municipality).map(_.id)
-    if (laneIds.nonEmpty) {
-      val lanesWithHistoryId = historyDao.insertHistoryLanes(laneIds, username)
-
-      historyDao.expireHistoryLanes(lanesWithHistoryId, username)
-      dao.deleteEntryLanes(laneIds)
-    }
-  }
-
-  //Deletes all lane info, only to be used in MainLanePopulation initial process
-  def deleteAllPreviousLaneData(): Unit = {
-    dao.truncateLaneTables()
-  }
 }
