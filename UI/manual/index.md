@@ -2566,6 +2566,7 @@ _Geometrian ulkopuolelle j&auml;&auml;neiden liikennemerkkien lista._
 Digiroadin käyttöliittymässä liikennemerkin vaikutussuunta ilmenee vaikutussuuntanuolella, joka osoittaa pääsääntöisesti joko tielinkin liikennevirran suuntaan tai sitä vasten. Ominaisuustietoikkunan Vaihda suuntaa -painiketta (14) napauttamalla voi kääntää merkin vastakkaiseen suuntaan eli 180 astetta.
 
 ![Vaihda suuntaa](lm14.png)
+
 _Vaihda suuntaa -painike_
 
 Kuitenkin on tilanteita, joissa liikennemerkin vaikutussuunta tulisi ilmaista muulla tavoin kuin tiellä olevan liikenteen suuntaisesti. Tällaisia tilanteita voivat olla esimerkiksi piha- tai parkkialueet, joilla ei ole mallinnettu tielinkkejä. Digiroadin käyttöliittymässä tie- tai katuverkon ulkopuolelle osoittava liikennemerkki tallennetaan seuraavasti:
@@ -2577,7 +2578,9 @@ Kuitenkin on tilanteita, joissa liikennemerkin vaikutussuunta tulisi ilmaista mu
 
 ![Sijaintitarkenne](lm15.png)
 ![Suuntima](lm16.png)
+
 _Sijaintitarkenne ja suuntima_
+
 # 32. Palvelupiste
 
 Palvelu on liikenneverkon k&auml;ytt&auml;j&auml;&auml; auttava ja tukeva palvelu kuten pys&auml;k&ouml;intitalo tai linja-autoasema. Palvelulla on geometriapiste (palvelupiste), joka sijaitsee palvelun sijaintikohdassa (rakennuksen tai kiinteist&ouml;n keskikohdassa). Yhdess&auml; palvelupisteess&auml; voi olla useita palveluita. Karttaikkunaan voi valita palvelupisteet tietolajivalikosta (1). Kartalle visualisoituvat palvelupisteet sinisen ympyrän päälle.
