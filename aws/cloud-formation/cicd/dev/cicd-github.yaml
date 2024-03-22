@@ -81,8 +81,7 @@ Resources:
     Properties:
       Authentication: GITHUB_HMAC
       AuthenticationConfiguration:
-        SecretToken:
-          Fn::Sub: "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
+        SecretToken: !Sub "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
       Filters:
         - JsonPath: $.ref
           MatchEquals: 'refs/heads/{Branch}'
@@ -115,8 +114,7 @@ Resources:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref GitRepositoryName
                 Branch: !Ref GitBranchName
-                OAuthToken:
-                  Fn::Sub: "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
+                OAuthToken: !Sub "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
                 PollForSourceChanges: false
               RunOrder: 1
         - Name: Build
