@@ -89,7 +89,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     val filteredNewLinks = changesNewLinks.filter(newLink => newLink.adminClass != State && MTKClassWidth(newLink.roadClass).value != MTKClassWidth.Unknown.value)
     val filteredLinkIds = filteredNewLinks.map(_.linkId)
 
-    val (assetsToAdjust, otherAssets) = LogUtils.time(logger, s"Partition ${operationStep.assetsAfter.size} road widths") {
+    val (assetsToAdjust, otherAssets) = LogUtils.time(logger, s"Partition ${operationStep.assetsAfter.size} road widths", startLogging = true) {
       operationStep.assetsAfter.partition(asset => {
         val validLinkToAdjust = filteredLinkIds.contains(asset.linkId)
         selectOnlyMachineCreated(asset) && validLinkToAdjust
@@ -108,7 +108,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         case _ => adjustValue(filteredNewLinksWithAssetsAfter, changeSet)
       }
 
-      val systemEditedUpdatedStep = LogUtils.time(logger, "Merge operation steps after road width value adjust") {
+      val systemEditedUpdatedStep = LogUtils.time(logger, "Merge operation steps after road width value adjust", startLogging = true) {
         mergeOperationSteps(systemEditedUpdated, allAssetsBefore).get
       }
       Some(systemEditedUpdatedStep.copy(assetsAfter = systemEditedUpdatedStep.assetsAfter ++ otherAssets))

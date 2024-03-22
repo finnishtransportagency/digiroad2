@@ -386,10 +386,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     */
   private def reportingAdjusted( assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
     // Assets on totally new links is already reported.
-    val pairs= LogUtils.time(logger, "partitionAndAddPairs") {
+    val pairs= LogUtils.time(logger, "partitionAndAddPairs" , startLogging = true) {
       partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore, assetsInNewLink.changeInfo.get.expiredAssetIds)
     }
-    LogUtils.time(logger,"Adding to changesForReport"){
+    LogUtils.time(logger,s"Adding ${pairs.size}to changesForReport", startLogging = true){
     var percentageProcessed = 0
     for (pairWithIndex <- pairs.zipWithIndex) {
       val (pair, index) = pairWithIndex
