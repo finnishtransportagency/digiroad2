@@ -18,8 +18,9 @@ import org.joda.time.DateTime
 import org.json4s.jackson.compactJson
 import org.slf4j.{Logger, LoggerFactory}
 
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentLinkedQueue
 import scala.annotation.tailrec
+import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Seq, mutable}
 import scala.util.{Failure, Success, Try}
@@ -80,7 +81,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private val roadLinkChangeClient = new RoadLinkChangeClient
 
-  private val changesForReport: mutable.ListBuffer[ChangedAsset] = ListBuffer()
+  private val changesForReport: ConcurrentLinkedQueue[ChangedAsset] = new ConcurrentLinkedQueue[ChangedAsset]()
 
   private val emptyStep: OperationStep = OperationStep(Seq(), None, Seq())
   val groupSizeForParallelRun = 1500
@@ -91,10 +92,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   protected val removePart: Int = -1
 
   def resetReport(): Unit = {
-    changesForReport.clear
+    changesForReport.clear()
   }
-  def getReport(): mutable.Seq[ChangedAsset] = {
-    changesForReport.distinct
+
+  def getReport(): Seq[ChangedAsset] = {
+    LogUtils.time(logger, "Get and filter out duplicate changes.") {
+      changesForReport.asScala.toList.distinct
+    }
   }
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -221,7 +225,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), (aBefore ++ bBefore).distinct))
   }
 
-  private def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]], allAssetsBefore: Seq[PersistedLinearAsset]) = {
+  protected def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]], allAssetsBefore: Seq[PersistedLinearAsset]) = {
     val after = new ListBuffer[PersistedLinearAsset]
     val droppedAssetIds = new ListBuffer[Long]
     val adjustedMValues = new ListBuffer[MValueAdjustment]
@@ -266,7 +270,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           case Some(asset) => Some(asset.linkId)
           case None => None
         }
-        val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId).sorted
+        val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId)
 
         val checkByOldAsset = (roadLinkChangeOldLinkId.nonEmpty && assetOldLinkId.nonEmpty) && roadLinkChangeOldLinkId == assetOldLinkId
 
@@ -335,18 +339,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     })
 
     if (propertyChange) {
-      changesForReport.append(ChangedAsset(linkId, assetId, ChangeTypeReport.PropertyChange,
+      changesForReport.add(ChangedAsset(linkId, assetId, ChangeTypeReport.PropertyChange,
         relevantRoadLinkChange.changeType, before, after.toSeq))
     } else {
       if (rowType.isDefined) {
-        changesForReport.append(ChangedAsset(linkId, assetId, rowType.get,
+        changesForReport.add(ChangedAsset(linkId, assetId, rowType.get,
           relevantRoadLinkChange.changeType, before, after.toSeq))
       }else {
         if (relevantRoadLinkChange.changeType == RoadLinkChangeType.Split) {
-          changesForReport.append(ChangedAsset(linkId, assetId, ChangeTypeReport.Divided,
+          changesForReport.add(ChangedAsset(linkId, assetId, ChangeTypeReport.Divided,
             relevantRoadLinkChange.changeType, before, after.toSeq))
         } else {
-          changesForReport.append(ChangedAsset(linkId, assetId, ChangeTypeReport.Replaced,
+          changesForReport.add(ChangedAsset(linkId, assetId, ChangeTypeReport.Replaced,
             relevantRoadLinkChange.changeType, before, after.toSeq))
         }
       }
@@ -354,13 +358,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     passThroughStep
   }
 
-  private def partitionAndAddPairs(assetsAfter: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange]): Set[Pair] = {
-    val alreadyReported = LogUtils.time(logger,"Check already reported changes to be filtered out."){changesForReport.flatMap(_.after).map(_.linearReference.get.linkId)}
+  private def partitionAndAddPairs(assetsAfter: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], expiredIds: Set[Long]): Set[Pair] = {
+    val alreadyReportedLinkIds = LogUtils.time(logger,"Check already reported changes to be filtered out."){
+      changesForReport.asScala.iterator.toList.flatMap(_.after).map(_.linearReference.get.linkId)
+    }
+    val assetsToReport = assetsAfter.filterNot(asset => {
+      alreadyReportedLinkIds.contains(asset.linkId) || expiredIds.contains(asset.id)
+    })
     val pairList = new ListBuffer[Set[Pair]]
     LogUtils.time(logger, "Loop and create pair") {
-      for (asset <- assetsAfter) {
-        if (!alreadyReported.contains(asset.linkId)) pairList.append(createPair(Some(asset), assetsBefore))
-      }
+      for (asset <- assetsToReport) pairList.append(createPair(Some(asset), assetsBefore))
     }
     val distinct = LogUtils.time(logger, "Remove duplicate in pair list") {
       pairList.toSet
@@ -379,25 +386,25 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     */
   private def reportingAdjusted( assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
     // Assets on totally new links is already reported.
-    val pairs= LogUtils.time(logger, "partitionAndAddPairs") {partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore,changes)}
-    LogUtils.time(logger,"Adding to changesForReport"){
+    val pairs= LogUtils.time(logger, "partitionAndAddPairs" , startLogging = true) {
+      partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore, assetsInNewLink.changeInfo.get.expiredAssetIds)
+    }
+    LogUtils.time(logger,s"Adding ${pairs.size}to changesForReport", startLogging = true){
     var percentageProcessed = 0
     for (pairWithIndex <- pairs.zipWithIndex) {
       val (pair, index) = pairWithIndex
       percentageProcessed = LogUtils.logArrayProgress(logger, "Adding to changesForReport", pairs.size, index, percentageProcessed)
-      createRow(assetsInNewLink.changeInfo, changes, pair)
+      createRow(changes, pair)
     }
     }
 
     Some(assetsInNewLink)
   }
 
-  private def createRow(changSet: Option[ChangeSet], changes: Seq[RoadLinkChange], pair: Pair)= {
+  private def createRow(changes: Seq[RoadLinkChange], pair: Pair)= {
     LogUtils.time(logger, "Creating reporting rows") {
       pair.newAsset match {
-        case Some(_) =>
-          if (!changSet.get.expiredAssetIds.contains(pair.newAsset.get.id)) {
-            Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, null))}
+        case Some(_) => Some(reportAssetChanges(pair.oldAsset, pair.newAsset, changes, null))
         case None => None
       }
     }
@@ -606,7 +613,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     LogUtils.time(logger, "Reporting removed") {
       changeInfo.get.expiredAssetIds.map(asset => {
-        val alreadyReported = changesForReport.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
+        val alreadyReported = changesForReport.asScala.iterator.toList.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
         if (!alreadyReported.contains(asset)) {
           val expiringAsset = assetsAll.find(_.id == asset)
           reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, Some(ChangeTypeReport.Deletion))
