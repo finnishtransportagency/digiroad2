@@ -481,7 +481,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changes
     * @return
     */
-  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] = None
+  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = None
   /**
     * 4.1) Add additional logic if something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -667,15 +667,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                               changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
     val initStep = Some(OperationStep(Seq(), Some(initChangeSet)))
     val merged = LogUtils.time(logger, "Merging operation steps before adjustment") {mergeOperationSteps(assetUnderReplace :+ initStep, allAssetsBefore)}
-    val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes, allAssetsBefore)}
+    val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes)}
     LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
   }
 
   private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
-                                            operationStep: Option[OperationStep], changes: Seq[RoadLinkChange],
-                                            allAssetsBefore: Seq[PersistedLinearAsset]): OperationStep = {
+                                            operationStep: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
     val additionalSteps = LogUtils.time(logger, s"Performing additional operations for ${AssetTypeInfo.apply(typeId)}") {
-      additionalOperations(operationStep.get, changes, allAssetsBefore)
+      additionalOperations(operationStep.get, changes)
     }
     if (additionalSteps.isDefined) {
       adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)

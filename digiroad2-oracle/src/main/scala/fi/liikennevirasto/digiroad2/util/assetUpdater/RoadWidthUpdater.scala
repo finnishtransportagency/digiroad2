@@ -34,11 +34,11 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
     }
   }
 
-  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] ={
-    adjustWidthsByRoadClass(operationStep,changes, allAssetsBefore)
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] ={
+    adjustWidthsByRoadClass(operationStep,changes)
   }
 
-  private def adjustWidthsByRoadClass(operationStep: OperationStep,changes: Seq[RoadLinkChange], allAssetsBefore: Seq[PersistedLinearAsset]) = {
+  private def adjustWidthsByRoadClass(operationStep: OperationStep,changes: Seq[RoadLinkChange]) = {
 
     def adjustValue(newLinksWithAssetsGroup: Map[RoadLinkInfo, Seq[PersistedLinearAsset]], changeSet: ChangeSet) = {
       newLinksWithAssetsGroup.flatMap(newLinkWithAssets => {
@@ -109,7 +109,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
       }
 
       val systemEditedUpdatedStep = LogUtils.time(logger, "Merge operation steps after road width value adjust", startLogging = true) {
-        mergeOperationSteps(systemEditedUpdated, allAssetsBefore).get
+        mergeOperationSteps(systemEditedUpdated, operationStep.assetsBefore).get
       }
       Some(systemEditedUpdatedStep.copy(assetsAfter = systemEditedUpdatedStep.assetsAfter ++ otherAssets))
     } else None

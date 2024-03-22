@@ -70,10 +70,10 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     OperationStep(operationStep.assetsAfter ++ newAssets, operationStep.changeInfo, operationStep.assetsBefore)
   }
 
-  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] = {
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
     val operationAfterGeneration = generateNewPavementForSplitAndReplace(operationStep, changes)
     val (assetsToBeRemoved, assetsToPersist) = collectRemovablePavementAssets(operationAfterGeneration, changes)
-    removePavement(assetsToBeRemoved, assetsToPersist, operationAfterGeneration, changes, allAssetsBefore)
+    removePavement(assetsToBeRemoved, assetsToPersist, operationAfterGeneration, changes)
   }
 
   /**
@@ -96,7 +96,8 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     surfaceTypeIsNone.contains(asset.linkId) && isGeneratedFromMML(asset)
   }
 
-  private def removePavement(assetsToBeRemoved: Seq[PersistedLinearAsset], assetsToPersist: Seq[PersistedLinearAsset], operation: OperationStep, changes: Seq[RoadLinkChange], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] = {
+  private def removePavement(assetsToBeRemoved: Seq[PersistedLinearAsset], assetsToPersist: Seq[PersistedLinearAsset],
+                             operation: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
     val changeSets = operation.changeInfo
     val expiredPavementSteps = assetsToBeRemoved.map(asset => {
       if (asset.id != 0) {
@@ -111,7 +112,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
 
     val initalOperation = Seq(Some(OperationStep(assetsAfter = assetsToPersist, changeInfo = changeSets, assetsBefore = Seq())))
     val combinedSteps = LogUtils.time(logger, "Merge operation steps after remove pavement") {
-      mergeOperationSteps(expiredPavementSteps ++ initalOperation, allAssetsBefore)
+      mergeOperationSteps(expiredPavementSteps ++ initalOperation, operation.assetsBefore)
     }
     combinedSteps
   }
