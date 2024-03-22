@@ -19,13 +19,13 @@
     ];
 
     var oneWayRules = [
-      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel').is(9).use({ stroke: {width: 2 }}),
-      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel').is(10).use({ stroke: {width: 4 }}),
-      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel').is(11).use({ stroke: {width: 4 }}),
-      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel').is(12).use({ stroke: {width: 5 }}),
-      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel').is(13).use({ stroke: {width: 5 }}),
-      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel').is(14).use({ stroke: {width: 8 }}),
-      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel').is(15).use({ stroke: {width: 8 }})
+      new StyleRule().where('sideCode').isIn([2,3]).and('trafficDirection').is('BothDirections').and('zoomLevel').is(9).use({ stroke: {width: 2 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('trafficDirection').is('BothDirections').and('zoomLevel').is(10).use({ stroke: {width: 4 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('trafficDirection').is('BothDirections').and('zoomLevel').is(11).use({ stroke: {width: 4 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('trafficDirection').is('BothDirections').and('zoomLevel').is(12).use({ stroke: {width: 5 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('trafficDirection').is('BothDirections').and('zoomLevel').is(13).use({ stroke: {width: 5 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('trafficDirection').is('BothDirections').and('zoomLevel').is(14).use({ stroke: {width: 8 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('trafficDirection').is('BothDirections').and('zoomLevel').is(15).use({ stroke: {width: 8 }})
     ];
 
     var featureTypeRules = [

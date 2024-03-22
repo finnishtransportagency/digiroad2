@@ -11,31 +11,41 @@ import fi.liikennevirasto.digiroad2.Point
 
 object LaneFiller {
 
-  trait baseAdjustment {
-    val laneId: Long
-    val linkId: String
-    val startMeasure: Double
-    val endMeasure: Double
-  }
-
-  case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double) extends baseAdjustment
-  case class VVHChangesAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, timeStamp: Long) extends baseAdjustment
+  case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double)
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
-
-  case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
-                        adjustedVVHChanges: Seq[VVHChangesAdjustment] = Seq.empty[VVHChangesAdjustment],
-                        adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
-                        expiredLaneIds: Set[Long] = Set.empty[Long],
-                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane]) {
+  case class LaneSplit(lanesToCreate: Seq[PersistedLane], originalLane: PersistedLane)
+  case class LanePositionAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode,
+                                    attributesToUpdate: Option[Seq[LaneProperty]] = None)
+  case class ChangeSet(adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
+                       adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
+                       positionAdjustments: Seq[LanePositionAdjustment] = Seq.empty[LanePositionAdjustment],
+                       expiredLaneIds: Set[Long] = Set.empty[Long],
+                       generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane],
+                       splitLanes: Seq[LaneSplit] = Seq.empty[LaneSplit]) {
     def isEmpty: Boolean = {
-        this.adjustedMValues.isEmpty &&
-        this.adjustedVVHChanges.isEmpty &&
+      this.adjustedMValues.isEmpty &&
         this.adjustedSideCodes.isEmpty &&
+        this.positionAdjustments.isEmpty &&
         this.expiredLaneIds.isEmpty &&
-        this.generatedPersistedLanes.isEmpty
+        this.generatedPersistedLanes.isEmpty &&
+        this.splitLanes.isEmpty
     }
   }
 
+  def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (changeSet1, changeSet2) => {
+     val mergedSplit = (changeSet1.splitLanes ++ changeSet2.splitLanes).distinct.groupBy(_.originalLane.id).map(
+       a=> LaneSplit(originalLane = a._2.head.originalLane,lanesToCreate= a._2.flatMap(_.lanesToCreate).distinct)
+    )
+    changeSet1.copy(
+      adjustedMValues = (changeSet1.adjustedMValues ++ changeSet2.adjustedMValues).distinct,
+      adjustedSideCodes = (changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes).distinct,
+      positionAdjustments = (changeSet1.positionAdjustments ++ changeSet2.positionAdjustments).distinct,
+      expiredLaneIds = changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
+      generatedPersistedLanes = (changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes).distinct,
+      splitLanes = mergedSplit.toSeq
+    )
+  }
+    
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
 }
@@ -195,7 +205,7 @@ class LaneFiller {
   }
 
   private def adjustAsset(lane: PersistedLane, roadLink: RoadLink): (PersistedLane, Seq[MValueAdjustment]) = {
-    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val roadLinkLength = roadLink.length
     val adjustedStartMeasure = if (lane.startMeasure < AllowedTolerance && lane.startMeasure > MaxAllowedError) Some(0.0) else None
     val endMeasureDifference: Double = roadLinkLength - lane.endMeasure
     val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference > MaxAllowedError) Some(roadLinkLength) else None
@@ -212,52 +222,7 @@ class LaneFiller {
 
 
 
-   def calculateNewMValuesAndSideCode(lane: PersistedLane, historyRoadLink: Option[RoadLink], projection: Projection,
-                                      roadLinkLength: Double, isLengthened: Boolean = false): (Double, Double, Int) = {
 
-     val isCutAdditionalLane = historyRoadLink match {
-       case Some(historyLink) => lane.laneCode != 1 && (lane.startMeasure != 0 ||
-         !areMeasuresCloseEnough(lane.endMeasure, historyLink.length, 0.5))
-       case _ => false
-     }
-
-    val oldLength = projection.oldEnd - projection.oldStart
-    val newLength = projection.newEnd - projection.newStart
-
-    // Test if the direction has changed -> side code will be affected, too
-    if (GeometryUtils.isDirectionChangeProjection(projection)) {
-      val newSideCode = SideCode.apply(lane.sideCode) match {
-        case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing.value
-        case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing.value
-        case _ => lane.sideCode
-      }
-
-      if(isCutAdditionalLane && isLengthened)
-        (lane.startMeasure, lane.endMeasure, newSideCode)
-      else {
-        val newStart = projection.newStart - (lane.endMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
-        val newEnd = projection.newEnd - (lane.startMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
-
-        // Test if asset is affected by projection
-        if (lane.endMeasure <= projection.oldStart || lane.startMeasure >= projection.oldEnd)
-          (lane.startMeasure, lane.endMeasure, newSideCode)
-        else
-          (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), newSideCode)
-
-      }} else {
-      val newStart = projection.newStart + (lane.startMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
-      val newEnd = projection.newEnd + (lane.endMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
-
-      if(isCutAdditionalLane && isLengthened)
-        (lane.startMeasure, lane.endMeasure, lane.sideCode)
-      // Test if asset is affected by projection
-      else if (lane.endMeasure <= projection.oldStart || lane.startMeasure >= projection.oldEnd) {
-        (lane.startMeasure, lane.endMeasure, lane.sideCode)
-      } else {
-        (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), lane.sideCode)
-      }
-    }
-  }
 
   private def combine(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
 
@@ -362,7 +327,7 @@ class LaneFiller {
 
     val returnSegments = if (resultingNumericalLimits.nonEmpty) cleanNumericalLimitIds(resultingNumericalLimits, Seq())
                          else Seq()
-    
+
     (returnSegments, changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
 
   }
@@ -410,7 +375,7 @@ class LaneFiller {
     }
   }
 
-  private def modifiedSort(left: PersistedLane, right: PersistedLane): Boolean = {
+  def modifiedSort(left: PersistedLane, right: PersistedLane): Boolean = {
     val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
     val rightStamp = right.modifiedDateTime.orElse(right.createdDateTime)
 
