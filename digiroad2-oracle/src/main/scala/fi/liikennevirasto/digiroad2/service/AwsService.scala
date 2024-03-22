@@ -128,7 +128,7 @@ class AwsService {
     private def completeMultipartUpload(s3Bucket: String, id: String, uploadId: String, uploadedETags: Map[Int, String]): Unit = {
       val completedParts = uploadedETags.map {
         case (partNumber, eTag) => CompletedPart.builder().partNumber(partNumber).eTag(eTag).build()
-      }.toList.asJava
+      }.toList.sortBy(_.partNumber).asJava
 
       val completeRequest = CompleteMultipartUploadRequest.builder()
         .bucket(s3Bucket)
