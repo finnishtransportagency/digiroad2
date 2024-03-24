@@ -225,29 +225,35 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), (aBefore ++ bBefore).distinct))
   }
 
-  protected def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]], allAssetsBefore: Seq[PersistedLinearAsset]) = {
-    val after = new ListBuffer[PersistedLinearAsset]
-    val droppedAssetIds = new ListBuffer[Long]
-    val adjustedMValues = new ListBuffer[MValueAdjustment]
-    val adjustedSideCodes = new ListBuffer[SideCodeAdjustment]
-    val expiredAssetIds = new ListBuffer[Long]
-    val valueAdjustments = new ListBuffer[ValueAdjustment]
+  protected def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] = {
+    var after: List[PersistedLinearAsset] = Nil
+    var droppedAssetIds: Set[Long] = Set.empty
+    var adjustedMValues: Set[MValueAdjustment] = Set.empty
+    var adjustedSideCodes: Set[SideCodeAdjustment] = Set.empty
+    var expiredAssetIds: Set[Long] = Set.empty
+    var valueAdjustments: Set[ValueAdjustment] = Set.empty
+
     for (a <- assetsUnderReplace) {
-      if (a.nonEmpty) {
-        after.appendAll(a.get.assetsAfter)
-        if (a.get.changeInfo.nonEmpty) {
-          droppedAssetIds.appendAll(a.get.changeInfo.get.droppedAssetIds)
-          adjustedMValues.appendAll(a.get.changeInfo.get.adjustedMValues.toList)
-          adjustedSideCodes.appendAll(a.get.changeInfo.get.adjustedSideCodes.toList)
-          expiredAssetIds.appendAll(a.get.changeInfo.get.expiredAssetIds)
-          valueAdjustments.appendAll(a.get.changeInfo.get.valueAdjustments.toList)
+      a.foreach { step =>
+        after ++= step.assetsAfter
+        step.changeInfo.foreach { changeSet =>
+          droppedAssetIds ++= changeSet.droppedAssetIds
+          adjustedMValues ++= changeSet.adjustedMValues
+          adjustedSideCodes ++= changeSet.adjustedSideCodes
+          expiredAssetIds ++= changeSet.expiredAssetIds
+          valueAdjustments ++= changeSet.valueAdjustments
         }
       }
     }
 
-    val changeSet = ChangeSet(droppedAssetIds = droppedAssetIds.toSet,
-      adjustedMValues = adjustedMValues.distinct, adjustedSideCodes = adjustedSideCodes.distinct,
-      expiredAssetIds = expiredAssetIds.toSet, valueAdjustments = valueAdjustments.distinct)
+    val changeSet = ChangeSet(
+      droppedAssetIds = droppedAssetIds,
+      adjustedMValues = adjustedMValues.toList,
+      adjustedSideCodes = adjustedSideCodes.toList,
+      expiredAssetIds = expiredAssetIds,
+      valueAdjustments = valueAdjustments.toList
+    )
+
     Some(OperationStep(assetsAfter = after, changeInfo = Some(changeSet), assetsBefore = allAssetsBefore))
   }
 
@@ -481,7 +487,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changes
     * @return
     */
-  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = None
+  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = Some(operationStep)
   /**
     * 4.1) Add additional logic if something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -676,9 +682,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val additionalSteps = LogUtils.time(logger, s"Performing additional operations for ${AssetTypeInfo.apply(typeId)}") {
       additionalOperations(operationStep.get, changes)
     }
-    if (additionalSteps.isDefined) {
-      adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
-    } else adjustAssets(typeId, onlyNeededNewRoadLinks, operationStep.get)
+
+    adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
   }
   /**
     * 6) Run fillTopology to adjust assets based on link length and other assets on link.
