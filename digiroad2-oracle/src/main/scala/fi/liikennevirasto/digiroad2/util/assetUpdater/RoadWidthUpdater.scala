@@ -112,7 +112,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         mergeOperationSteps(systemEditedUpdated, operationStep.assetsBefore).get
       }
       Some(systemEditedUpdatedStep.copy(assetsAfter = systemEditedUpdatedStep.assetsAfter ++ otherAssets))
-    } else None
+    } else Some(operationStep)
   }
 
   private def createValue(replace:MTKClassWidth) = {
