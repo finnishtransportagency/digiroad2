@@ -481,7 +481,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changes
     * @return
     */
-  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = None
+  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = Some(operationStep)
   /**
     * 4.1) Add additional logic if something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -676,9 +676,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val additionalSteps = LogUtils.time(logger, s"Performing additional operations for ${AssetTypeInfo.apply(typeId)}") {
       additionalOperations(operationStep.get, changes)
     }
-    if (additionalSteps.isDefined) {
-      adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
-    } else adjustAssets(typeId, onlyNeededNewRoadLinks, operationStep.get)
+
+    adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
   }
   /**
     * 6) Run fillTopology to adjust assets based on link length and other assets on link.
