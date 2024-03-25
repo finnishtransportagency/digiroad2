@@ -15,7 +15,7 @@ import org.joda.time.DateTime
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
 
-  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
+  override def operationForNewLink(change: RoadLinkChange, onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
     val roadLinkFound = onlyNeededNewRoadLinks.exists(_.linkId == newLinkInfo.linkId)
 
@@ -109,12 +109,14 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         Some(reportAssetChanges(Some(originalAsset), None, changes, operation.copy(assetsAfter = Seq()), Some(ChangeTypeReport.Deletion)))
       }
     })
-
     val initalOperation = Seq(Some(OperationStep(assetsAfter = assetsToPersist, changeInfo = changeSets, assetsBefore = Seq())))
-    val combinedSteps = LogUtils.time(logger, "Merge operation steps after remove pavement") {
-      mergeOperationSteps(expiredPavementSteps ++ initalOperation, operation.assetsBefore)
+    val (after, changeInfoM) = LogUtils.time(logger, "Merge operation steps after remove pavement", startLogging = true) {
+      mergeAfterAndChangeSets(expiredPavementSteps ++ initalOperation)
     }
-    combinedSteps
+    Some(operation.copy(
+      assetsAfter = after.toList,
+      changeInfo = changeInfoM
+    ))
   }
 
   /**
