@@ -46,12 +46,6 @@ ScalatraBootstrap extends LifeCycle {
                           s"/externalApi/integration/*")
     context.mount(new ChangeApi(swagger), 
                         s"/externalApi/changes/*")
-    context.mount(new MunicipalityApi(Digiroad2Context.roadLinkClient, 
-                                      Digiroad2Context.roadLinkService, 
-                                      Digiroad2Context.speedLimitService, 
-                                      Digiroad2Context.pavedRoadService, 
-                                      Digiroad2Context.obstacleService, swagger),
-                          s"/externalApi/municipality/*")
     context.mount(new ServiceRoadAPI( Digiroad2Context.maintenanceRoadService, 
                                       Digiroad2Context.roadLinkService, swagger),
                           s"/externalApi/livi/*")
