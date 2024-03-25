@@ -37,7 +37,7 @@
   },
   {
     "ParameterKey": "KgvApi",
-    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/keskilinjavarasto/ogc/features/collections/"
   },
   {
     "ParameterKey": "KgvApiKeySSM",
