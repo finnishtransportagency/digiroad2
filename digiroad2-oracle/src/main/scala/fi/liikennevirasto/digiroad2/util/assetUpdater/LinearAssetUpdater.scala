@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import scala.annotation.tailrec
 import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 import scala.collection.mutable.ListBuffer
-import scala.collection.{GenIterable, Seq, mutable}
+import scala.collection.{Seq, mutable}
 import scala.util.{Failure, Success, Try}
 
 /**
