@@ -107,18 +107,13 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         case a if a >= parallelizationThreshold => parallelLoop(filteredNewLinksWithAssetsAfter, changeSet)
         case _ => adjustValue(filteredNewLinksWithAssetsAfter, changeSet)
       }
-
-    /*  val systemEditedUpdatedStep = LogUtils.time(logger, "Merge operation steps after road width value adjust", startLogging = true) {
-        mergeOperationSteps(systemEditedUpdated, operationStep.assetsBefore).get
-      }*/
       
       val (after, changeInfoM) = LogUtils.time(logger, "Merge operation steps after road width value adjust", startLogging = true) {
         mergeAfterAndChangeSets(systemEditedUpdated)
       }
-      //Some(systemEditedUpdatedStep.copy(assetsAfter = systemEditedUpdatedStep.assetsAfter ++ otherAssets))
       
       Some(operationStep.copy(
-        assetsAfter = after.toList ++ otherAssets,
+        assetsAfter = after ++ otherAssets,
         changeInfo = changeInfoM
       ))
     } else Some(operationStep)

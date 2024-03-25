@@ -107,7 +107,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val totalTasks = numberOfSets
     val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
     logger.info(s"Asset groups: $totalTasks, parallelism level used: $level")
-    (totalTasks, level)
+    level
   }
 
   def logChangeSetSizes(changeSet: ChangeSet): Unit = {
@@ -364,14 +364,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       alreadyReportedLinkIds.contains(asset.linkId) || expiredIds.contains(asset.id)
     })
     val pairList = new ConcurrentLinkedQueue[Set[Pair]]
-    val grouped = assetsToReport.grouped(groupSizeForParallelRun).toList.par
-    val (totalTasks: Int, level: Int) = setParallelismLevel(grouped.size)
-    logger.info(s"Change groups: $totalTasks, parallelism level used: $level")
     LogUtils.time(logger, "Loop and create pair") {
       assetsToReport.size match {
         case a if a >= parallelizationThreshold =>
           val g = assetsToReport.grouped(groupSizeForParallelRun).toList.par
-          val (_, level: Int) = setParallelismLevel(g.size)
+          val level = setParallelismLevel(g.size)
             new Parallel().operation(g, level) {
               tasks =>tasks.map { al =>al.foreach(a1=>pairList.add(createPair(Some(a1), assetsBefore)))}
           }
@@ -400,13 +397,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       partitionAndAddPairs(assetsInNewLink.assetsAfter, assetsInNewLink.assetsBefore, assetsInNewLink.changeInfo.get.expiredAssetIds)
     }
     LogUtils.time(logger, s"Adding ${pairs.size}to changesForReport", startLogging = true) {
-      val grouped = pairs.grouped(groupSizeForParallelRun).toList.par
-      val (totalTasks: Int, level: Int) = setParallelismLevel(grouped.size)
-      logger.info(s"Change groups: $totalTasks, parallelism level used: $level")
       pairs.size match {
         case a if a >= parallelizationThreshold =>
           val g = pairs.grouped(groupSizeForParallelRun).toList.par
-          val (_, level: Int) = setParallelismLevel(g.size)
+          val level = setParallelismLevel(g.size)
           LogUtils.time(logger, s"Reporting assets, multithreaded") {
             new Parallel().operation(g, level) { tasks => tasks.map { al => reportLoop(changes, al) }
             }
@@ -592,9 +586,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def goTroughChangesParallelLoop(onlyNeededNewRoadLinks: Seq[RoadLink], assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]],
                                           changes: Seq[RoadLinkChange], changeSet: ChangeSet) = {
     val changesGrouped = changes.grouped(groupSizeForParallelRun).toList.par
-    val (totalTasks: Int, level: Int) = setParallelismLevel(changesGrouped.size)
-    logger.info(s"Change groups: $totalTasks, parallelism level used: $level")
-
+    val level = setParallelismLevel(changesGrouped.size)
     val initStep = OperationStep(Seq(), Some(changeSet))
     new Parallel().operation(changesGrouped, level) { tasks =>
       tasks.flatMap {
@@ -749,9 +741,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     def parallelLoop(): List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
       val grouped = assetsByLink.grouped(groupSizeForParallelRun).toList.par
-      val (totalTasks: Int, level: Int) = setParallelismLevel(grouped.size)
-      logger.info(s"Asset groups: $totalTasks, parallelism level used: $level")
-
+      val level = setParallelismLevel(grouped.size)
       new Parallel().operation(grouped, level) { tasks =>
         tasks.map { al =>
           LogUtils.time(logger, s"Adjusting assets on ${al.size} links in a single thread") {

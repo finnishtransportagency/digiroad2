@@ -114,7 +114,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
       mergeAfterAndChangeSets(expiredPavementSteps ++ initalOperation)
     }
     Some(operation.copy(
-      assetsAfter = after.toList,
+      assetsAfter = after,
       changeInfo = changeInfoM
     ))
   }
