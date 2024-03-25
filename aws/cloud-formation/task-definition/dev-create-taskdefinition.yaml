@@ -117,7 +117,7 @@ Resources:
             - Name: kgv.endpoint
               Value: 'https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/'
             - Name: viiteRestApiEndPoint
-              Value: 'https://devapi.testivaylapilvi.fi/viite/api/viite/'
+              Value: 'https://api.vaylapilvi.fi/viite/api/viite/'
             - Name: authenticationTestMode
               Value: 'false'
             - Name: vkmUrl
