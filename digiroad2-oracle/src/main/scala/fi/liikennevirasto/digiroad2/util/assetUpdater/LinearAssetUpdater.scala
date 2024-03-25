@@ -189,17 +189,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  private def toRoadLinkForFillTopology(roadLink: RoadLink): RoadLinkForFillTopology = {
-    RoadLinkForFillTopology(linkId = roadLink.linkId, length = roadLink.length,
-      trafficDirection = roadLink.trafficDirection, administrativeClass = roadLink.administrativeClass,
-      linkSource = roadLink.linkSource, linkType = roadLink.linkType,
-      constructionType = roadLink.constructionType,
-      geometry = roadLink.geometry, municipalityCode = roadLink.municipalityCode)
-  }
-  private def toOperationStep(step: OperationStepSplit): OperationStep = {
-    OperationStep(assetsAfter = step.assetsAfter, changeInfo = step.changeInfo, assetsBefore = step.assetsBefore)
-  }
-
   private def convertToPersisted(asset: PieceWiseLinearAsset): PersistedLinearAsset = {
     PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value,
       asset.value, asset.startMeasure, asset.endMeasure, asset.createdBy,
@@ -233,7 +222,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
   
 
-  protected def mergeAfterAndChangeSets(assetsUnderReplace: Seq[Option[OperationStep]]): (ListBuffer[PersistedLinearAsset], Some[ChangeSet]) = {
+  protected def mergeAfterAndChangeSets(assetsUnderReplace: Seq[Option[OperationStep]]): (List[PersistedLinearAsset], Some[ChangeSet]) = {
     val after = new ListBuffer[PersistedLinearAsset]
     val droppedAssetIds = new ListBuffer[Long]
     val adjustedMValues = new ListBuffer[MValueAdjustment]
@@ -257,7 +246,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       adjustedMValues = adjustedMValues.distinct, adjustedSideCodes = adjustedSideCodes.distinct,
       expiredAssetIds = expiredAssetIds.toSet, valueAdjustments = valueAdjustments.distinct)
 
-    (after, Some(changeSet))
+    (after.toList, Some(changeSet))
   }
 
   def reportAssetChanges(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset],
@@ -1074,30 +1063,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * Updates an OperationStepSplit with expired Ids of those assets that have fallen outside geometry after split.
    *
    * @param operationStep post-split information of assets
-   * @param expiredIds set of expired asset Ids
+   * @param expiredId set of expired asset Ids
    * @return Option[OperationStep] returns the updated OperationStep
    */
   private def updateSplitOperationWithExpiredIds(operationStep: OperationStepSplit, expiredId: Long): OperationStepSplit = {
     val updatedChangeSet = updateChangeSetWithExpiredId(operationStep.changeInfo, expiredId)
     operationStep.copy(newLinkId = "", changeInfo = updatedChangeSet, assetsAfter = Seq())
-  }
-
-  /**
-   * Reports change for each asset that has fallen outside of geometry after split-delete
-   *
-   * @param linksAndOperations sequence of RoadLink and related OperationStep pairs that contain post-split information
-   * @param change Change case information
-   * @return Set[PersistedLinearAsset] returns the reported assets, or no assets if no empty link was presented
-   */
-  private def reportAssetExpirationAfterSplit(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Set[PersistedLinearAsset] = {
-    val emptyLink = linksAndOperations.filter(linkAndOperation => linkAndOperation.newLinkId.isEmpty)
-    if (emptyLink.nonEmpty) {
-      val emptyLinkOperation = emptyLink.head.operation
-      val oldAssetsToExpire = getOldAssetsToExpireAfterSplit(linksAndOperations)
-      oldAssetsToExpire.foreach(asset => Some(reportAssetChanges(Some(asset), None, Seq(change),
-        toOperationStep(emptyLinkOperation), Some(ChangeTypeReport.Deletion),useGivenChange = true)))
-      oldAssetsToExpire
-    } else
-      Set.empty[PersistedLinearAsset]
   }
 }
