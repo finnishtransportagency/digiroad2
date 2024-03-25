@@ -642,6 +642,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], 
                                                      assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]], changes: Seq[RoadLinkChange],
                                                      changeSet: ChangeSet,existingAssetsSize:Int): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val operated: OperationStep = operatesChanges(onlyNeededNewRoadLinks, assetsGroup, changes, changeSet, existingAssetsSize)
+
+    logger.info(s"Adjusting ${operated.assetsAfter.size} projected assets")
+    val (assetsOperated, changeInfo) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
+      adjustAndReport(typeId, onlyNeededNewRoadLinks, changes,operated)
+    }
+    (assetsOperated, changeInfo.get)
+  }
+
+  private def operatesChanges(onlyNeededNewRoadLinks: Seq[RoadLink], assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]], changes: Seq[RoadLinkChange], changeSet: ChangeSet, existingAssetsSize: Int) = {
     val initStep = Some(OperationStep(Seq(), Some(changeSet)))
     logger.info(s"Projecting ${existingAssetsSize} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
@@ -653,20 +663,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         rawData.filter(_.nonEmpty)
       }
     }
-    
+
     val (after, changeInfoM) = LogUtils.time(logger, "Merging operation steps before adjustment") {
       mergeAfterAndChangeSets(projectedToNewLinks :+ initStep)
     }
 
-    val operated: OperationStep = OperationStep(assetsAfter = after, changeInfo = changeInfoM, assetsBefore = assetsGroup.values.toSeq.flatten)
-
-    logger.info(s"Adjusting ${operated.assetsAfter.size} projected assets")
-    val (assetsOperated, changeInfo) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
-      adjustAndReport(typeId, onlyNeededNewRoadLinks, changes,operated)
-    }
-    (assetsOperated, changeInfo.get)
+   OperationStep(assetsAfter = after, changeInfo = changeInfoM, assetsBefore = assetsGroup.values.toSeq.flatten)
   }
-
   private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet,
                                initStep: OperationStep, change: RoadLinkChange, initStepSplit:OperationStepSplit): Option[OperationStep] = {
 
