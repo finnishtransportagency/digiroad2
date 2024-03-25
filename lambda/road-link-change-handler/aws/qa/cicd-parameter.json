@@ -37,6 +37,6 @@
   },
   {
     "ParameterKey": "GitHubWebhookSecret",
-    "UsePreviousValue": true
+    "ParameterValue": "arn:aws:secretsmanager:eu-west-1:475079312496:secret:GITHUB_PAT-CqR1N2"
   }
 ]
