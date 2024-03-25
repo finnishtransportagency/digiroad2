@@ -17,4 +17,5 @@ RUN npm run post-compile
 # Move dist directory contents to root and remove empty directory
 RUN mv dist/* ${LAMBDA_TASK_ROOT} && rmdir dist
 
-CMD ["index.handler"]
+ENTRYPOINT ["node", "index"]
+#CMD ["index.handler"]
