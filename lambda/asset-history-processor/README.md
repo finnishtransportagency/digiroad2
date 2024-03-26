@@ -39,6 +39,16 @@ region = REGION
 
 ### Lokaali debug
 
+Koska lambda on yhteydessä Digiroadin kantaan, vaatii lokaali testaaminen yhteyden kantaan.
+
+#### Yhteys lokaaliin Digiroad kantaan
+Tarkemmat ohjeet: aws/local-dev/postgis/README.md
+```sh
+cd ..\..\aws\local-dev\postgis
+docker compose up -d
+cd ..\..\..\lambda\asset-history-processor
+```
+
 ```sh
 sam build -t aws/sam/template.yaml --region REGION
 sam local invoke Lambda --profile AssetHistoryLambdaRole --region REGION --event events/test.json --log-file debug.log

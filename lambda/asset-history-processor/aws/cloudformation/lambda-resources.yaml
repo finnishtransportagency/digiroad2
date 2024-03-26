@@ -15,6 +15,25 @@ Parameters:
   ECRImageTag:
     Type: String
     Description: ECR image tag name
+  NetworkStackName:
+    Description: Name of network stack
+    Type: String
+  LambdaEventEnabled:
+    Description: True or false depending on is the lambda event enabled or not
+    Type: String
+    AllowedValues: [ "true", "false" ]
+  PgHost:
+    Description: Database host
+    Type: String
+  PgPort:
+    Description: Database port
+    Type: String
+  PgDatabase:
+    Description: Database name
+    Type: String
+  PgUser:
+    Description: Database user
+    Type: String
 
 Conditions:
   IsDev:
@@ -38,9 +57,16 @@ Resources:
       ReceiveMessageWaitTimeSeconds: 0
       VisibilityTimeout: 120
       DelaySeconds: 0
-      #RedrivePolicy:  # dead-letter queue functionality
-      #  deadLetterTargetArn: ""
-      #  maxReceiveCount: 3
+      RedrivePolicy:  # dead-letter queue functionality
+        deadLetterTargetArn: !GetAtt DLQQueue.Arn
+        maxReceiveCount: 5
+
+  DLQQueue:
+    Type: 'AWS::SQS::Queue'
+    DeletionPolicy: Retain
+    Properties:
+      FifoQueue: true
+      QueueName: !Sub ${Environment}-${ApplicationName}-change-queue-DLQ.fifo
 
   SQSQueuePolicy:
     Type: 'AWS::SQS::QueuePolicy'
@@ -72,7 +98,30 @@ Resources:
               - sqs:ChangeMessageVisibility
             Resource: !GetAtt SQSQueue.Arn
 
+  ### SECURITY GROUP ###
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub '${ApplicationName}-${Environment}-asset-history-lambda-sg'
+      GroupName: !Sub '${ApplicationName}-${Environment}-asset-history-lambda-sg'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: '-1'
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: '-1'
+      VpcId:
+        Fn::ImportValue:
+          !Sub '${NetworkStackName}-VPC-Id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationName}-${Environment}-asset-history-lambda-sg'
+
+
   ### LAMBDA ###
+
   Lambda:
     DependsOn: LambdaRole
     Type: AWS::Lambda::Function
@@ -88,18 +137,35 @@ Resources:
       ImageConfig:
         Command:
           - index.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt SecurityGroup.GroupId
+        SubnetIds:
+          - Fn::ImportValue:
+              !Sub '${NetworkStackName}-Subnet1-Id'
+          - Fn::ImportValue:
+              !Sub '${NetworkStackName}-Subnet2-Id'
+      Environment:
+        Variables:
+          PG_HOST: !Ref PgHost
+          PG_PORT: !Ref PgPort
+          PG_DATABASE: !Ref PgDatabase
+          PG_USER: !Ref PgUser
+          PG_PW: !Sub /${Environment}/bonecp.password
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-asset-history-processor-lambda-role
 
   LambdaEventSource:
-   Type: AWS::Lambda::EventSourceMapping
-   Properties:
-     Enabled: true
-     EventSourceArn: !GetAtt SQSQueue.Arn
-     FunctionName: !GetAtt Lambda.Arn
-     MaximumBatchingWindowInSeconds: 0
-     BatchSize: 1
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: !Ref LambdaEventEnabled
+      EventSourceArn: !GetAtt SQSQueue.Arn
+      FunctionName: !GetAtt Lambda.Arn
+      MaximumBatchingWindowInSeconds: 0
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      BatchSize: 10
 
   ### IAM ###
 
@@ -136,6 +202,24 @@ Resources:
                   - sqs:GetQueueAttributes
                   - sqs:ChangeMessageVisibility
                 Resource: !GetAtt SQSQueue.Arn
+        - PolicyName: LambdaVpcAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                Resource: '*'
+        - PolicyName: FetchParameterFromSSM
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter*
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Environment}/*
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-asset-history-processor-lambda-role

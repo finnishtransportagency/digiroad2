@@ -1,0 +1,1 @@
+aws cloudformation update-stack --stack-name dev-digiroad2-asset-history-pipeline --capabilities CAPABILITY_NAMED_IAM --template-body file://lambda/asset-history-processor/aws/cloudformation/cicd/cicd-stack.yaml --parameters file://lambda/asset-history-processor/aws/dev/cicd-parameter.json --tags file://lambda/asset-history-processor/aws/dev/tags.json --profile vaylaapp

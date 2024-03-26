@@ -1,15 +1,15 @@
 [
   {
     "ParameterKey": "PipelineName",
-    "ParameterValue": "dev-digiroad2-asset-history-pipeline"
+    "ParameterValue": "qa-digiroad2-asset-history-pipeline"
   },
   {
     "ParameterKey": "ResourceStackName",
-    "ParameterValue": "dev-digiroad2-asset-history-processor"
+    "ParameterValue": "qa-digiroad2-asset-history-processor"
   },
   {
     "ParameterKey": "EcrRepositoryName",
-    "ParameterValue": "dev-digiroad2-asset-history-processor-lambda"
+    "ParameterValue": "qa-digiroad2-asset-history-processor-lambda"
   },
   {
     "ParameterKey": "CodeBuildImage",
@@ -17,11 +17,11 @@
   },
   {
     "ParameterKey": "EcrTag",
-    "ParameterValue": "latest"
+    "ParameterValue": "qa"
   },
   {
     "ParameterKey": "LambdaName",
-    "ParameterValue": "dev-digiroad2-asset-history-processor"
+    "ParameterValue": "qa-digiroad2-asset-history-processor"
   },
   {
     "ParameterKey": "LambdaFolder",
@@ -33,7 +33,7 @@
   },
   {
     "ParameterKey": "GitBranchName",
-    "ParameterValue": "dev-assetHistoryProcessor"
+    "ParameterValue": "qa-assetHistoryProcessor"
   },
   {
     "ParameterKey": "GitHubOwner",

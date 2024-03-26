@@ -14,11 +14,14 @@ Parameters:
   CodeBuildImage:
     Description: Image used for CodeBuild project
     Type: String
-  BuildSpecPath:
-    Description: Path to lambda function buildspec file in git repository
+  EcrTag:
+    Description: Tag used to mark current version
     Type: String
   LambdaName:
     Description: Name of lambda function updated with pipeline
+    Type: String
+  LambdaFolder:
+    Description: Path to folder where lambda code is contained
     Type: String
   GitRepoName:
     Description: The Git repository name
@@ -75,7 +78,7 @@ Resources:
     Properties:
       Authentication: GITHUB_HMAC
       AuthenticationConfiguration:
-        SecretToken: !Ref GitHubWebhookSecret
+        SecretToken: !Sub "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
       Filters:
         - JsonPath: $.ref
           MatchEquals: 'refs/heads/{Branch}'
@@ -108,7 +111,7 @@ Resources:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref GitRepoName
                 Branch: !Ref GitBranchName
-                OAuthToken: !Ref GitHubWebhookSecret
+                OAuthToken: !Sub "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
                 PollForSourceChanges: false
               RunOrder: 1
         - Name: Build
@@ -157,6 +160,11 @@ Resources:
                   - cloudwatch:*
                   - s3:*
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'secretsmanager:DescribeSecret'
+                  - 'secretsmanager:GetSecretValue'
+                Resource: !Ref GitHubWebhookSecret
       Tags:
         - Key: Name
           Value: !Sub ${PipelineName}-role
@@ -185,9 +193,13 @@ Resources:
             Value: !Ref AWS::AccountId
           - Name: LAMBDA_NAME
             Value: !Ref LambdaName
+          - Name: LAMBDA_FOLDER
+            Value: !Ref LambdaFolder
+          - Name: ECR_TAG
+            Value: !Ref EcrTag
       Source:
         Type: CODEPIPELINE
-        BuildSpec: !Ref BuildSpecPath
+        BuildSpec: !Sub ${LambdaFolder}/aws/codebuild/buildspec.yml
       Artifacts:
         Name: !Ref PipelineName
         Type: CODEPIPELINE
