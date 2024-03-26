@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "DevAdminAccountArn",
+    "ParameterValue": "arn:aws:iam::475079312496:role/DigiroadOthAdmin"
+  },
+  {
+    "ParameterKey": "CodeBuildServiceRoleArn",
+    "ParameterValue": "arn:aws:iam::475079312496:role/prod-digiroad2-road-link-change-pipeline-codebuild-role"
+  }
+]

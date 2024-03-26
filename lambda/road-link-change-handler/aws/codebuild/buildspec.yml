@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+  build:
+    commands:
+      - echo Build started on `date`
+      - cd $LAMBDA_FOLDER
+      - echo Building the Docker image...
+      - docker build -t $ECR_REPOSITORY_NAME:$ECR_TAG .
+      - docker tag $ECR_REPOSITORY_NAME:$ECR_TAG $ECR_REPOSITORY_URI:$ECR_TAG
+      - docker tag $ECR_REPOSITORY_NAME:$ECR_TAG $ECR_REPOSITORY_URI:$COMMIT_HASH
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $ECR_REPOSITORY_URI:$ECR_TAG
+      - docker push $ECR_REPOSITORY_URI:$COMMIT_HASH
+      - echo Updating lambda function...
+      - aws lambda update-function-code --function-name $LAMBDA_NAME --image-uri $ECR_REPOSITORY_URI:$COMMIT_HASH
+      - echo Finished on `date`
