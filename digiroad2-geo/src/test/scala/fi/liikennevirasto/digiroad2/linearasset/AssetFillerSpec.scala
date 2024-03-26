@@ -1782,7 +1782,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     ))
   }
 
-  test("Fill hole in middle of links when AgainstDigitizing side has multiple values, roadlink long assets, finally Merge") { // hajoaa jos ajetaan irrallaan
+  test("Fill hole in middle of links when AgainstDigitizing side has multiple values, roadlink long assets, finally Merge") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(400, 0.0)), 400, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
         TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
