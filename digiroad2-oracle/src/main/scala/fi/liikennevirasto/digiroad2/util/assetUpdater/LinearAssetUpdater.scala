@@ -103,6 +103,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
+  private def setParallelismLevel(numberOfSets: Int) = {
+    val totalTasks = numberOfSets
+    val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
+    logger.info(s"Asset groups: $totalTasks, parallelism level used: $level")
+    level
+  }
+
   def logChangeSetSizes(changeSet: ChangeSet): Unit = {
     logger.info(s"adjustedMValues size: ${changeSet.adjustedMValues.size}")
     logger.info(s"adjustedSideCodes size: ${changeSet.adjustedSideCodes.size}")
@@ -182,17 +189,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  private def toRoadLinkForFillTopology(roadLink: RoadLink): RoadLinkForFillTopology = {
-    RoadLinkForFillTopology(linkId = roadLink.linkId, length = roadLink.length,
-      trafficDirection = roadLink.trafficDirection, administrativeClass = roadLink.administrativeClass,
-      linkSource = roadLink.linkSource, linkType = roadLink.linkType,
-      constructionType = roadLink.constructionType,
-      geometry = roadLink.geometry, municipalityCode = roadLink.municipalityCode)
-  }
-  private def toOperationStep(step: OperationStepSplit): OperationStep = {
-    OperationStep(assetsAfter = step.assetsAfter, changeInfo = step.changeInfo, assetsBefore = step.assetsBefore)
-  }
-
   private def convertToPersisted(asset: PieceWiseLinearAsset): PersistedLinearAsset = {
     PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value,
       asset.value, asset.startMeasure, asset.endMeasure, asset.createdBy,
@@ -224,37 +220,33 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (bBefore, assetsB, changeInfoB) = (b.get.assetsBefore, b.get.assetsAfter, b.get.changeInfo)
     Some(OperationStep((assetsA ++ assetsB).distinct, Some(LinearAssetFiller.combineChangeSets(changeInfoA.get, changeInfoB.get)), (aBefore ++ bBefore).distinct))
   }
+  
 
-  protected def mergeOperationSteps(assetsUnderReplace: Seq[Option[OperationStep]], allAssetsBefore: Seq[PersistedLinearAsset]): Option[OperationStep] = {
-    var after: List[PersistedLinearAsset] = Nil
-    var droppedAssetIds: Set[Long] = Set.empty
-    var adjustedMValues: Set[MValueAdjustment] = Set.empty
-    var adjustedSideCodes: Set[SideCodeAdjustment] = Set.empty
-    var expiredAssetIds: Set[Long] = Set.empty
-    var valueAdjustments: Set[ValueAdjustment] = Set.empty
-
+  protected def mergeAfterAndChangeSets(assetsUnderReplace: Seq[Option[OperationStep]]): (List[PersistedLinearAsset], Some[ChangeSet]) = {
+    val after = new ListBuffer[PersistedLinearAsset]
+    val droppedAssetIds = new ListBuffer[Long]
+    val adjustedMValues = new ListBuffer[MValueAdjustment]
+    val adjustedSideCodes = new ListBuffer[SideCodeAdjustment]
+    val expiredAssetIds = new ListBuffer[Long]
+    val valueAdjustments = new ListBuffer[ValueAdjustment]
     for (a <- assetsUnderReplace) {
-      a.foreach { step =>
-        after ++= step.assetsAfter
-        step.changeInfo.foreach { changeSet =>
-          droppedAssetIds ++= changeSet.droppedAssetIds
-          adjustedMValues ++= changeSet.adjustedMValues
-          adjustedSideCodes ++= changeSet.adjustedSideCodes
-          expiredAssetIds ++= changeSet.expiredAssetIds
-          valueAdjustments ++= changeSet.valueAdjustments
+      if (a.nonEmpty) {
+        after.appendAll(a.get.assetsAfter)
+        if (a.get.changeInfo.nonEmpty) {
+          droppedAssetIds.appendAll(a.get.changeInfo.get.droppedAssetIds)
+          adjustedMValues.appendAll(a.get.changeInfo.get.adjustedMValues.toList)
+          adjustedSideCodes.appendAll(a.get.changeInfo.get.adjustedSideCodes.toList)
+          expiredAssetIds.appendAll(a.get.changeInfo.get.expiredAssetIds)
+          valueAdjustments.appendAll(a.get.changeInfo.get.valueAdjustments.toList)
         }
       }
     }
 
-    val changeSet = ChangeSet(
-      droppedAssetIds = droppedAssetIds,
-      adjustedMValues = adjustedMValues.toList,
-      adjustedSideCodes = adjustedSideCodes.toList,
-      expiredAssetIds = expiredAssetIds,
-      valueAdjustments = valueAdjustments.toList
-    )
+    val changeSet = ChangeSet(droppedAssetIds = droppedAssetIds.toSet,
+      adjustedMValues = adjustedMValues.distinct, adjustedSideCodes = adjustedSideCodes.distinct,
+      expiredAssetIds = expiredAssetIds.toSet, valueAdjustments = valueAdjustments.distinct)
 
-    Some(OperationStep(assetsAfter = after, changeInfo = Some(changeSet), assetsBefore = allAssetsBefore))
+    (after.toList, Some(changeSet))
   }
 
   def reportAssetChanges(oldAsset: Option[PersistedLinearAsset], newAsset: Option[PersistedLinearAsset],
@@ -363,7 +355,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
     passThroughStep
   }
-
+  
   private def partitionAndAddPairs(assetsAfter: Seq[PersistedLinearAsset], assetsBefore: Seq[PersistedLinearAsset], expiredIds: Set[Long]): Set[Pair] = {
     val alreadyReportedLinkIds = LogUtils.time(logger,"Check already reported changes to be filtered out."){
       changesForReport.asScala.iterator.toList.flatMap(_.after).map(_.linearReference.get.linkId)
@@ -371,12 +363,20 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val assetsToReport = assetsAfter.filterNot(asset => {
       alreadyReportedLinkIds.contains(asset.linkId) || expiredIds.contains(asset.id)
     })
-    val pairList = new ListBuffer[Set[Pair]]
+    val pairList = new ConcurrentLinkedQueue[Set[Pair]]
     LogUtils.time(logger, "Loop and create pair") {
-      for (asset <- assetsToReport) pairList.append(createPair(Some(asset), assetsBefore))
-    }
+      assetsToReport.size match {
+        case a if a >= parallelizationThreshold =>
+          val g = assetsToReport.grouped(groupSizeForParallelRun).toList.par
+          val level = setParallelismLevel(g.size)
+            new Parallel().operation(g, level) {
+              tasks =>tasks.map { al =>al.foreach(a1=>pairList.add(createPair(Some(a1), assetsBefore)))}
+          }
+        case _ => assetsToReport.foreach(a1=>pairList.add(createPair(Some(a1), assetsBefore)))
+    }}
+    
     val distinct = LogUtils.time(logger, "Remove duplicate in pair list") {
-      pairList.toSet
+      pairList.asScala.toSet
     }
 
     LogUtils.time(logger, "Flatten pair list") {
@@ -386,27 +386,46 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   /**
     * 9) start creating report row
+    *
     * @param assetsInNewLink
     * @param changes
     * @return
     */
-  private def reportingAdjusted( assetsInNewLink: OperationStep,changes: Seq[RoadLinkChange]): Some[OperationStep] = {
+  private def reportingAdjusted(assetsInNewLink: OperationStep, changes: Seq[RoadLinkChange]): (Seq[PersistedLinearAsset], Option[ChangeSet]) = {
     // Assets on totally new links is already reported.
-    val pairs= LogUtils.time(logger, "partitionAndAddPairs" , startLogging = true) {
-      partitionAndAddPairs(assetsInNewLink.assetsAfter,assetsInNewLink.assetsBefore, assetsInNewLink.changeInfo.get.expiredAssetIds)
+    val pairs = LogUtils.time(logger, "partitionAndAddPairs", startLogging = true) {
+      partitionAndAddPairs(assetsInNewLink.assetsAfter, assetsInNewLink.assetsBefore, assetsInNewLink.changeInfo.get.expiredAssetIds)
     }
-    LogUtils.time(logger,s"Adding ${pairs.size}to changesForReport", startLogging = true){
-    var percentageProcessed = 0
-    for (pairWithIndex <- pairs.zipWithIndex) {
-      val (pair, index) = pairWithIndex
-      percentageProcessed = LogUtils.logArrayProgress(logger, "Adding to changesForReport", pairs.size, index, percentageProcessed)
-      createRow(changes, pair)
-    }
+    LogUtils.time(logger, s"Adding ${pairs.size}to changesForReport", startLogging = true) {
+      pairs.size match {
+        case a if a >= parallelizationThreshold =>
+          val g = pairs.grouped(groupSizeForParallelRun).toList.par
+          val level = setParallelismLevel(g.size)
+          LogUtils.time(logger, s"Reporting assets, multithreaded") {
+            new Parallel().operation(g, level) { tasks => tasks.map { al => reportLoop(changes, al) }
+            }
+          }
+        case _ => reportLoop(changes, pairs)
+      }
     }
 
-    Some(assetsInNewLink)
+    LogUtils.time(logger, "Reporting removed") {
+      assetsInNewLink.changeInfo.get.expiredAssetIds.map(asset => {
+        val alreadyReported = changesForReport.asScala.iterator.toList.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
+        if (!alreadyReported.contains(asset)) {
+          val expiringAsset = assetsInNewLink.assetsBefore.find(_.id == asset)
+          reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, Some(ChangeTypeReport.Deletion))
+        }
+      })
+    }
+    (assetsInNewLink.assetsAfter, assetsInNewLink.changeInfo)
   }
 
+  private def reportLoop(changes: Seq[RoadLinkChange], pairs: Set[Pair]): Unit = {
+    LogUtils.time(logger, s"Reporting assets task with items count ${pairs.size} ") {
+      pairs.foreach(asset => createRow(changes, asset))
+    }
+  }
   private def createRow(changes: Seq[RoadLinkChange], pair: Pair)= {
     LogUtils.time(logger, "Creating reporting rows") {
       pair.newAsset match {
@@ -463,11 +482,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   /**
     * 4.2) Add logic to create assets when link is created. Default is do nothing.
     * @param change
-    * @param assetsAll
     * @param changeSets
     * @return
     */
-  def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = None
+  def operationForNewLink(change: RoadLinkChange, onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = None
   /**
     * 4.3) Add additional operation based on removed link when something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -536,16 +554,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info("Fetching road links and assets")
     // FeatureClass HardShoulder or WinterRoads, and ExpiringSoon filtered away 
     val onlyNeededNewRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIds.toSet, false)
-
-    val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
-    val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
-
-    logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of changes in the sets: ${changes.size}")
-    logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${addedLinksCount}")
-    logger.info("Starting to process changes")
-    val assetsGrouped = IterableOperation.groupByPropertyHashMap(existingAssets, (elem: PersistedLinearAsset) => elem.linkId )
+    
+    val (existingAssetsSize:Int, initChangeSet: ChangeSet, assetsGrouped: mutable.HashMap[String, Set[PersistedLinearAsset]]) = prepareAssets(typeId, changes, oldIds, deletedLinks, addedLinksCount)
     val (projectedAssets, changedSet) = LogUtils.time(logger, s"Samuuting logic finished: ") {
-      fillNewRoadLinksWithPreviousAssetsData(typeId, onlyNeededNewRoadLinks,assetsGrouped, existingAssets, changes, initChangeSet)
+      fillNewRoadLinksWithPreviousAssetsData(typeId, onlyNeededNewRoadLinks,assetsGrouped, changes, initChangeSet,existingAssetsSize)
     }
 
     additionalRemoveOperationMass(deletedLinks)
@@ -560,91 +572,100 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
+  private def prepareAssets(typeId: Int, changes: Seq[RoadLinkChange], oldIds: Seq[String], deletedLinks: Seq[String], addedLinksCount: Int) = {
+    val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
+    val initChangeSet = LinearAssetFiller.initWithExpiredIn(existingAssets, deletedLinks)
+
+    logger.info(s"Processing assets: ${typeId}, assets count: ${existingAssets.size}, number of changes in the sets: ${changes.size}")
+    logger.info(s"Deleted links count: ${deletedLinks.size}, new links count: ${addedLinksCount}")
+    logger.info("Starting to process changes")
+    val assetsGrouped = IterableOperation.groupByPropertyHashMap(existingAssets, (elem: PersistedLinearAsset) => elem.linkId)
+    (existingAssets.size, initChangeSet, assetsGrouped)
+  }
+
+  private def goTroughChangesParallelLoop(onlyNeededNewRoadLinks: Seq[RoadLink], assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]],
+                                          changes: Seq[RoadLinkChange], changeSet: ChangeSet) = {
+    val changesGrouped = changes.grouped(groupSizeForParallelRun).toList.par
+    val level = setParallelismLevel(changesGrouped.size)
+    val initStep = OperationStep(Seq(), Some(changeSet))
+    new Parallel().operation(changesGrouped, level) { tasks =>
+      tasks.flatMap {
+        changesPerThread =>
+          LogUtils.time(logger, s"Processing ${changesPerThread.size} changes in a single thread") {
+            changesPerThread.map(change => {
+              goThroughChanges(assetsGroup, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
+            })
+          }
+      }
+    }.seq.toSeq
+  }
+
+  private def goTroughChangesLinearly(onlyNeededNewRoadLinks: Seq[RoadLink], assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]],
+                                      changes: Seq[RoadLinkChange], changeSet: ChangeSet) = {
+    var percentageProcessed = 0
+    val initStep = OperationStep(Seq(), Some(changeSet))
+    changes.zipWithIndex.map(changeWithIndex => {
+      val (change, index) = changeWithIndex
+      percentageProcessed = LogUtils.logArrayProgress(logger, "Projecting assets to new links", changes.size, index, percentageProcessed)
+      goThroughChanges(assetsGroup, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
+    })
+  }
+  
   /**
     * 4) Start projecting everything into new links based on replace info.
     * @param typeId Asset typeId
     * @param onlyNeededNewRoadLinks Filtered new road links from changes
     * @param assetsGroup Assets grouped by linkId
-    * @param assetsAll All assets from old road links
     * @param changes Road link changes to process
     * @param changeSet changeSet with expired asset ids
     * @return Assets moved to new links and adjusted, changeSet for saving adjustments
     */
-  private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]],
-                                                     assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
-                                                     changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    def goTroughChangesParallelLoop() = {
-      val changesGrouped = changes.grouped(groupSizeForParallelRun).toList.par
-      val totalTasks = changesGrouped.size
-      val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
-      logger.info(s"Change groups: $totalTasks, parallelism level used: $level")
+  private def fillNewRoadLinksWithPreviousAssetsData(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], 
+                                                     assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]], changes: Seq[RoadLinkChange],
+                                                     changeSet: ChangeSet,existingAssetsSize:Int): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val operated: OperationStep = operatesChanges(onlyNeededNewRoadLinks, assetsGroup, changes, changeSet, existingAssetsSize)
 
-      val initStep = OperationStep(Seq(), Some(changeSet))
-      new Parallel().operation(changesGrouped, level) { tasks =>
-        tasks.flatMap {
-          changesPerThread =>
-            LogUtils.time(logger, s"Processing ${changesPerThread.size} changes in a single thread") {
-              changesPerThread.map(change => {
-                goThroughChanges(assetsGroup, assetsAll, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
-              })
-            }
-        }
-      }.seq.toSeq
+    logger.info(s"Adjusting ${operated.assetsAfter.size} projected assets")
+    val (assetsOperated, changeInfo) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
+      adjustAndReport(typeId, onlyNeededNewRoadLinks, changes,operated)
     }
+    (assetsOperated, changeInfo.get)
+  }
 
-    def goTroughChangesLinearly() = {
-      var percentageProcessed = 0
-      val initStep = OperationStep(Seq(), Some(changeSet))
-      changes.zipWithIndex.map(changeWithIndex => {
-        val (change, index) = changeWithIndex
-        percentageProcessed = LogUtils.logArrayProgress(logger, "Projecting assets to new links", changes.size, index, percentageProcessed)
-        goThroughChanges(assetsGroup,assetsAll,onlyNeededNewRoadLinks, changeSet, initStep, change,OperationStepSplit(Seq(), Some(changeSet)))
-      })
-    }
-
-    logger.info(s"Projecting ${assetsAll.size} assets to new links")
+  private def operatesChanges(onlyNeededNewRoadLinks: Seq[RoadLink], assetsGroup: mutable.HashMap[String, Set[PersistedLinearAsset]], changes: Seq[RoadLinkChange], changeSet: ChangeSet, existingAssetsSize: Int) = {
+    val initStep = Some(OperationStep(Seq(), Some(changeSet)))
+    logger.info(s"Projecting ${existingAssetsSize} assets to new links")
     val projectedToNewLinks = LogUtils.time(logger, "Projecting assets to new links") {
       val rawData = changes.size match {
-        case a if a >= parallelizationThreshold => goTroughChangesParallelLoop()
-        case _ => goTroughChangesLinearly()
+        case a if a >= parallelizationThreshold => goTroughChangesParallelLoop(onlyNeededNewRoadLinks, assetsGroup, changes, changeSet)
+        case _ => goTroughChangesLinearly(onlyNeededNewRoadLinks, assetsGroup, changes, changeSet)
       }
       LogUtils.time(logger, "Filter empty and empty afters away from projected") {
         rawData.filter(_.nonEmpty)
       }
     }
 
-    logger.info(s"Adjusting ${projectedToNewLinks.size} projected assets")
-    val OperationStep(assetsOperated, changeInfo,_) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
-      adjustAndReport(typeId, onlyNeededNewRoadLinks, projectedToNewLinks, assetsAll, changes,changeSet).get
-    }
-    LogUtils.time(logger, "Reporting removed") {
-      changeInfo.get.expiredAssetIds.map(asset => {
-        val alreadyReported = changesForReport.asScala.iterator.toList.map(_.before).filter(_.nonEmpty).map(_.get.assetId)
-        if (!alreadyReported.contains(asset)) {
-          val expiringAsset = assetsAll.find(_.id == asset)
-          reportAssetChanges(expiringAsset, None, changes.filterNot(isNew), emptyStep, Some(ChangeTypeReport.Deletion))
-        }
-      })
+    val (after, changeInfoM) = LogUtils.time(logger, "Merging operation steps before adjustment") {
+      mergeAfterAndChangeSets(projectedToNewLinks :+ initStep)
     }
 
-    (assetsOperated, changeInfo.get)
+   OperationStep(assetsAfter = after, changeInfo = changeInfoM, assetsBefore = assetsGroup.values.toSeq.flatten)
   }
-
-  private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], assetsAll: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet,
+  private def goThroughChanges(assetsAllG: mutable.HashMap[String,Set[PersistedLinearAsset]], onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet,
                                initStep: OperationStep, change: RoadLinkChange, initStepSplit:OperationStepSplit): Option[OperationStep] = {
 
     nonAssetUpdate(change, Seq(), null)
     LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
+      val assets = Try(assetsAllG(change.oldLink.get.linkId)) match {
+        case Success(value) => value.toSeq
+        case Failure(_) => Seq()
+      }
       change.changeType match {
         case RoadLinkChangeType.Add =>
-          val operation = operationForNewLink(change, assetsAll, onlyNeededNewRoadLinks, changeSets).getOrElse(initStep)
+          val operation = operationForNewLink(change, onlyNeededNewRoadLinks, changeSets).getOrElse(initStep)
           Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, Some(ChangeTypeReport.Creation), true))
-        case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
+        case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assets, changeSets)
         case _ =>
-          val assets = Try(assetsAllG(change.oldLink.get.linkId)) match {
-            case Success(value) => value.toSeq
-            case Failure(_) => Seq()
-          }
           if (assets.nonEmpty) {
             change.changeType match {
               case RoadLinkChangeType.Replace =>
@@ -669,12 +690,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     None
   }
   private def adjustAndReport(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
-                              assetUnderReplace: Seq[Option[OperationStep]], allAssetsBefore: Seq[PersistedLinearAsset],
-                              changes: Seq[RoadLinkChange], initChangeSet: ChangeSet): Option[OperationStep] = {
-    val initStep = Some(OperationStep(Seq(), Some(initChangeSet)))
-    val merged = LogUtils.time(logger, "Merging operation steps before adjustment") {mergeOperationSteps(assetUnderReplace :+ initStep, allAssetsBefore)}
-    val adjusted = LogUtils.time(logger, "Adjusting assets") {adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, merged,changes)}
-    LogUtils.time(logger, "Reporting assets") {reportingAdjusted(adjusted,changes)}
+                              changes: Seq[RoadLinkChange], merged: OperationStep): (Seq[PersistedLinearAsset], Option[ChangeSet]) = {
+    val adjusted = LogUtils.time(logger, "Adjusting assets") {
+      adjustAndAdditionalOperations(typeId, onlyNeededNewRoadLinks, Some(merged), changes)
+    }
+    LogUtils.time(logger, "Reporting assets") {
+      reportingAdjusted(adjusted, changes)
+    }
   }
 
   private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
@@ -693,7 +715,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @return
     */
   private def adjustAssets(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], operationStep: OperationStep): OperationStep = {
-    val OperationStep(assetsAfter, changeSetFromOperation, assetsBefore) = operationStep
+    val OperationStep(assetsAfter, changeSetFromOperation,_) = operationStep
     val assetsOperated = assetsAfter.filterNot(a => changeSetFromOperation.get.expiredAssetIds.contains(a.id))
     val groupedAssets = LogUtils.time(logger, "Convert to right format") {
       assetFiller.mapLinkAndAssets(assetsOperated, onlyNeededNewRoadLinks)
@@ -701,7 +723,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (adjusted, changeSet) = LogUtils.time(logger, "Run fillTopology") {
       adjustLinearAssetsLoop(typeId, groupedAssets, changeSetFromOperation)
     }
-    OperationStep(adjusted.map(convertToPersisted), Some(changeSet), assetsBefore)
+
+    operationStep.copy(
+      assetsAfter = adjusted.map(convertToPersisted),
+      changeInfo = Some(changeSet)
+    )
   }
 
   private def adjustLinearAssetsLoop(typeId: Int,
@@ -715,10 +741,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     def parallelLoop(): List[(Seq[PieceWiseLinearAsset], ChangeSet)] = {
       val grouped = assetsByLink.grouped(groupSizeForParallelRun).toList.par
-      val totalTasks = grouped.size
-      val level = if (totalTasks < maximumParallelismLevel) totalTasks else maximumParallelismLevel
-      logger.info(s"Asset groups: $totalTasks, parallelism level used: $level")
-
+      val level = setParallelismLevel(grouped.size)
       new Parallel().operation(grouped, level) { tasks =>
         tasks.map { al =>
           LogUtils.time(logger, s"Adjusting assets on ${al.size} links in a single thread") {
@@ -1030,30 +1053,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
    * Updates an OperationStepSplit with expired Ids of those assets that have fallen outside geometry after split.
    *
    * @param operationStep post-split information of assets
-   * @param expiredIds set of expired asset Ids
+   * @param expiredId set of expired asset Ids
    * @return Option[OperationStep] returns the updated OperationStep
    */
   private def updateSplitOperationWithExpiredIds(operationStep: OperationStepSplit, expiredId: Long): OperationStepSplit = {
     val updatedChangeSet = updateChangeSetWithExpiredId(operationStep.changeInfo, expiredId)
     operationStep.copy(newLinkId = "", changeInfo = updatedChangeSet, assetsAfter = Seq())
-  }
-
-  /**
-   * Reports change for each asset that has fallen outside of geometry after split-delete
-   *
-   * @param linksAndOperations sequence of RoadLink and related OperationStep pairs that contain post-split information
-   * @param change Change case information
-   * @return Set[PersistedLinearAsset] returns the reported assets, or no assets if no empty link was presented
-   */
-  private def reportAssetExpirationAfterSplit(linksAndOperations: Seq[LinkAndOperation], change: RoadLinkChange): Set[PersistedLinearAsset] = {
-    val emptyLink = linksAndOperations.filter(linkAndOperation => linkAndOperation.newLinkId.isEmpty)
-    if (emptyLink.nonEmpty) {
-      val emptyLinkOperation = emptyLink.head.operation
-      val oldAssetsToExpire = getOldAssetsToExpireAfterSplit(linksAndOperations)
-      oldAssetsToExpire.foreach(asset => Some(reportAssetChanges(Some(asset), None, Seq(change),
-        toOperationStep(emptyLinkOperation), Some(ChangeTypeReport.Deletion),useGivenChange = true)))
-      oldAssetsToExpire
-    } else
-      Set.empty[PersistedLinearAsset]
   }
 }
