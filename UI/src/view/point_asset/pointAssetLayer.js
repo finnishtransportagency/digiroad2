@@ -116,7 +116,7 @@
                 });
               }
 
-              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, linkId: nearestLine.linkId, geometry: feature.features.getArray()[0].getGeometry(), floating: false, bearing: newBearing});
+              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, mValue: null, linkId: nearestLine.linkId, geometry: feature.features.getArray()[0].getGeometry(), floating: false, bearing: newBearing});
             }
           }
         }
