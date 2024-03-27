@@ -77,7 +77,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
 
       new Parallel().operation(newLinksWithAssetsGroups, level) { tasks =>
         tasks.flatMap(newLinksWithAssetsGroup => {
-          LogUtils.time(logger, s"Adjusting road width values on ${newLinksWithAssetsGroups.size} links in a single thread") {
+          LogUtils.time(logger, s"Adjusting road width values on ${newLinksWithAssetsGroup.size} links in a single thread") {
             adjustValue(newLinksWithAssetsGroup, changeSet)
           }
         })
