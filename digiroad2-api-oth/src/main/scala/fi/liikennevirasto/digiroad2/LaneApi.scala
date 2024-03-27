@@ -14,6 +14,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 
@@ -24,6 +25,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   lazy val polygonTools = new PolygonTools
   lazy val laneService = new LaneService(roadLinkService, new DummyEventBus, roadAddressService)
   val apiId = "lane-api"
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 
   case class HomogenizedLane(laneCode: Long, laneTypeCode: Long, roadNumber: Long, roadPartNumber: Long, track: Long, startAddressM: Long, endAddressM: Long)
   case class InvalidRoadAddressRangeParamaterException(msg: String) extends Exception(msg)
@@ -137,9 +139,11 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         }
       }
       catch {
-        case _: RoadLinkNotFoundException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,s"No road link found with given linkID")
+        case _: RoadLinkNotFoundException => throw DigiroadApiError(HttpStatusCodeError.NOT_FOUND,s"No road link found with given linkID")
         case _: NumberFormatException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid mValue parameter")
-        case _: Exception => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Something went wrong")
+        case e: Exception =>
+          logger.error(s"Exception thrown processing /lanes_on_point request. Type: ${e.getClass.getSimpleName}, message: ${e.getMessage}")
+          throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Something went wrong")
       }
     }
   }
