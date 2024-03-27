@@ -137,7 +137,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         }
       }
       catch {
-        case _: NoSuchElementException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"No road link found on given linkID")
+        case _: RoadLinkNotFoundException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,s"No road link found with given linkID")
         case _: NumberFormatException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid mValue parameter")
         case _: Exception => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Something went wrong")
       }
