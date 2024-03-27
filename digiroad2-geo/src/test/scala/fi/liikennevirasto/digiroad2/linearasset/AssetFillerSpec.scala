@@ -54,10 +54,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
       createdDateTime = Some(DateTime.now().plusDays(addDay)), typeId = 140, trafficDirection = TrafficDirection.BothDirections, timeStamp = 0L,
       geomModifiedDate = None, linkSource = NormalLinkInterface, administrativeClass = State, attributes = Map(), verifiedBy = None, verifiedDate = None, informationSource = None)
   }
-  def createAsset(id: Long, linkId1: String, measure: Measure, sideCode: SideCode, value: Option[Value],trafficDirection:TrafficDirection = TrafficDirection.BothDirections, typeId: Int = NumberOfLanes.typeId) = {
+  def createAsset(id: Long, linkId1: String, measure: Measure, sideCode: SideCode, value: Option[Value],trafficDirection:TrafficDirection = TrafficDirection.BothDirections, typeId: Int = NumberOfLanes.typeId,addDay:Int=0 ) = {
     PieceWiseLinearAsset(id = id, linkId = linkId1, sideCode = sideCode, value = value, geometry = Nil, expired = false, startMeasure = measure.startMeasure, endMeasure = measure.endMeasure,
       endpoints = Set(Point(measure.endMeasure,0.0)), modifiedBy = None, modifiedDateTime = None, createdBy = Some("guy"),
-      createdDateTime = Some(DateTime.now()), typeId = typeId, trafficDirection = trafficDirection, timeStamp = 0L,
+      createdDateTime = Some(DateTime.now().plusDays(addDay)), typeId = typeId, trafficDirection = trafficDirection, timeStamp = 0L,
       geomModifiedDate = None, linkSource = NormalLinkInterface, administrativeClass = State, attributes = Map(), verifiedBy = None, verifiedDate = None, informationSource = None)
   }
   
@@ -1790,12 +1790,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val assets = Seq(
       // TowardsDigitizing
-      createAsset(1, linkId1, Measure(0, 200.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
-      createAsset(2, linkId1, Measure(210, 400.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
+      createAsset(1, linkId1, Measure(0, 200.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId,5),
+      createAsset(2, linkId1, Measure(210, 400.00), SideCode.TowardsDigitizing, Some(NumericValue(1)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId,2),
       // AgainstDigitizing
-      createAsset(3, linkId1, Measure(0, 310.00), SideCode.AgainstDigitizing, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
-      createAsset(4, linkId1, Measure(320, 360.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId),
-      createAsset(5, linkId1, Measure(370, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId)
+      createAsset(3, linkId1, Measure(0, 310.00), SideCode.AgainstDigitizing, Some(NumericValue(2)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId,3),
+      createAsset(4, linkId1, Measure(320, 360.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId,4),
+      createAsset(5, linkId1, Measure(370, 400.00), SideCode.AgainstDigitizing, Some(NumericValue(3)), TrafficDirection.BothDirections, typeId = SpeedLimitAsset.typeId,1)
     )
 
     val (methodTest, combineTestChangeSet) = assetFiller.fillHolesWithFuse(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
