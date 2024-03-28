@@ -302,16 +302,16 @@
     };
 
     var controlAdministrativeClasses = function(administrativeClass) {
-      $("#adminClass").prop('disabled', administrativeClass === 'State');
-      $("#adminClass").find("option[value = State ]").prop('disabled', true);
+      $("#adminClass").prop('disabled', administrativeClass === 'State' && !authorizationPolicy.isOperator());
+      $("#adminClass").find("option[value = State ]").prop('disabled', !authorizationPolicy.isOperator());
     };
 
     var controlAdministrativeClassesOnToggle = function(selectedLinkProperty) {
       var disabled = !_.isEmpty(_.filter(selectedLinkProperty.get(), function (link) {
-        return link.administrativeClass === "State";
+        return link.administrativeClass === "State" && !authorizationPolicy.isOperator();
       }));
       $("#adminClass").prop('disabled', disabled);
-      $("#adminClass").find("option[value = State ]").prop('disabled', true);
+      $("#adminClass").find("option[value = State ]").prop('disabled', !authorizationPolicy.isOperator());
     };
 
     var validateSelectedAccessRight = function(selectedLinkProperty){

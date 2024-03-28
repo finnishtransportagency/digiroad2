@@ -871,7 +871,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int, administrativeClass: AdministrativeClass) = validateUserAccess(user)(municipalityCode, administrativeClass)
     properties.map { prop =>
-      roadLinkService.updateLinkProperties(prop, Option(user.username), municipalityValidation).map { roadLink =>
+      roadLinkService.updateLinkProperties(prop, Option(user.username), municipalityValidation, user.isOperator()).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
