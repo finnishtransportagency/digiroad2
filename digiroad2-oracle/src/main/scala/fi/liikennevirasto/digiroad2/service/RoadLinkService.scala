@@ -651,7 +651,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   /**
     * Saves road link property data from UI.
     */
-  def updateLinkProperties(linkProperty: LinkProperties, username: Option[String], municipalityValidation: (Int, AdministrativeClass) => Unit): Option[RoadLink] = {
+  def updateLinkProperties(linkProperty: LinkProperties, username: Option[String], municipalityValidation: (Int, AdministrativeClass) => Unit, isOperator: Boolean = false): Option[RoadLink] = {
     val fetchedRoadLink = withDbConnection { roadLinkDAO.fetchByLinkId(linkProperty.linkId) match {
       case Some(fetchedRoadLink) => Some(fetchedRoadLink)
       case None => complementaryLinkDAO.fetchByLinkId(linkProperty.linkId)
@@ -662,7 +662,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
         setLinkProperty(RoadLinkOverrideDAO.TrafficDirection, linkProperty, username, fetchedRoadLink, None, None)
         if (linkProperty.functionalClass != UnknownFunctionalClass.value) setLinkProperty(RoadLinkOverrideDAO.FunctionalClass, linkProperty, username, fetchedRoadLink, None, None)
         if (linkProperty.linkType != UnknownLinkType) setLinkProperty(RoadLinkOverrideDAO.LinkType, linkProperty, username, fetchedRoadLink, None, None)
-        if (linkProperty.administrativeClass != State && fetchedRoadLink.administrativeClass != State) setLinkProperty(RoadLinkOverrideDAO.AdministrativeClass, linkProperty, username, fetchedRoadLink, None, None)
+        if ((linkProperty.administrativeClass != State && fetchedRoadLink.administrativeClass != State) || isOperator) setLinkProperty(RoadLinkOverrideDAO.AdministrativeClass, linkProperty, username, fetchedRoadLink, None, None)
         if (linkProperty.administrativeClass == Private) setLinkAttributes(RoadLinkOverrideDAO.LinkAttributes, linkProperty, username, fetchedRoadLink, None, None)
         else LinkAttributesDao.expireValues(linkProperty.linkId, username)
         val enrichedLink = enrichFetchedRoadLinks(Seq(fetchedRoadLink)).head
