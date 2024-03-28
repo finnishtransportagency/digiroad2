@@ -376,7 +376,8 @@ class RoadLinkPropertyUpdater {
     val oldLink = oldLinkList.find(_.linkId == oldLinkId.getOrElse(""))
     val newLink = newLinkList.find(_.linkId == newLinkId)
     val lifeCycleStatusOld = if (oldLink.nonEmpty) Some(oldLink.get.lifeCycleStatus) else None
-    Some(ConstructionTypeChange(newLinkId, ChangeTypeReport.Dummy, lifeCycleStatusOld, Some(newLink.get.lifeCycleStatus)))
+    val lifeCycleStatusNew = if (newLink.nonEmpty) Some(newLink.get.lifeCycleStatus) else None
+    Some(ConstructionTypeChange(newLinkId, ChangeTypeReport.Dummy, lifeCycleStatusOld, lifeCycleStatusNew))
   }
   /**
     *  Create ReportedChange objects for removed road link properties.
