@@ -777,9 +777,19 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val changeSetUpdated = mergeChangeSets(operated.map(_._2).toSeq)
     (adjusted, changeSetUpdated.get)
   }
+  /**
+    *  Main unit of work.
+    * @param typeId
+    * @param onlyNeededNewRoadLinks
+    * @param assetsGroup
+    * @param changeSet
+    * @param initStep
+    * @param replaceInfoSet
+    * @return
+    */
   private def goThroughWholeLinks(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink], assetsGroup: mutable.HashMap[ChangeId, Set[PersistedLinearAsset]]
-                                  , changeSet: ChangeSet, initStep: OperationStep, a: ReplaceInfoSet): (Seq[PersistedLinearAsset], Option[ChangeSet]) = {
-    val changes = a.allNeededReplaced
+                                  , changeSet: ChangeSet, initStep: OperationStep, replaceInfoSet: ReplaceInfoSet): (Seq[PersistedLinearAsset], Option[ChangeSet]) = {
+    val changes = replaceInfoSet.allNeededReplaced
     val assets = changes.flatMap(a3 => {
       Try(assetsGroup(a3.infos.oldLinkId.getOrElse(""))) match {
         case Success(value) => value.toSeq
@@ -801,14 +811,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
        reportingAdjusted(adjusted, changesFromMap.toSeq)
      }else (Seq(),Some(changeSet))
   }
-  private def handleReplaceInfo(onlyNeededNewRoadLinks: Seq[RoadLink], 
-                                changeSet: ChangeSet, initStep: OperationStep, 
-                                assets: Set[PersistedLinearAsset], a: (RoadLinkChangeType, Set[ReplaceInfosWithHash])) = {
-    val replaceInfos = a._2
+  private def handleReplaceInfo(onlyNeededNewRoadLinks: Seq[RoadLink],
+                                changeSet: ChangeSet, initStep: OperationStep,
+                                assets: Set[PersistedLinearAsset], replaceInfoGorup: (RoadLinkChangeType, Set[ReplaceInfosWithHash])) = {
+    val replaceInfos = replaceInfoGorup._2
     val oldLinks = replaceInfos.map(_.infos.oldLinkId.getOrElse(""))
     val assetsForProjecting = assets.filter(a=>oldLinks.contains(a.linkId))
     if (assetsForProjecting.nonEmpty){
-      a._1 match {
+      replaceInfoGorup._1 match {
         case RoadLinkChangeType.Replace => try {
           handleReplacements(changeSet, initStep, replaceInfos, assetsForProjecting.toSeq, onlyNeededNewRoadLinks)
         } catch {
