@@ -44,7 +44,8 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
       assets.map(asset => {
         if (asset.id != 0) {
           val modifiedAsset = PersistedLinearAsset(asset.id, newLink.linkId,
-            sideCode = toSideCode(newLink.trafficDirection).value, value = Some(createValue(MTKClassWidth(newLink.roadClass))),
+            sideCode = toSideCode(newLink.trafficDirection).value,
+            value = Some(extractAndUpdate(asset,newLink)),
             startMeasure = asset.startMeasure, endMeasure = asset.endMeasure,
             createdBy = asset.createdBy,
             createdDateTime = asset.createdDateTime,
@@ -132,11 +133,13 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
   }
 
   private def handleGeneratedPart(asset: PersistedLinearAsset, newLink: RoadLinkInfo): Some[OperationStep] = {
+    val operationUpdated = Some(OperationStep(assetsAfter = Seq(asset.copy(value = Some(extractAndUpdate(asset, newLink)))), changeInfo = None, assetsBefore = Seq()))
+    if (widthNeedUpdating(asset, newLink)) operationUpdated else  Some(OperationStep(assetsAfter = Seq(asset), changeInfo = None, assetsBefore = Seq()))
+  }
+  private def extractAndUpdate(asset: PersistedLinearAsset, newLink: RoadLinkInfo): DynamicValue = {
     val (_, other) = asset.value.get.asInstanceOf[DynamicValue].value.properties.partition(_.publicId == "width")
     val newWidth = Seq(DynamicProperty("width", "integer", required = true, List(DynamicPropertyValue(MTKClassWidth(newLink.roadClass).width.toString))))
-    val newValue = DynamicValue(value = DynamicAssetValue(other ++ newWidth))
-    val operationUpdated = Some(OperationStep(assetsAfter = Seq(asset.copy(value = Some(newValue))), changeInfo = None, assetsBefore = Seq()))
-    if (widthNeedUpdating(asset, newLink)) operationUpdated else  Some(OperationStep(assetsAfter = Seq(asset), changeInfo = None, assetsBefore = Seq()))
+    DynamicValue(value = DynamicAssetValue(other ++ newWidth))
   }
   private def widthNeedUpdating(asset: PersistedLinearAsset, newLink: RoadLinkInfo) = {
     extractPropertyValue("width", asset.value.get.asInstanceOf[DynamicValue].value.properties).head != MTKClassWidth(newLink.roadClass).width.toString
