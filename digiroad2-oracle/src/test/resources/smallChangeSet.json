@@ -3543,5 +3543,101 @@
         "digitizationChange": false
       }
     ]
+  },
+  {
+    "changeType":"split",
+    "old":{
+      "linkId":"0b873c9b-43d3-43fb-8ffd-c361c5366db6:1",
+      "linkLength":381.244,
+      "geometry":"SRID=3067;LINESTRING ZM(214928.914 6907636.198 19.346 0,214931.166 6907642.561 19.318 6.75,214945.497 6907684.465 18.757 51.037,214981.034 6907787.486 16.435 160.015,215013.293 6907879.795 14.418 257.798,215033.992 6907939.305 13.262 320.805,215053.526 6907995.551 12.505 380.347,215053.818 6907996.4 12.504 381.244)",
+      "roadClass":12121,
+      "adminClass":1,
+      "municipality":287,
+      "surfaceType":2,
+      "trafficDirection":0,
+      "lifeCycleStatus":3
+    },
+    "new":[
+      {
+        "linkId":"1581a91b-9bfb-4223-b1e2-fa7b5a156a60:1",
+        "linkLength":221.093,
+        "geometry":"SRID=3067;LINESTRING ZM(214859.555 6907445.369 19.273 0,214874.022 6907480.836 19.302 38.304,214883.14 6907504.414 19.396 63.584,214891.289 6907528.26 19.395 88.784,214901.283 6907557.441 19.4 119.629,214911.169 6907586.028 19.471 149.877,214923.494 6907622.485 19.472 188.361,214934.46 6907653.326 19.183 221.093)",
+        "roadClass":12121,
+        "adminClass":1,
+        "municipality":287,
+        "surfaceType":2,
+        "trafficDirection":0,
+        "lifeCycleStatus":3
+      },
+      {
+        "linkId":"b012e33e-8030-4795-8400-ca0915c8fb60:1",
+        "linkLength":363.253,
+        "geometry":"SRID=3067;LINESTRING ZM(214934.46 6907653.326 19.183 0,214945.497 6907684.465 18.757 33.037,214955.312 6907714.201 18.129 64.351,214967.25 6907746.939 17.334 99.198,214981.034 6907787.486 16.435 142.024,215013.293 6907879.795 14.418 239.807,215033.992 6907939.305 13.262 302.814,215053.526 6907995.551 12.505 362.356,215053.818 6907996.4 12.504 363.253)",
+        "roadClass":12121,
+        "adminClass":1,
+        "municipality":287,
+        "surfaceType":2,
+        "trafficDirection":0,
+        "lifeCycleStatus":3
+      }
+    ],
+    "replaceInfo":[
+      {
+        "oldLinkId":"0b873c9b-43d3-43fb-8ffd-c361c5366db6:1",
+        "newLinkId":"1581a91b-9bfb-4223-b1e2-fa7b5a156a60:1",
+        "oldFromMValue":0,
+        "oldToMValue":18.001,
+        "newFromMValue":203.09,
+        "newToMValue":221.093,
+        "digitizationChange":false
+      },
+      {
+        "oldLinkId":"0b873c9b-43d3-43fb-8ffd-c361c5366db6:1",
+        "newLinkId":"b012e33e-8030-4795-8400-ca0915c8fb60:1",
+        "oldFromMValue":18.001,
+        "oldToMValue":381.244,
+        "newFromMValue":0,
+        "newToMValue":363.253,
+        "digitizationChange":false
+      }
+    ]
+  },
+  {
+    "changeType":"replace",
+    "old":{
+      "linkId":"1981d30f-1a0f-4d57-bcde-759f5eedaaef:1",
+      "linkLength":203.082,
+      "geometry":"SRID=3067;LINESTRING ZM(214859.555 6907445.369 19.273 0,214859.678 6907445.665 19.278 0.321,214874.022 6907480.836 19.302 38.304,214891.289 6907528.26 19.395 88.774,214911.169 6907586.028 19.471 149.867,214922.991 6907619.459 19.476 185.326,214928.914 6907636.198 19.346 203.082)",
+      "roadClass":12121,
+      "adminClass":1,
+      "municipality":287,
+      "surfaceType":2,
+      "trafficDirection":0,
+      "lifeCycleStatus":3
+    },
+    "new":[
+      {
+        "linkId":"1581a91b-9bfb-4223-b1e2-fa7b5a156a60:1",
+        "linkLength":221.093,
+        "geometry":"SRID=3067;LINESTRING ZM(214859.555 6907445.369 19.273 0,214874.022 6907480.836 19.302 38.304,214883.14 6907504.414 19.396 63.584,214891.289 6907528.26 19.395 88.784,214901.283 6907557.441 19.4 119.629,214911.169 6907586.028 19.471 149.877,214923.494 6907622.485 19.472 188.361,214934.46 6907653.326 19.183 221.093)",
+        "roadClass":12121,
+        "adminClass":1,
+        "municipality":287,
+        "surfaceType":2,
+        "trafficDirection":0,
+        "lifeCycleStatus":3
+      }
+    ],
+    "replaceInfo":[
+      {
+        "oldLinkId":"1981d30f-1a0f-4d57-bcde-759f5eedaaef:1",
+        "newLinkId":"1581a91b-9bfb-4223-b1e2-fa7b5a156a60:1",
+        "oldFromMValue":0,
+        "oldToMValue":203.082,
+        "newFromMValue":0,
+        "newToMValue":203.09,
+        "digitizationChange":false
+      }
+    ]
   }
 ]
