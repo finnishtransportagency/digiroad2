@@ -18,7 +18,7 @@
     "resourceRequirements" : [
       {
         "type": "MEMORY",
-        "value": "32768"
+        "value": "40960"
       },
       {
         "type": "VCPU",
