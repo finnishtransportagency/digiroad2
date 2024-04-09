@@ -1606,16 +1606,14 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Split, Replace. Given a new RoadLink born from split; When the new RoadLink is merged to another old RoadLink; Then main lanes should be moven.") {
+  test("Split, Replace. Given a split and then replace. When the merged old link has 2 main lanes; Then lanes should be moved to new link") {
     val newLinkId1 = "354c1d14-583e-4bef-8808-abfadeaba4c9:1"
-    val newLinkId2 = "a7f54985-ccc2-4c88-8f48-869fc09a53cd:1"
     val oldLinkId1 = "5dc2e739-794e-4ba9-b635-c676d9b60e93:1"
     val oldLinkId2 = "1d26dcec-ec5d-4c26-ac93-cfefaab26091:1"
     val relevantChanges = testChanges.filter(change => change.newLinks.map(_.linkId).contains(newLinkId1))
 
     runWithRollback {
-      val newLinks = roadLinkService.getRoadLinksByLinkIds(Set(newLinkId1, newLinkId2))
-      val oldLinks = roadLinkService.getRoadLinksByLinkIds(Set(oldLinkId1, oldLinkId2))
+      val newLink = roadLinkService.getRoadLinksByLinkIds(Set(newLinkId1)).head
 
       val mainLaneTowardsOldLink1 = NewLane(0, 0.0, 356.664, 931, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
       val mainLaneTowardsOldLink1ID = LaneServiceWithDao.create(Seq(mainLaneTowardsOldLink1), Set(oldLinkId1), SideCode.TowardsDigitizing.value, "auto_generated_lane").head
@@ -1634,8 +1632,15 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val changedAssets = LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChanges)
       changedAssets.size should be(4)
 
-      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId1))
+      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId1)).sortBy(_.sideCode)
       lanesAfterChanges.size should equal(2)
+      lanesAfterChanges.head.startMeasure should equal(0.0)
+      lanesAfterChanges.head.endMeasure should equal(newLink.length)
+      lanesAfterChanges.head.sideCode should equal(SideCode.TowardsDigitizing.value)
+
+      lanesAfterChanges(1).startMeasure should equal(0.0)
+      lanesAfterChanges(1).endMeasure should equal(newLink.length)
+      lanesAfterChanges(1).sideCode should equal(SideCode.AgainstDigitizing.value)
     }
   }
 }
