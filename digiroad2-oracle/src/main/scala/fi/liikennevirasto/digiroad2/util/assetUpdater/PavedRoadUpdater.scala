@@ -3,14 +3,14 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkChange
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkChange}
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Replace, Split}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.SurfaceType.Paved
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{KgvUtil, LinearAssetUtils, LogUtils}
 import org.joda.time.DateTime
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
@@ -45,9 +45,15 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     val assetsAll: Seq[PersistedLinearAsset] = operationStep.assetsAfter
     val newLinksWithPavedSurfaceType = changes.filter(c => c.changeType == Replace || c.changeType == Split).flatMap(_.newLinks)
       .filter(link => link.surfaceType == Paved)
-    val newLinksLackingPavement = newLinksWithPavedSurfaceType.filterNot(link => assetsAll.map(_.linkId).contains(link.linkId)).distinct
 
-    val newAssets = newLinksLackingPavement.map{newLinkInfo =>
+    val validNewLinksLackingPavement = newLinksWithPavedSurfaceType.filterNot(link => {
+      val featureClass = KgvUtil.extractFeatureClass(link.roadClass)
+      val ignoredFeatureClass = FeatureClass.featureClassesToIgnore.contains(featureClass)
+      val alreadyHasPavement = assetsAll.map(_.linkId).contains(link.linkId)
+      alreadyHasPavement || ignoredFeatureClass
+    }).distinct
+
+    val newAssets = validNewLinksLackingPavement.map{newLinkInfo =>
       val relevantChange = changes.find(c => c.newLinks.nonEmpty && c.newLinks.map(_.linkId).contains(newLinkInfo.linkId)).get
       val defaultMultiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("99")))))
       val defaultPropertyData = DynamicValue(defaultMultiTypePropSeq)

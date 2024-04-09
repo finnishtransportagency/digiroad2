@@ -677,4 +677,33 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuite
       sortedChanges.last.assetId should be(oldAssetId2)
     }
   }
+
+  test("PavedRoad asset on WinterRoad should be expired when link is replaced with another WinterRoad with SurfaceType 2") {
+    val oldLinkId = "ac33b29c-241e-41c8-a65b-ddc8096afbc4:1"
+    val newLinkId = "710cdd1b-e221-48c8-b52d-92abbc1f35af:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(_.newLinks.exists(_.linkId == newLinkId))
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(oldLinkId).get
+      val id1 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, 22.035), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+      val assetsAfterOnOldLink = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id1), false)
+      assetsAfterOnOldLink.size should be(1)
+      assetsAfterOnOldLink.head.expired should be(true)
+      val assetsAfterOnNewLink = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId), false)
+      assetsAfterOnNewLink.size should equal (0)
+
+      val reports = TestPavedRoadUpdater.getReport()
+      reports.size should equal(1)
+      reports.head.changeType should equal(ChangeTypeReport.Deletion)
+      reports.head.roadLinkChangeType should equal(RoadLinkChangeType.Replace)
+      reports.head.before.get.assetId should equal(assetsBefore.head.id)
+      reports.head.after.size should equal(0)
+    }
+  }
 }
