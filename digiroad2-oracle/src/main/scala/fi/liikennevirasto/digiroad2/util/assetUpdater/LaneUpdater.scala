@@ -888,7 +888,9 @@ object LaneUpdater {
     oldAdditionalLanes.map(originalAdditionalLane => {
       val replaceInfosAffectingLane = change.replaceInfo.filter(replaceInfo => {
         GeometryUtils.liesInBetweenExclusiveEnd(originalAdditionalLane.startMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0))) ||
-          GeometryUtils.liesInBetweenExclusiveStart(originalAdditionalLane.endMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0)))
+          GeometryUtils.liesInBetweenExclusiveStart(originalAdditionalLane.endMeasure, (replaceInfo.oldFromMValue.getOrElse(0.0), replaceInfo.oldToMValue.getOrElse(0.0))) ||
+          GeometryUtils.liesInBetweenExclusiveEnd(replaceInfo.oldFromMValue.getOrElse(0.0), (originalAdditionalLane.startMeasure, originalAdditionalLane.endMeasure)) ||
+          GeometryUtils.liesInBetweenExclusiveStart(replaceInfo.oldToMValue.getOrElse(0.0), (originalAdditionalLane.startMeasure, originalAdditionalLane.endMeasure))
       })
       val lanesSplitFromOriginal = replaceInfosAffectingLane.map(replaceInfo => {
         val newId = replaceInfo.newLinkId.getOrElse("")
