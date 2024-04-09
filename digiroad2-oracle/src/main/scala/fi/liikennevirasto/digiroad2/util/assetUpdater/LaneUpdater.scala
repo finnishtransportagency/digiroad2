@@ -266,7 +266,7 @@ object LaneUpdater {
         val propertiesToUse = if(LaneNumber.isMainLane(origin.laneCode)) {
           getLatestStartDatePropertiesForFusedLanes(toBeFused)
         } else origin.attributes
-        val newId = toBeFused.find(_.id != 0).map(_.id).getOrElse(0L)
+        val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(toBeFused.head.id)
 
         val modified = toBeFused.head.copy(id = newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure, attributes = propertiesToUse)
         val expiredId = Set(origin.id, target.get.id) -- Set(newId, 0L) // never attempt to expire id zero
