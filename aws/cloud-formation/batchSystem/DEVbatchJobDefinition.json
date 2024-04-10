@@ -18,7 +18,7 @@
     "resourceRequirements" : [
       {
         "type": "MEMORY",
-        "value": "32768"
+        "value": "40960"
       },
       {
         "type": "VCPU",
@@ -109,6 +109,10 @@
         "value": "digiroad2dbuser"
       },
       {
+        "name": "oag.username",
+        "value": "svc_clouddr"
+      },
+      {
         "name": "batchMode",
         "value": "true"
       },
@@ -155,6 +159,10 @@
       {
         "name": "kgv.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/kgv.apikey"
+      },
+      {
+        "name": "oag.password",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.oag.basic.password"
       },
       {
         "name": "viite.apikey",
