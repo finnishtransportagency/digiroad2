@@ -1231,17 +1231,6 @@ trait LaneOperations {
     dao.expireAdditionalLanes(username)
   }
 
-  // Used by initial main lane population process
-  def expireAllMunicipalityLanes(municipality: Int, username: String): Unit = {
-    val laneIds = dao.fetchLanesByMunicipality(municipality).map(_.id)
-    if (laneIds.nonEmpty) {
-      val lanesWithHistoryId = historyDao.insertHistoryLanes(laneIds, username)
-
-      historyDao.expireHistoryLanes(lanesWithHistoryId, username)
-      dao.deleteLanesBatch(laneIds)
-    }
-  }
-
   def processRoadLinkPropertyChange(linkPropertyChange: LinkPropertyChange, newTransaction: Boolean = true): Unit = {
     if(newTransaction) {
       withDynTransaction(handleRoadLinkPropertyChange(linkPropertyChange))
@@ -1314,10 +1303,5 @@ trait LaneOperations {
       case "link_type" => handleLinkTypeChange(mainLanesOnLink, additionalLanesOnLink, roadLink, username, timeStamp)
       case _ =>
     }
-  }
-
-  //Deletes all lane info, only to be used in MainLanePopulation initial process
-  def deleteAllPreviousLaneData(): Unit = {
-    dao.truncateLaneTables()
   }
 }
