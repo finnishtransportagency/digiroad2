@@ -198,7 +198,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val intermediates = Seq(ManoeuvreElement(1, intermediateLinkId1, intermediateLinkId2, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId2, randomLinkId, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId2, intermediateLinkId3, ElementTypes.IntermediateElement))
-      val result = manoeuvreService.cleanChain(start, end, intermediates)
+      val result = manoeuvreService.cleanChain(Some(start), Some(end), intermediates)
       result should have size 4
       result.exists(_.destLinkId == randomLinkId) should be(false)
     }
@@ -211,7 +211,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val intermediates = Seq(ManoeuvreElement(1, intermediateLinkId1, intermediateLinkId2, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId2, intermediateLinkId3, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId3, intermediateLinkId1, ElementTypes.IntermediateElement))
-      val result = manoeuvreService.cleanChain(start, end, intermediates)
+      val result = manoeuvreService.cleanChain(Some(start), Some(end), intermediates)
       result should have size 0
     }
   }
@@ -223,7 +223,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val intermediates = Seq(ManoeuvreElement(1, intermediateLinkId2, endLinkId, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId1, intermediateLinkId2, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId1, endLinkId, ElementTypes.IntermediateElement))
-      val result = manoeuvreService.cleanChain(start, end, intermediates)
+      val result = manoeuvreService.cleanChain(Some(start), Some(end), intermediates)
       result.size > 2 should be(true)
     }
   }
@@ -235,7 +235,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val intermediates = Seq(ManoeuvreElement(1, intermediateLinkId1, intermediateLinkId2, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId2, intermediateLinkId3, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId3, endLinkId, ElementTypes.IntermediateElement))
-      val result = manoeuvreService.cleanChain(start, end, intermediates)
+      val result = manoeuvreService.cleanChain(Some(start), Some(end), intermediates)
       result should have size 5
       result.filter(_.elementType == ElementTypes.IntermediateElement) should be(intermediates)
     }
@@ -248,7 +248,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val intermediates = Seq(ManoeuvreElement(1, intermediateLinkId1, intermediateLinkId2, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId3, endLinkId, ElementTypes.IntermediateElement),
         ManoeuvreElement(1, intermediateLinkId2, intermediateLinkId3, ElementTypes.IntermediateElement))
-      val result = manoeuvreService.cleanChain(start, end, intermediates)
+      val result = manoeuvreService.cleanChain(Some(start), Some(end), intermediates)
       result should have size 5
       result.filter(_.elementType == ElementTypes.IntermediateElement) shouldNot be(intermediates)
       val newIntermediates = result.filter(_.elementType == ElementTypes.IntermediateElement)

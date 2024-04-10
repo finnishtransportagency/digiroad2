@@ -869,7 +869,7 @@
         title: 'Tietyöt',
         newTitle: 'Uusi tietyöt',
         className: 'road-works-asset',
-        isSeparable: true,
+        isSeparable: false,
         allowComplementaryLinks: true,
         editControlLabels: {
           title: 'Tietyöt',
