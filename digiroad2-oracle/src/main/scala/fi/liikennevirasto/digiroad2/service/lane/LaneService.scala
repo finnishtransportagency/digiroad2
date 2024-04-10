@@ -1304,5 +1304,4 @@ trait LaneOperations {
       case _ =>
     }
   }
-
 }
