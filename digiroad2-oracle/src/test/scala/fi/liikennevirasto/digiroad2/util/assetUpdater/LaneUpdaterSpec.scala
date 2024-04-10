@@ -1692,4 +1692,33 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       lanesAfterChanges(1).sideCode should equal(SideCode.AgainstDigitizing.value)
     }
   }
+
+  test("Split to five parts. The old additional lane is whole road link long") {
+    val oldLinkId = "a19c463a-3c13-458b-b193-547ac04e99fb:1"
+    val newLinkId1 = "ceef5e25-5797-4991-8ba0-28bf21c050cf:1"
+    val newLinkId2 = "1d327c26-7a6e-49cd-9158-6ab85f1d2670:1"
+    val newLinkId3 = "b5cc3a23-33e6-41b8-8c6d-8a8c8ff7bde6:1"
+    val newLinkId4 = "96f0f69e-6506-4925-835d-17929984198d:1"
+    val newLinkId5 = "2ef6a250-01a1-43c1-8dcc-f5ff57948d29:1"
+
+    val relevantChanges = testChanges.filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkId)
+
+    runWithRollback {
+      val mainLane = NewLane(0, 0.0, 1150.751, 837, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane), Set(oldLinkId), SideCode.AgainstDigitizing.value, testUserName).head
+
+      val subLane = NewLane(0, 0.0, 1150.751, 837, isExpired = false, isDeleted = false, subLane2PropertiesA)
+      LaneServiceWithDao.create(Seq(subLane), Set(oldLinkId), SideCode.AgainstDigitizing.value, testUserName).head
+
+      val changeSet = LaneUpdater.handleChanges(relevantChanges)
+      LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChanges)
+
+      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId1, newLinkId2, newLinkId3, newLinkId4, newLinkId5))
+      relevantChanges.head.replaceInfo.foreach { r =>
+        val lanesOnNewLink = lanesAfterChanges.filter(l => l.startMeasure == r.newFromMValue.get && l.endMeasure == r.newToMValue.get)
+        lanesOnNewLink.size should be(2)
+        lanesOnNewLink.map(_.laneCode).sorted should be(Seq(1,2))
+      }
+    }
+  }
 }
