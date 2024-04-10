@@ -758,13 +758,17 @@ class PostGISLinearAssetDao() {
     val statement =
       "update multiple_choice_value set enumerated_value_id = (select id from enumerated_value where value = (?) and property_id = (?)) where asset_id = (?) and property_id = (?)"
 
-    MassQuery.executeBatch(statement) { ps =>
-      props.foreach { case (assetId, prop) =>
-        ps.setInt(1, prop.values.head.value.toString.toInt)
-        ps.setLong(2, propertyId)
-        ps.setLong(3, assetId)
-        ps.setLong(4, propertyId)
-        ps.addBatch()
+    if (props.nonEmpty) {
+      MassQuery.executeBatch(statement) { ps =>
+        props.foreach { case (assetId, prop) =>
+          if (prop.values.nonEmpty) {
+            ps.setInt(1, prop.values.head.value.toString.toInt)
+            ps.setLong(2, propertyId)
+            ps.setLong(3, assetId)
+            ps.setLong(4, propertyId)
+            ps.addBatch()
+          }
+        }
       }
     }
   }
