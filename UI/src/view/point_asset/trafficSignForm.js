@@ -6,9 +6,10 @@
     var additionalPanelWithTextCode = '61';
     var additionalPanelTwoWayBikePath2 = '362';
     var additionalPanelDrivingInServicePurposesAllowed = '62';
+    var signAppliesToBothDirections = '140';
 
     var additionalPanelsAllowedOnPedestrianCycling = [additionalPanelWithTextCode, additionalPanelTwoWayBikePath2,
-      additionalPanelDrivingInServicePurposesAllowed];
+      additionalPanelDrivingInServicePurposesAllowed, signAppliesToBothDirections];
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
