@@ -656,7 +656,7 @@ sealed trait ProhibitionExceptionClass {
 }
 
 object ProhibitionExceptionClass {
-  val values = Set(MopedException, ServiceVehicles, Motorbike, BusException, Sedan, VanException, LorryException, Caravan, Unknown)
+  val values = Set(MopedException, ServiceVehicles, Motorbike, BusException, Sedan, VanException, LorryException, Caravan, EmergencyVehicleException, Unknown)
 
   def apply(value: Int): ProhibitionExceptionClass = {
     values.find(_.value == value).getOrElse(Unknown)
@@ -704,6 +704,11 @@ object ProhibitionExceptionClass {
   case object Caravan extends ProhibitionExceptionClass {
     def value = 15
     override val trafficSign: Seq[TrafficSignType] = Seq(HusvagnCaravan)
+  }
+
+  case object EmergencyVehicleException extends ProhibitionExceptionClass {
+    def value = 29
+    override val trafficSign: Seq[TrafficSignType] = Seq(AdditionalPanelWithText)
   }
 
   case object Unknown extends ProhibitionExceptionClass {
