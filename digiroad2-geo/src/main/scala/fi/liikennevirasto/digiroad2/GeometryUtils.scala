@@ -1,17 +1,63 @@
 package fi.liikennevirasto.digiroad2
 
+import com.vividsolutions.jts.algorithm.`match`.{AreaSimilarityMeasure, HausdorffSimilarityMeasure}
+import com.vividsolutions.jts.geom.{Geometry => JtsGeometry}
+import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, LineString}
+import com.vividsolutions.jts.io.WKTReader
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import com.vividsolutions.jts.geom._
+import org.geotools.geometry.jts.JTSFactoryFinder
 
+
+sealed case class GeometryString( format:String,string: String)
 object GeometryUtils {
 
   // Default value of minimum distance where locations are considered to be same
   final private val DefaultEpsilon = 0.01
   final private val adjustmentTolerance = 2.0
+  final private val defaultDecimalPrecision = 3
+  lazy val geometryFactory: GeometryFactory = JTSFactoryFinder.getGeometryFactory(null)
+  lazy val hausdorffSimilarityMeasure: HausdorffSimilarityMeasure =  new HausdorffSimilarityMeasure()
+  lazy val areaSimilarityMeasure: AreaSimilarityMeasure = new AreaSimilarityMeasure()
+  lazy val wktReader: WKTReader = new WKTReader()
+
 
   def getDefaultEpsilon(): Double = {
     DefaultEpsilon
   }
+
+  def doubleToDefaultPrecision(value: Double): Double = {
+    BigDecimal(value).setScale(defaultDecimalPrecision, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
+
+  def toDefaultPrecision(geometry: Seq[Point]): Seq[Point] = {
+    geometry.map(point => {
+      val x = doubleToDefaultPrecision(point.x)
+      val y = doubleToDefaultPrecision(point.y)
+      val z = doubleToDefaultPrecision(point.z)
+      Point(x, y, z)
+    })
+  }
+
+  def toWktLineString(geometry: Seq[Point]): GeometryString = {
+    if (geometry.nonEmpty) {
+      val segments = geometry.zip(geometry.tail)
+      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2)).map(doubleToDefaultPrecision)
+      val mValuedGeometry = geometry.zip(runningSum.toList)
+      val wktString = mValuedGeometry.map {
+        case (p, newM) => p.x + " " + p.y + " " + p.z + " " + newM
+      }.mkString(", ")
+      GeometryString( "geometryWKT", "LINESTRING ZM (" + wktString + ")")
+    }
+    else
+      GeometryString("geometryWKT","")
+  }
+
+  def toWktPoint(lon: Double, lat: Double): GeometryString = {
+    val geometryWKT = "POINT (" + doubleToDefaultPrecision(lon) + " " + doubleToDefaultPrecision(lat) + ")"
+    GeometryString( "geometryWKT", geometryWKT)
+  }
+
 
   def areMeasuresCloseEnough(measure1: Double, measure2: Double, tolerance: Double): Boolean ={
     val difference = math.abs(measure2 - measure1)
@@ -45,13 +91,44 @@ object GeometryUtils {
   }
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
+    if (geometry.isEmpty) {
+      throw new NoSuchElementException("Geometry is empty")
+    }
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last
     (firstPoint, lastPoint)
   }
 
-  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+  /**
+    * Check if given measure is between the given start and end measures, inclusive
+    * @param measure m-value to check
+    * @param interval First element of tuple is start measure, second element is the end measure of the interval
+    * @return true if m-value lies between the given start and end measures, else false
+    */
+  def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
+  }
+
+  /**
+    * Check if given measure is between given start and end measures, start measure is exclusive
+    * Used in LaneUpdater to check if replaceInfo affects lane.
+    * @param measure m-value to check
+    * @param interval First element of tuple is start measure, second element is the end measure of the interval
+    * @return true if m-value lies between the given start and end measures, else false
+    */
+  def liesInBetweenExclusiveStart(measure: Double, interval: (Double, Double)): Boolean = {
+    measure > interval._1 && measure <= interval._2
+  }
+
+  /**
+    * Check if given measure is between given start and end measures, end measure is exclusive
+    * Used in LaneUpdater to check if replaceInfo affects lane.
+    * @param measure m-value to check
+    * @param interval First element of tuple is start measure, second element is the end measure of the interval
+    * @return true if m-value lies between the given start and end measures, else false
+    */
+  def liesInBetweenExclusiveEnd(measure: Double, interval: (Double, Double)): Boolean = {
+    measure >= interval._1 && measure < interval._2
   }
 
   def truncateGeometry2D(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
@@ -71,7 +148,7 @@ object GeometryUtils {
       firstPoint + directionVector
     }
 
-    if (startMeasure > endMeasure) throw new IllegalArgumentException
+    if (startMeasure > endMeasure) throw new IllegalArgumentException(s"start measure is greater than end, start: ${startMeasure} end: ${endMeasure}")
     if (geometry.length == 1) throw new IllegalArgumentException
     if (geometry.isEmpty) return Nil
 
@@ -315,6 +392,68 @@ object GeometryUtils {
     ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
   }
 
+  def pointsToLineString(points: Seq[Point]): LineString = {
+    val coordinates = points.map(p => new Coordinate(p.x, p.y)).toArray
+    val lineString = geometryFactory.createLineString(coordinates)
+    lineString
+  }
+
+  /**
+    * Measures the degree of similarity between two Geometries using the Hausdorff distance metric.
+    * The measure is normalized to lie in the range [0, 1]. Higher measures indicate a great degree of similarity.
+    * @param geom1
+    * @param geom2
+    * @return Measure of similarity from 0 to 1
+    */
+  def getHausdorffSimilarityMeasure(geom1: LineString, geom2: LineString): Double = {
+    hausdorffSimilarityMeasure.measure(geom1, geom2)
+  }
+
+  /**
+    * Measures the degree of similarity between two Geometries
+    * using the area of intersection between the geometries.
+    * The measure is normalized to lie in the range [0, 1].
+    * Higher measures indicate a great degree of similarity.
+    *
+    * When used with Road Links, use buffer
+    * @param geom1 geometry 1 to compare
+    * @param geom2 geometry 2 to compare
+    * @return Normalized measure in range [0, 1] measuring the similarity of given geometries.
+    *         0 = No intersection, 1 = Full intersection
+    */
+  def getAreaSimilarityMeasure(geom1: JtsGeometry, geom2: JtsGeometry): Double = {
+    areaSimilarityMeasure.measure(geom1, geom2)
+  }
+
+  /**
+    * Calculates the centroid (average of all the points) of given points
+    * @param points Points to calculate centroid from
+    * @return calculated centroid as a Point object
+    */
+  def calculateCentroid(points: Seq[Point]): Point = {
+    val (sumX, sumY, sumZ) = points.foldLeft((0.0, 0.0, 0.0)) {
+      case ((accX, accY, accZ), Point(x, y, z)) => (accX + x, accY + y, accZ + z)
+    }
+    Point(sumX / points.size, sumY / points.size, sumZ / points.size)
+  }
+
+  /**
+    * Centers the given points geometry around origin 0.0 by subtracting the calculated centroid from all the points
+    * @param points Points we want to center
+    * @param centroid Calculated average of all points
+    * @return Geometry centered around 0.0 with the same shape
+    */
+  def centerGeometry(points: Seq[Point], centroid: Point): Seq[Point] = {
+    val centeredPoints = points.map { case Point(x, y, z) =>
+      Point(x - centroid.x, y - centroid.y, z - centroid.z)
+    }
+    centeredPoints
+  }
+
+  def isAnyPointInsideRadius(point: Point, radius: Double, geometry: Seq[Point]): Boolean = {
+    geometry.exists(geomPoint => point.distance2DTo(geomPoint) <= radius)
+  }
+
   def withinTolerance(geom1: Seq[Point], geom2: Seq[Point], tolerance: Double): Boolean = {
     geom1.size == geom2.size &&
       geom1.zip(geom2).forall {
@@ -458,7 +597,7 @@ object GeometryUtils {
     connectionPoint(geometries, DefaultEpsilon)
   }
 
-  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long)
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long = 0, linkId:String = "", linkLength:Double = 0)
 
   def getOppositePoint(geometry: Seq[Point], point: Point) : Point = {
     val (headPoint, lastPoint) = geometryEndpoints(geometry)

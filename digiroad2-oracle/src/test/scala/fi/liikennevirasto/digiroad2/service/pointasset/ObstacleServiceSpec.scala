@@ -335,20 +335,21 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Update obstacle without geometry changes"){
     runWithRollback {
       val linkId = LinkIdGenerator.generateRandom()
-      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink = RoadLink(linkId, Seq(Point(5.0, 0.0), Point(10.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
-      val id = service.create(IncomingObstacle(0.0, 20.0, linkId, Set(simpleProperty)), "jakke", roadLink )
+      val id = service.create(IncomingObstacle(9.5, 19.0, linkId, Set(simpleProperty)), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
       val updatedValues = Seq(PropertyValue("1"))
       val updatedSimpleProperty = SimplePointAssetProperty("esterakennelma", updatedValues)
-      val newId = service.update(id, IncomingObstacle(0.0, 20.0, linkId, Set(updatedSimpleProperty)), roadLink, "test")
+      val newId = service.update(id, IncomingObstacle(asset.lon, asset.lat, linkId, Set(updatedSimpleProperty), Some(asset.mValue)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
       updatedAsset.lon should be (asset.lon)
       updatedAsset.lat should be (asset.lat)
+      updatedAsset.mValue should be (asset.mValue)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.propertyData.find(_.publicId == "esterakennelma").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should equal(1)

@@ -142,7 +142,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update directional traffic sign without geometry changes") {
-    val linkGeometry = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
+    val linkGeometry = Seq(Point(73.0, 9.0), Point(100.0, 18.0))
     val linkId = LinkIdGenerator.generateRandom()
     when(mockRoadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(235)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
@@ -154,16 +154,16 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val textValues = Seq(PropertyValue("HELSINKI:HELSINGFORS;;;;1;1;"))
       val simpleProperty = SimplePointAssetProperty("opastustaulun_teksti", textValues)
-      val assetCreatedID = service.create(IncomingDirectionalTrafficSign(100, 0, linkId, 3, Some(0), Set(simpleProperty)), "test", roadLink)
+      val assetCreatedID = service.create(IncomingDirectionalTrafficSign(76, 10, linkId, 3, Some(0), Set(simpleProperty)), "test", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(assetCreatedID))
 
       val beforeUpdate = assets.head
 
       beforeUpdate.id should be(assetCreatedID)
       beforeUpdate.linkId should be(linkId)
-      beforeUpdate.lon should be(100)
-      beforeUpdate.lat should be(0)
-      beforeUpdate.mValue should be(100)
+      beforeUpdate.lon should be(76.0)
+      beforeUpdate.lat should be(10.0)
+      beforeUpdate.mValue should be(3.162)
       beforeUpdate.floating should be(false)
       beforeUpdate.municipalityCode should be(235)
       beforeUpdate.validityDirection should be(3)
@@ -173,13 +173,13 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
 
       val updatedTextValues = Seq(PropertyValue("New text"))
       val updatedSimpleProperty = SimplePointAssetProperty("opastustaulun_teksti", updatedTextValues)
-      service.update(assetCreatedID, IncomingDirectionalTrafficSign(100, 0, linkId, 3, Some(0), Set(updatedSimpleProperty)), roadLink, "test")
+      service.update(assetCreatedID, IncomingDirectionalTrafficSign(beforeUpdate.lon, beforeUpdate.lat, linkId, 3, Some(0), Set(updatedSimpleProperty), Some(beforeUpdate.mValue)), roadLink, "test")
 
       val afterUpdate = service.getByMunicipality(235).find(_.id == assetCreatedID).get
       afterUpdate.id should equal(assetCreatedID)
-      afterUpdate.lon should equal(100)
-      afterUpdate.lat should equal(0.0)
-      afterUpdate.mValue should equal(100.0)
+      afterUpdate.lon should equal(beforeUpdate.lon)
+      afterUpdate.lat should equal(beforeUpdate.lat)
+      afterUpdate.mValue should equal(beforeUpdate.mValue)
       afterUpdate.linkId should equal(linkId)
       afterUpdate.municipalityCode should equal(235)
       afterUpdate.createdBy should equal(Some("test"))
