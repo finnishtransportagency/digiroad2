@@ -19,7 +19,7 @@ import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressServ
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode, pwLanesTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.util._
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException, RoadLinkNotFoundException}
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
@@ -147,7 +147,7 @@ trait LaneOperations {
   }
 
   def getLanesAndRoadLinkOnLinearReferencePoint(linkId: String, mValue: Double): (Seq[PieceWiseLane], RoadLink) = {
-    val roadLink = roadLinkService.getRoadLinksByLinkIds(Set(linkId)).headOption.getOrElse(throw new NoSuchElementException(s"No road link found on given linkId: $linkId"))
+    val roadLink = roadLinkService.getRoadLinksByLinkIds(Set(linkId)).headOption.getOrElse(throw new RoadLinkNotFoundException(linkId))
     val lanesOnLink = getLanesByRoadLinks(Seq(roadLink))
     val lanesOnPoint = lanesOnLink.filter(lane => {
       lane.startMeasure <= mValue && lane.endMeasure >= mValue
