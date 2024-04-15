@@ -83,7 +83,7 @@
     };
 
     this.fetch = function(boundingBox) {
-      return backend.getPointAssetsWithComplementary(boundingBox, layerName)
+      return backend.getTrafficSignsWithComplementary(boundingBox)
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
           me.allowComplementaryIsActive(allowComplementary);

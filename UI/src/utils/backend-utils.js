@@ -237,6 +237,12 @@
       });
     });
 
+    this.getTrafficSignsWithComplementary = latestResponseRequestor(function(boundingBox) {
+      return validateBoundingBox(boundingBox,{
+        url: 'api/trafficSigns?bbox=' + boundingBox
+      });
+    });
+
     this.getPointAssetById = latestResponseRequestor(function(id, endPointName) {
       return {
         url: 'api/'+ endPointName + '/' + id
