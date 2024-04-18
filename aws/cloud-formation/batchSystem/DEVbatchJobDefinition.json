@@ -5,7 +5,7 @@
     "attempts": 1
   },
   "timeout": {
-    "attemptDurationSeconds": 604800
+    "attemptDurationSeconds": 259200
   },
   "platformCapabilities": [
     "FARGATE"
