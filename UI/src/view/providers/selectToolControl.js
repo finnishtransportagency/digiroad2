@@ -192,13 +192,6 @@
                 map.addInteraction(multiSelectInteraction);
                 initialized = true;
             }
-            mapDoubleClickEventKey = map.on('dblclick', function () {
-                _.defer(function(){
-                    if(selectInteraction.getFeatures().getLength() < 1 && zoomlevels.getViewZoom(map) <= 13 && enabled){
-                        map.getView().setZoom(zoomlevels.getViewZoom(map)+1);
-                    }
-                });
-            });
             toggleDragBox();
           }
         };
