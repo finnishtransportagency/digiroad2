@@ -1,7 +1,6 @@
 (function(root) {
     root.SelectToolControl = function(application, layer, map, isMultipleLinkSelectionAllowed, options) {
 
-        var mapDoubleClickEventKey;
         var enabled = false;
         var initialized = false;
         var isPolygonActive = false;
@@ -202,8 +201,6 @@
             isRectangleActive = false;
             map.removeInteraction(drawSquare);
             map.removeInteraction(drawInteraction);
-            ol.Observable.unByKey(mapDoubleClickEventKey);
-
         };
 
         var activePolygon = function(){
