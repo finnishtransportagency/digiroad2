@@ -1,5 +1,5 @@
 (function(root) {
-  root.ObstaclesRoadCollection = function(backend) {
+  root.ObstaclesAndRailwayCrossingsRoadCollection = function (backend) {
     RoadCollection.call(this, backend);
     var me = this;
 

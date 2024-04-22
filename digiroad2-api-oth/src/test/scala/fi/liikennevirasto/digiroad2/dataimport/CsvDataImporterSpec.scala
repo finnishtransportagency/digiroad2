@@ -57,7 +57,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   val updateOnlyStartDatesFalse: UpdateOnlyStartDates = UpdateOnlyStartDates(false)
 
-  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
   when(mockRoadLinkService.enrichFetchedRoadLinks(any[Seq[RoadLinkFetched]], any[Boolean])).thenReturn(roadLink)
 
   def runWithRollback(test: => Unit): Unit = sTestTransactions.runWithRollback()(test)
@@ -344,7 +344,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "F37", "suuntima" -> "40")
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
-    when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(Seq())
+    when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(Seq())
 
     trafficSignCsvImporter.processing(invalidCsv, Set(), testUser) should equal(trafficSignCsvImporter.ImportResultPointAsset(
       notImportedData = List(trafficSignCsvImporter.NotImportedData(
@@ -359,7 +359,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
 
     runWithRollback {
-      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
       when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
 
       val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
@@ -382,7 +382,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
 
     runWithRollback {
-      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
       when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
 
       val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
@@ -405,7 +405,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
 
     runWithRollback {
-      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
       when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
 
       val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
@@ -428,7 +428,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
 
     runWithRollback {
-      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
       when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
 
       val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
@@ -450,7 +450,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
 
     runWithRollback {
-      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
       when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
 
       val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
