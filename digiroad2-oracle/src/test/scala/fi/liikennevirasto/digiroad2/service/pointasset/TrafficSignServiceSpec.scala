@@ -53,7 +53,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   val fetchedRoadlink2 = Seq(RoadLinkFetched(testLinkId2, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(fetchedRoadlink1.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinkByLinkId(any[String], any[Boolean])).thenReturn(fetchedRoadlink1.map(toRoadLink).headOption)
-  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(fetchedRoadlink2.map(toRoadLink))
+  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(fetchedRoadlink2.map(toRoadLink))
   when(mockRoadLinkService.enrichFetchedRoadLinks(fetchedRoadlink2)).thenReturn(fetchedRoadlink2.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinkByLinkId(randomLinkId2)).thenReturn(Seq(
     RoadLinkFetched(randomLinkId2, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,

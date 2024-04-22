@@ -45,7 +45,7 @@ object KgvCollection {
   case object UnFrozen extends KgvCollection { def value = "keskilinjavarasto:road_links" }
   case object LinkVersios extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
   case object LinkCorreponceTable extends KgvCollection { def value = "keskilinjavarasto:frozenlinks_vastintaulu" }
-  case object MunicipalityBorders extends KgvCollection { def value = "paikkatiedot:kuntarajat"}
+  case object MunicipalityBorders extends KgvCollection { def value = "paikkatiedot:kuntarajat_10k"}
 }
 
 object FilterOgc extends Filter {
