@@ -942,7 +942,7 @@
         singleElementEventCategory: 'cyclingAndWalking',
         multiElementEventCategory: 'cyclingAndWalkings',
         layerName: 'cyclingAndWalking',
-        title: 'Käpy tietolaji',
+        title: 'Käpy tietolaji (vain katselukäyttö)',
         newTitle: 'Uusi Käpy tietolaji',
         className: 'cycling-and-walking',
         isSeparable: true,
