@@ -382,7 +382,7 @@
 
     function handleChanged() {
       var asset = selectedAsset.get();
-      var featureRedraw = me.vectorLayer.getSource().getFeatures().filter(function (feature) {
+      var featureRedraw = _.filter(me.vectorLayer.getSource().getFeatures(), function (feature) {
         return feature.getProperties().id === asset.id;
       });
       var newProperties = {
@@ -392,7 +392,7 @@
         'constructionType': obtainConstructionType(asset),
         'geometry': new ol.geom.Point([asset.lon, asset.lat])
       };
-      featureRedraw.forEach(function (feature) {
+      _.forEach(featureRedraw, function (feature) {
         feature.setProperties(newProperties);
         if (layerName === 'trafficLights') {
           feature.setProperties({'propertyData': asset.propertyData});
