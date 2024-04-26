@@ -209,8 +209,9 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       dao.getProhibitionsChangedSince(typeId, since, until, excludedTypes, withAutoAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(prohibitions.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
-    mapPersistedAssetChanges(prohibitions, roadLinks)
+    val historyRoadLinks = roadLinkService.getHistoryDataLinks(prohibitions.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
+    mapPersistedAssetChanges(prohibitions, roadLinks, historyRoadLinks)
   }
 
 

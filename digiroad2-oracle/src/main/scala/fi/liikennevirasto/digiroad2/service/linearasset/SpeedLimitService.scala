@@ -113,20 +113,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(persistedSpeedLimits.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+    val historyRoadLinks = roadLinkService.getHistoryDataLinks(persistedSpeedLimits.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
-    persistedSpeedLimits.map { persisted =>
-      val roadLinkFetched = roadLinksWithoutWalkways.find(_.linkId == persisted.linkId) match {
-        case Some(roadLink) => roadLink
-        case _ => roadLinkService.getHistoryDataLink(persisted.linkId)
-          .getOrElse(throw new IllegalStateException(s"Road link no longer available ${persisted.linkId}"))
-      }
-      ChangedLinearAsset(
-        PieceWiseLinearAsset(persisted.id, persisted.linkId, SideCode(persisted.sideCode), persisted.value, GeometryUtils.truncateGeometry3D(roadLinkFetched.geometry, persisted.startMeasure, persisted.endMeasure), persisted.expired,
-          persisted.startMeasure, persisted.endMeasure, Set(Point(0.0, 0.0)), persisted.modifiedBy, persisted.modifiedDateTime, persisted.createdBy, persisted.createdDateTime,
-          persisted.typeId, SideCode.toTrafficDirection(SideCode(persisted.sideCode)), persisted.timeStamp, persisted.geomModifiedDate,
-          roadLinkFetched.linkSource, roadLinkFetched.administrativeClass, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource),
-        roadLinkFetched)
-    }
+    mapPersistedAssetChanges(persistedSpeedLimits, roadLinksWithoutWalkways, historyRoadLinks)
   }
 
   /**

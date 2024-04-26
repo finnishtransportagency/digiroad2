@@ -129,7 +129,6 @@ trait  PointAssetOperations{
   def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = {
-    val logger = LoggerFactory.getLogger(getClass)
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
@@ -143,17 +142,29 @@ trait  PointAssetOperations{
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(assets.map(_.linkId).toSet)
-    val historicRoadLink = roadLinkService.getHistoryDataLinks(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
+    val historyRoadLinks = roadLinkService.getHistoryDataLinks(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
+    mapPersistedAssetChanges(assets, roadLinks, historyRoadLinks)
+  }
+
+  /**
+   * Maps PersistedAssets with responding RoadLinks. If no RoadLink is found for an asset, it is skipped with log warning
+   * @param assets
+   * @param roadLinks
+   * @param historyRoadLinks
+   * @return
+   */
+  def mapPersistedAssetChanges(assets: Seq[PersistedAsset], roadLinks: Seq[RoadLink], historyRoadLinks: Seq[RoadLink]): Seq[ChangedPointAsset] = {
+    val logger = LoggerFactory.getLogger(getClass)
     assets.flatMap { asset =>
-      val link = roadLinks.find(_.linkId == asset.linkId)
-      val roadLink =
-        if (link.nonEmpty) link
-        else historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.timeStamp)(Ordering.Long.reverse).headOption
-      roadLink match {
+      val roadLinkFetched = roadLinks
+        .find(_.linkId == asset.linkId)
+        .orElse(historyRoadLinks.find(_.linkId == asset.linkId))
+
+      roadLinkFetched match {
         case Some(roadLink: RoadLink) => Some(ChangedPointAsset(asset, roadLink))
         case _ =>
-          logger.info(s"Road link no longer available ${asset.linkId}. Skipping asset $asset")
+          logger.info(s"Road link no longer available ${asset.linkId}. Skipping asset $asset.id")
           None
       }
     }
