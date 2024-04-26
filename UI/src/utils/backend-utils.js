@@ -600,6 +600,22 @@
       return $.getJSON('api/laneWorkList');
     };
 
+    this.getAutoProcessedLanesWorkList = function () {
+      return $.getJSON('api/autoProcessedLanesWorkList');
+    };
+
+    this.getRoadLinkReplacementWorkList = function () {
+      return $.getJSON('api/roadLinkReplacementWorkList');
+    };
+
+    this.getAssetsOnExpiredLinksWorkList = function () {
+      return $.getJSON('api/assetsOnExpiredLinksWorkList');
+    };
+
+    this.getManoeuvreSamuutusWorkList = function () {
+      return $.getJSON('api/manoeuvreSamuutusWorkList');
+    };
+
     this.getMunicipalityIdByName = function(municipalityName) {
       return $.getJSON('api/municipalities/idByName?name=' + municipalityName);
     };
@@ -1086,6 +1102,42 @@
         contentType: "application/json",
         type: "DELETE",
         url: "api/laneWorkList",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.deleteAutoProcessedLanesWorkListItems = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/autoProcessedLanesWorkList",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.deleteRoadLinkReplacementWorkListItems = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/autoProcessedLanesWorkList",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.deleteAssetsOnExpiredLinksWorkListItems = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/assetsOnExpiredLinksWorkList",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
