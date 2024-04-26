@@ -23,9 +23,10 @@ object AssetPropertyConfiguration {
   )
   val ExcludedProperties: Set[String] = Set(LiviIdSave)
 
+  val ValidityDirectionBoth = "1"
   val ValidityDirectionSame = "2"
   val ValidityDirectionOpposite = "3"
-  val validityDirectionValues = Seq(PropertyValue(ValidityDirectionSame, Some("Digitointisuuntaan")),PropertyValue(ValidityDirectionOpposite, Some("Digitointisuuntaa vastaan")))
+  val validityDirectionValues = Seq(PropertyValue(ValidityDirectionSame, Some("Digitointisuuntaan")),PropertyValue(ValidityDirectionOpposite, Some("Digitointisuuntaa vastaan")), PropertyValue(ValidityDirectionBoth, Some("Molempiin suuntiin")))
   val enumeratedValidityDirectionValues = EnumeratedPropertyValue(0, ValidityDirectionId, "Vaikutussuunta", SingleChoice, values = validityDirectionValues)
 
   val commonAssetPropertyEnumeratedValues: Seq[EnumeratedPropertyValue] = List(enumeratedValidityDirectionValues)

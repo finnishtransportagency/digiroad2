@@ -204,6 +204,7 @@
           $('ul[class=information-content]').empty();
 
           renderLinktoLaneWorkList();
+          renderLinktoAutoProcessedLanesWorkList();
         }
       });
 
@@ -218,6 +219,11 @@
     var renderLinktoLaneWorkList = function renderLinktoWorkList() {
         $('ul[class=information-content]').append('' +
             '<li><button id="work-list-link-lanes" class="lane-work-list btn btn-tertiary" onclick=location.href="#work-list/laneChecklist">Tarkistettavien kaistojen lista</button></li>');
+    };
+
+    var renderLinktoAutoProcessedLanesWorkList = function renderLinktoWorkList() {
+      $('ul[class=information-content]').append('' +
+          '<li><button id="work-list-link-auto-processed-lanes" class="auto-processed-lane-work-list btn btn-tertiary" onclick=location.href="#work-list/autoProcessedLanesWorkList">Automaattisesti käsiteltyjen kaistojen lista</button></li>');
     };
 
     self.renderAvailableFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled, alreadyRendered) {

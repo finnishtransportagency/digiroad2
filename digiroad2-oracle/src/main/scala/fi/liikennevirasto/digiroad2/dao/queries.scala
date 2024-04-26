@@ -84,6 +84,10 @@ object Queries {
 
   def nextLaneHistoryEventOrderNumber = sql"select nextval('lane_history_event_order_seq')"
 
+  def nextLaneHistoryEventOrderNumbers(len: Int) = {
+    sql"""select nextval('lane_history_event_order_seq') from generate_series(1, $len)"""
+  }
+
   def fetchLrmPositionIds(len: Int) = {
     sql"""SELECT nextval('lrm_position_primary_key_seq') from generate_series(1,$len)""".as[Long].list
   }
@@ -92,6 +96,10 @@ object Queries {
     sqlu"""
       update asset set modified_by = $updater, modified_date = current_timestamp where id = $assetId
     """
+  def updateAssestModified(assetIds: Seq[Long], updater: String) = {
+    sqlu"""update asset set modified_by = $updater, modified_date = current_timestamp where id in(#${assetIds.mkString(",")})""".execute
+  }
+  
 
   def updateAssetGeometry(id: Long, point: Point): Unit = {
     val x = point.x
@@ -445,4 +453,25 @@ object Queries {
     sqlu"""delete from single_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute
     sqlu"""delete from multiple_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute
   }
+  
+  def getLatestSuccessfulSamuutus(typeid: Int):DateTime = {
+    sql"""select last_succesfull_samuutus from samuutus_success where asset_type_id = $typeid """.as[DateTime].list.head
+  }
+  def updateLatestSuccessfulSamuutus(typeid: Int, latestSuccess: DateTime): Unit = {
+    sqlu"""UPDATE samuutus_success SET last_succesfull_samuutus = to_timestamp($latestSuccess, 'YYYY-MM-DD"T"HH24:MI:SS.FF') WHERE asset_type_id = $typeid""".execute
+  }
+
+  // Used for performance reasons, remember to add back constraints after operation using method addLaneFKConstraints()
+  def dropLaneFKConstraints(): Unit = {
+    sqlu"ALTER TABLE LANE_ATTRIBUTE DROP CONSTRAINT fk_lane_attribute_lane".execute
+    sqlu"ALTER TABLE LANE_LINK DROP CONSTRAINT fk_lane_link_lane".execute
+    sqlu"ALTER TABLE LANE_LINK DROP CONSTRAINT fk_lane_link_lane_position".execute
+  }
+
+  def addLaneFKConstraints(): Unit = {
+    sqlu"ALTER TABLE lane_attribute ADD CONSTRAINT fk_lane_attribute_lane FOREIGN KEY (lane_id) REFERENCES lane(id) ON DELETE NO ACTION NOT DEFERRABLE INITIALLY IMMEDIATE".execute
+    sqlu"ALTER TABLE LANE_LINK ADD CONSTRAINT fk_lane_link_lane_position FOREIGN KEY (lane_position_id) REFERENCES lane_position(id) ON DELETE NO ACTION NOT DEFERRABLE INITIALLY IMMEDIATE".execute
+    sqlu"ALTER TABLE LANE_LINK ADD CONSTRAINT fk_lane_link_lane FOREIGN KEY (lane_id) REFERENCES lane(id) ON DELETE NO ACTION NOT DEFERRABLE INITIALLY IMMEDIATE".execute
+  }
+ 
 }
