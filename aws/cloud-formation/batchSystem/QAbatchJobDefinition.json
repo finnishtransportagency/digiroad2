@@ -67,7 +67,7 @@
       },
       {
         "name": "kgv.endpoint",
-        "value": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+        "value": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/"
       },
       {
         "name": "viiteRestApiEndPoint",
