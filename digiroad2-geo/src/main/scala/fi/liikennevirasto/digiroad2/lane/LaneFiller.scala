@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.lane
 
+import com.sun.org.slf4j.internal.LoggerFactory
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, areMeasuresCloseEnough}
 import fi.liikennevirasto.digiroad2.asset.SideCode
@@ -7,6 +8,8 @@ import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.Point
+
+import scala.collection.Seq
 
 
 object LaneFiller {
@@ -44,7 +47,16 @@ class LaneFiller {
   val AllowedTolerance = 2.0
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
-
+  val logger = LoggerFactory.getLogger(getClass)
+  def debugLogging(operationName:String)(roadLink:RoadLink, segments:Seq[PersistedLane], changeSet:ChangeSet ) ={
+    logger.warn(operationName + ": " + roadLink.linkId)
+    logger.warn("asset count on link: " + segments.size)
+    logger.warn(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
+    logger.warn(s"mValue adjustment count: ${changeSet.adjustedMValues.size}")
+    logger.warn(s"expire adjustment count: ${changeSet.expiredLaneIds.size}")
+    logger.warn(s"dropped adjustment count: ${changeSet.generatedPersistedLanes.size}")
+    (segments, changeSet)
+  }
   def getOperations(geometryChanged: Boolean) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
@@ -57,10 +69,16 @@ class LaneFiller {
     )
 
     val adjustmentOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
+      expireOverlappingSegments,
+      debugLogging("expireOverlappingSegments"),
       combine,
+      debugLogging("combine"),
       fuse,
+      debugLogging("fuse"),
       dropShortSegments,
-      adjustAssets
+      debugLogging("dropShortSegments"),
+      adjustAssets,
+        debugLogging("adjustAssets")
     )
 
     if(geometryChanged) fillOperations
