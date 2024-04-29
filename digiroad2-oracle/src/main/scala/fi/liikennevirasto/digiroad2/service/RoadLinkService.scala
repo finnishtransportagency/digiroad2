@@ -408,8 +408,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @param municipalities
     * @return RoadLinkFetched
     */
-  def fetchRoadLinksByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLinkFetched] = {
-    withDbConnection{roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
+  def fetchRoadLinksByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), includeComplementaries: Boolean = false): Seq[RoadLinkFetched] = {
+    if (includeComplementaries) withDbConnection{roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities) ++ complementaryLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
+    else withDbConnection{roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
   }
 
   /**
@@ -895,12 +896,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     else Some(roadLinks.minBy(roadLink => minimumDistance(point, roadLink.geometry)))
   }
 
-  def getClosestRoadlinkForCarTraffic(user: User, point: Point, forCarTraffic: Boolean = true): Seq[RoadLink] = {
+  def getClosestRoadlinkForCarTraffic(user: User, point: Point, forCarTraffic: Boolean = true, includeComplementaries: Boolean = false): Seq[RoadLink] = {
     val diagonal = Vector3d(10, 10, 0)
 
     val roadLinks =
-      if (user.isOperator()) fetchRoadLinksByBoundsAndMunicipalities(BoundingRectangle(point - diagonal, point + diagonal))
-      else fetchRoadLinksByBoundsAndMunicipalities(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+      if (user.isOperator()) fetchRoadLinksByBoundsAndMunicipalities(BoundingRectangle(point - diagonal, point + diagonal), includeComplementaries = includeComplementaries)
+      else fetchRoadLinksByBoundsAndMunicipalities(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities, includeComplementaries)
 
     val closestRoadLinks =
       if (roadLinks.isEmpty) Seq.empty[RoadLink]
