@@ -197,9 +197,7 @@ class ExtractorBase {
         }
       }
     }
-
     
-val test  =numberConversion("sourceid")
     Map(
       "ROADNUMBER"            -> numberConversion("roadnumber"),
       "ROADPARTNUMBER"        -> numberConversion("roadpartnumber"),
