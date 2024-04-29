@@ -175,7 +175,7 @@ class ExtractorBase {
     }
   }
 
-  def toBigInt(value: Int): BigInt = {
+  def toBigInt(value: Long): BigInt = {
     Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
   }
 
@@ -190,14 +190,14 @@ class ExtractorBase {
         null
       }else {
         try {
-          toBigInt(attributesMap(field).toString.toInt)
+          toBigInt(attributesMap(field).toString.toLong)
         } catch {
           case _: Exception =>
             throw NumberConversionFailed(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
         }
       }
     }
-
+    
     Map(
       "ROADNUMBER"            -> numberConversion("roadnumber"),
       "ROADPARTNUMBER"        -> numberConversion("roadpartnumber"),
