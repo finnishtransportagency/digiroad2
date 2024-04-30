@@ -17,8 +17,6 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
-private val logger = LoggerFactory.getLogger(getClass)
-
 sealed trait FloatingReason {
   def value: Int
 }
@@ -96,6 +94,8 @@ trait LightGeometry {
 }
 
 trait  PointAssetOperations{
+  private val logger = LoggerFactory.getLogger(getClass)
+
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
 
