@@ -17,6 +17,8 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
+private val logger = LoggerFactory.getLogger(getClass)
+
 sealed trait FloatingReason {
   def value: Int
 }
@@ -142,7 +144,8 @@ trait  PointAssetOperations{
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(assets.map(_.linkId).toSet)
-    val historyRoadLinks = roadLinkService.getHistoryDataLinks(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
+    val missingOrDeletedLinks = assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet)
+    val historyRoadLinks = roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
 
     mapPersistedAssetChanges(assets, roadLinks, historyRoadLinks)
   }
@@ -158,7 +161,6 @@ trait  PointAssetOperations{
                                filteredRoadLinks: Seq[RoadLink],
                                historyRoadLinks: Seq[RoadLink],
                                excludedRoadLinks: Seq[RoadLink] = Seq.empty[RoadLink]): Seq[ChangedPointAsset] = {
-    val logger = LoggerFactory.getLogger(getClass)
     assets.flatMap { asset =>
       val roadLinkFetched = filteredRoadLinks
         .find(_.linkId == asset.linkId)

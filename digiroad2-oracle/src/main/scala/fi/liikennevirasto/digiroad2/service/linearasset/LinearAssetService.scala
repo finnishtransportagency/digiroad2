@@ -353,7 +353,8 @@ trait LinearAssetOperations {
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
-    val historyRoadLinks = roadLinkService.getHistoryDataLinks(persistedLinearAssets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
+    val missingOrDeletedLinks = persistedLinearAssets.map(_.linkId).toSet.diff(roadLinksWithoutWalkways.map(_.linkId).toSet)
+    val historyRoadLinks = roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
     mapPersistedAssetChanges(persistedLinearAssets, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
   }
 

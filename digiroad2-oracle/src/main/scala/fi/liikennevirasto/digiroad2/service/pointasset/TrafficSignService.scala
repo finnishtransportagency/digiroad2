@@ -140,9 +140,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(assets.map(_.linkId).toSet)
-    val historicRoadLinks = roadLinkService.getHistoryDataLinks(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
+    val missingOrDeletedLinks = assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet)
+    val historyRoadLinks = roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
 
-    mapPersistedAssetChanges(assets, roadLinks, historicRoadLinks)
+    mapPersistedAssetChanges(assets, roadLinks, historyRoadLinks)
   }
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], timeStamp: Option[Long]): Long = {

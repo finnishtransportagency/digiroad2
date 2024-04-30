@@ -113,7 +113,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(persistedSpeedLimits.map(_.linkId).toSet)
     val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
-    val historyRoadLinks = roadLinkService.getHistoryDataLinks(persistedSpeedLimits.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
+    val missingOrDeletedLinks = persistedSpeedLimits.map(_.linkId).toSet.diff(roadLinksWithoutWalkways.map(_.linkId).toSet)
+    val historyRoadLinks = roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
 
     mapPersistedAssetChanges(persistedSpeedLimits, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
   }
