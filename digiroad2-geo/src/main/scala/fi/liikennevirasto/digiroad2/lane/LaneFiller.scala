@@ -74,7 +74,9 @@ class LaneFiller {
     val operations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet) => (Seq[PersistedLane], ChangeSet)] = Seq(
       expireOverlappingSegments,
       debugLogging("expireOverlappingSegments"),
+      validateLink("before combine "),
       combine,
+      validateLink("after combine "),
       debugLogging("combine"),
       fuse,
       debugLogging("fuse"),
@@ -82,7 +84,7 @@ class LaneFiller {
       debugLogging("dropShortSegments"),
       adjustAssets,
       debugLogging("adjustAssets"),
-      validateLink,
+      validateLink("final validation "),
       debugLogging("validateLink")
     )
     val changeSet = changedSet match {
@@ -208,19 +210,17 @@ class LaneFiller {
     }
   }
 
-  protected def validateLink(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
-    val laneGroupBySideCode = lanes.groupBy(_.sideCode)
-    laneGroupBySideCode.foreach(a =>{
+  private def validateLink(title: String = "")(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
+    lanes.groupBy(_.sideCode).foreach(a => {
       val lanes = a._2
-      val checkLanes =  lanes.groupBy(a=>a.laneCode)
-      checkLanes.foreach(a=> {
-        val (laneNumber, lanes) = a 
-        if (lanes.length>1) {
-          logger.warn(s"There is more than one lane number on link link: ${roadLink.linkId}, lane number: ${laneNumber.toString}, lanes ids:  ${a._2.map(_.id).mkString(",")} ")
+      lanes.groupBy(a => a.laneCode).foreach(a => {
+        val (laneNumber, lanes) = a
+        if (lanes.length > 1) {
+          logger.warn(s"${title}There is more than one lane number on link link: ${roadLink.linkId}, lane number: ${laneNumber}, lanes ids:  ${lanes.map(_.id).mkString(",")} ")
         }
       })
     })
-    (lanes,changeSet)
+    (lanes, changeSet)
   }
 
   private def adjustAsset(lane: PersistedLane, roadLink: RoadLink): (PersistedLane, Seq[MValueAdjustment]) = {
