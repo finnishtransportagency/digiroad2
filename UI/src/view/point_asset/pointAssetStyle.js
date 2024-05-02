@@ -57,8 +57,6 @@
       var haveSameDirection = function(asset) {
           if (!isOld(asset)) {
               var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
-              if (asset.selectedId == asset.id)
-                  return true;
 
               var bearingValue = _.head(_.head(bearingProps).values).propertyValue;
               var sameBearing = _.every(bearingProps, function(prop){return _.head(prop.values).propertyValue == bearingValue;});
