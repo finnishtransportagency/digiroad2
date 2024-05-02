@@ -210,8 +210,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(prohibitions.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
-    val missingOrDeletedLinks = prohibitions.map(_.linkId).toSet.diff(roadLinksWithoutWalkways.map(_.linkId).toSet)
-    val historyRoadLinks = roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
+    val historyRoadLinks = fetchMissingLinksFromHistory(prohibitions, roadLinksWithoutWalkways)
 
     mapPersistedAssetChanges(prohibitions, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
   }

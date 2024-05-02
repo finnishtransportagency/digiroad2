@@ -338,6 +338,11 @@ trait LinearAssetOperations {
       dao.fetchLinearAssetsByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
   }
 
+  protected def fetchMissingLinksFromHistory(assets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]) = {
+    val missingOrDeletedLinks = assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet)
+    roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
+  }
+
   /**
     * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
     *
@@ -353,8 +358,7 @@ trait LinearAssetOperations {
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
-    val missingOrDeletedLinks = persistedLinearAssets.map(_.linkId).toSet.diff(roadLinksWithoutWalkways.map(_.linkId).toSet)
-    val historyRoadLinks = roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
+    val historyRoadLinks = fetchMissingLinksFromHistory(persistedLinearAssets, roadLinksWithoutWalkways)
     mapPersistedAssetChanges(persistedLinearAssets, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
   }
 

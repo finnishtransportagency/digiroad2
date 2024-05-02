@@ -258,7 +258,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet)
     val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
-    val historyRoadLinks = roadLinkService.getHistoryDataLinks(persistedLinearAssets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
+    val historyRoadLinks = fetchMissingLinksFromHistory(persistedLinearAssets, roadLinksWithoutWalkways)
 
     mapPersistedAssetChanges(persistedLinearAssets, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
   }

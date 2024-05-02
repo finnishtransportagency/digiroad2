@@ -140,8 +140,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(assets.map(_.linkId).toSet)
-    val missingOrDeletedLinks = assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet)
-    val historyRoadLinks = roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
+    val historyRoadLinks = fetchMissingLinksFromHistory(assets, roadLinks)
 
     mapPersistedAssetChanges(assets, roadLinks, historyRoadLinks)
   }
