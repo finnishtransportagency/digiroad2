@@ -59,12 +59,12 @@ class LaneFiller {
   val MinAllowedLength = 2.0
   val logger = LoggerFactory.getLogger(getClass)
   def debugLogging(operationName:String)(roadLink:RoadLink, segments:Seq[PersistedLane], changeSet:ChangeSet ) = {
-    logger.warn(operationName + ": " + roadLink.linkId)
-    logger.warn("asset count on link: " + segments.size)
-    logger.warn(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
-    logger.warn(s"mValue adjustment count: ${changeSet.adjustedMValues.size}")
-    logger.warn(s"expire adjustment count: ${changeSet.expiredLaneIds.size}")
-    logger.warn(s"dropped adjustment count: ${changeSet.generatedPersistedLanes.size}")
+    logger.debug(operationName + ": " + roadLink.linkId)
+    logger.debug("asset count on link: " + segments.size)
+    logger.debug(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
+    logger.debug(s"mValue adjustment count: ${changeSet.adjustedMValues.size}")
+    logger.debug(s"expire adjustment count: ${changeSet.expiredLaneIds.size}")
+    logger.debug(s"dropped adjustment count: ${changeSet.generatedPersistedLanes.size}")
     (segments, changeSet)
   }
   
