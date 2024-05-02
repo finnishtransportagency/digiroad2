@@ -216,7 +216,7 @@ class LaneFiller {
       lanes.groupBy(a => a.laneCode).foreach(a => {
         val (laneNumber, lanes) = a
         if (lanes.length > 1) {
-          logger.warn(s"${title}There is more than one lane number on link link: ${roadLink.linkId}, lane number: ${laneNumber}, lanes ids:  ${lanes.map(_.id).mkString(",")} ")
+          logger.warn(s"${title}there is more than one lane number on link: ${roadLink.linkId}, lane number: ${laneNumber}, lanes ids:  ${lanes.map(_.id).mkString(",")} ")
         }
       })
     })
