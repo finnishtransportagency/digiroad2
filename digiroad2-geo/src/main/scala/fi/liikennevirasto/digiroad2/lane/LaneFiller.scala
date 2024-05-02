@@ -88,7 +88,9 @@ class LaneFiller {
       dropShortSegments,
       debugLogging("dropShortSegments"),
       adjustAssets,
-        debugLogging("adjustAssets")
+      debugLogging("adjustAssets"),
+      validateLink,
+      debugLogging("validateLink")
     )
 
     if(geometryChanged) fillOperations
@@ -220,6 +222,21 @@ class LaneFiller {
         val (asset, adjustmentsMValues) = adjustAsset(lane, roadLink)
         (resultAssets ++ Seq(asset), change.copy(adjustedMValues = change.adjustedMValues ++ adjustmentsMValues))
     }
+  }
+
+  protected def validateLink(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
+    val laneGroupBySideCode = lanes.groupBy(_.sideCode)
+    laneGroupBySideCode.foreach(a =>{
+      val lanes = a._2
+      val checkLanes =  lanes.groupBy(a=>a.laneCode)
+      checkLanes.foreach(a=> {
+        val (laneNumber, lanes) = a 
+        if (lanes.length>1) {
+          logger.warn(s"There is more than one lane number on link link: ${roadLink.linkId}, lane number: ${laneNumber.toString}, lanes ids:  ${a._2.map(_.id).mkString(",")} ")
+        }
+      })
+    })
+    (lanes,changeSet)
   }
 
   private def adjustAsset(lane: PersistedLane, roadLink: RoadLink): (PersistedLane, Seq[MValueAdjustment]) = {
