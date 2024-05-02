@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.model.LRMPosition
+import fi.liikennevirasto.digiroad2.model.PointAssetLRMPosition
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{LightGeometryMassTransitStop, MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
 import org.joda.time.format.ISODateTimeFormat
@@ -33,22 +33,22 @@ class MassTransitStopDao {
   }
 
   def queryFetchPointAssets() : String = {
-    """ select a.id, a.national_id, a.asset_type_id, a.bearing, lrm.side_code,
+    """ select a.id, a.national_id, a.asset_type_id, a.bearing, pos.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
-        lrm.adjusted_timestamp, p.id as p_id, p.public_id, p.property_type, p.required, p.max_value_length, e.value,
+        pos.adjusted_timestamp, p.id as p_id, p.public_id, p.property_type, p.required, p.max_value_length, e.value,
         case
           when e.name_fi is not null then e.name_fi
           when tp.value_fi is not null then tp.value_fi
           when np.value is not null then cast(np.value as text)
           else null
         end as display_value,
-        lrm.id as lrm_id, lrm.start_measure, lrm.end_measure, lrm.link_id,
+        pos.id as lrm_id, pos.start_measure, pos.link_id,
         a.created_date, a.created_by, a.modified_date, a.modified_by,
-        ST_Transform(a.geometry, 4326) AS position_wgs84, lrm.link_source,
+        ST_Transform(a.geometry, 4326) AS position_wgs84, pos.link_source,
         tbs.terminal_asset_id as terminal_asset_id
         from asset a
           join asset_link al on a.id = al.asset_id
-          join lrm_position lrm on al.position_id = lrm.id
+          join lrm_position pos on al.position_id = pos.id
           join property p on a.asset_type_id = p.asset_type_id
           left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
@@ -69,7 +69,7 @@ class MassTransitStopDao {
 
         s"select id, national_id, asset_type_id, bearing, side_code, valid_from, valid_to, geometry, municipality_code, floating, "+
         s" adjusted_timestamp, p_id, public_id, property_type, required, max_value_length, value, display_value, lrm_id, start_measure, "+
-        s" end_measure, link_id, created_date, created_by, modified_date, modified_by, position_wgs84, link_source, terminal_asset_id "+
+        s" link_id, created_date, created_by, modified_date, modified_by, position_wgs84, link_source, terminal_asset_id "+
         s" from ( ${queryFilter(query.replace("from asset a", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum "
 
       case _ => queryFilter(queryFetchPointAssets())
@@ -176,7 +176,6 @@ class MassTransitStopDao {
         propertyMaxCharacters = propertyMaxCharacters)
       val lrmId = r.nextLong
       val startMeasure = r.nextDouble()
-      val endMeasure = r.nextDouble()
       val linkId = r.nextString()
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
@@ -185,7 +184,7 @@ class MassTransitStopDao {
       val terminalId = r.nextLongOption
       MassTransitStopRow(id, nationalId, assetTypeId, point, linkId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, timeStamp, linkSource),
+        lrmPosition = PointAssetLRMPosition(lrmId, startMeasure, point, timeStamp, linkSource),
         municipalityCode = municipalityCode, persistedFloating = persistedFloating, terminalId = terminalId)
     }
   }
@@ -481,26 +480,26 @@ class MassTransitStopDao {
         sqlu"""
            update lrm_position
             set start_measure = $mValue,
-            end_measure = $mValue,
             link_id = $linkId,
             link_source = ${linkSource.value},
+            modified_date = current_timestamp,
             adjusted_timestamp = ${adjustedTimeStamp}
            where id = (
-            select lrm.id
+            select pos.id
             from asset a
             join asset_link al on al.asset_id = a.id
-            join lrm_position lrm on lrm.id = al.position_id
+            join lrm_position pos on pos.id = al.position_id
             where a.id = $id)
       """.execute
       case _ =>
         sqlu"""
            update lrm_position
-           set start_measure = $mValue, end_measure = $mValue, link_id = $linkId, link_source = ${linkSource.value}
+           set start_measure = $mValue, link_id = $linkId, modified_date = current_timestamp, link_source = ${linkSource.value}
            where id = (
-            select lrm.id
+            select pos.id
             from asset a
             join asset_link al on al.asset_id = a.id
-            join lrm_position lrm on lrm.id = al.position_id
+            join lrm_position pos on pos.id = al.position_id
             where a.id = $id)
       """.execute
     }
@@ -508,15 +507,15 @@ class MassTransitStopDao {
 
   def insertLrmPosition(id: Long, mValue: Double, linkId: String, linkSource: LinkGeomSource) {
     sqlu"""
-           insert into lrm_position (id, start_measure, end_measure, link_id, link_source)
-           values ($id, $mValue, $mValue, $linkId, ${linkSource.value})
+           insert into lrm_position (id, start_measure, link_id, link_source)
+           values ($id, $mValue, $linkId, ${linkSource.value})
       """.execute
   }
 
   def insertLrmPosition(id: Long, mValue: Double, linkId: String, linkSource: LinkGeomSource, sideCode: SideCode) {
     sqlu"""
-           insert into lrm_position (id, start_measure, end_measure, link_id, link_source, side_code)
-           values ($id, $mValue, $mValue, $linkId, ${linkSource.value}, ${sideCode.value})
+           insert into lrm_position (id, start_measure, link_id, link_source, side_code)
+           values ($id, $mValue, $linkId, ${linkSource.value}, ${sideCode.value})
       """.execute
   }
 
@@ -627,6 +626,9 @@ class MassTransitStopDao {
   def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
   }
+  def withIds(ids: Seq[Long])(query: String): String = {
+    query + s" where a.id in (${ids.mkString(",")})"
+  }
 
   def withTerminalId(terminalId: Long)(query: String): String = {
     query + s" where terminal_asset_id = $terminalId and (a.valid_to is null or a.valid_to > current_timestamp)"
@@ -653,10 +655,10 @@ class MassTransitStopDao {
   }
 
   def fetchTerminalFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String)] ={
-    val query = s"""select a.$idField, lrm.link_id
+    val query = s"""select a.$idField, pos.link_id
           from asset a
           join asset_link al on a.id = al.asset_id
-          join lrm_position lrm on al.position_id = lrm.id
+          join lrm_position pos on al.position_id = pos.id
           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'pysakin_tyyppi'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'

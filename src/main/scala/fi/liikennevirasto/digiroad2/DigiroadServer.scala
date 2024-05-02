@@ -33,7 +33,7 @@ trait DigiroadServer {
     holder.setInitParameter("cacheControl", "no-store, no-cache")
     context.addServlet(holder, "/index.html")
     
-    context.addServlet(classOf[OAGProxyServlet], "/maasto/*")
+    context.addServlet(classOf[MMLProxyServlet], "/maasto/*")
     context.addServlet(classOf[VKMProxyServlet], "/viitekehysmuunnin/*")
     context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
@@ -64,7 +64,7 @@ trait DigiroadServer {
   }
 }
 
-class OAGProxyServlet extends ProxyServlet {
+class MMLProxyServlet extends ProxyServlet {
 
   def regex = "(/(digiroad(-dev)?))?/(maasto)/(wmts)".r
   private val logger = LoggerFactory.getLogger(getClass)

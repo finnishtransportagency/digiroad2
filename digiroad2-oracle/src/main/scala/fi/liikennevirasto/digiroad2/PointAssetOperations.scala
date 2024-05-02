@@ -13,6 +13,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.client.RoadLinkInfo
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
@@ -24,7 +25,8 @@ sealed trait FloatingReason {
 case class ChangedPointAsset(pointAsset: PersistedPointAsset, link: RoadLink)
 
 object FloatingReason{
-  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue, TrafficDirectionNotMatch, TerminalChildless)
+  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad,
+    NoReferencePointForMValue, TrafficDirectionNotMatch, TerminalChildless, TerminatedRoad)
 
   def apply(intValue: Int): FloatingReason = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -67,6 +69,12 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val timeStamp: Long
   val linkSource: LinkGeomSource
   val propertyData: Seq[Property]
+
+  def getValidityDirection: Option[Int] = None
+  def getBearing: Option[Int] = None
+  def getProperty(property: String) : Option[PropertyValue] =
+    this.propertyData.find(_.publicId == property).getOrElse(throw new NoSuchElementException("Property not found"))
+      .values.map(_.asInstanceOf[PropertyValue]).headOption
 }
 
 trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
@@ -92,6 +100,10 @@ trait LightGeometry {
   val lon: Double
   val lat: Double
 }
+
+case class AssetUpdate(assetId: Long, lon: Double, lat: Double, linkId: String, mValue: Double,
+                       validityDirection: Option[Int], bearing: Option[Int], timeStamp: Long,
+                       floating: Boolean, floatingReason: Option[FloatingReason] = None)
 
 trait  PointAssetOperations{
   type IncomingAsset <: IncomingPointAsset
@@ -121,6 +133,8 @@ trait  PointAssetOperations{
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
   def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
   def createTimeStamp(offsetHours:Int=5): Long = LinearAssetUtils.createTimeStamp(offsetHours)
+  def createOperation(asset: PersistedAsset, adjustment: AssetUpdate): PersistedAsset = {throw new UnsupportedOperationException()}
+  def adjustmentOperation(asset: PersistedAsset, adjustment: AssetUpdate, link: RoadLinkInfo): Long = {throw new UnsupportedOperationException()}
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds,asyncMode=false)
     getByBoundingBox(user, bounds, roadLinks)
@@ -262,6 +276,15 @@ trait  PointAssetOperations{
     }
   }
 
+  protected def getByMunicipality(withFilter: String => String, newTransaction: Boolean = true): Seq[PersistedAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        fetchPointAssets(withFilter).toList
+      }
+    else fetchPointAssets(withFilter).toList
+
+  }
+
   def getById(id: Long): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkByLinkId(x.linkId) }
@@ -317,13 +340,13 @@ trait  PointAssetOperations{
   }
 
   def getPersistedAssetsByLinkIdWithoutTransaction(linkId: String): Seq[PersistedAsset] = {
-    val filter = s"where a.asset_type_id = $typeId and lp.link_Id = '$linkId'"
+    val filter = s"where a.asset_type_id = $typeId and pos.link_Id = '$linkId'"
     fetchPointAssets(withFilter(filter))
   }
 
   def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[String]): Seq[PersistedAsset] = {
     MassQuery.withStringIds(linkIds) { idTableName =>
-      val filter = s"join $idTableName i on i.id = lp.link_id where a.asset_type_id = $typeId"
+      val filter = s"join $idTableName i on i.id = pos.link_id where a.asset_type_id = $typeId"
       fetchPointAssets(withFilter(filter))
     }
   }
@@ -411,6 +434,10 @@ trait  PointAssetOperations{
     withFilter(s"Where a.asset_type_id = $typeId and $boundingBoxFilter")(query)
   }
 
+  def floatingUpdate(assetId: Long, floating: Boolean, floatingReason: Option[FloatingReason]): Unit = {
+    updateFloating(assetId, floating, floatingReason)
+  }
+
   protected def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]): Unit = sqlu"""update asset set floating = $floating where id = $id""".execute
 
   protected def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[RoadLinkLike]) : String = {
@@ -466,22 +493,41 @@ trait  PointAssetOperations{
     }
   }
 
-  def getValidityDirection(point: Point, roadLink: RoadLink, optBearing: Option[Int], twoSided: Boolean = false) : Int = {
-    if (twoSided)
-      BothDirections.value
-    else
-      SideCode.apply(optBearing match {
-        case Some(bearing) => getAssetValidityDirection(bearing)
-        case _ => getValidityDirectionByGeometry(point, roadLink.geometry)
-      }).value
+  def getAssetSideCodeByBearing(assetBearing: Int, roadLinkBearing: Int): Int = {
+    val toleranceInDegrees = 25
+
+    def getAngle(b1: Int, b2: Int): Int = {
+      180 - Math.abs(Math.abs(b1 - b2) - 180)
+    }
+
+    val reverseRoadLinkBearing =
+      if (roadLinkBearing - 180 < 0) {
+        roadLinkBearing + 180
+      } else {
+        roadLinkBearing - 180
+      }
+
+    if(getAngle(assetBearing, roadLinkBearing) <= toleranceInDegrees) SideCode.TowardsDigitizing.value
+    else if(Math.abs(assetBearing - reverseRoadLinkBearing) <= toleranceInDegrees) SideCode.AgainstDigitizing.value
+    else SideCode.Unknown.value
   }
 
-  def getValidityDirectionByGeometry(assetLocation: Point, geometry: Seq[Point]): Int = {
+  def getSideCode(point: Point, roadLink: RoadLink, optBearing: Option[Int], twoSided: Boolean = false) : Int = {
+    if (twoSided)
+      BothDirections.value
+    else {
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(point.x, point.y, 0), roadLink.geometry)
+      val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue)
+      val linkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue))
+      SideCode.apply(optBearing match {
+        case Some(bearing) => getAssetSideCodeByBearing(bearing, linkBearing)
+        case _ => getSideCodeByGeometry(point, roadLinkPoint, linkBearing)
+      }).value
+    }
 
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), geometry)
-    val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue)
-    val linkBearing = GeometryUtils.calculateBearing(geometry, Some(mValue))
+  }
 
+  def getSideCodeByGeometry(assetLocation: Point, roadLinkPoint: Option[Point], linkBearing: Int): Int = {
     val lonDifference = assetLocation.x - roadLinkPoint.get.x
     val latDifference = assetLocation.y - roadLinkPoint.get.y
 

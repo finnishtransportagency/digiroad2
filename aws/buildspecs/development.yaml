@@ -40,7 +40,7 @@ phases:
       - grunt deploy
       - sbt clean
       - sbt assembly
-      - docker build -f aws/fargate/Dockerfile --build-arg image=475079312496.dkr.ecr.eu-west-1.amazonaws.com/openjdk_8u191-jre-alpine:latest  -t $ECR_REPOSITORY_NAME:latest .
+      - docker build -f aws/fargate/Dockerfile --build-arg image=public.ecr.aws/docker/library/amazoncorretto:8-alpine-jre  -t $ECR_REPOSITORY_NAME:latest .
       - echo Post-build started on `date`
       - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:latest
       - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER

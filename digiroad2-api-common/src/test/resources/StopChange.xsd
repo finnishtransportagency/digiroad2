@@ -228,27 +228,31 @@
 
 	<xs:complexType name="StopAttribute">
 		<xs:annotation>
-			<xs:documentation>This element lists traffic types that this stop
-				supports.</xs:documentation>
+			<xs:documentation>This element lists traffic types that this stop supports.</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="StopType" type="xs:nonNegativeInteger" minOccurs="0" maxOccurs="unbounded">
-        <xs:annotation>
-          <xs:documentation>
-            This element defines type of stop. Stop can have multiple types. If there are no types on a stop, the type of the stop is undefined or unknown.
-            Type is specified as one of the following integers:
-            1 - Tram stop
-            2 - Local bus stop
-            3 - Express bus stop
-            4 - Non-stop express bus stop
-            5 - Virtual stop
-		    6 - Terminal stop
-          </xs:documentation>
-        </xs:annotation>
-      </xs:element>
-		</xs:sequence>
+			<xs:element name="StopType" maxOccurs="unbounded" minOccurs="0">
+				<xs:complexType>
+					<xs:annotation>
+						<xs:documentation>
+							This element defines type of stop. Stop can have multiple types. If there are no types on a stop, the type of the stop is undefined or unknown.
+							Type is specified as one of the following integers:
+						 	Digiroad code: 2 - Local bus stop, 				Vallu name:  LOCAL_BUS
+							Digiroad code: 3 - Express bus stop, 			Vallu name:  EXPRESS_BUS
+							Digiroad code: 4 - Non-stop express bus stop, 	Vallu name:  NON_STOP_EXPRESS_BUS
+							Digiroad code: 5 - Virtual stop, 				Vallu name:  VIRTUAL_STOP
+							Digiroad code: 6 - Terminal stop, 				Vallu name:  TERMINAL
+						</xs:documentation>
+					</xs:annotation>
+					<xs:simpleContent>
+						<xs:extension base="xs:string">
+							<xs:attribute type="xs:string" name="name" use="optional"/>
+						</xs:extension>
+					</xs:simpleContent>
+				</xs:complexType>
+			</xs:element>
+      </xs:sequence>
 	</xs:complexType>
-
 	<xs:simpleType name="BearingDescriptionType">
 		<xs:annotation>
 			<xs:documentation>This value is used to restrict directions returned.

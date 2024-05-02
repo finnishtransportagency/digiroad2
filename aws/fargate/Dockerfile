@@ -1,4 +1,4 @@
-ARG image="openjdk:8u191-jre-alpine"
+ARG image="amazoncorretto:8-alpine-jre"
 FROM ${image}
 ENV initialRamPercentage="-XX:InitialRAMPercentage=50.0"
 ENV maxRamPercentage="-XX:MaxRAMPercentage=95.0"
@@ -7,6 +7,8 @@ ENV otherParameter="-Djava.security.egd=file:/dev/./urandom -Duser.timezone=Euro
 ENV containerCPU=""
 ENV javaParameter="${initialRam} ${maxRamPercentage} ${containerCPU} ${otherParameter}"
 ENV batchMode="false"
+RUN apk update && \
+    apk del xz openssl
 RUN apk --no-cache add curl
 RUN mkdir /src
 RUN mkdir /src/main

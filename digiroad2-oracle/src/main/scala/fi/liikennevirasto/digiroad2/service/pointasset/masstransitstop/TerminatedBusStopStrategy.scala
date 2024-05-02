@@ -1,13 +1,13 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import java.util.NoSuchElementException
-
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, FloatingReason, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Position, Property, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopOperations._
+import fi.liikennevirasto.digiroad2.util.DataFixture.massTransitStopService.updateFloating
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
 class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform) {
@@ -19,6 +19,10 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
   }
   def changesOnDefaultValues(properties: Set[SimplePointAssetProperty], asset: PersistedMassTransitStop): Boolean = {
     properties.filter(prop => defaultChanges.contains(prop.publicId)).map(_.values).toSeq.diff(asset.propertyData.filter(prop => defaultChanges.contains(prop.publicId)).map(_.values)).nonEmpty
+  }
+
+  override def enrichBusStopsOperation(persistedStops: Seq[PersistedMassTransitStop], links: Seq[RoadLink]): Seq[PersistedMassTransitStop] = {
+    persistedStops
   }
 
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
@@ -45,6 +49,8 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
 
     municipalityValidation(asset.municipalityCode, roadLink.administrativeClass)
     massTransitStopDao.updateAssetLastModified(asset.id, username)
+    optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
+    updateFloating(asset.id, false, None)
     updatePropertiesForAsset(asset.id, properties.toSeq, roadLink.administrativeClass, asset.nationalId)
 
     val resultAsset = enrichBusStop(fetchAsset(asset.id))._1

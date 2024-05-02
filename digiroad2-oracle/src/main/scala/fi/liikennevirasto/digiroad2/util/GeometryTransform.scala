@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.{PointAssetForConversion, MassQueryParamsCoord, MassQueryResolve, RoadAddressBoundToAsset, VKMClient}
 import fi.liikennevirasto.digiroad2.client.viite.ViiteClientException
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
 import fi.liikennevirasto.digiroad2.{Point, RoadAddress, RoadAddressException, Track}
@@ -65,23 +65,8 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
       })
     }
   }
-
+  
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
-
-    def againstDigitizing(addr: RoadAddressForLink) = {
-      val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
-      val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
-      val newMValue = (addr.endAddrMValue - ((mValue-addr.startMValue) * addressLength / lrmLength)).toInt
-      RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue)
-    }
-
-    def towardsDigitizing (addr: RoadAddressForLink) = {
-      val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
-      val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
-      val newMValue = (((mValue-addr.startMValue) * addressLength) / lrmLength + addr.startAddrMValue).toInt
-      RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue)
-    }
-
     val roadAddress =
       try {
         roadAddressService.getByLrmPosition(linkId, mValue)
@@ -95,6 +80,24 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
     if(roadAddress.isEmpty && road.isDefined)
       return vkmClient.resolveAddressAndLocation(coord, heading, SideCode.apply(assetSideCode), road)
 
+    determinateRoadSide(mValue, assetSideCode, municipalityCode, roadAddress)
+  }
+  
+  private def againstDigitizing(addr: RoadAddressForLink, mValue: Double, municipalityCode: Option[Int]): RoadAddress = {
+    val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
+    val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
+    val newMValue = (addr.endAddrMValue - ((mValue - addr.startMValue) * addressLength / lrmLength)).toInt
+    RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue)
+  }
+
+  private def towardsDigitizing(addr: RoadAddressForLink, mValue: Double, municipalityCode: Option[Int]): RoadAddress = {
+    val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
+    val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
+    val newMValue = (((mValue - addr.startMValue) * addressLength) / lrmLength + addr.startAddrMValue).toInt
+    RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue)
+  }
+
+  private def determinateRoadSide(mValue: Double, assetSideCode: Int, municipalityCode: Option[Int], roadAddress: Option[RoadAddressForLink]): (RoadAddress, RoadSide) = {
     val roadSide = roadAddress match {
       case Some(addrSide) if addrSide.sideCode.value == assetSideCode => RoadSide.Right //TowardsDigitizing //
       case Some(addrSide) if addrSide.sideCode.value != assetSideCode => RoadSide.Left //AgainstDigitizing //
@@ -104,13 +107,36 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
     val address = roadAddress match {
       case Some(addr) if addr.track.eq(Track.Unknown) => throw new RoadAddressException("Invalid value for Track: %d".format(addr.track.value))
       case Some(addr) if addr.sideCode.value != assetSideCode =>
-        if (assetSideCode == SideCode.AgainstDigitizing.value) towardsDigitizing(addr) else againstDigitizing(addr)
+        if (assetSideCode == SideCode.AgainstDigitizing.value) towardsDigitizing(addr, mValue, municipalityCode) else againstDigitizing(addr, mValue, municipalityCode)
       case Some(addr) =>
-        if (assetSideCode == SideCode.TowardsDigitizing.value) towardsDigitizing(addr) else againstDigitizing(addr)
+        if (assetSideCode == SideCode.TowardsDigitizing.value) towardsDigitizing(addr, mValue, municipalityCode) else againstDigitizing(addr, mValue, municipalityCode)
       case None => throw new RoadAddressException("No road address found")
     }
 
-    (address, roadSide )
+    (address, roadSide)
+  }
+  def resolveMultipleAddressAndLocations(assets: Seq[PointAssetForConversion]): Seq[RoadAddressBoundToAsset] = {
+    val roadAddress = roadAddressService.getAllByLinkIds(assets.map(_.linkId))
+    val foundFromViite = assets.map(mapRoadAddressToAsset(roadAddress, _)).filter(_.isDefined).map(_.get)
+    val allReadyMapped = foundFromViite.map(_.asset)
+    val stillMissing = assets.filterNot(a => allReadyMapped.contains(a.id))
+    logger.info(s"still missing road address: ${stillMissing.size}")
+    val foundFromVKM = vkmClient.resolveAddressAndLocations(stillMissing.filter(_.road.isDefined).map(a => MassQueryResolve(a.id, a.coord, a.heading, SideCode.apply(a.sideCode.get), a.road)))
+    foundFromVKM ++ foundFromViite
+  }
+  private def mapRoadAddressToAsset(roadAddress: Seq[RoadAddressForLink], asset: PointAssetForConversion): Option[RoadAddressBoundToAsset] = {
+    // copy pasted from Viite code base Search API get by LRM
+    // will return the road addresses with the start and end measure in between mValue or start measure equal or greater than mValue
+    def selectRoadAddress(ra: RoadAddressForLink, asset: PointAssetForConversion): Boolean = {
+      val isBetween = ra.startMValue < asset.mValue && asset.mValue < ra.endMValue
+      ra.linkId == asset.linkId && (ra.startMValue >= asset.mValue || isBetween)
+    }
+    roadAddress.find(selectRoadAddress(_,asset)) match {
+      case Some(selected) =>
+        val (roadAddress, side) = determinateRoadSide(asset.mValue, asset.sideCode.get, asset.municipalityCode, Some(selected))
+        Some(RoadAddressBoundToAsset(asset.id, roadAddress, side))
+      case None => None
+    }
   }
 }
 

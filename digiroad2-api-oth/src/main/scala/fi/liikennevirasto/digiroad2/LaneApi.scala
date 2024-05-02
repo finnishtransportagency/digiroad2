@@ -14,6 +14,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 
@@ -24,6 +25,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   lazy val polygonTools = new PolygonTools
   lazy val laneService = new LaneService(roadLinkService, new DummyEventBus, roadAddressService)
   val apiId = "lane-api"
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 
   case class HomogenizedLane(laneCode: Long, laneTypeCode: Long, roadNumber: Long, roadPartNumber: Long, track: Long, startAddressM: Long, endAddressM: Long)
   case class InvalidRoadAddressRangeParamaterException(msg: String) extends Exception(msg)
@@ -65,15 +67,27 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       description "Example URL: /externalApi/lanes/lanes_in_municipality?municipality=235"
       )
 
+  val getLanesOnPoint =
+    (apiOperation[Long]("getLanesOnPoint")
+      .parameters(
+        queryParam[String]("linkId").description("LinkID for linear referencing"),
+        queryParam[Double]("mValue").description("M-Value for linear referencing, three decimal point accuracy")
+      )
+      tags "LaneApi"
+      summary "Get lanes on given linearly referenced point"
+      authorizations "Contact your service provider for more information"
+      description "Example URL: /externalApi/lanes/lanes_on_point?linkId=abb902fe-96a2-4423-b619-2af7f06f410a:1&mValue=50.567"
+      )
+
   get("/lanes_in_range", operation(getLanesInRoadAddressRange)) {
     contentType = formats("json") + "; charset=utf-8"
     ApiUtils.avoidRestrictions(apiId + "_range", request, params) { params =>
-      val roadNumber = params.getOrElse("road_number", halt(BadRequest("Missing parameters")))
+      val roadNumber = params.getOrElse("road_number",throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing parameters"))
       val track = params.get("track")
-      val startRoadPartNumber = params.getOrElse("start_part", halt(BadRequest("Missing parameters")))
-      val startAddrM = params.getOrElse("start_addrm", halt(BadRequest("Missing parameters")))
-      val endRoadPartNumber = params.getOrElse("end_part", halt(BadRequest("Missing parameters")))
-      val endAddrM = params.getOrElse("end_addrm", halt(BadRequest("Missing parameters")))
+      val startRoadPartNumber = params.getOrElse("start_part", throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing parameters"))
+      val startAddrM = params.getOrElse("start_addrm", throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing parameters"))
+      val endRoadPartNumber = params.getOrElse("end_part", throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing parameters"))
+      val endAddrM = params.getOrElse("end_addrm", throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing parameters"))
 
       val parameters = try {
         val trackParam = if(track.isDefined) Some(Track(track.get.toInt))
@@ -85,8 +99,8 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         params
       }
       catch {
-        case invalidRoadNumberException: InvalidRoadAddressRangeParamaterException => halt(BadRequest(invalidRoadNumberException.getMessage))
-        case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
+        case invalidRoadNumberException: InvalidRoadAddressRangeParamaterException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,invalidRoadNumberException.getMessage)
+        case _: NumberFormatException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid parameters")
       }
 
       lanesInRoadAddressRangeToApi(parameters)
@@ -98,14 +112,38 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     ApiUtils.avoidRestrictions(apiId + "_municipality", request, params) { params =>
       try {
         val municipalityParameter = params.get("municipality")
-        if (municipalityParameter.isEmpty) halt(BadRequest("Missing municipality parameter"))
+        if (municipalityParameter.isEmpty)  throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing municipality parameter")
         else {
           val municipalityNumber = municipalityParameter.get.toInt
           lanesInMunicipalityToApi(municipalityNumber)
         }
       }
       catch {
-        case _: NumberFormatException => halt(BadRequest("Missing or invalid municipality parameter"))
+        case _: NumberFormatException =>  throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing or invalid municipality parameter")
+      }
+    }
+  }
+
+  get("/lanes_on_point", operation(getLanesOnPoint)) {
+    contentType = formats("json") + "; charset=utf-8"
+    ApiUtils.avoidRestrictions(apiId + "_point", request, params) { params =>
+      try {
+        val linkIdParam = params.get("linkId")
+        val mValueParam = params.get("mValue")
+        if (linkIdParam.isEmpty) throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing linkId parameter")
+        if (mValueParam.isEmpty) throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mValue parameter")
+        else {
+          val linkId = linkIdParam.get
+          val mValue = mValueParam.get.toDouble
+          lanesOnPointToApi(linkId, mValue)
+        }
+      }
+      catch {
+        case _: RoadLinkNotFoundException => throw DigiroadApiError(HttpStatusCodeError.NOT_FOUND,s"No road link found with given linkID")
+        case _: NumberFormatException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid mValue parameter")
+        case e: Exception =>
+          logger.error(s"Exception thrown processing /lanes_on_point request. Type: ${e.getClass.getSimpleName}, message: ${e.getMessage}")
+          throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Something went wrong")
       }
     }
   }
@@ -125,7 +163,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
     val roadLinksFiltered = roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
     val roadLinksGrouped = roadLinksFiltered.groupBy(_.linkId).mapValues(_.head)
-    val lanes = laneService.getLanesByRoadLinks(roadLinksFiltered, adjust = false)
+    val lanes = laneService.getLanesByRoadLinks(roadLinksFiltered)
 
     val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(roadLink => {
       val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
@@ -143,7 +181,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val (lanesWithRoadAddress, roadLinksGrouped) = try {
       laneService.getLanesInRoadAddressRange(roadAddressRange)
     } catch {
-      case rae: RoadAddressException => halt(BadRequest("Could not fetch lanes for given road address range, check that given road address range is valid"))
+      case rae: RoadAddressException =>  throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Could not fetch lanes for given road address range, check that given road address range is valid")
     }
     val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
     val homogenousLanes = homogenizeTwoDigitLanes(twoDigitLanes, roadLinksGrouped)
@@ -201,5 +239,35 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     }).values.toSeq
   }
 
+  def lanesOnPointToApi(linkId: String, mValue: Double): Seq[mutable.LinkedHashMap[String, Any]] = {
+    val (lanes, roadLink) = laneService.getLanesAndRoadLinkOnLinearReferencePoint(linkId, mValue)
+    lanes.map(laneToApi => {
+      val municipalityCode = roadLink.municipalityCode
+      val roadName = roadLink.roadNameIdentifier.getOrElse("")
+      val roadNumber = laneToApi.roadNumber.getOrElse("")
+      val roadPartNumber = laneToApi.roadPartNumber.getOrElse("")
+      val track = laneToApi.track.getOrElse("")
+      val startAddrM = laneToApi.startAddrM.getOrElse("")
+      val endAddrM = laneToApi.endAddrM.getOrElse("")
+      val laneCode = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_code").asInstanceOf[Int]
+      val laneType = laneService.getPropertyValue(laneToApi.laneAttributes, "lane_type").toString.toInt
+
+      mutable.LinkedHashMap(
+        "laneCode" -> laneCode,
+        "laneType" -> laneType,
+        "municipality" -> municipalityCode,
+        "linkId" -> laneToApi.linkId,
+        "startMeasure" -> laneToApi.startMeasure,
+        "endMeasure" -> laneToApi.endMeasure,
+        "sideCode" -> laneToApi.sideCode,
+        "roadName" -> roadName,
+        "roadNumber" -> roadNumber,
+        "roadPartNumber" -> roadPartNumber,
+        "track" -> track,
+        "startAddr" -> startAddrM,
+        "endAddr" -> endAddrM
+      )
+    })
+  }
 
 }

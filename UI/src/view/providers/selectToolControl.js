@@ -1,7 +1,6 @@
 (function(root) {
     root.SelectToolControl = function(application, layer, map, isMultipleLinkSelectionAllowed, options) {
 
-        var mapDoubleClickEventKey;
         var enabled = false;
         var initialized = false;
         var isPolygonActive = false;
@@ -192,13 +191,6 @@
                 map.addInteraction(multiSelectInteraction);
                 initialized = true;
             }
-            mapDoubleClickEventKey = map.on('dblclick', function () {
-                _.defer(function(){
-                    if(selectInteraction.getFeatures().getLength() < 1 && zoomlevels.getViewZoom(map) <= 13 && enabled){
-                        map.getView().setZoom(zoomlevels.getViewZoom(map)+1);
-                    }
-                });
-            });
             toggleDragBox();
           }
         };
@@ -209,8 +201,6 @@
             isRectangleActive = false;
             map.removeInteraction(drawSquare);
             map.removeInteraction(drawInteraction);
-            ol.Observable.unByKey(mapDoubleClickEventKey);
-
         };
 
         var activePolygon = function(){

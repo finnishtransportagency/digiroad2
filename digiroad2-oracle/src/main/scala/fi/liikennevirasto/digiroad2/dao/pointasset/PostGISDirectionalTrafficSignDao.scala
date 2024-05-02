@@ -44,21 +44,24 @@ case class DirectionalTrafficSign(id: Long, linkId: String,
                                   modifiedAt: Option[DateTime] = None,
                                   geometry: Seq[Point] = Nil,
                                   linkSource: LinkGeomSource,
-                                  externalId: Option[String] = None) extends PersistedPointAsset
+                                  externalId: Option[String] = None) extends PersistedPointAsset {
+  override def getValidityDirection: Option[Int] = Some(this.validityDirection)
+  override def getBearing: Option[Int] = this.bearing
+}
 
 object PostGISDirectionalTrafficSignDao {
   def fetchByFilter(queryFilter: String => String): Seq[DirectionalTrafficSign] = {
     val query =
       s"""
-         select a.id, lrm.link_id, a.geometry, lrm.start_measure, a.floating, lrm.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
+         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
           case
             when ev.name_fi is not null then ev.name_fi
             when tpv.value_fi is not null then tpv.value_fi
             else null
-          end as display_value, lrm.side_code, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, lrm.link_source, a.external_id
+          end as display_value, pos.side_code, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, pos.link_source, a.external_id
          from asset a
          join asset_link al on a.id = al.asset_id
-         join lrm_position lrm on al.position_id = lrm.id
+         join lrm_position pos on al.position_id = pos.id
          join property p on a.asset_type_id = p.asset_type_id
          left join text_property_value tpv on (tpv.property_id = p.id AND tpv.asset_id = a.id)
          left join multiple_choice_value mcv ON mcv.asset_id = a.id and mcv.property_id = p.id AND p.PROPERTY_TYPE = 'checkbox'
@@ -133,7 +136,7 @@ object PostGISDirectionalTrafficSignDao {
         propertyRequired = propertyRequired,
         propertyValue = propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString,
         propertyDisplayValue = propertyDisplayValue.orNull)
-      val validityDirection = r.nextInt()
+      val validityDirection = r.nextIntOption()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
@@ -142,7 +145,7 @@ object PostGISDirectionalTrafficSignDao {
       val linkSource = r.nextInt()
       val externalId = r.nextStringOption()
 
-      DirectionalTrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, validityDirection,
+      DirectionalTrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, validityDirection.getOrElse(99),
         bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), externalId = externalId)
     }
   }
@@ -154,8 +157,8 @@ object PostGISDirectionalTrafficSignDao {
     sqlu"""
         insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
         values ($id, 240, $username, current_timestamp, $municipality, ${sign.bearing}, $floating);
-        insert into lrm_position(id, start_measure, end_measure, link_id, side_code)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection});
+        insert into lrm_position(id, start_measure, link_id, side_code)
+        values ($lrmPositionId, $mValue, ${sign.linkId}, ${sign.validityDirection});
         insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
     """.execute
@@ -168,15 +171,19 @@ object PostGISDirectionalTrafficSignDao {
 
   def create(sign: IncomingDirectionalTrafficSign, mValue: Double,  municipality: Int, username: String,
              createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime],
-             externalIdFromUpdate: Option[String]): Long = {
+             externalIdFromUpdate: Option[String], fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None,
+             modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
+
+    val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
+    val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
 
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
        insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $username, current_timestamp);
-        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp);
+        values ($id, $externalIdFromUpdate, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $modifiedBy, $modifiedAt);
+        insert into lrm_position(id, start_measure, link_id, side_code, modified_date)
+        values ($lrmPositionId, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp);
        insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
     """.execute
@@ -187,9 +194,9 @@ object PostGISDirectionalTrafficSignDao {
     id
   }
 
-  def update(id: Long, sign: IncomingDirectionalTrafficSign, mValue: Double, municipality: Int, username: String) = {
+  def update(id: Long, sign: IncomingDirectionalTrafficSign, mValue: Double, municipality: Int, username: String, fromPointAssetUpdater: Boolean = false) = {
     sqlu""" update asset set municipality_code = $municipality, bearing=${sign.bearing} where id = $id """.execute
-    updateAssetModified(id, username).execute
+    if (!fromPointAssetUpdater) updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
     deleteTextProperty(id, getTextPropertyId).execute
 
@@ -198,7 +205,8 @@ object PostGISDirectionalTrafficSignDao {
        set
        start_measure = $mValue,
        link_id = ${sign.linkId},
-       side_code = ${sign.validityDirection}
+       side_code = ${sign.validityDirection},
+       modified_date = current_timestamp
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
 

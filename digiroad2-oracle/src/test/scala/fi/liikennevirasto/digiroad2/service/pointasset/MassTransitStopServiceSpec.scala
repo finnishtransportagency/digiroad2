@@ -62,7 +62,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     RoadLinkFetched(randomLinkId6, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers),
     RoadLinkFetched(randomLinkId7, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("ROADNAME_SE" -> "roadname_se",
       "ROADNAME_FI" -> "roadname_fi")))
-  
+
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
@@ -160,8 +160,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       massTransitStops.find(_.id == 300000).get.stopTypes should be(Seq(2))
-      massTransitStops.find(_.id == 300001).get.stopTypes.sorted should be(Seq(2, 3, 4))
-      massTransitStops.find(_.id == 300003).get.stopTypes.sorted should be(Seq(2, 3))
+      massTransitStops.find(_.id == 300001).get.stopTypes should be(Seq(2))
+      massTransitStops.find(_.id == 300003).get.stopTypes.sorted should be(Seq(1,2))
     }
   }
 
@@ -185,53 +185,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(User(0, "test", Configuration()), boundingBoxWithKauniainenAssets)
       stops should not be(empty)
-    }
-  }
-
-  ignore("Stop floats if road link does not exist") {
-    runWithRollback {
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      stops.find(_.id == 300000).map(_.floating) should be(Some(true))
-    }
-  }
-
-  ignore("Stop floats if stop and roadlink municipality codes differ") {
-    runWithRollback {
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      stops.find(_.id == 300004).map(_.floating) should be(Some(true))
-    }
-  }
-
-  ignore("Stop floats if stop is too far from linearly referenced location") {
-    runWithRollback {
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      stops.find(_.id == 300008).map(_.floating) should be(Some(true))
-    }
-  }
-
-  ignore("Persist mass transit stop floating status change") {
-    runWithRollback {
-      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      val floating: Option[Boolean] = sql"""select floating from asset where id = 300008""".as[Boolean].firstOption
-      floating should be(Some(true))
-    }
-  }
-
-  ignore("Persist mass transit stop floating direction not match") {
-    runWithRollback {
-    val massTransitStopDao = new MassTransitStopDao
-    val roadLink = RoadLink(randomLinkId6, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, randomLinkId6, 2,
-      Seq(
-        SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-        SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))) //TowardsDigitizin
-      )), "masstransitstopservice_spec", roadLink)
-
-      val stops = RollbackMassTransitStopService.getByBoundingBox(
-      userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
-      stops.find(_.id == id).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(id) should be(Some(FloatingReason.TrafficDirectionNotMatch))
     }
   }
 
@@ -460,7 +413,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("When moving over 50 meter and expiring in OthBusStopLifeCycle strategy send vallu message "){
+  test("Given a ELY administrated Motorway bus stop; " +
+    "When the bus stop is moved over 50 meters; " +
+    "Then the bus stop's nationalId should not change and the bus stop should not be expired"){
     runWithRollback {
       val linkId = randomLinkId1
       val municipalityCode = 91
@@ -479,25 +434,74 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
         (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
       )
-      val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections,
+      val roadLink = RoadLink(linkId, geometry, 120, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
       val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
+      val oldAsset = service.getMassTransitStopById(oldAssetId)._1.get
       val position = Some(Position(60.0, 0.0, randomLinkId1, None))
       val updatedAsset =service.updateExistingById(oldAssetId, position, Set.empty, "user", (_,_) => Unit)
-      // check if new asset has same properties as old one
+
       updatedAsset.propertyData.find(p=>p.publicId =="nimi_suomeksi" ).get.values
         .head.asInstanceOf[PropertyValue].propertyValue should be("value is copied")
-
       updatedAsset.propertyData.find(p=>p.publicId =="pysakin_tyyppi" ).get.values
         .head.asInstanceOf[PropertyValue].propertyValue should be("1")
-
       updatedAsset.propertyData.find(p=>p.publicId =="tietojen_yllapitaja" ).get.values
         .head.asInstanceOf[PropertyValue].propertyValue should be("2")
-
       updatedAsset.propertyData.find(p=>p.publicId =="vaikutussuunta" ).get.values
         .head.asInstanceOf[PropertyValue].propertyValue should be("2")
 
-      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
+      updatedAsset.nationalId should be(oldAsset.nationalId)
+
+      verify(eventbus, times(2)).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+
+      //Check that no expiration message was sent
+      verify(eventbus, never()).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
+    }
+  }
+
+  test("Given a HSL administrated Motorway bus stop; " +
+    "When the bus stop is moved over 50 meters; " +
+    "Then the bus stop's nationalId should not change and the bus stop should not be expired") {
+    runWithRollback {
+      val linkId = randomLinkId1
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0, 0.0), Point(120.0, 0.0))
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
+      val properties = List(
+        SimplePointAssetProperty("nimi_suomeksi", List(PropertyValue("value is copied"))),
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))),
+        SimplePointAssetProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01")))
+      )
+
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
+        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+      )
+      val roadLink = RoadLink(linkId, geometry, 120, State, 1, TrafficDirection.BothDirections,
+        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
+      val oldAsset = service.getMassTransitStopById(oldAssetId)._1.get
+      val position = Some(Position(60.0, 0.0, randomLinkId1, None))
+      val updatedAsset = service.updateExistingById(oldAssetId, position, Set.empty, "user", (_, _) => Unit)
+
+      updatedAsset.propertyData.find(p => p.publicId == "nimi_suomeksi").get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("value is copied")
+      updatedAsset.propertyData.find(p => p.publicId == "pysakin_tyyppi").get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("1")
+      updatedAsset.propertyData.find(p => p.publicId == "tietojen_yllapitaja").get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("3")
+      updatedAsset.propertyData.find(p => p.publicId == "vaikutussuunta").get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("2")
+
+      updatedAsset.nationalId should be(oldAsset.nationalId)
+
+      verify(eventbus, times(2)).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+
+      //Check that no expiration message was sent
+      verify(eventbus, never()).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
     }
   }
 
@@ -671,39 +675,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       liviId shouldNot be ("")
     }
   }
-  
-  test("Update existing masstransitstop if the new distance is greater than 50 meters"){
-    runWithRollback {
-      val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
-      val properties = List(
-        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
-      val linkId = randomLinkId1
-      val municipalityCode = 91
-      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
-      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
-        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
-      )
-      val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-
-      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
-      val oldAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $oldAssetId""".as[(Long, Int, String, String)].firstOption
-      oldAsset should be (Some(oldAssetId, municipalityCode, null, null))
-
-      val updatedAssetId = service.updateExistingById(oldAssetId, Some(Position(0, 51, linkId, Some(0))), Set(), "test",  (_, _) => Unit).id
-
-      val newAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $updatedAssetId""".as[(Long, Int, String, String)].firstOption
-      newAsset should be (Some(updatedAssetId, municipalityCode, null, null))
-
-      val expired = sql"""select case when a.valid_to <= current_timestamp then 1 else 0 end as expired from asset a where id = $oldAssetId""".as[(Boolean)].firstOption
-      expired should be(Some(true))
-    }
-  }
-  
   test("Should not copy existing masstransitstop if the new distance is less or equal than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
@@ -733,7 +705,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       expired should be(Some(false))
     }
   }
-  
+
   test("Send Vallus message when deleting stop"){
     runWithRollback {
       val linkId = randomLinkId1
@@ -759,7 +731,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
     }
   }
-  
+
   test("Updating the mass transit stop from others -> ELY should create a stop with liviID") {
     runWithRollback {
       val linkId1 = LinkIdGenerator.generateRandom()
@@ -778,10 +750,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val admin = props.find(_.publicId == "tietojen_yllapitaja").get
       val newAdmin = admin.copy(values = List(PropertyValue("2")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
-      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("1")))
       admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
       types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
-      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
@@ -812,10 +784,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val admin = props.find(_.publicId == "tietojen_yllapitaja").get
       val newAdmin = admin.copy(values = List(PropertyValue("3")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
-      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("1")))
       admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
       types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
-      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
@@ -833,7 +805,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, randomLinkId5, 2,
         Seq(
           SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("2"))),
-          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"), PropertyValue("3"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
           SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]]
@@ -870,9 +842,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(Private)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
 
       // hsl can not add liviID to bust stop in private road
       OthBusStopLifeCycleBusStopStrategy
@@ -887,9 +859,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(Municipality)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
 
       // hsl can not add liviID to bust stop in municipality road
       OthBusStopLifeCycleBusStopStrategy
@@ -905,9 +877,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(State)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
+        stopType(MassTransitStopOperations.BusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
+        stopType(MassTransitStopOperations.BusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
       OthBusStopLifeCycleBusStopStrategy
@@ -933,7 +905,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(Municipality)
       val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
 
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
@@ -943,121 +915,51 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val roadLink = roadLinkFactory(State)
       val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
 
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
     }
   }
 
-  test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, HSL"){
+  test("liviId when not terminated and bus or servicePoint, HSL"){
     runWithRollback {
       val roadLink = roadLinkFactory(State)
       val hsl =  MassTransitStopOperations.HSLPropertyValue
       val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      val longDistanceBusStop:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
-        stopType(MassTransitStopOperations.LongDistanceBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
       val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
         stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
 
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
       OthBusStopLifeCycleBusStopStrategy
-        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
-      OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
     }
   }
 
-  test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, Ely"){
+  test("liviId when not terminated and bus or servicePoint, Ely"){
     runWithRollback {
       val roadLink = roadLinkFactory(State)
       val ely =  MassTransitStopOperations.CentralELYPropertyValue
       val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      val longDistanceBusStop:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
-        stopType(MassTransitStopOperations.LongDistanceBusStopPropertyValue))
+        stopType(MassTransitStopOperations.BusStopPropertyValue))
       val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
         stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
 
       OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
       OthBusStopLifeCycleBusStopStrategy
-        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
-      OthBusStopLifeCycleBusStopStrategy
         .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
     }
   }
-  
+
   test ("Get enumerated property values") {
     runWithRollback {
       val propertyValues = RollbackMassTransitStopService.massTransitStopEnumeratedPropertyValues
       propertyValues.nonEmpty should be (true)
       propertyValues.forall(x => x._2.nonEmpty) should be (true)
       propertyValues.forall(x => x._1 != "") should be (true)
-    }
-  }
-
-  ignore("Stop floats if a State road has got changed to a road owned by municipality"){
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300006
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
-    }
-  }
-
-  ignore("Stop floats if a State road has got changed to a road owned to a private road"){
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
-    }
-  }
-
-  ignore("Stop floats if a Municipality road has got changed to a road owned by state"){
-    val vvhRoadLinks = List(
-      RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-    
-    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
-
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300006
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, Municipality)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
-    }
-  }
-
-  ignore("Stop floats if a Private road has got changed to a road owned by state"){
-    val vvhRoadLinks = List(
-      RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-    
-    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
-
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300006
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, Private)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
     }
   }
 
@@ -1098,7 +1000,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId).flatMap(prop => prop.values.headOption).map(_.asInstanceOf[PropertyValue].propertyValue)
   }
   test("Updating an existing stop should not create a new Livi ID") {
-     
+
     runWithRollback {
       val rad = RoadAddress(Some("235"), 110, 10, Track.Combined, 108)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((rad, RoadSide.Right))
@@ -1121,7 +1023,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       dbResult.head should be ("livi114873")
     }
   }
-  
+
   test("auto correct geometry with bounding box less than 3m") {
     runWithRollback {
       val linkId1 = LinkIdGenerator.generateRandom()
@@ -1238,10 +1140,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val admin = props.find(_.publicId == "tietojen_yllapitaja").get
       val newAdmin = admin.copy(values = List(PropertyValue("2")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
-      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("1")))
       admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
       types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
-      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
@@ -1249,6 +1151,61 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit})
       val livi = service.getMassTransitStopById(id);
       getLiviIdValue(livi._1.get.propertyData) should be (None)
+    }
+  }
+
+  test("a stop without tram type can not be against traffic direction") {
+    runWithRollback {
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val exception = intercept[Exception] {
+        RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, linkId, 2,
+          Seq(
+            SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+            SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+            SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3")))
+          )), "test", roadLink)
+      }
+      exception.getMessage should be("Invalid Mass Transit Stop direction")
+    }
+  }
+
+  test("a stop with tram type can be against traffic direction") {
+    runWithRollback {
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, linkId, 2,
+        Seq(
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3")))
+        )), "test", roadLink)
+    }
+  }
+
+  test("removing tram type from a stop against traffic direction throws exception") {
+    runWithRollback {
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val properties = Seq(
+        SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("1"))),
+        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+        SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3")))
+      )
+      val stopId = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, linkId, 2, properties
+        ), "test", roadLink)
+      val newProperties = Set(
+        SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+        SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("3")))
+      )
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(roadLink))
+      val exception = intercept[Exception] {
+        RollbackMassTransitStopService.updateExistingById(stopId, None, newProperties, "test", { (_, _) => Unit })
+      }
+      exception.getMessage should be("Invalid Mass Transit Stop direction")
     }
   }
 }

@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirec
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import org.joda.time.DateTime
+import org.json4s._
 
 trait Lane extends PolyLine{
   val id: Long
@@ -20,12 +21,22 @@ case class ChangedSegment(startMeasure: Double, startAddrM: Int, endMeasure: Dou
 
 case class LightLane ( value: Int, expired: Boolean,  sideCode: Int )
 
-case class PieceWiseLane ( id: Long, linkId: String, sideCode: Int, expired: Boolean, geometry: Seq[Point],
-                                startMeasure: Double, endMeasure: Double,
-                                endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
-                                createdBy: Option[String], createdDateTime: Option[DateTime],
-                                timeStamp: Long, geomModifiedDate: Option[DateTime], administrativeClass: AdministrativeClass,
-                           laneAttributes: Seq[LaneProperty],  attributes: Map[String, Any] = Map() ) extends Lane
+case class PieceWiseLane(id: Long, linkId: String, sideCode: Int, expired: Boolean, geometry: Seq[Point],
+                         startMeasure: Double, endMeasure: Double,
+                         endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
+                         createdBy: Option[String], createdDateTime: Option[DateTime],
+                         timeStamp: Long, geomModifiedDate: Option[DateTime], administrativeClass: AdministrativeClass,
+                         laneAttributes: Seq[LaneProperty], attributes: Map[String, Any] = Map()) extends Lane {
+  def roadNumber: Option[String] = attributes.get("ROAD_NUMBER").map(_.toString)
+
+  def roadPartNumber: Option[String] = attributes.get("ROAD_PART_NUMBER").map(_.toString)
+
+  def track: Option[String] = attributes.get("TRACK").map(_.toString)
+
+  def startAddrM: Option[String] = attributes.get("START_ADDR").map(_.toString)
+
+  def endAddrM: Option[String] = attributes.get("END_ADDR").map(_.toString)
+}
 
 case class PersistedLane ( id: Long, linkId: String, sideCode: Int, laneCode: Int, municipalityCode: Long,
                            startMeasure: Double, endMeasure: Double,
@@ -49,12 +60,19 @@ case class ViewOnlyLane(linkId: String, startMeasure: Double, endMeasure: Double
 
 case class SideCodesForLinkIds(linkId: String, sideCode: Int)
 
+case class OldLaneWithNewId(lane: PersistedLane, newId: Option[Long])
+
 sealed trait LaneValue {
   def toJson: Any
 }
 
-case class LanePropertyValue(value: Any)
-case class LaneProperty(publicId: String,  values: Seq[LanePropertyValue])
+case class LanePropertyValue(value: Any) {
+  def toJson: JValue = JString(value.toString)
+}
+case class LaneProperty(publicId: String,  values: Seq[LanePropertyValue], createdDate: Option[DateTime] = None,
+                        createdBy: Option[String] = None, modifiedDate: Option[DateTime] = None, modifiedBy: Option[String] = None) {
+  def toJson = List(JField("publicId", JString(publicId)), JField("values", JArray(values.map(_.toJson).toList)))
+}
 
 case class LaneRoadAddressInfo ( roadNumber: Long, startRoadPart: Long, startDistance: Long,
                                  endRoadPart: Long, endDistance: Long, track: Int )

@@ -12,14 +12,17 @@
   ],
   "containerProperties": {
     "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:latest",
+    "fargatePlatformConfiguration": {
+      "platformVersion": "1.4.0"
+    },
     "resourceRequirements" : [
       {
         "type": "MEMORY",
-        "value": "30720"
+        "value": "40960"
       },
       {
         "type": "VCPU",
-        "value": "4"
+        "value": "8"
       }
     ],
     "executionRoleArn": "arn:aws:iam::475079312496:role/DEV-batchSystem-BatchTaskRole-VGL42N9TANTI",
@@ -27,7 +30,7 @@
     "environment": [
       {
         "name": "containerCPU",
-        "value": "-XX:ActiveProcessorCount=4"
+        "value": "-XX:ActiveProcessorCount=8"
       },
       {
         "name": "speedLimitProvider",
@@ -67,7 +70,7 @@
       },
       {
         "name": "kgv.endpoint",
-        "value": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+        "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/"
       },
       {
         "name": "viiteRestApiEndPoint",
@@ -104,10 +107,6 @@
       {
         "name": "bonecp.username",
         "value": "digiroad2dbuser"
-      },
-      {
-        "name": "oag.username",
-        "value": "svc_clouddr"
       },
       {
         "name": "batchMode",
@@ -156,10 +155,6 @@
       {
         "name": "kgv.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/kgv.apikey"
-      },
-      {
-        "name": "oag.password",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.oag.basic.password"
       },
       {
         "name": "viite.apikey",

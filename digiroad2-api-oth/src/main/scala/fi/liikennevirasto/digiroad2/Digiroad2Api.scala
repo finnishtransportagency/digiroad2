@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
+import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ProhibitionService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop, ServicePointStopService}
@@ -91,7 +91,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val cyclingAndWalkingService: CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService,
                    val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
-                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService)
+                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService,
+                   val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = Digiroad2Context.autoProcessedLanesWorkListService,
+                   val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = Digiroad2Context.assetsOnExpiredLinksService,
+                   val roadLinkMissingReplacementService: RoadLinkReplacementWorkListService = Digiroad2Context.roadLinkReplacementWorkListService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -378,6 +381,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val massTransitStop = massTransitStopReturned._1.map { stop =>
 
       Map("id" -> stop.id,
+        "linkId" -> stop.linkId,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
         "lat" -> stop.lat,
@@ -867,7 +871,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int, administrativeClass: AdministrativeClass) = validateUserAccess(user)(municipalityCode, administrativeClass)
     properties.map { prop =>
-      roadLinkService.updateLinkProperties(prop, Option(user.username), municipalityValidation).map { roadLink =>
+      roadLinkService.updateLinkProperties(prop, Option(user.username), municipalityValidation, user.isOperator()).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
@@ -1257,22 +1261,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
     assets.foreach(usedService.validateCondition)
 
-    val updatedNumericalIds = if (valueOption.nonEmpty) {
-      try {
-        valueOption.map(usedService.update(existingAssetIds.toSeq, _, user.username)).getOrElse(Nil)
-      } catch {
-        case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
-        case e: IllegalArgumentException => halt(BadRequest("Property not found"))
-      }
-    } else {
-      usedService.clearValue(existingAssetIds.toSeq, user.username)
-    }
-
     try {
-      val createdIds = usedService.create(newLinearAssets, typeId, user.username)
-      updatedNumericalIds ++ createdIds
+      usedService.createOrUpdate(newLinearAssets, typeId, user.username, valueOption, existingAssetIds)
     } catch {
       case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
+      case e: IllegalArgumentException => halt(BadRequest("Property not found"))
     }
   }
 
@@ -1497,10 +1490,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     user.isOperator() match {
       case true =>
-        manoeuvreService.getInaccurateRecords()
+        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId)
       case false =>
-        manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
+        manoeuvreService.getInaccurateRecords(Manoeuvres.typeId,municipalityCode, Set(Municipality))
     }
+  }
+
+  get("/manoeuvreSamuutusWorkList") {
+    val user = userProvider.getCurrentUser()
+    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
+    workListItems.map(a=> Map("assetId" -> a.assetId, "links" -> a.links)).toList
   }
 
   delete("/laneWorkList") {
@@ -1521,7 +1520,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
     val workListItems = userHasRights match {
-      case true => laneWorkListService.getLaneWorkList
+      case true => laneWorkListService.getLaneWorkList()
       case false => halt(Forbidden("User not authorized to get items from lane work list"))
     }
 
@@ -1536,6 +1535,107 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "createdBy" -> item.createdBy)}))
   }
 
+  delete("/autoProcessedLanesWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isLaneMaintainer() || user.isOperator()
+    val itemIdsToDelete = userHasRights match{
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(Forbidden("User not authorized to delete items from generated lanes work list"))
+    }
+    itemIdsToDelete match {
+      case Some(ids) =>
+        autoProcessedLanesWorkListService.deleteFromAutoProcessedLanesWorkList(ids)
+      case None => halt(BadRequest("No item ids to delete provided"))
+    }
+  }
+
+  get("/autoProcessedLanesWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isLaneMaintainer() || user.isOperator()
+    val workListItems = userHasRights match {
+      case true => autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList()
+      case false => halt(Forbidden("User not authorized to get items from generated lanes work list"))
+    }
+
+    Map("items" -> workListItems.groupBy(_.propertyName)
+      .mapValues(_.map{ item =>
+        Map("id" -> item.id,
+          "linkId" -> item.linkId,
+          "propertyName" -> item.propertyName,
+          "newValue" -> item.newValue,
+          "oldValue" -> item.oldValue,
+          "startDates" -> item.startDates,
+          "createdAt" -> item.createdDate,
+          "createdBy" -> item.createdBy)}))
+  }
+
+  get("/assetsOnExpiredLinksWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val workListItems = userHasRights match {
+      case true => assetsOnExpiredLinksService.getAllWorkListAssets()
+      case false => halt(Forbidden("User not authorized for assetsOnExpiredLinksWorkList"))
+    }
+
+    Map("items" -> workListItems.groupBy(_.assetTypeId)
+      .mapValues(_.map { item =>
+        Map("id" -> item.id,
+          "assetType" -> item.assetTypeId,
+          "linkId" -> item.linkId,
+          "sideCode" -> item.sideCode,
+          "startMeasure" -> item.startMeasure,
+          "endMeasure" -> item.endMeasure,
+          "geometry" -> item.geometry,
+          "roadLinkExpiredDate" -> item.roadLinkExpiredDate)
+      })
+    )
+  }
+
+  delete("/assetsOnExpiredLinksWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val assetIdsToDeleteFromList = userHasRights match {
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(Forbidden("User not authorized to delete items from work list"))
+    }
+    assetIdsToDeleteFromList match {
+      case Some(assetIds) =>
+        assetsOnExpiredLinksService.deleteFromWorkList(assetIds, newTransaction = true)
+      case None => halt(BadRequest("No ids to delete provided"))
+    }
+  }
+
+  get("/roadLinkReplacementWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val workListItems = if (userHasRights) {
+      roadLinkMissingReplacementService.getMatchedLinksWorkList()
+    } else {
+      halt(Forbidden("User not authorized for roadLinkReplacementWorkList"))
+    }
+
+    Map("items" -> workListItems.map { item =>
+        Map("id" -> item.id,
+          "removedLinkId" -> item.removedLinkId,
+          "addedLinkId" -> item.addedLinkId)
+      })
+  }
+
+  delete("/roadLinkReplacementWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val idsToDeleteFromList = if (userHasRights) {
+      parsedBody.extractOpt[Set[Long]]
+    } else {
+      halt(Forbidden("User not authorized to delete items from work list"))
+    }
+    idsToDeleteFromList match {
+      case Some(assetIds) =>
+        roadLinkMissingReplacementService.deleteFromWorkList(assetIds, newTransaction = true)
+      case None => halt(BadRequest("No ids to delete provided"))
+    }
+  }
+
   get("/inaccurates") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
@@ -1548,7 +1648,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         getLinearAssetService(typeId).getInaccurateRecords(typeId, municipalityCode, Set(Municipality))
     }
   }
-
+  
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val optionalValue = (parsedBody \ "value").extractOpt[SpeedLimitValue]
@@ -1556,13 +1656,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
       case Some(values) =>
-        val updatedIds = speedLimitService.updateValues(ids, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
-        val createdIds = speedLimitService.create(newLimits, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).toSet
-        speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
+      val idsSavedOrUpdated = speedLimitService.createOrUpdateSpeedLimit(newLimits, values, user.username,ids,
+          validateUserAccess(user, Some(SpeedLimitAsset.typeId)),
+          validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _)
+        speedLimitService.getSpeedLimitAssetsByIds(idsSavedOrUpdated.toSet)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
-
+  
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
     speedLimitService.splitSpeedLimit(params("speedLimitId").toLong,
@@ -1572,7 +1673,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       user.username,
       validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _)
   }
-
+  
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
     speedLimitService.separateSpeedLimit(params("speedLimitId").toLong,
@@ -1581,7 +1682,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       user.username,
       validateUserAccess(user, Some(SpeedLimitAsset.typeId)))
   }
-
+  
   post("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val newLimit = NewLimit((parsedBody \ "linkId").extract[String],
@@ -1590,10 +1691,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val c = (parsedBody \ "value").extract[SpeedLimitValue]
 
-    speedLimitService.create(Seq(newLimit),
+    speedLimitService.createOrUpdateSpeedLimit(Seq(newLimit),
       (parsedBody \ "value").extract[SpeedLimitValue],
       user.username,
-      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).headOption match {
+      Seq.empty[Long],
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _,
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _
+    ).headOption match {
       case Some(id) => speedLimitService.getSpeedLimitById(id)
       case _ => BadRequest("Speed limit creation failed")
     }
@@ -1717,7 +1821,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         validateBoundingBox(boundingRectangle)
       }
       LogUtils.time(logger, "TEST LOG Get manoeuvres by boundingBox total operation") {
-        manoeuvreService.getByBoundingBox(boundingRectangle, Set())
+        manoeuvreService.getByBoundingBox(boundingRectangle, Set[Int]())
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
@@ -1754,7 +1858,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
-
+  
   put("/manoeuvres") {
     val user = userProvider.getCurrentUser()
     val manoeuvreUpdates: Map[Long, ManoeuvreUpdates] = parsedBody
@@ -2383,7 +2487,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
-
+  
   post("/lanes") {
     val user = userProvider.getCurrentUser()
 
@@ -2396,7 +2500,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRightsForLanes(linkIds, user)
     laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username, sideCodesForLinks)
   }
-
+  
   post("/lanesByRoadAddress") {
     val user = userProvider.getCurrentUser()
 
@@ -2408,6 +2512,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRightsForRoadAddress(laneRoadAddressInfo, user)
     try {
       laneService.processLanesByRoadAddress(incomingLanes, laneRoadAddressInfo, user.username)
+      
     } catch {
       case e: InvalidParameterException => halt(BadRequest(e.getMessage))
     }

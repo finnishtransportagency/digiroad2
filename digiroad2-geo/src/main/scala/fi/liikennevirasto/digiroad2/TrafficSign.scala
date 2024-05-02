@@ -2913,6 +2913,7 @@ case object DrivingInServicePurposesAllowed  extends AdditionalPanelsType {
   override val TRvalue = 825 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(872)
   override val NewLawCode = "H25"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object EmergencyPhoneAndExtinguisher  extends AdditionalPanelsType {

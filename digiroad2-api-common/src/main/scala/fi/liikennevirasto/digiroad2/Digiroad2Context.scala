@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
@@ -12,17 +13,17 @@ import fi.liikennevirasto.digiroad2.middleware._
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process._
-import fi.liikennevirasto.digiroad2.service._
+import fi.liikennevirasto.digiroad2.service.{AssetsOnExpiredLinksService, _}
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
-import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{SpeedLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform, JsonSerializer}
-import fi.liikennevirasto.digiroad2.vallu.ValluSender
+import fi.liikennevirasto.digiroad2.vallu.{ValluSender, ValluStoreStopChangeMessage}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.TimeUnit
@@ -40,11 +41,15 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 
   def persistedAssetChanges(busStop: PersistedMassTransitStop,deleteEvent:Boolean = false) = {
     withDynSession {
-      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, newTransaction = false)
-      val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
-      ValluSender.postToVallu(massTransitStop)
-      if(!deleteEvent)
-        massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
+      val busStopTypes = ValluStoreStopChangeMessage.getPropertyValuesByPublicId("pysakin_tyyppi", busStop.propertyData).map(x => x.propertyValue.toLong)
+      val justTram = busStopTypes.size == 1 && busStopTypes.contains(1)
+      if (!justTram) {
+        val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, newTransaction = false)
+        val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
+        ValluSender.postToVallu(massTransitStop)
+        if (!deleteEvent)
+          massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
+      }
     }
   }
 }
@@ -189,11 +194,51 @@ class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSig
   }
 }
 
-class LaneWorkListInsertItem(laneWorkListService: LaneWorkListService) extends Actor {
+class RoadLinkPropertyChangedActor(laneService: LaneService) extends Actor {
   def receive = {
     case linkPropertyChange: LinkPropertyChange =>
-      laneWorkListService.insertToLaneWorkList(linkPropertyChange)
-    case _ => println("LaneWorkListInsertItem: Received unknown message")
+      laneService.processRoadLinkPropertyChange(linkPropertyChange)
+    case _ => println("RoadLinkPropertyChangedActor: Received unknown message")
+  }
+}
+
+class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
+  val logger = LoggerFactory.getLogger(getClass)
+  def receive: Receive = {
+    case a: AssetUpdateActor =>
+      lazy val eventbus = new DummyEventBus
+      lazy val roadLinkService: RoadLinkService = {
+        new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), eventbus, new JsonSerializer)
+      }
+      def getLinearAssetService(typeId: Int): LinearAssetOperations = {
+        typeId match {
+          case MaintenanceRoadAsset.typeId => new MaintenanceService(roadLinkService, eventbus)
+          case PavedRoad.typeId => new PavedRoadService(roadLinkService, eventbus)
+          case RoadWidth.typeId => new RoadWidthService(roadLinkService, eventbus)
+          case Prohibition.typeId => new ProhibitionService(roadLinkService, eventbus)
+          case HazmatTransportProhibition.typeId => new HazmatTransportProhibitionService(roadLinkService, eventbus)
+          case EuropeanRoads.typeId | ExitNumbers.typeId => new TextValueLinearAssetService(roadLinkService, eventbus)
+          case CareClass.typeId | CarryingCapacity.typeId | LitRoad.typeId => new DynamicLinearAssetService(roadLinkService, eventbus)
+          case HeightLimitInfo.typeId => new LinearHeightLimitService(roadLinkService, eventbus)
+          case LengthLimit.typeId => new LinearLengthLimitService(roadLinkService, eventbus)
+          case WidthLimitInfo.typeId => new LinearWidthLimitService(roadLinkService, eventbus)
+          case TotalWeightLimit.typeId => new LinearTotalWeightLimitService(roadLinkService, eventbus)
+          case TrailerTruckWeightLimit.typeId => new LinearTrailerTruckWeightLimitService(roadLinkService, eventbus)
+          case AxleWeightLimit.typeId => new LinearAxleWeightLimitService(roadLinkService, eventbus)
+          case BogieWeightLimit.typeId => new LinearBogieWeightLimitService(roadLinkService, eventbus)
+          case MassTransitLane.typeId => new MassTransitLaneService(roadLinkService, eventbus)
+          case NumberOfLanes.typeId => new NumberOfLanesService(roadLinkService, eventbus)
+          case DamagedByThaw.typeId =>  new DamagedByThawService(roadLinkService, eventbus)
+          case RoadWorksAsset.typeId => new RoadWorkService(roadLinkService, eventbus)
+          case ParkingProhibition.typeId => new ParkingProhibitionService(roadLinkService, eventbus)
+          case CyclingAndWalking.typeId => new CyclingAndWalkingService(roadLinkService, eventbus)
+          case SpeedLimitAsset.typeId => new SpeedLimitService(eventbus,roadLinkService)
+          case _ => linearAssetService
+        }
+      }
+      if (a.roadLinkUpdate) getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId, adjustSideCode = true)
+      else getLinearAssetService(a.typeId).adjustLinearAssetsAction(a.linksIds,a.typeId)
+    case _ => logger.info("AssetUpdater: Received unknown message")
   }
 }
 
@@ -239,8 +284,8 @@ object Digiroad2Context {
   val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignService, trafficSignManager), name = "trafficSignUpdate")
   eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
-  val laneWorkListInsert = system.actorOf(Props(classOf[LaneWorkListInsertItem], laneWorkListService), name = "laneWorkListInsert")
-  eventbus.subscribe(laneWorkListInsert, "laneWorkList:insert")
+  val roadLinkPropertyChanged = system.actorOf(Props(classOf[RoadLinkPropertyChangedActor], laneService), name = "roadLinkPropertyChanged")
+  eventbus.subscribe(roadLinkPropertyChanged, "roadLinkProperty:changed")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
@@ -272,8 +317,27 @@ object Digiroad2Context {
   val pedestrianCrossingVerifier = system.actorOf(Props(classOf[PedestrianCrossingValidation], pedestrianCrossingValidator), name = "pedestrianCrossingValidator")
   eventbus.subscribe(pedestrianCrossingVerifier, "pedestrianCrossing:Validator")
 
+  val assetUpdater = system.actorOf(Props(classOf[AssetUpdater], linearAssetService), name = "linearAssetUpdater")
+  eventbus.subscribe(assetUpdater, "linearAssetUpdater")
+
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
+  }
+  private def clientBuilder(maxConnTotal: Int = 1000,
+                            maxConnPerRoute: Int = 1000,
+                            timeout:Int = 60*1000
+                           ): CloseableHttpClient = {
+    HttpClientBuilder.create()
+      .setDefaultRequestConfig(
+        RequestConfig.custom()
+          .setCookieSpec(CookieSpecs.STANDARD)
+          .setSocketTimeout(timeout)
+          .setConnectTimeout(timeout) 
+          .build()
+      )
+      .setMaxConnTotal(maxConnTotal)
+      .setMaxConnPerRoute(maxConnPerRoute)
+      .build()
   }
 
   lazy val assetPropertyService: AssetPropertyService = {
@@ -305,12 +369,10 @@ object Digiroad2Context {
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint,
-      HttpClientBuilder.create().setDefaultRequestConfig(
-        RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()
-      ).build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, clientBuilder(
+      10000,10000))
   }
-
+  
   lazy val linearAssetDao: PostGISLinearAssetDao = {
     new PostGISLinearAssetDao()
   }
@@ -418,10 +480,6 @@ object Digiroad2Context {
     new LinearAssetService(roadLinkService, eventbus)
   }
 
-  lazy val onOffLinearAssetService: OnOffLinearAssetService = {
-    new OnOffLinearAssetService(roadLinkService, eventbus)
-  }
-
   lazy val prohibitionService: ProhibitionService = {
     new ProhibitionService(roadLinkService, eventbus)
   }
@@ -464,6 +522,18 @@ object Digiroad2Context {
 
   lazy val laneWorkListService: LaneWorkListService = {
     new LaneWorkListService()
+  }
+
+  lazy val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = {
+    new AutoProcessedLanesWorkListService()
+  }
+
+  lazy val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = {
+    new AssetsOnExpiredLinksService()
+  }
+
+  lazy val roadLinkReplacementWorkListService: RoadLinkReplacementWorkListService = {
+    new RoadLinkReplacementWorkListService()
   }
 
   lazy val municipalityAssetMappingService: MunicipalityAssetMappingService = {

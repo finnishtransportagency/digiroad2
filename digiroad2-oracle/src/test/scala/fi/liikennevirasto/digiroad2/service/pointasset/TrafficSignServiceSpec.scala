@@ -213,16 +213,17 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val propertiesToUpdate = properties60
 
-      val roadLink = RoadLink(randomLinkId1, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficSign(0.0, 20.0, randomLinkId1, properties, 1, None), "jakke", roadLink )
+      val roadLink = RoadLink(randomLinkId1, Seq(Point(2.0, 0.0), Point(4.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(3.15, 11.5, randomLinkId1, properties, 1, None), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingTrafficSign(0.0, 20.0, randomLinkId1, propertiesToUpdate, 1, None), roadLink, "test")
+      val newId = service.update(id, IncomingTrafficSign(asset.lon, asset.lat, randomLinkId1, propertiesToUpdate, 1, None, Some(asset.mValue)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
       updatedAsset.lon should be (asset.lon)
       updatedAsset.lat should be (asset.lat)
+      updatedAsset.mValue should be(asset.mValue)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("2")
@@ -239,7 +240,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
       val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
-      val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), None, false)
+      val validityDirection = service.getSideCode(Point(3, 2), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 2, testLinkId2, properties, validityDirection,  Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
       val id = service.createFromCoordinates(sign,  toRoadLink(closestLink), "test_user")
@@ -262,7 +263,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
       val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
-      val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), None, false)
+      val validityDirection = service.getSideCode(Point(3, 4), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 4, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
       val id = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")
@@ -285,7 +286,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
       val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
-      val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), None, false)
+      val validityDirection = service.getSideCode(Point(3, 2), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 2, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
       val id = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")
@@ -308,7 +309,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
     val bearing = Some(225)
     val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
-    val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
+    val validityDirection = service.getSideCode(Point(3, 4), toRoadLink(closestLink), bearing, false)
     val sign = IncomingTrafficSign(3, 4, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
     runWithRollback {
@@ -331,7 +332,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val bearing = Some(45)
       val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
-      val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, true)
+      val validityDirection = service.getSideCode(Point(3, 4), toRoadLink(closestLink), bearing, true)
       val sign = IncomingTrafficSign(3, 4, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
       val id = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")
@@ -353,7 +354,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val bearing = Some(225)
       val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
-      val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
+      val validityDirection = service.getSideCode(Point(3, 4), toRoadLink(closestLink), bearing, false)
       val sign = IncomingTrafficSign(3, 4, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
       val id = service.createFromCoordinates(sign,  toRoadLink(closestLink), "test_user")
@@ -626,7 +627,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(5, 4), r.geometry))
       val bearing = Some(GeometryUtils.calculateBearing(closestLink.geometry))
-      val validityDirection = service.getValidityDirection(Point(5, 4), toRoadLink(closestLink), bearing, false)
+      val validityDirection = service.getSideCode(Point(5, 4), toRoadLink(closestLink), bearing, false)
       val sign = IncomingTrafficSign(5, 4, testLinkId2, properties, validityDirection, bearing)
 
       val originalTrafficSignId = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")

@@ -4,9 +4,13 @@ import java.nio.charset.StandardCharsets
 import java.text.Normalizer
 import java.util.Base64
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Value}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import scala.util.Try
+import org.json4s.JsonAST.JString
+import org.json4s._
+
+import scala.util.{Failure, Success, Try}
 
 
 sealed trait LinkGeomSource{
@@ -33,7 +37,7 @@ sealed trait ConstructionType {
 }
 
 object ConstructionType{
-  val values = Set[ConstructionType](InUse, UnderConstruction, Planned, TemporarilyOutOfUse, UnknownConstructionType)
+  val values = Set[ConstructionType](InUse, UnderConstruction, Planned, TemporarilyOutOfUse, UnknownConstructionType, ExpiringSoon)
 
   def apply(intValue: Int): ConstructionType = {
     values.find(_.value == intValue).getOrElse(InUse)
@@ -43,6 +47,7 @@ object ConstructionType{
   case object UnderConstruction extends ConstructionType { def value = 2 }
   case object InUse extends ConstructionType { def value = 3 }
   case object TemporarilyOutOfUse extends ConstructionType { def value = 4 }
+  case object ExpiringSoon extends ConstructionType { def value = 5 }
   case object UnknownConstructionType extends ConstructionType { def value = 99 }
 }
 
@@ -166,6 +171,15 @@ object TrafficDirection {
     values.find(_.toString == stringValue).getOrElse(UnknownDirection)
   }
 
+  def switch(trafficDirection: TrafficDirection): TrafficDirection = {
+    trafficDirection match {
+      case TowardsDigitizing => AgainstDigitizing
+      case AgainstDigitizing => TowardsDigitizing
+      case UnknownDirection => UnknownDirection
+      case BothDirections => BothDirections
+    }
+  }
+
   def toSideCode(trafficDirection: TrafficDirection): SideCode = {
     trafficDirection match {
       case TowardsDigitizing => SideCode.TowardsDigitizing
@@ -228,11 +242,12 @@ object PointAssetStructure {
   case object Unknown extends PointAssetStructure { def value = 99; def description = "Ei tiedossa" }
 }
 
+case class SideCodeException(msg:String) extends Exception(msg)
 sealed trait SideCode {
   def value: Int
 }
 object SideCode {
-  val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown)
+  val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown, DoesNotAffectRoadLink)
 
   def apply(intValue: Int): SideCode = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -252,9 +267,20 @@ object SideCode {
       case AgainstDigitizing => TrafficDirection.AgainstDigitizing
       case BothDirections => TrafficDirection.BothDirections
       case Unknown => TrafficDirection.UnknownDirection
+      case DoesNotAffectRoadLink => throw SideCodeException("Cannot convert SideCode 0 into TrafficDirection")
     }
   }
-
+  def toTrafficDirectionForTrafficSign(sideCode: SideCode): Int = {
+    sideCode match {
+      case TowardsDigitizing => TrafficDirection.TowardsDigitizing.value
+      case AgainstDigitizing => TrafficDirection.AgainstDigitizing.value
+      case BothDirections => TrafficDirection.BothDirections.value
+      case Unknown => TrafficDirection.UnknownDirection.value
+      case DoesNotAffectRoadLink => DoesNotAffectRoadLink.value
+    }
+  }
+  
+  case object DoesNotAffectRoadLink extends SideCode { def value = 0 }
   case object BothDirections extends SideCode { def value = 1 }
   case object TowardsDigitizing extends SideCode { def value = 2 }
   case object AgainstDigitizing extends SideCode { def value = 3 }
@@ -268,11 +294,46 @@ sealed trait PavementClass {
   def value: Int
   def typeDescription: String
 }
+case class ConversionIntoPavementClassException(msg:String) extends Exception(msg) 
 object PavementClass {
   val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt, GravelSurface, GravelWearLayer, OtherCoatings, Unknown)
 
   def apply(value: Int): PavementClass = {
     values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def applyFromDynamicPropertyValue(value: Any): PavementClass = {
+    Try(apply(value.toString.toInt)) match {
+      case Success(pavementClass) => pavementClass
+      case Failure(_) => throw ConversionIntoPavementClassException(s"Cannot convert value(${value.toString}) into PavementClass")
+    }
+  }
+
+  def extractPavementClassValue(assetValue: Option[Value]): Option[PavementClass] = {
+    assetValue.collect {
+      case dynamicValue: DynamicValue =>
+        dynamicValue.value.properties.collectFirst {
+          case property if property.publicId == "paallysteluokka" && property.values.size > 0 =>
+            applyFromDynamicPropertyValue(property.values.head.value)
+        }
+    }.flatten
+  }
+  
+  def extractPavementClass(assetValue: Option[Value]): Option[DynamicPropertyValue] = {
+    assetValue.collect {
+      case dynamicValue: DynamicValue =>
+        dynamicValue.value.properties.collectFirst {
+          case property if property.publicId == "paallysteluokka" && property.values.size > 0 =>
+            property.values.head
+        }
+    }.flatten
+  }
+
+  def isReplaceablePavementClass(assetValue: Option[Value]) = {
+    extractPavementClassValue(assetValue) match {
+      case Some(pavementClass) => pavementClass == Unknown
+      case _ => true
+    }
   }
 
   case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
@@ -735,7 +796,9 @@ object DateParser {
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue], groupedId: Long = 0) extends AbstractProperty
-case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
+case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue]) {
+  def toJson = JObject(JField("publicId", JString(publicId)), JField("propertyType", JString(propertyType)), JField("required", JBool(required)), JField("values", JArray(values.map(_.toJson).toList)))
+}
 
 abstract class AbstractProperty {
   def publicId: String
@@ -743,13 +806,18 @@ abstract class AbstractProperty {
 }
 
 sealed trait PointAssetValue {
-  def toJson: Any
+  def toJson: JValue
 }
 
-case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None, groupedId: Long = 0) extends AbstractProperty
+case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None, groupedId: Long = 0) extends AbstractProperty {
+  def toJson = JObject(JField("id", JLong(id)), JField("publicId", JString(publicId)), JField("propertyType", JString(propertyType)),
+    JField("required", JBool(required)), JField("values", JArray(values.map(_.toJson).toList)), JField("groupedId", JLong(groupedId)))
+}
 
 case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
-  override def toJson: Any = this
+  override def toJson: JValue = JObject(JField("id", JInt(panelType)), JField("panelInfo", JString(panelInfo)), JField("panelValue", JString(panelValue)),
+    JField("formPosition", JInt(formPosition)), JField("text", JString(text)), JField("size", JInt(size)), JField("coating_type", JInt(coating_type)),
+    JField("additional_panel_color", JInt(additional_panel_color)))
   def verifyCorrectInputOnAdditionalPanel: Unit = {
     if(AdditionalPanelColor.apply(additional_panel_color).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel color: ${additional_panel_color}")
     if(AdditionalPanelSize.apply(size).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel size: ${size}")
@@ -810,10 +878,22 @@ case object ColorOption2 extends AdditionalPanelColor { def value = 2; def prope
 case object ColorOption99 extends AdditionalPanelColor { def value = 99; def propertyDisplayValue = "Ei tietoa"}
 
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
-  override def toJson: Any = this
+  def toJson: JValue = JObject(JField("propertyValue", JString(propertyValue)), JField("propertyDisplayValue",
+    JString(propertyDisplayValue.getOrElse(null))))
 }
 
-case class DynamicPropertyValue(value: Any)
+case class DynamicPropertyValue(value: Any) {
+  def toJson = {
+    val valueObject = if (value.isInstanceOf[Map[String, Any]]) {
+      val valueToMap = value.asInstanceOf[Map[String, Any]]
+      Try(JObject(ValidityPeriodValue.toMap(ValidityPeriodValue.fromMap(valueToMap)).map(v => JField(v._1, JInt(v._2.toString.toInt))).toList))
+        .getOrElse(JObject(valueToMap.map(v => JField(v._1, JString(v._2.toString))).toList))
+    } else {
+      JString(value.toString)
+    }
+    JObject(JField("value", valueObject))
+  }
+}
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: String, bearing: Option[Int])
@@ -925,8 +1005,34 @@ object AssetTypeInfo {
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers, TrafficLights,
                     MaintenanceRoadAsset, TrafficSigns, StateSpeedLimit, TrWeightLimit, TrTrailerTruckWeightLimit, TrAxleWeightLimit,
                     TrBogieWeightLimit, TrHeightLimit, TrWidthLimit, Manoeuvres, CareClass, CarryingCapacity, AnimalWarnings, RoadWorksAsset,
-                    ParkingProhibition, CyclingAndWalking, Lanes,
+                    ParkingProhibition, CyclingAndWalking, Lanes, RoadLinkProperties,
                     UnknownAssetTypeId)
+
+  val validate: Set[AssetTypeInfo] = Set(MassTransitStopAsset, SpeedLimitAsset, TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
+    HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw, NumberOfLanes, MassTransitLane,
+    TrafficVolume, WinterSpeedLimit, Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
+    RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers, TrafficLights,
+    MaintenanceRoadAsset, TrafficSigns, StateSpeedLimit, CareClass, CarryingCapacity, RoadWorksAsset,
+    ParkingProhibition, CyclingAndWalking, Lanes)
+  
+  /**
+    * for updating all linear assets side code when traffic direction changes via UI
+    */
+  val linearAssets: Seq[AssetTypeInfo] = Seq(
+    SpeedLimitAsset, WinterSpeedLimit, TotalWeightLimit, TrailerTruckWeightLimit, AxleWeightLimit, BogieWeightLimit,
+    HeightLimit, LengthLimit, WidthLimit, RoadWorksAsset, ParkingProhibition, NumberOfLanes, HazmatTransportProhibition,
+    Prohibition, CyclingAndWalking, TrafficVolume, EuropeanRoads, ExitNumbers, RoadWidth, DamagedByThaw, MassTransitLane,
+    LitRoad, CarryingCapacity, CareClass, PavedRoad
+  )
+
+  val assetsWithValidityDirectionExcludingSpeedLimits = Seq(MassTransitLane.typeId, NumberOfLanes.typeId,
+    CyclingAndWalking.typeId, HazmatTransportProhibition.typeId, ParkingProhibition.typeId, Prohibition.typeId)
+
+  val physicalObjectsWithValidityDirection = Seq(MassTransitLane.typeId, NumberOfLanes.typeId, CyclingAndWalking.typeId,
+    ParkingProhibition.typeId)
+
+  val roadLinkLongAssets = Seq(SpeedLimitAsset.typeId, RoadWidth.typeId, EuropeanRoads.typeId, CyclingAndWalking.typeId,
+    CareClass.typeId, TrafficVolume.typeId, ExitNumbers.typeId, PavedRoad.typeId, HazmatTransportProhibition.typeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
@@ -953,18 +1059,18 @@ case object NumberOfLanes extends AssetTypeInfo { val typeId = 140; def geometry
 case object MassTransitLane extends AssetTypeInfo { val typeId = 160; def geometryType = "linear"; val label = "MassTransitLane"; val layerName = "massTransitLanes"; val nameFI = "Joukkoliikennekaistat"  }
 case object TrafficVolume extends AssetTypeInfo { val typeId = 170; def geometryType = "linear"; val label = "TrafficVolume"; val layerName = "trafficVolume"; val nameFI = "Liikennemäärä" }
 case object WinterSpeedLimit extends AssetTypeInfo { val typeId = 180; def geometryType = "linear"; val label = "WinterSpeedLimit"; val layerName = "winterSpeedLimits"; val nameFI = "Talvinopeusrajoitukset"  }
-case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = ""; val layerName = "prohibition"; val nameFI = "Ajokielto" }
+case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = "Prohibition"; val layerName = "prohibition"; val nameFI = "Ajokielto" }
 case object PedestrianCrossings extends AssetTypeInfo { val typeId = 200; def geometryType = "point"; val label = "PedestrianCrossings"; val layerName = "pedestrianCrossings"; val nameFI = "Suojatie" }
 case object HazmatTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = "HazmatTransportProhibition"; val layerName = "hazardousMaterialTransportProhibition"; val nameFI = "VAK-rajoitus" }
-case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = ""; val layerName = "obstacles"; val nameFI = "Esterakennelma" }
-case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = ""; val layerName = "railwayCrossings"; val nameFI = "Rautatien tasoristeys" }
-case object DirectionalTrafficSigns extends AssetTypeInfo { val typeId = 240; def geometryType = "point"; val label = ""; val layerName = "directionalTrafficSigns"; val nameFI = "Opastustaulu ja sen informaatio" }
-case object ServicePoints extends AssetTypeInfo { val typeId = 250; def geometryType = "point"; val label = ""; val layerName = "servicePoints"; val nameFI = "Palvelupiste" }
-case object EuropeanRoads extends AssetTypeInfo { val typeId = 260; def geometryType = "linear"; val label = ""; val layerName = "europeanRoads"; val nameFI = "Eurooppatienumero" }
-case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryType = "linear"; val label = ""; val layerName = "exitNumbers"; val nameFI = "Liittymänumero" }
-case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label =  ""; val layerName = "trafficLights"; val nameFI = "Liikennevalo"}
-case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = ""; val layerName = "maintenanceRoads"; val nameFI = "Huoltotie" }
-case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""; val layerName = "trafficSigns"; val nameFI = "Liikennemerkki"}
+case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = "Obstacles"; val layerName = "obstacles"; val nameFI = "Esterakennelma" }
+case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = "RailwayCrossings"; val layerName = "railwayCrossings"; val nameFI = "Rautatien tasoristeys" }
+case object DirectionalTrafficSigns extends AssetTypeInfo { val typeId = 240; def geometryType = "point"; val label = "DirectionalTrafficSigns"; val layerName = "directionalTrafficSigns"; val nameFI = "Opastustaulu ja sen informaatio" }
+case object ServicePoints extends AssetTypeInfo { val typeId = 250; def geometryType = "point"; val label = "ServicePoints"; val layerName = "servicePoints"; val nameFI = "Palvelupiste" }
+case object EuropeanRoads extends AssetTypeInfo { val typeId = 260; def geometryType = "linear"; val label = "EuropeanRoads"; val layerName = "europeanRoads"; val nameFI = "Eurooppatienumero" }
+case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryType = "linear"; val label = "ExitNumbers"; val layerName = "exitNumbers"; val nameFI = "Liittymänumero" }
+case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label = "TrafficLights"; val layerName = "trafficLights"; val nameFI = "Liikennevalo"}
+case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = "MaintenanceRoads"; val layerName = "maintenanceRoads"; val nameFI = "Huoltotie" }
+case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = "TrafficSigns"; val layerName = "trafficSigns"; val nameFI = "Liikennemerkki"}
 case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit"; val layerName = "totalWeightLimit"; val nameFI = "Tierekisteri Nopeusrajoitukset" }
 case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""; val layerName = ""; val nameFI = ""}
 case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometryType = "point"; val label = "TrWeightLimit"; val layerName = "trWeightLimits"; val nameFI = "Tierekisteri Suurin sallittu massa"}
@@ -980,8 +1086,8 @@ case object AnimalWarnings extends AssetTypeInfo { val typeId = 410; def geometr
 case object RoadWorksAsset extends AssetTypeInfo { val typeId = 420; def geometryType = "linear"; val label = "RoadWorks" ; val layerName = "roadWorks"; val nameFI = "Tietyot"}
 case object ParkingProhibition extends AssetTypeInfo { val typeId = 430; def geometryType = "linear"; val label = "ParkingProhibition" ; val layerName = "parkingProhibition"; val nameFI = "Pysäköintikielto"}
 case object CyclingAndWalking extends AssetTypeInfo { val typeId = 440; def geometryType = "linear"; val label = "CyclingAndWalking" ; val layerName = "cyclingAndWalking"; val nameFI = "Käpy tietolaji"}
-case object Lanes extends AssetTypeInfo { val typeId = 450; def geometryType = "linear"; val label = "Lanes" ; val layerName = "lanes"; val nameFI = "Kaista"}
-
+case object Lanes extends AssetTypeInfo { val typeId = 450; def geometryType = "linear"; val label = "Lanes" ; val layerName = "lanes"; val nameFI = "Kaista"} // not saved in asset_type table
+case object RoadLinkProperties extends AssetTypeInfo { val typeId = 460; def geometryType = "linear"; val label = "RoadLinkProperties"; val layerName = "roadlink"; val nameFI = "Tielinkin ominaisuustiedot"} //not saved in asset type table
 
 object AutoGeneratedUsername {
 
@@ -997,10 +1103,11 @@ object AutoGeneratedUsername {
   val annualUpdate = "annually_updated_period"
   val splitSpeedLimitPrefix = "split_speedlimit_"
   val batchProcessPrefix = "batch_process_"
+  val mmlPavedDefault = "mml_paved_default"
 
   val values =
     Seq(dr1Conversion, automaticCorrection, excelDataMigration, automaticGeneration, generatedInUpdate, automaticAdjustment,
-      mtkClassDefault, autoGeneratedLane, startDateImporter, annualUpdate)
+      mtkClassDefault, autoGeneratedLane, startDateImporter, annualUpdate, mmlPavedDefault)
 
   val prefixes = Seq(splitSpeedLimitPrefix, batchProcessPrefix)
 

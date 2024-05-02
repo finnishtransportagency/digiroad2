@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetServi
 import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
+import org.postgresql.util.PSQLException
 
 import scala.slick.jdbc.{StaticQuery => Q}
 
@@ -28,7 +29,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean = false,
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], generateUnknownBoolean: Boolean = true, showHistory: Boolean = false,
                                         roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
 
@@ -36,68 +37,36 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       withDynTransaction {
         dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, linkIds)
       }.filterNot(_.expired)
-    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
 
-    if(adjust) {
-      val groupedAssets = linearAssets.groupBy(_.linkId)
-      val adjustedAssets = withDynTransaction {
-        LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
-          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
-        }
-      }
-      adjustedAssets
-    }
-    else linearAssets
+    if(generateUnknownBoolean) generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
   }
 
-  def getPavedRoadAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
-                            changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
-
-    //Group last vvhchanges by link id
-    val lastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.timeStamp))
-
-    //Map all existing assets by roadlink and changeinfo
-    val changedAssets = lastChanges.map{
-      case (linkId, changeInfo) =>
-        (roadLinks.find(_.linkId == linkId), changeInfo, existingLinearAssets.filter(_.linkId == linkId))
-    }
-
-    /* Note: This uses isNotPaved that excludes "unknown" pavement status. In OTH unknown means
-    *  "no pavement" but in case OTH has pavement info with value 1 then VVH "unknown" should not affect OTH.
-    *  Additionally, should there be an override that is later fixed we let the asset expire here as no
-    *  override is needed anymore.
+  /**
+    * Make sure operations are small and fast
+    * Do not try to use methods which also use event bus, publishing will not work
+    * @param linksIds
+    * @param typeId asset type
     */
-    val expiredAssetsIds = changedAssets.flatMap {
-      case (Some(roadLink), changeInfo, assets) =>
-        if (roadLink.isNotPaved && assets.nonEmpty)
-          assets.filter(_.timeStamp < changeInfo.timeStamp).map(_.id)
-        else
-          List()
-      case _ =>
-        List()
-    }.toSet[Long]
+  override def adjustLinearAssetsAction(linksIds: Set[String], typeId: Int, newTransaction: Boolean = true,adjustSideCode: Boolean = false): Unit = {
+    if (newTransaction) withDynTransaction {action(false)} else action(newTransaction)
+    def action(newTransaction: Boolean): Unit = {
+      try {
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
+        val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
+        val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
+        val groupedAssets = linearAssets.groupBy(_.linkId)
 
-    /* Note: This will not change anything if asset is stored using value None (null in database)
-    *  This is the intended consequence as it enables the UI to write overrides to VVH pavement info */
-    val newAndUpdatedAssets = changedAssets.flatMap{
-      case (Some(roadLink), changeInfo, assets) =>
-        if(roadLink.isPaved)
-          if (assets.isEmpty)
-            Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(defaultPropertyData), 0,
-              GeometryUtils.geometryLength(roadLink.geometry), None, None, None, None, false,
-              PavedRoad.typeId, changeInfo.timeStamp, None, linkSource = roadLink.linkSource, None, None, Some(MmlNls)))
-          else
-            assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
-              (a.value.isEmpty || a.timeStamp >= changeInfo.timeStamp)
-            ).map(a => a.copy(timeStamp = changeInfo.timeStamp, value=a.value,
-              startMeasure=0.0, endMeasure=roadLink.length, informationSource = Some(MmlNls)))
-        else
-          None
-      case _ =>
-        None
-    }.toSeq
+        LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
+          if (adjustSideCode) adjustLinearAssetsSideCode(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          else adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+        }
 
-    (expiredAssetsIds, newAndUpdatedAssets)
+      } catch {
+        case e: PSQLException => logger.error(s"Database error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+        case e: Throwable => logger.error(s"Unknown error happened on asset type ${typeId}, on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
+      }
+    }
   }
 
   override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
@@ -166,8 +135,8 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
-  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
+  override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit,adjust:Boolean = true): Seq[Long] = {
+  val ids = withDynTransaction {
       val linearAsset = enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))).head
       val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(linearAsset.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
@@ -182,8 +151,8 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       val createdIdOption = createdValue.map(
         createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp,
           Some(roadLink), informationSource = Some(MunicipalityMaintenainer.value)))
-
       newIdsToReturn ++ Seq(createdIdOption).flatten
     }
+    if (adjust) adjustAssets(ids)else ids
   }
 }

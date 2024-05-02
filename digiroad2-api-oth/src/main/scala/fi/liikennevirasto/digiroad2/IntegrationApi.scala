@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, Width
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, LinearAssetOperations, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
 import org.joda.time.DateTime
@@ -23,21 +23,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   protected val applicationDescription = "Integration API "
   protected implicit val jsonFormats: Formats = DefaultFormats
   val apiId = "integration-api"
-  val defaultDecimalPrecision = 3
-
-  case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
   after() {
     response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
     response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
     response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
-  }
-
-  def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
-    "muokattu_viimeksi" ->
-      timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
-        .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
-          .getOrElse(""))
   }
 
   def extractModifier(massTransitStop: PersistedMassTransitStop): (String, String) = {
@@ -47,16 +37,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def doubleToDefaultPrecision(value: Double): Double = {
-    BigDecimal(value).setScale(defaultDecimalPrecision, BigDecimal.RoundingMode.HALF_UP).toDouble
+    GeometryUtils.doubleToDefaultPrecision(value)
   }
 
   def geometryToDefaultPrecision(geometry: Seq[Point]): Seq[Point] = {
-    geometry.map(point => {
-      val x = doubleToDefaultPrecision(point.x)
-      val y = doubleToDefaultPrecision(point.y)
-      val z = doubleToDefaultPrecision(point.z)
-      Point(x,y,z)
-    })
+    GeometryUtils.toDefaultPrecision(geometry)
   }
 
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
@@ -69,9 +54,23 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       mapName.getOrElse(key) -> transformation(values)
     }
 
+    def extractPropertyOnlyValue(key: String, properties: Seq[Property], transformation: Seq[String] => Any): Any = {
+      val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
+        property.values.map { value =>
+          value.asInstanceOf[PropertyValue].propertyValue
+        }
+      }
+      transformation(values)
+    }
+
     def propertyValuesToIntList(values: Seq[String]): Seq[Int] = {
       values.map(_.toInt)
     }
+
+    def propertyValueToInt(values: Seq[String]): Option[Int] = {
+      values.map(_.toInt).headOption
+    }
+
 
     def propertyValuesToString(values: Seq[String]): String = {
       values.mkString
@@ -109,6 +108,73 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       "linkSource" -> Some(massTransitStop.linkSource.value)
     }
 
+    def extractRoadAddress(massTransitStop: PersistedMassTransitStop): Map[String, Any] = {
+      Map(
+        extractPropertyValueWithKey("tie", massTransitStop),
+        extractPropertyValueWithKey("osa", massTransitStop),
+        extractPropertyValueWithKey("aet", massTransitStop),
+        extractPropertyValueWithKey("ajr", massTransitStop),
+        extractPropertyValueWithKey("puoli", massTransitStop)
+      )
+    }
+
+    def extractPropertyValueWithKey(key: String, massTransitStop: PersistedMassTransitStop): (String, Any) = {
+      key -> extractPropertyOnlyValue(key, massTransitStop.propertyData, propertyValueToInt).asInstanceOf[Option[Int]].getOrElse("")
+    }
+
+    def properties(massTransitStop: PersistedMassTransitStop, isMassServicePoint: Boolean): Map[String, Any]  = {
+      Map(
+        extractModifier(massTransitStop),
+        latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
+        lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
+        extractBearing(massTransitStop),
+        if (isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractNationalId(massTransitStop),
+        extractFloating(massTransitStop),
+        if (isMassServicePoint) "link_id" -> None else extractLinkId(massTransitStop),
+        if (isMassServicePoint) "m_value" -> None else extractMvalue(massTransitStop),
+        extractLinkSource(massTransitStop),
+        extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
+        extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue(if (isMassServicePoint) "palvelun_nimi" else "nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString, if (isMassServicePoint) Option("nimi_suomeksi") else None),
+        extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("tietojen_yllapitaja", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("yllapitajan_tunnus", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("yllapitajan_koodi", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("matkustajatunnus", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("maastokoordinaatti_x", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("maastokoordinaatti_y", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("maastokoordinaatti_z", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("liikennointisuunta", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("vaikutussuunta", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("ensimmainen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("viimeinen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("aikataulu", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("katos", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("mainoskatos", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("penkki", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("sahkoinen_aikataulunaytto", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("valaistus", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("esteettomyys_liikuntarajoitteiselle", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("saattomahdollisuus_henkiloautolla", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("liityntapysakointipaikkojen_maara", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("liityntapysakoinnin_lisatiedot", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("pysakin_omistaja", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("palauteosoite", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
+        extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
+        extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("tarkenne", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("palvelun_lisätieto", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString),
+        extractPropertyValue("korotettu", massTransitStop.propertyData, firstPropertyValueToInt)
+      ) ++ extractRoadAddress(massTransitStop)
+    }
+
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
@@ -118,55 +184,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "type" -> "Feature",
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
-          "properties" -> Map(
-            extractModifier(massTransitStop),
-            latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
-            lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
-            extractBearing(massTransitStop),
-            if(isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractNationalId(massTransitStop),
-            extractFloating(massTransitStop),
-            if(isMassServicePoint) "link_id" -> None else extractLinkId(massTransitStop),
-            if(isMassServicePoint) "m_value" -> None else extractMvalue(massTransitStop),
-            extractLinkSource(massTransitStop),
-            extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
-            extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue(if(isMassServicePoint) "palvelun_nimi" else "nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString, if(isMassServicePoint) Option("nimi_suomeksi") else None),
-            extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("tietojen_yllapitaja", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("yllapitajan_tunnus", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("yllapitajan_koodi", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("matkustajatunnus", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_x", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_y", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_z", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liikennointisuunta", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("vaikutussuunta", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("ensimmainen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("viimeinen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("aikataulu", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("katos", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("mainoskatos", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("penkki", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("sahkoinen_aikataulunaytto", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("valaistus", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("esteettomyys_liikuntarajoitteiselle", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("saattomahdollisuus_henkiloautolla", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("liityntapysakointipaikkojen_maara", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liityntapysakoinnin_lisatiedot", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("pysakin_omistaja", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("palauteosoite", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
-            extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("tarkenne", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("palvelun_lisätieto", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString)
-          ))
+          "properties" -> properties(massTransitStop, isMassServicePoint)
+          )
       })
   }
 
@@ -191,25 +210,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
         "linkSource" -> speedLimit.linkSource.value
       )
-    }
-  }
-
-  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedLinearAsset]) = {
-
-    speedLimits.map { case ChangedLinearAsset(speedLimit, link) =>
-      val defaultPrecisionGeometry = geometryToDefaultPrecision(speedLimit.geometry)
-      Map("id" -> speedLimit.id,
-        "sideCode" -> speedLimit.sideCode.value,
-        "points" -> defaultPrecisionGeometry,
-        geometryWKTForLinearAssets(defaultPrecisionGeometry),
-        "value" -> speedLimitService.getSpeedLimitValue(speedLimit.value).get.value,
-        "startMeasure" -> doubleToDefaultPrecision(speedLimit.startMeasure),
-        "endMeasure" -> doubleToDefaultPrecision(speedLimit.endMeasure),
-        "linkId" -> speedLimit.linkId,
-        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
-        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
-        "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime),
-        "linkSource" -> speedLimit.linkSource.value)
     }
   }
 
@@ -686,25 +686,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) =
-  {
-    if (geometry.nonEmpty)
-    {
-      val segments = geometry.zip(geometry.tail)
-      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2)).map(doubleToDefaultPrecision)
-      val mValuedGeometry = geometry.zip(runningSum.toList)
-      val wktString = mValuedGeometry.map {
-        case (p, newM) => p.x +" " + p.y + " " + p.z + " " + newM
-      }.mkString(", ")
-      "geometryWKT" -> ("LINESTRING ZM (" + wktString + ")")
-    }
-    else
-      "geometryWKT" -> ""
+  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) = {
+    val formatted = GeometryUtils.toWktLineString(geometry)
+    (formatted.format,formatted.string)
   }
 
   def geometryWKTForPoints(lon: Double, lat: Double): (String, String) = {
-    val geometryWKT = "POINT (" + lon + " " + lat + ")"
-    "geometryWKT" -> geometryWKT
+    val formatted = GeometryUtils.toWktPoint(lon,lat)
+    (formatted.format,formatted.string)
   }
 
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
@@ -871,7 +860,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "typeOfDamage" -> Try(trafficSignService.getProperty(trafficSign, "type_of_damage").map(_.propertyValue.toInt).get).getOrElse(""),
           "urgencyOfRepair" -> Try(trafficSignService.getProperty(trafficSign, "urgency_of_repair").map(_.propertyValue.toInt).get).getOrElse(""),
           "lifespanLeft" -> Try(trafficSignService.getProperty(trafficSign, "lifespan_left").map(_.propertyDisplayValue.get.toInt).get).getOrElse(""),
-          "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
+          "trafficDirection" -> SideCode.toTrafficDirectionForTrafficSign(SideCode(trafficSign.validityDirection)),
           "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
      )}
   }
@@ -887,53 +876,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "additionalPanelCoatingType" -> Try(AdditionalPanelCoatingType.apply(panel.coating_type).getOrElse(CoatingTypeOption99).value).getOrElse(""),
         "additionalPanelColor" -> Try(AdditionalPanelColor.apply(panel.additional_panel_color).getOrElse(ColorOption99).value).getOrElse("")
       )
-    }
-  }
-
-  private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
-    if (expired) {
-      "Remove"
-    } else if (createdDateTime.exists(_.isAfter(since))) {
-      "Add"
-    } else {
-      "Modify"
-    }
-  }
-
-  //Description of Api entry point to get assets changes by asset type and between two dates
-  val getChangesOfAssetsByType =
-    (apiOperation[Long]("getChangesOfAssetsByType")
-      .parameters(
-        queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
-        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset.").optional,
-        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presense of records modified by generated_in_update and not modified yet on the response. The value is True by default.").optional,
-        pathParam[String]("assetType").description("Asset type name to get the changes")
-      )
-      tags "Integration API (Kalpa API)"
-      summary "List all changes per assets type between two specific dates."
-      authorizations "Contact your service provider for more information"
-      description "Example URL: api/integration/changes/bogie_weight_limits?since=2018-04-12T04:00Z&until=2018-04-16T15:00Z"
-      )
-
-  get("/changes/:assetType", operation(getChangesOfAssetsByType)) {
-    contentType = formats("json")
-    ApiUtils.avoidRestrictions(apiId, request, params){ params =>
-      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-      val until = params.get("until") match {
-        case Some(dateValue) => DateTime.parse(dateValue)
-        case _ => DateTime.now()
-      }
-
-      val withAdjust = params.get("withAdjust") match{
-        case Some(value)=> value.toBoolean
-        case _ => true
-      }
-
-      val assetType = params("assetType")
-      assetType match {
-        case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(SpeedLimitAsset.typeId, since, until, withAdjust))
-        case _ => BadRequest("Invalid asset type")
-      }
     }
   }
 
@@ -968,7 +910,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     contentType = formats("json")+ "; charset=utf-8"
     ApiUtils.avoidRestrictions(apiId, request, params){ params =>
       params.get("municipality").map { municipality =>
-        val municipalityNumber = municipality.toInt
+        val municipalityNumber = Try(municipality.toInt).getOrElse(throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Municipality parameter is not in number format"))
         val assetType = params("assetType")
         assetType match {
           case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
@@ -1013,10 +955,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case "road_works_asset" => roadWorksToApi(municipalityNumber)
           case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
           case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
-          case _ => BadRequest("Invalid asset type")
+          case _ => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid asset type")
         }
       } getOrElse {
-        BadRequest("Missing mandatory 'municipality' parameter")
+        throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mandatory 'municipality' parameter")
       }
     }
   }
@@ -1027,11 +969,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       params.get("municipality").map { municipality =>
         val groupName = getTrafficSignGroup(params("group_name"))
         groupName match {
-          case TrafficSignTypeGroup.Unknown => BadRequest("Invalid group type")
+          case TrafficSignTypeGroup.Unknown => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid group type")
           case _ => trafficSignsToApi(trafficSignService.getByMunicipalityAndGroup(municipality.toInt, groupName))
         }
       } getOrElse {
-        BadRequest("Missing mandatory 'municipality' parameter")
+      throw  DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Missing mandatory 'municipality' parameter")
       }
     }
   }

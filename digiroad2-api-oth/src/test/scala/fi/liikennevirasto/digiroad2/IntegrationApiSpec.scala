@@ -19,7 +19,6 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatra.test.scalatest.ScalatraSuite
 
-import java.util.NoSuchElementException
 import javax.sql.DataSource
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -230,29 +229,6 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "linkId" -> linkId2,
       "muokattu_viimeksi" -> "",
       "generatedValue" -> false,
-      "linkSource" -> 1
-    )))
-  }
-
-  test("changeType validation returns 'add' if asset is create before the actual date") {
-    val changedSpeedLimits = ChangedLinearAsset(
-      linearAsset = PieceWiseLinearAsset(1, linkId2, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(), false,
-        0, 1, Set(), Some("K123456"), None, Some("K12345"), Some(DateTime.parse("2017-05-07T12:00Z")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections, 0,
-        None, NormalLinkInterface, Unknown, Map(), None, None, None),
-      link = RoadLink("12345", Seq(), 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None))
-
-    integrationApi.speedLimitsChangesToApi(DateTime.parse("2017-05-06T12:00Z"), Seq(changedSpeedLimits)) should be(Seq(Map(
-      "id" -> 1,
-      "sideCode" -> 1,
-      "points" -> Nil,
-      "geometryWKT" -> "",
-      "value" -> 80,
-      "startMeasure" -> 0.0,
-      "endMeasure" -> 1.0,
-      "linkId" -> linkId2,
-      "muokattu_viimeksi" -> "07.05.2017 12:00:00",
-      "generatedValue" -> false,
-      "changeType" -> "Add",
       "linkSource" -> 1
     )))
   }
