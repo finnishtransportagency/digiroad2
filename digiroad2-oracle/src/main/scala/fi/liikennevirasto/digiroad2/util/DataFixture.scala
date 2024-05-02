@@ -2124,7 +2124,7 @@ object DataFixture {
         removeRoadWorksCreatedLastYear()
       case Some("traffic_sign_extract") =>
         extractTrafficSigns(args.lastOption)
-      case Some("remove_unnecessary_unknown_speedLimits") =>
+      case Some("update_unknown_speed_limits") =>
         unknownSpeedLimitUpdater.updateUnknownSpeedLimits()
       case Some("list_incorrect_SpeedLimits_created") =>
         printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
@@ -2203,7 +2203,7 @@ object DataFixture {
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite |" +
-        " populate_new_link_with_main_lanes | redundant_traffic_direction_removal |" +
+        " populate_new_link_with_main_lanes | redundant_traffic_direction_removal |" + "update_unknown_speed_limits |" +
         " refresh_road_link_cache | lane_end_date_expirer | resolving_frozen_links | handle_expired_road_links | topology_validation | find_assets_on_expired_road_links | repeat_damaged_by_thaw_activity_periods")
     }
   }
