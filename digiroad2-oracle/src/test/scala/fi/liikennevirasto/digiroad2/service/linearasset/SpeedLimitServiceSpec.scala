@@ -25,7 +25,8 @@ import slick.jdbc.StaticQuery.interpolation
 import scala.language.implicitConversions
 
 class SpeedLimitServiceSpec extends FunSuite with Matchers {
-val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val provider = new SpeedLimitService(new DummyEventBus, mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -1304,7 +1305,7 @@ val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
       sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
-
+      when(mockRoadLinkService.getHistoryDataLinks(any[Set[String]], any[Boolean])).thenReturn(Seq.empty[RoadLink])
       val result = provider.getChanged(SpeedLimitAsset.typeId, DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
       result.length should be(1)
       result.head.link.linkType should not be (TractorRoad)

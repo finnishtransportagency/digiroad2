@@ -668,6 +668,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset3, $asset3, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getHistoryDataLinks(any[Set[String]], any[Boolean])).thenReturn(Seq.empty[RoadLink])
 
       val result = service.getChanged(heightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
       result.length should be(1)
@@ -688,6 +689,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
     PostGISDatabase.withDynTransaction {
       when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1))
+      when(mockRoadLinkService.getHistoryDataLinks(any[Set[String]], any[Boolean])).thenReturn(Seq.empty[RoadLink])
 
       //Linear assets that have been changed in OTH between given date values Before Update
       val resultBeforeUpdate = service.getChanged(totalWeightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
