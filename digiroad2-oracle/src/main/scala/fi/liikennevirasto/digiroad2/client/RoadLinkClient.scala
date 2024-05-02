@@ -20,6 +20,9 @@ object FeatureClass {
   case object CarRoad_IIIa extends FeatureClass
   case object CarRoad_IIIb extends FeatureClass
   case object AllOthers extends FeatureClass
+
+  // RoadLinks with these feature classes are generally not handled by Digiroad
+  val featureClassesToIgnore = Seq(WinterRoads, HardShoulder)
 }
 
 
@@ -36,6 +39,8 @@ case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[
   def verticalLevel: Option[String] = attributes.get("VERTICALLEVEL").map(_.toString)
   val timeStamp = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
+
+case class LinkIdAndExpiredDate(linkId: String, expiredDate: DateTime)
 
 
 case class HistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,

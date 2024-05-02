@@ -12,10 +12,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
-case class IncomingServicePoint(lon: Double,
-                                lat: Double,
-                                services: Set[IncomingService],
-                                propertyData: Set[SimplePointAssetProperty])
+case class IncomingServicePoint(lon: Double, lat: Double, services: Set[IncomingService], propertyData: Set[SimplePointAssetProperty], mValue: Option[Double] = None)
 
 case class IncomingService(serviceType: Int,
                            name: Option[String],

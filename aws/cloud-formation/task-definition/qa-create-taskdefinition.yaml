@@ -116,7 +116,7 @@ Resources:
             - Name: vvhRoadlink.frozen
               Value: 'false'
             - Name: kgv.endpoint
-              Value: 'https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/'
+              Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/'
             - Name: viiteRestApiEndPoint
               Value: 'https://api.testivaylapilvi.fi/viite/api/viite/'
             - Name: authenticationTestMode
