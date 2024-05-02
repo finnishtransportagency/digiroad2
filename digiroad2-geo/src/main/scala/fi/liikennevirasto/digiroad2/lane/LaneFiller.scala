@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.lane
 
-import com.sun.org.slf4j.internal.LoggerFactory
+import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, areMeasuresCloseEnough}
 import fi.liikennevirasto.digiroad2.asset.SideCode
