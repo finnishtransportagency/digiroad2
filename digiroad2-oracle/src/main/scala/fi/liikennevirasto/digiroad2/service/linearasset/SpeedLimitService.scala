@@ -348,22 +348,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
   }
 
-
-  def updateFromMunicipalityApi(id: Long, newLimits: Seq[NewLinearAsset], username: String, newTransaction: Boolean = true): Seq[Long] = {
-    val oldSpeedLimit = getPersistedSpeedLimitById(id, newTransaction).map(toPieceWiseLinearAsset(_, newTransaction)).get
-
-    newLimits.flatMap (limit =>  limit.value match {
-      case SpeedLimitValue(suggestion, intValue) =>
-
-        if ((validateMinDistance(limit.startMeasure, oldSpeedLimit.startMeasure) || validateMinDistance(limit.endMeasure, oldSpeedLimit.endMeasure)) || SideCode(limit.sideCode) != oldSpeedLimit.sideCode)
-          updateSpeedLimitWithExpiration(id, SpeedLimitValue(suggestion, intValue), username, Some(Measures(limit.startMeasure, limit.endMeasure)), Some(limit.sideCode), (_, _) => Unit)
-        else
-          updateValues(Seq(id), SpeedLimitValue(suggestion, intValue), username, (_, _) => Unit, newTransaction)
-      case _ => Seq.empty[Long]
-    })
-  }
-
-
   def updateSpeedLimitWithExpiration(id: Long, value: SpeedLimitValue, username: String, measures: Option[Measures] = None, sideCode: Option[Int] = None, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
     validateMunicipalities(id, municipalityValidation, newTransaction = false)
 
@@ -500,21 +484,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     adjustLinearAssetsAction(Set(speedLimit.linkId),speedLimit.typeId)
     
     Seq(assets.find(_.id == newId1).get, assets.find(_.id == newId2).get)
-  }
-
-  /**
-    * This method was created for municipalityAPI, in future could be merge with the other create method.
-    */
-  def createMultiple(newLimits: Seq[NewLinearAsset], username: String, timeStamp: Long = createTimeStamp(), municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    val createdIds = newLimits.flatMap { limit =>
-      limit.value match {
-        case SpeedLimitValue(suggestion, intValue) => speedLimitDao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.apply(limit.sideCode), SpeedLimitValue(suggestion, intValue), timeStamp, municipalityValidation)
-        case _ => None
-      }
-    }
-
-    eventbus.publish("speedLimits:purgeUnknownLimits", (newLimits.map(_.linkId).toSet, Seq()))
-    createdIds
   }
 
   /**
