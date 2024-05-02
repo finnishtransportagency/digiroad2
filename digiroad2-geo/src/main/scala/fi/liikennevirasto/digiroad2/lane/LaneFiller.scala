@@ -1,15 +1,11 @@
 package fi.liikennevirasto.digiroad2.lane
 
-import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, areMeasuresCloseEnough}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.Point
-
-import scala.collection.Seq
+import org.slf4j.LoggerFactory
 
 
 object LaneFiller {
