@@ -79,8 +79,9 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
+  val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+
   test("generate segments pieces pair sign"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val roadLinkNameB1 = RoadLink(linkIdB1, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
     val roadLinkNameB2 = RoadLink(linkIdB2, Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
 
@@ -111,7 +112,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("generate segments pieces pair and unpair"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val propertiesB = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoLorriesAndVans.OTHvalue.toString)))) //value 6
     val trafficSign = PersistedTrafficSign(1, linkIdB1, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -158,7 +158,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("generate segments pieces 2 pair signs"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val propertiesB = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoLorriesAndVans.OTHvalue.toString))))
     val trafficSign1 = PersistedTrafficSign(1, linkIdB1, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -201,7 +200,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("generate segments pieces on a endRoadLink BothDirections"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val trafficSign = PersistedTrafficSign(1, linkIdB1, 5, 0, 5, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -271,7 +269,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   )
 
   test("create prohibitions values based on trafficSigns"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
       val simpleProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sign.OTHvalue.toString))))
 
@@ -285,7 +282,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("create prohibitions values based on trafficSigns with additional Panels") {
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "", "9-10", 1, "", 99, 99, 99),
                             AdditionalPanel(ValidSat.OTHvalue, "", "(11-12)",2, "", 99, 99, 99),
                             AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "(17-18)", 3, "", 99, 99, 99),
@@ -308,7 +304,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("insert values  on trafficSigns with additional Panels") {
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "", "9-10", 1, "", 99, 99, 99),
                           AdditionalPanel(ValidSat.OTHvalue, "", "(11-12)", 2, "", 99, 99, 99),
                           AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "(17-18)", 3, "", 99, 99, 99),
@@ -331,7 +326,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("test value change old segments") {
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     //when a linear asset already exist and a trafficSign was added with different value
     val existingValue = Seq(ProhibitionValue(3, Set(), Set()))
     val existingSegments = Seq(TrafficSignToLinear(roadLinkNameB1, Prohibitions(existingValue), SideCode.BothDirections, 0, 10, Set(), Some(100)))
@@ -647,5 +641,16 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     resultB2.get.startMeasure should be(0)
     resultB2.get.endMeasure should be(10)
     resultB2.get.sideCode should be(SideCode.AgainstDigitizing)
+  }
+
+  test("Create a MotorVehicle prohibition value with an EmergencyVehicle exception") {
+    val additionalPanel = Seq(AdditionalPanel(AdditionalPanelWithText.OTHvalue, "sepustus", " jatkuu ", 1, " vielä.", 99, 99, 99))
+    val simpleProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(ClosedToAllVehicles.OTHvalue.toString))), Property(0, "additional_panel", "", false, additionalPanel))
+    val trafficSign = PersistedTrafficSign(1, linkIdA, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+    val prohibitions = Prohibitions(Seq(ProhibitionValue(ProhibitionClass.MotorVehicle.value, Set(), Set(29))))
+    val prohibitionsResult = prohibitionGenerator.createValue(Seq(trafficSign))
+    withClue("trafficSign sign " + ClosedToAllVehicles) {
+        Some(prohibitions) should be(prohibitionsResult)
+      }
   }
 }
