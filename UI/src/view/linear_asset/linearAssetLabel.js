@@ -124,7 +124,7 @@
   root.WinterSpeedLimitLabel = function(){
     TRSpeedLimitAssetLabel.call(this);
 
-    this.getImageConfiguration = function (value) {
+    this.getImageConfiguration = function (asset) {
 
       var imagesConfig = [
         {value : 100 , image: 'images/speed-limits/100.svg', scale: 1.6 },
@@ -134,7 +134,7 @@
       ];
 
       var config = imagesConfig.find ( function(configuration) {
-        return configuration.value === value;
+        return configuration.value === asset.value;
       });
 
       if(config)

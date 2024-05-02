@@ -116,7 +116,7 @@
                 });
               }
 
-              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, linkId: nearestLine.linkId, geometry: feature.features.getArray()[0].getGeometry(), floating: false, bearing: newBearing});
+              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, mValue: null, linkId: nearestLine.linkId, geometry: feature.features.getArray()[0].getGeometry(), floating: false, bearing: newBearing});
             }
           }
         }
@@ -382,15 +382,23 @@
 
     function handleChanged() {
       var asset = selectedAsset.get();
-      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset),
-        administrativeClass: obtainAdministrativeClass(asset), constructionType: obtainConstructionType(asset)});
-      _.find(me.vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
-      var featureRedraw = _.find(me.vectorLayer.getSource().getFeatures(), function(feature) {
-          return feature.getProperties().id === newAsset.id;
+      var featureRedraw = _.filter(me.vectorLayer.getSource().getFeatures(), function (feature) {
+        return feature.getProperties().id === asset.id;
       });
-      featureRedraw.setProperties({'geometry': new ol.geom.Point([newAsset.lon, newAsset.lat])});
-      selectControl.addSelectionFeatures([featureRedraw]);
-
+      var newProperties = {
+        'rotation': determineRotation(asset),
+        'bearing': determineBearing(asset),
+        'administrativeClass': obtainAdministrativeClass(asset),
+        'constructionType': obtainConstructionType(asset),
+        'geometry': new ol.geom.Point([asset.lon, asset.lat])
+      };
+      _.forEach(featureRedraw, function (feature) {
+        feature.setProperties(newProperties);
+        if (layerName === 'trafficLights') {
+          feature.setProperties({'propertyData': asset.propertyData});
+        }
+      });
+      selectControl.addSelectionFeatures(featureRedraw);
     }
 
     this.createNewAsset =  function(coordinates) {

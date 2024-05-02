@@ -67,7 +67,7 @@
       },
       {
         "name": "kgv.endpoint",
-        "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+        "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/"
       },
       {
         "name": "viiteRestApiEndPoint",
@@ -104,6 +104,10 @@
       {
         "name": "bonecp.username",
         "value": "digiroad"
+      },
+      {
+        "name": "oag.username",
+        "value": "svc_clouddr"
       },
       {
         "name": "batchMode",
@@ -153,6 +157,11 @@
         "name": "kgv.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/kgv.apikey"
       },
+      {
+        "name": "oag.password",
+        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/authentication.oag.basic.password"
+      },
+      
       {
         "name": "viite.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/viite"

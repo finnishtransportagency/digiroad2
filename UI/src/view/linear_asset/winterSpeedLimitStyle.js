@@ -8,11 +8,11 @@
     };
 
     var createZoomDependentOneWayRule = function (zoomLevel, style) {
-      return new StyleRule().where('sideCode').isNot(1).and('zoomLevel').is(zoomLevel).use(style);
+      return new StyleRule().where('sideCode').isNot(1).and('zoomLevel').is(zoomLevel).and('trafficDirection').is('BothDirections').use(style);
     };
 
     var createZoomAndTypeDependentOneWayRule = function (type, zoomLevel, style) {
-      return new StyleRule().where('type').is(type).and('zoomLevel').is(zoomLevel).and('sideCode').isNot(1).use(style);
+      return new StyleRule().where('type').is(type).and('zoomLevel').is(zoomLevel).and('sideCode').isNot(1).and('trafficDirection').is('BothDirections').use(style);
     };
 
     var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');

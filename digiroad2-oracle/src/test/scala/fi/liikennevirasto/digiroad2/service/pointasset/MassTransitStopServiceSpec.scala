@@ -188,53 +188,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  ignore("Stop floats if road link does not exist") {
-    runWithRollback {
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      stops.find(_.id == 300000).map(_.floating) should be(Some(true))
-    }
-  }
-
-  ignore("Stop floats if stop and roadlink municipality codes differ") {
-    runWithRollback {
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      stops.find(_.id == 300004).map(_.floating) should be(Some(true))
-    }
-  }
-
-  ignore("Stop floats if stop is too far from linearly referenced location") {
-    runWithRollback {
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      stops.find(_.id == 300008).map(_.floating) should be(Some(true))
-    }
-  }
-
-  ignore("Persist mass transit stop floating status change") {
-    runWithRollback {
-      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      val floating: Option[Boolean] = sql"""select floating from asset where id = 300008""".as[Boolean].firstOption
-      floating should be(Some(true))
-    }
-  }
-
-  ignore("Persist mass transit stop floating direction not match") {
-    runWithRollback {
-    val massTransitStopDao = new MassTransitStopDao
-    val roadLink = RoadLink(randomLinkId6, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, randomLinkId6, 2,
-      Seq(
-        SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-        SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))) //TowardsDigitizin
-      )), "masstransitstopservice_spec", roadLink)
-
-      val stops = RollbackMassTransitStopService.getByBoundingBox(
-      userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
-      stops.find(_.id == id).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(id) should be(Some(FloatingReason.TrafficDirectionNotMatch))
-    }
-  }
-
   test("Fetch mass transit stop by national id") {
 
     runWithRollback {
@@ -723,6 +676,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
+  test("Update existing masstransitstop if the new distance is greater than 50 meters"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
+      val properties = List(
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
+      val linkId = randomLinkId1
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
+
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
+        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+      )
+      val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
+      val oldAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $oldAssetId""".as[(Long, Int, String, String)].firstOption
+      oldAsset should be (Some(oldAssetId, municipalityCode, null, null))
+
+      val updatedAssetId = service.updateExistingById(oldAssetId, Some(Position(0, 51, linkId, Some(0))), Set(), "test",  (_, _) => Unit).id
+
+      val updatedAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $updatedAssetId""".as[(Long, Int, String, String)].firstOption
+      updatedAsset should be (Some(updatedAssetId, municipalityCode, null, null))
+    }
+  }
+  
   test("Should not copy existing masstransitstop if the new distance is less or equal than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
@@ -1007,68 +989,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       propertyValues.nonEmpty should be (true)
       propertyValues.forall(x => x._2.nonEmpty) should be (true)
       propertyValues.forall(x => x._1 != "") should be (true)
-    }
-  }
-
-  ignore("Stop floats if a State road has got changed to a road owned by municipality"){
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300006
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
-    }
-  }
-
-  ignore("Stop floats if a State road has got changed to a road owned to a private road"){
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
-    }
-  }
-
-  ignore("Stop floats if a Municipality road has got changed to a road owned by state"){
-    val vvhRoadLinks = List(
-      RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-
-    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
-
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300006
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, Municipality)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
-    }
-  }
-
-  ignore("Stop floats if a Private road has got changed to a road owned by state"){
-    val vvhRoadLinks = List(
-      RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-
-    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
-
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300006
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, Private)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
     }
   }
 

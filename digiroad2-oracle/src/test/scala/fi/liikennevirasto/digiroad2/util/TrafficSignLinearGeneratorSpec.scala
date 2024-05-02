@@ -79,8 +79,9 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
+  val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+
   test("generate segments pieces pair sign"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val roadLinkNameB1 = RoadLink(linkIdB1, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
     val roadLinkNameB2 = RoadLink(linkIdB2, Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
 
@@ -91,6 +92,8 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2)
     when(mockRoadLinkService.getAdjacent(linkIdB1, false)).thenReturn(Seq(roadLinkNameB2))
     when(mockRoadLinkService.getAdjacent(linkIdB2, false)).thenReturn(Seq(roadLinkNameB1))
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(0.0, 10.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(linkIdB2, Seq(Point(0.0, 10.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB1))
 
     val result= prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign, pairedTrafficSign), Seq())
     result.size should be (2)
@@ -104,12 +107,11 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val resultB2 = result.find(_.roadLink.linkId == linkIdB2)
     resultB2 should not be None
     resultB2.get.startMeasure should be (0)
-    resultB2.get.endMeasure should be (GeometryUtils.geometryLength(Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0))))
+    resultB2.get.endMeasure should be ("%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0)))).toDouble)
     resultB2.get.sideCode should be (SideCode.BothDirections)
   }
 
   test("generate segments pieces pair and unpair"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val propertiesB = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoLorriesAndVans.OTHvalue.toString)))) //value 6
     val trafficSign = PersistedTrafficSign(1, linkIdB1, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -117,6 +119,12 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val unPairedTrafficSign = PersistedTrafficSign(3, linkIdB2, 10, 0, 8, false, 0, 235, propertiesB, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(10.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(linkIdB2, Seq(Point(20.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB3))
+    when(mockRoadLinkService.getAdjacent(linkIdB3, Seq(Point(40.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameC))
+    when(mockRoadLinkService.getAdjacent(linkIdB3, Seq(Point(20.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(linkIdB2, Seq(Point(10.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB1))
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(0.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameA))
     when(mockRoadLinkService.getAdjacent(linkIdB1, false)).thenReturn(Seq(roadLinkNameA, roadLinkNameB2))
     when(mockRoadLinkService.getAdjacent(linkIdB2, false)).thenReturn(Seq(roadLinkNameB1, roadLinkNameB3))
     when(mockRoadLinkService.getAdjacent(linkIdB3, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
@@ -150,7 +158,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("generate segments pieces 2 pair signs"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val propertiesB = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoLorriesAndVans.OTHvalue.toString))))
     val trafficSign1 = PersistedTrafficSign(1, linkIdB1, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -159,8 +166,14 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val pairedSign2 = PersistedTrafficSign(4, linkIdB3, 30, 0, 10, false, 0, 235, propertiesB, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(10.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(linkIdB2, Seq(Point(20.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB3))
+    when(mockRoadLinkService.getAdjacent(linkIdB3, Seq(Point(40.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameC))
+    when(mockRoadLinkService.getAdjacent(linkIdB3, Seq(Point(20.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(linkIdB2, Seq(Point(10.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB1))
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(0.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameA))
     when(mockRoadLinkService.getAdjacent(linkIdB1, false)).thenReturn(Seq(roadLinkNameA, roadLinkNameB2))
-    when(mockRoadLinkService.getAdjacent(linkIdB2, false)).thenReturn(Seq())
+    when(mockRoadLinkService.getAdjacent(linkIdB2, false)).thenReturn(Seq(roadLinkNameB3))
     when(mockRoadLinkService.getAdjacent(linkIdB3, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
 
     val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign1, trafficSign2, pairedSign1, pairedSign2), Seq()).toSeq
@@ -187,11 +200,12 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("generate segments pieces on a endRoadLink BothDirections"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val trafficSign = PersistedTrafficSign(1, linkIdB1, 5, 0, 5, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2)
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(10.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(linkIdB2, Seq(Point(10.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB1))
     when(mockRoadLinkService.getAdjacent(linkIdB1, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameA))
     when(mockRoadLinkService.getAdjacent(linkIdB2, false)).thenReturn(Seq(roadLinkNameB1))
 
@@ -209,6 +223,37 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     resultB2.value.asInstanceOf[Prohibitions].prohibitions.head.typeId should be (2)
   }
 
+  test("prohibition ends in the next intersection") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+    val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
+    val trafficSign = PersistedTrafficSign(1, linkIdB1, 5, 0, 5, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+    val roadLinkNameD = RoadLink(linkIdB1, Seq(Point(10.0, 0.0), Point(10.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name D"))
+
+    val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2)
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(10.0, 0.0, 0.0)), false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameD))
+    when(mockRoadLinkService.getAdjacent(linkIdB1, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameD))
+
+    val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign), Seq())
+    result.size should be(1)
+    val resultB1 = result.find(_.roadLink.linkId == linkIdB1).get
+    resultB1.startMeasure should be(5)
+    resultB1.endMeasure should be(10)
+    resultB1.sideCode should be(SideCode.TowardsDigitizing)
+    resultB1.value.asInstanceOf[Prohibitions].prohibitions.head.typeId should be(2)
+  }
+
+  test("zero length prohibition is discarded") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+    val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
+    val trafficSign = PersistedTrafficSign(1, linkIdB1, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+
+    val allRoadLinks = Seq(roadLinkNameB1)
+    when(mockRoadLinkService.getAdjacent(linkIdB1, Seq(Point(0.0, 0.0, 0.0)), false)).thenReturn(Nil)
+
+    val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign), Seq())
+    result should be(Set.empty)
+  }
+
   val relationSignProhibition : Map[ProhibitionsAndRestrictionsType, Seq[ProhibitionClass]] = Map(
     NoLorriesAndVans ->	Seq(ProhibitionClass.DeliveryCar, ProhibitionClass.Truck),
     NoVehicleCombinations -> Seq(ProhibitionClass.ArticulatedVehicle),
@@ -224,7 +269,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   )
 
   test("create prohibitions values based on trafficSigns"){
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
       val simpleProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sign.OTHvalue.toString))))
 
@@ -238,7 +282,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("create prohibitions values based on trafficSigns with additional Panels") {
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "", "9-10", 1, "", 99, 99, 99),
                             AdditionalPanel(ValidSat.OTHvalue, "", "(11-12)",2, "", 99, 99, 99),
                             AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "(17-18)", 3, "", 99, 99, 99),
@@ -261,7 +304,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("insert values  on trafficSigns with additional Panels") {
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "", "9-10", 1, "", 99, 99, 99),
                           AdditionalPanel(ValidSat.OTHvalue, "", "(11-12)", 2, "", 99, 99, 99),
                           AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "(17-18)", 3, "", 99, 99, 99),
@@ -284,7 +326,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("test value change old segments") {
-    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     //when a linear asset already exist and a trafficSign was added with different value
     val existingValue = Seq(ProhibitionValue(3, Set(), Set()))
     val existingSegments = Seq(TrafficSignToLinear(roadLinkNameB1, Prohibitions(existingValue), SideCode.BothDirections, 0, 10, Set(), Some(100)))
@@ -572,5 +613,44 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     resultB3.get.startMeasure should be(0)
     resultB3.get.endMeasure should be(20)
     resultB3.get.sideCode should be(SideCode.BothDirections)
+  }
+
+  test("generate parking prohibitions against digitizing starting from an intermediate location on the first link and ending to intersection") {
+    val linkIdB11 = LinkIdGenerator.generateRandom()
+    val roadLinkNameB11 = RoadLink(linkIdB11, Seq(Point(10.0, 0.0), Point(10.0, 20.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+
+    val parkingProhibitionGenerator = new TestTrafficSignParkingProhibitionGenerator()
+    val signProperty = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(StandingAndParkingProhibited.OTHvalue.toString))))
+    val trafficSign = PersistedTrafficSign(1, linkIdB3, 40, 20, 5, false, 0, 235, signProperty, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+
+    val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
+    when(mockRoadLinkService.getAdjacent(linkIdB3, Seq(Point(20, 0)))).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(linkIdB2, Seq(Point(10, 0)))).thenReturn(Seq(roadLinkNameB1, roadLinkNameB11))
+
+    val result = parkingProhibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign), Seq()).toSeq
+    result.size should be(2)
+
+    val resultB3 = result.find(_.roadLink.linkId == linkIdB3)
+    resultB3 should not be None
+    resultB3.get.startMeasure should be(0)
+    resultB3.get.endMeasure should be(5)
+    resultB3.get.sideCode should be(SideCode.AgainstDigitizing)
+
+    val resultB2 = result.find(_.roadLink.linkId == linkIdB2)
+    resultB2 should not be None
+    resultB2.get.startMeasure should be(0)
+    resultB2.get.endMeasure should be(10)
+    resultB2.get.sideCode should be(SideCode.AgainstDigitizing)
+  }
+
+  test("Create a MotorVehicle prohibition value with an EmergencyVehicle exception") {
+    val additionalPanel = Seq(AdditionalPanel(AdditionalPanelWithText.OTHvalue, "sepustus", " jatkuu ", 1, " vielä.", 99, 99, 99))
+    val simpleProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(ClosedToAllVehicles.OTHvalue.toString))), Property(0, "additional_panel", "", false, additionalPanel))
+    val trafficSign = PersistedTrafficSign(1, linkIdA, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+    val prohibitions = Prohibitions(Seq(ProhibitionValue(ProhibitionClass.MotorVehicle.value, Set(), Set(29))))
+    val prohibitionsResult = prohibitionGenerator.createValue(Seq(trafficSign))
+    withClue("trafficSign sign " + ClosedToAllVehicles) {
+        Some(prohibitions) should be(prohibitionsResult)
+      }
   }
 }

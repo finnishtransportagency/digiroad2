@@ -53,7 +53,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   val fetchedRoadlink2 = Seq(RoadLinkFetched(testLinkId2, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(fetchedRoadlink1.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinkByLinkId(any[String], any[Boolean])).thenReturn(fetchedRoadlink1.map(toRoadLink).headOption)
-  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(fetchedRoadlink2.map(toRoadLink))
+  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(fetchedRoadlink2.map(toRoadLink))
   when(mockRoadLinkService.enrichFetchedRoadLinks(fetchedRoadlink2)).thenReturn(fetchedRoadlink2.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinkByLinkId(randomLinkId2)).thenReturn(Seq(
     RoadLinkFetched(randomLinkId2, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
@@ -213,16 +213,17 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val propertiesToUpdate = properties60
 
-      val roadLink = RoadLink(randomLinkId1, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficSign(0.0, 20.0, randomLinkId1, properties, 1, None), "jakke", roadLink )
+      val roadLink = RoadLink(randomLinkId1, Seq(Point(2.0, 0.0), Point(4.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(3.15, 11.5, randomLinkId1, properties, 1, None), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingTrafficSign(0.0, 20.0, randomLinkId1, propertiesToUpdate, 1, None), roadLink, "test")
+      val newId = service.update(id, IncomingTrafficSign(asset.lon, asset.lat, randomLinkId1, propertiesToUpdate, 1, None, Some(asset.mValue)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
       updatedAsset.lon should be (asset.lon)
       updatedAsset.lat should be (asset.lat)
+      updatedAsset.mValue should be(asset.mValue)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("2")
