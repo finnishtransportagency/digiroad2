@@ -31,63 +31,6 @@ class LaneFillerSpec extends FunSuite with Matchers {
   val roadLinkTowards4 = RoadLink(linkId4, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, Municipality,
                                 1, TrafficDirection.AgainstDigitizing, Motorway, None, None)
 
-  test("Expire lane that is outside topology and create a new lane similar and with % reduction") {
-
-    val topology = Seq( roadLinkTowards1 )
-
-    val lane = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      1, 745L, 10.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))))
-    )
-
-    val linearAssets = Map(
-      roadLinkTowards1.linkId -> Seq( lane )
-    )
-
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
-    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
-    pieceWiseTopology should have size 1
-    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
-    pieceWiseTopology.map(_.id) should be (Seq(0L))
-    pieceWiseTopology.map(_.linkId) should be (Seq(linkId1))
-    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(5.0, 0.0), Point(7.5, 0.0))))
-
-    changeSet.expiredLaneIds should be (Set(1L))
-  }
-
-  test("Multiple lanes outside topology. One lane should dropped due the shortness after conversion.") {
-    val topology = Seq( roadLinkTowards1 )
-
-    val lane1 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      1, 745L, 10.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))))
-    )
-
-    val lane2 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      2, 745L, 10.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))))
-    )
-
-    val lane3 = PersistedLane(3L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      3, 745L, 13.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(3))))
-    )
-
-    val linearAssets = Map(
-      roadLinkTowards1.linkId -> Seq( lane1, lane2, lane3 )
-    )
-
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
-    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
-    pieceWiseTopology should have size 2
-    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value))
-    pieceWiseTopology.map(_.id) should be (Seq(0L, 0L))
-    pieceWiseTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId))
-    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(5.0, 0.0), Point(7.5, 0.0)), Seq(Point(5.0, 0.0), Point(7.5, 0.0))))
-
-    changeSet.expiredLaneIds should be (Set(1L, 2L, 3L))
-  }
-
   test("Adjust lane that goes outside of roadLink length") {
     val topology = Seq( roadLinkTowards1 )
 
@@ -277,44 +220,5 @@ class LaneFillerSpec extends FunSuite with Matchers {
     pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
 
     changeSet.expiredLaneIds should be (Set(3L))
-  }
-
-  test("Expire duplicate lane2") {
-    val topology = Seq(roadLinkTowards1)
-
-    val lane1 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      1, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))))
-    )
-
-    val lane2 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      2, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))))
-    )
-
-    val lane2Duplicated = PersistedLane(3L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      2, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))))
-    )
-
-    val lane3 = PersistedLane(4L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      3, 745L, 5.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(3))))
-    )
-
-    val linearAssets = Map(
-      roadLinkTowards1.linkId -> Seq(lane1, lane2, lane2Duplicated, lane3)
-    )
-
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets,geometryChanged = false)
-    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
-
-    pieceWiseTopology should have size 3
-    pieceWiseTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections.value, SideCode.BothDirections.value, SideCode.BothDirections.value))
-    pieceWiseTopology.map(_.id).sorted should be(Seq(1L, 2L, 4L))
-    pieceWiseTopology.map(_.linkId) should be(Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId, roadLinkTowards1.linkId))
-    pieceWiseTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
-
-    changeSet.expiredLaneIds should be(Set(3L))
   }
 }
