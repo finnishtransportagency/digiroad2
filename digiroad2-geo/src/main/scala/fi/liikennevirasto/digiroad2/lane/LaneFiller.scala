@@ -58,7 +58,7 @@ class LaneFiller {
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
   val logger = LoggerFactory.getLogger(getClass)
-  def debugLogging(operationName:String)(roadLink:RoadLink, segments:Seq[PersistedLane], changeSet:ChangeSet ) ={
+  def debugLogging(operationName:String)(roadLink:RoadLink, segments:Seq[PersistedLane], changeSet:ChangeSet ) = {
     logger.warn(operationName + ": " + roadLink.linkId)
     logger.warn("asset count on link: " + segments.size)
     logger.warn(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
@@ -67,18 +67,11 @@ class LaneFiller {
     logger.warn(s"dropped adjustment count: ${changeSet.generatedPersistedLanes.size}")
     (segments, changeSet)
   }
-  def getOperations(geometryChanged: Boolean) = {
-    val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
-      capSegmentsThatOverflowGeometry,
-      expireOverlappingSegments,
-      combine,
-      fuse,
-      dropShortSegments,
-      adjustAssets
-    )
+  
+  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[String, Seq[PersistedLane]],
+                   changedSet: Option[ChangeSet] = None): (Seq[PersistedLane], ChangeSet) = {
 
-    val adjustmentOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
+    val operations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet) => (Seq[PersistedLane], ChangeSet)] = Seq(
       expireOverlappingSegments,
       debugLogging("expireOverlappingSegments"),
       combine,
@@ -92,15 +85,6 @@ class LaneFiller {
       validateLink,
       debugLogging("validateLink")
     )
-
-    if(geometryChanged) fillOperations
-    else adjustmentOperations
-  }
-
-  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[String, Seq[PersistedLane]],
-                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true ): (Seq[PersistedLane], ChangeSet) = {
-
-    val operations = getOperations(geometryChanged)
     val changeSet = changedSet match {
       case Some(change) => change
       case None => ChangeSet()
