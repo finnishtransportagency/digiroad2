@@ -552,7 +552,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     else enrichFetchedRoadLinks(links ++ complementaryLinks)
   }
 
-  def reloadRoadLinksWithComplementaryAndChanges(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
+  def reloadRoadLinksWithComplementaryAndChanges(municipalities: Int, newTransaction: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     val fut = for {
       f2Result <- roadLinkClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
     } yield  f2Result
@@ -560,7 +560,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     val  (complementaryLinks, links) = withDbConnection {
       (complementaryLinkDAO.fetchWalkwaysByMunicipalities(municipalities),roadLinkDAO.fetchByMunicipality(municipalities))
     }
-    withDynTransaction {
+    if (newTransaction) {
+      withDynTransaction {
+        (enrichFetchedRoadLinks(links), changes, enrichFetchedRoadLinks(complementaryLinks))
+      }
+    } else {
       (enrichFetchedRoadLinks(links), changes, enrichFetchedRoadLinks(complementaryLinks))
     }
   }
@@ -923,9 +927,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
 
-  def getRoadLinksAndComplementaryLinksByMunicipality(municipality: Int): Seq[RoadLink] = {
+  def getRoadLinksAndComplementaryLinksByMunicipality(municipality: Int, newTransaction: Boolean = true): Seq[RoadLink] = {
     val (roadLinks,_, complementaries) =  LogUtils.time(logger,"Get roadlinks with cache")(
-      getCachedRoadLinks(municipality)
+      getCachedRoadLinks(municipality, newTransaction)
     )
     roadLinks ++ complementaries
   }
@@ -1280,9 +1284,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   /**
     *  Call reloadRoadLinksWithComplementaryAndChanges
     */
-  private def getCachedRoadLinks(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
+  private def getCachedRoadLinks(municipalityCode: Int, newTransaction: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     Caching.cache[(Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])](
-      reloadRoadLinksWithComplementaryAndChanges(municipalityCode)
+      reloadRoadLinksWithComplementaryAndChanges(municipalityCode, newTransaction)
     )("links:" + municipalityCode)
   }
 
