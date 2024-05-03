@@ -18,11 +18,11 @@
     "resourceRequirements" : [
       {
         "type": "MEMORY",
-        "value": "40960"
+        "value": "30720"
       },
       {
         "type": "VCPU",
-        "value": "8"
+        "value": "4"
       }
     ],
     "executionRoleArn": "arn:aws:iam::475079312496:role/DEV-batchSystem-BatchTaskRole-VGL42N9TANTI",
@@ -30,7 +30,7 @@
     "environment": [
       {
         "name": "containerCPU",
-        "value": "-XX:ActiveProcessorCount=8"
+        "value": "-XX:ActiveProcessorCount=4"
       },
       {
         "name": "speedLimitProvider",
@@ -70,7 +70,7 @@
       },
       {
         "name": "kgv.endpoint",
-        "value": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+        "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/"
       },
       {
         "name": "viiteRestApiEndPoint",

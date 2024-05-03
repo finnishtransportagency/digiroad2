@@ -66,7 +66,7 @@
             };
 
             var deleteBtn = function () {
-                return $('<button disabled/>').attr('id', 'deleteUnknownSpeedLimits').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
+                return $('<button disabled/>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
                     new GenericConfirmPopup("Haluatko varmasti poistaa valitut tielinkin muutokset työlistasta?", {
                         container: '#work-list',
                         successCallback: function () {

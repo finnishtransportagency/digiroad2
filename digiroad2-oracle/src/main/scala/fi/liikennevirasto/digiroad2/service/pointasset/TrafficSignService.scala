@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.SideCode._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.RoadLinkInfo
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PersistedTrafficSign, PostGISTrafficSignDao}
 import fi.liikennevirasto.digiroad2.lane.LaneType
 import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
@@ -15,7 +16,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 
-case class IncomingTrafficSign(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingTrafficSign(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Option[Double] = None) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: String, validityDirection: Int, signType: Int, roadLink: RoadLink)
 case class TrafficSignInfoUpdate(newSign: TrafficSignInfo, oldSign: PersistedTrafficSign)
@@ -115,7 +116,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   override def update(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, roadLink, username, None, None)
+      updateWithoutTransaction(id, updatedAsset, roadLink, username, updatedAsset.mValue, None)
     }
   }
 
@@ -153,15 +154,16 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], timeStamp: Option[Long]): Long = {
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], timeStamp: Option[Long], fromPointAssetUpdater: Boolean = false): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry))
     val oldAsset = getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException(s"Asset not found: $id"))
     val updatedId = oldAsset match {
-      case old if old.bearing != updatedAsset.bearing || !GeometryUtils.areAdjacent(Point(old.lon, old.lat), Point(updatedAsset.lon, updatedAsset.lat)) || old.validityDirection != updatedAsset.validityDirection =>
+      case old if (old.bearing != updatedAsset.bearing || !GeometryUtils.areAdjacent(Point(old.lon, old.lat), Point(updatedAsset.lon, updatedAsset.lat)) || old.validityDirection != updatedAsset.validityDirection) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
-        PostGISTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt, old.externalId)
+        PostGISTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode,
+          timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
-        PostGISTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource)
+        PostGISTrafficSignDao.update(id, updatedAsset, value, roadLink.municipalityCode, username, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource, fromPointAssetUpdater)
     }
     eventBus.publish("trafficSign:update", TrafficSignInfoUpdate(TrafficSignInfo(updatedId, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, roadLink), oldAsset))
     updatedId
@@ -188,39 +190,48 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
-    createPersistedAsset(asset, adjustment)
+  override def createOperation(asset: PersistedAsset, adjustment: AssetUpdate): PersistedAsset = {
+    val validityDirection = adjustment.validityDirection.getOrElse(asset.validityDirection)
+    new PersistedAsset(adjustment.assetId, adjustment.linkId, adjustment.lon, adjustment.lat,
+      adjustment.mValue, adjustment.floating, asset.timeStamp, asset.municipalityCode, asset.propertyData,
+      asset.createdBy, asset.createdAt, asset.modifiedBy, asset.modifiedAt, validityDirection, adjustment.bearing,
+      asset.linkSource, externalId = asset.externalId)
   }
 
-  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
+  override def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetUpdate, link: RoadLinkInfo): Long = {
     val propertyData = persistedAsset.propertyData.map(prop =>
       prop.propertyType match {
         case "single_choice" if prop.values.head.asInstanceOf[PropertyValue].propertyValue.isEmpty =>
-          SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getSingleChoiceDefaultValueByPublicId(prop.publicId).toString)))
+          SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getSingleChoiceDefaultValueByPublicId(prop.publicId).toString)), prop.groupedId)
 
         case "checkbox" if prop.values.head.asInstanceOf[PropertyValue].propertyValue.isEmpty =>
           if (prop.publicId == "old_traffic_code" && persistedAsset.createdAt.get.isBefore(newTrafficCodeStartDate))
-            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue("1")))
+            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue("1")), prop.groupedId)
           else
-            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getDefaultMultiChoiceValue.toString)))
+            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getDefaultMultiChoiceValue.toString)), prop.groupedId)
 
         case "additional_panel_type" if prop.values.nonEmpty =>
-          val additionalPanelValues = prop.values.head.asInstanceOf[AdditionalPanel]
-          val pValues = additionalPanelValues.copy(
-            size = if (additionalPanelValues.size != 0) additionalPanelValues.size else AdditionalPanelSize.getDefault.value,
-            coating_type = if (additionalPanelValues.coating_type != 0) additionalPanelValues.coating_type else AdditionalPanelCoatingType.getDefault.value,
-            additional_panel_color = if (additionalPanelValues.additional_panel_color != 0) additionalPanelValues.additional_panel_color else AdditionalPanelColor.getDefault.value
-          )
-          SimplePointAssetProperty(prop.publicId, Seq(pValues))
+          val additionalPanelValues = prop.values.map { value =>
+            val apValue = value.asInstanceOf[AdditionalPanel]
+            apValue.copy(
+              size = if (apValue.size != 0) apValue.size else AdditionalPanelSize.getDefault.value,
+              coating_type = if (apValue.coating_type != 0) apValue.coating_type else AdditionalPanelCoatingType.getDefault.value,
+              additional_panel_color = if (apValue.additional_panel_color != 0) apValue.additional_panel_color else AdditionalPanelColor.getDefault.value
+            )
+          }
+          SimplePointAssetProperty(prop.publicId, additionalPanelValues, prop.groupedId)
 
-        case _ => SimplePointAssetProperty(prop.publicId, prop.values)
+        case _ => SimplePointAssetProperty(prop.publicId, prop.values, prop.groupedId)
       }).toSet
 
+    val validityDirection = adjustment.validityDirection.getOrElse(persistedAsset.validityDirection)
     val updated = IncomingTrafficSign(adjustment.lon, adjustment.lat, adjustment.linkId, propertyData,
-      persistedAsset.validityDirection, persistedAsset.bearing)
+      validityDirection, adjustment.bearing)
+    val roadLink = roadLinkService.getExistingOrExpiredRoadLinkByLinkId(link.linkId, newTransaction = false)
+      .getOrElse(throw new NoSuchElementException("Road link no longer available"))
 
     updateWithoutTransaction(adjustment.assetId, updated, roadLink,
-      AutoGeneratedUsername.generatedInUpdate, Some(adjustment.mValue), Some(adjustment.timeStamp))
+      AutoGeneratedUsername.generatedInUpdate, Some(adjustment.mValue), Some(adjustment.timeStamp), true)
   }
 
   def withMunicipalityAndGroup(municipalityCode: Int, trafficSignTypes: Set[Int])(query: String): String = {
@@ -244,13 +255,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     val assets = getByMunicipality(withMunicipality(municipalityCode) _)
     val filterRoadLinks = mapRoadLinks.filterNot(_._2.administrativeClass == filterAdministrativeClass)
     assets.filter{a => filterRoadLinks.get(a.linkId).nonEmpty}
-  }
-
-  private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
-    new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.timeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
-      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.validityDirection, persistedStop.bearing,
-      persistedStop.linkSource, externalId = persistedStop.externalId)
   }
 
   def getAssetBearing(validityDirection: Int, geometry: Seq[Point], assetMValue: Option[Double] = None, geometryLength: Option[Double] = None): Int = {

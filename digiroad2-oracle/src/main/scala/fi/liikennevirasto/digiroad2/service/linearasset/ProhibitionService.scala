@@ -39,10 +39,19 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     if (newTransaction)
       withDynTransaction {
-        dao.fetchProhibitionsByLinkIds(typeId, linkIds)
+       dao.fetchProhibitionsByLinkIds(typeId, linkIds)
       }
     else
       dao.fetchProhibitionsByLinkIds(typeId, linkIds)
+  }
+
+  override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] ={
+    if (newTransaction)
+      withDynTransaction {
+        dao.fetchProhibitionsByLinkIds(typeId, (linksIds++removedLinkIds).toSeq)
+      }
+    else
+      dao.fetchProhibitionsByLinkIds(typeId, (linksIds++removedLinkIds).toSeq)
   }
 
   override def getAssetsByMunicipality(typeId: Int, municipality: Int, newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
@@ -65,7 +74,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         dao.fetchProhibitionsByLinkIds(typeId, linkIds)
       }.filterNot(_.expired)
 
-    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
     if(generateUnknownBoolean) generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId), typeId) else linearAssets
   }
 
@@ -81,7 +90,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       try {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
         val existingAssets = dao.fetchProhibitionsByLinkIds(typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
-        val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+        val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
         val groupedAssets = linearAssets.groupBy(_.linkId)
 
         LogUtils.time(logger, s"Check for and adjust possible linearAsset adjustments on ${roadLinks.size} roadLinks. TypeID: $typeId") {
@@ -138,22 +147,35 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
           val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(oldAsset.linkId, newTransaction = false)
           //Create New Asset
           createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, sideCode.getOrElse(oldAsset.sideCode),
-            measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, timeStamp.getOrElse(createTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
+            measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, timeStamp.getOrElse(createTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, verifiedBy = getVerifiedBy(username, oldAsset.typeId))
         }
     }
   }
 
   override def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, timeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                                   createdByFromUpdate: Option[String] = Some(""),
-                                                  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
+                                                  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      timeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
+      timeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, modifiedByFromUpdate, modifiedDateTimeFromUpdate, verifiedBy)
     value match {
       case prohibitions: Prohibitions =>
         dao.insertProhibitionValue(id, typeId, prohibitions)
       case _ => None
     }
     id
+  }
+  override def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
+    val assetsSaved = dao.createMultipleLinearAssets(list)
+    LogUtils.time(logger,"Saving assets properties"){
+      assetsSaved.foreach(a => {
+        val value = a.asset.value
+        value match {
+          case prohibitions: Prohibitions =>
+            dao.insertProhibitionValue(a.id, a.asset.typeId, prohibitions)
+          case _ => None
+        }
+      })
+    }
   }
 
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit,adjust:Boolean = true): Seq[Long] = {
