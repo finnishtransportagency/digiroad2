@@ -38,6 +38,7 @@ class UnknownSpeedLimitUpdater {
         generateUnknownSpeedLimitsByMunicipality(municipality)
       }
     }
+    logger.info("Batch completed.")
   }
 
   def removeByMunicipality(municipality: Int) = {
