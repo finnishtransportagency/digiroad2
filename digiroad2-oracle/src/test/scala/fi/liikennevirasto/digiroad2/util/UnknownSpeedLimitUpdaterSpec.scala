@@ -47,7 +47,7 @@ class UnknownSpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val specialTransPort = RoadLink(linkId4, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, SpecialTransportWithGate, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
     when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)))
-    when(mockRoadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipalityCode)).thenReturn(Seq(carRoad1, carRoad2, walkingAndCycling, specialTransPort))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId1, linkId2, linkId3, linkId4), false)).thenReturn(Seq(carRoad1, carRoad2, walkingAndCycling, specialTransPort))
 
     runWithRollback {
       testUnknownSpeedLimitUpdater.dao.persistUnknownSpeedLimits(Seq(UnknownSpeedLimit(linkId1, municipalityCode, State), UnknownSpeedLimit(linkId2, municipalityCode, State), UnknownSpeedLimit(linkId3, 235, State), UnknownSpeedLimit(linkId4, 235, State)))

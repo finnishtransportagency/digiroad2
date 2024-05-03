@@ -44,8 +44,8 @@ class UnknownSpeedLimitUpdater {
   def removeByMunicipality(municipality: Int) = {
     val linkIdsWithUnknownLimits = dao.getMunicipalitiesWithUnknown(municipality).map(_._1)
     val linkIdsWithExistingSpeedLimit = dao.fetchSpeedLimitsByLinkIds(linkIdsWithUnknownLimits).map(_.linkId)
-    val roadLinks = roadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipality, newTransaction = false)
-    val unsupportedLinkTypes = roadLinks.filter(rl => !rl.isCarTrafficRoad || Seq(SpecialTransportWithGate, SpecialTransportWithoutGate).contains(rl.linkType)).map(_.linkId)
+    val roadLinksWithUnknown = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linkIdsWithUnknownLimits.toSet, newTransaction = false)
+    val unsupportedLinkTypes = roadLinksWithUnknown.filter(rl => !rl.isCarTrafficRoad || Seq(SpecialTransportWithGate, SpecialTransportWithoutGate).contains(rl.linkType)).map(_.linkId)
 
     if ((linkIdsWithExistingSpeedLimit ++ unsupportedLinkTypes).nonEmpty) {
       logger.info(s"Speed limits cover links - $linkIdsWithExistingSpeedLimit. Deleting unknown limits.")
