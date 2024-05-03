@@ -2126,6 +2126,7 @@ object DataFixture {
         extractTrafficSigns(args.lastOption)
       case Some("update_unknown_speed_limits") =>
         unknownSpeedLimitUpdater.updateUnknownSpeedLimits()
+        exit() // batch doesn't exit automatically after completion
       case Some("list_incorrect_SpeedLimits_created") =>
         printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
       case Some("create_prohibition_using_traffic_signs") =>
