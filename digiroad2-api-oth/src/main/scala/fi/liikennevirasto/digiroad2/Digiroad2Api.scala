@@ -105,11 +105,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
 
-  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
-    case _ => throw new NotImplementedError("DateTime deserialization")
-  }, {
-    case d: DateTime => JString(d.toString(DateTimePropertyFormat))
-  }))
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => (
+    {
+      case JString(dateTimeStr) =>
+        DateTimePropertyFormat.parseDateTime(dateTimeStr)
+    },
+    {
+      case dateTime: DateTime => JString(dateTime.toString(DateTimePropertyFormat))
+    }
+  ))
 
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ( {
     null
