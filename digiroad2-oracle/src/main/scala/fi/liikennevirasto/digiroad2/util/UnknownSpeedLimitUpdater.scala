@@ -48,7 +48,7 @@ class UnknownSpeedLimitUpdater {
 
     if ((linkIdsWithExistingSpeedLimit ++ unsupportedLinkTypes).nonEmpty) {
       logger.info(s"Speed limits cover links - $linkIdsWithExistingSpeedLimit. Deleting unknown limits.")
-      logger.info(s"Unknown speed limits created outside car traffic roads on links $unsupportedLinkTypes. Deleting unknown limits.")
+      logger.info(s"Unknown speed limits created on unsupported link types $unsupportedLinkTypes. Deleting unknown limits.")
       dao.deleteUnknownSpeedLimits(linkIdsWithExistingSpeedLimit ++ unsupportedLinkTypes)
     }
   }
