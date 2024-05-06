@@ -57,7 +57,7 @@ class UnknownSpeedLimitUpdater {
     val unsupportedLinkIds = roadLinksWithUnknown.filter(rl => isUnsupportedRoadLinkType(rl)).map(_.linkId)
     val expiredLinkIds = roadLinkDAO.fetchExpiredByLinkIds(linkIdsWithUnknownLimits.toSet).map(_.linkId)
 
-    if ((linkIdsWithExistingSpeedLimit ++ unsupportedLinkIds).nonEmpty) {
+    if ((linkIdsWithExistingSpeedLimit ++ unsupportedLinkIds ++ expiredLinkIds).nonEmpty) {
       logger.info(s"Speed limits cover links - $linkIdsWithExistingSpeedLimit. Deleting unknown limits.")
       logger.info(s"Unknown speed limits created on unsupported link types $unsupportedLinkIds. Deleting unknown limits.")
       logger.info(s"Unknown speed limits found on expired road links $expiredLinkIds. Deleting unknown limits")
