@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, CycleOrPedestrianPath, Municipality, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, State}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -20,6 +20,7 @@ class UnknownSpeedLimitUpdater {
   val roadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, new DummySerializer)
   val speedLimitService = new SpeedLimitService(dummyEventBus, roadLinkService)
   val dao = new PostGISSpeedLimitDao(roadLinkService)
+  val roadLinkDAO = new RoadLinkDAO()
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -54,11 +55,13 @@ class UnknownSpeedLimitUpdater {
     val linkIdsWithExistingSpeedLimit = dao.fetchSpeedLimitsByLinkIds(linkIdsWithUnknownLimits).map(_.linkId)
     val roadLinksWithUnknown = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linkIdsWithUnknownLimits.toSet, newTransaction = false)
     val unsupportedLinkIds = roadLinksWithUnknown.filter(rl => isUnsupportedRoadLinkType(rl)).map(_.linkId)
+    val expiredLinkIds = roadLinkDAO.fetchExpiredByLinkIds(linkIdsWithUnknownLimits.toSet).map(_.linkId)
 
     if ((linkIdsWithExistingSpeedLimit ++ unsupportedLinkIds).nonEmpty) {
       logger.info(s"Speed limits cover links - $linkIdsWithExistingSpeedLimit. Deleting unknown limits.")
       logger.info(s"Unknown speed limits created on unsupported link types $unsupportedLinkIds. Deleting unknown limits.")
-      dao.deleteUnknownSpeedLimits(linkIdsWithExistingSpeedLimit ++ unsupportedLinkIds)
+      logger.info(s"Unknown speed limits found on expired road links $expiredLinkIds. Deleting unknown limits")
+      dao.deleteUnknownSpeedLimits(linkIdsWithExistingSpeedLimit ++ unsupportedLinkIds ++ expiredLinkIds)
     }
   }
 
