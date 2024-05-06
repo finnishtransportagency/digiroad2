@@ -121,7 +121,7 @@ object ApiUtils {
   def timer[R](operationName: String)(f: => R): R = LogUtils.time(logger, operationName)(f)
   
   val MAX_WAIT_TIME_SECONDS: Int = 20
-  val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
+  val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 9 // 9Mb in bytes. API GW size limit is 10MB, but we use use 9MB to allow small deviations in calculated response size
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
 
  /**
