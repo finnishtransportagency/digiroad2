@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.Planned
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
@@ -38,25 +39,28 @@ class UnknownSpeedLimitUpdaterSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Remove unknown speed limits that have been replaced by an ordinary speed limit or are not located on car roads") {
-    val (linkId1, linkId2, linkId3, linkId4) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
+    val linkIds = (1 to 6).map(_ => LinkIdGenerator.generateRandom())
     val municipalityCode = 235
 
-    val carRoad1 = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    val carRoad2 = RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    val walkingAndCycling = RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    val specialTransPort = RoadLink(linkId4, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, SpecialTransportWithGate, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val carRoad1 = RoadLink(linkIds(0), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val carRoad2 = RoadLink(linkIds(1), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val walkingAndCycling = RoadLink(linkIds(2), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val specialTransPort = RoadLink(linkIds(3), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, SpecialTransportWithGate, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val privateRoad = RoadLink(linkIds(4), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, Private, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val plannedRoad = RoadLink(linkIds(5), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)), constructionType = Planned)
 
-    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId1, linkId2, linkId3, linkId4), false)).thenReturn(Seq(carRoad1, carRoad2, walkingAndCycling, specialTransPort))
+    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkIds(0))).thenReturn(Some(RoadLinkFetched(linkIds(0), municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(linkIds.toSet)).thenReturn(Seq(carRoad1, carRoad2, walkingAndCycling, specialTransPort, privateRoad, plannedRoad))
 
     runWithRollback {
-      testUnknownSpeedLimitUpdater.dao.persistUnknownSpeedLimits(Seq(UnknownSpeedLimit(linkId1, municipalityCode, State), UnknownSpeedLimit(linkId2, municipalityCode, State), UnknownSpeedLimit(linkId3, 235, State), UnknownSpeedLimit(linkId4, 235, State)))
-      testUnknownSpeedLimitUpdater.speedLimitService.createWithoutTransaction(Seq(NewLimit(linkId1, 0.0, 8.0)), SpeedLimitValue(100), "test", SideCode.BothDirections)
+      val unknowsToCreate = linkIds.map ( linkId => UnknownSpeedLimit(linkId, municipalityCode, State))
+      testUnknownSpeedLimitUpdater.dao.persistUnknownSpeedLimits(unknowsToCreate)
+      testUnknownSpeedLimitUpdater.speedLimitService.createWithoutTransaction(Seq(NewLimit(linkIds(0), 0.0, 8.0)), SpeedLimitValue(100), "test", SideCode.BothDirections)
       val unknownLimitsBefore = testUnknownSpeedLimitUpdater.dao.getMunicipalitiesWithUnknown(municipalityCode).map(_._1)
-      unknownLimitsBefore.sorted should be (Seq(linkId1, linkId2, linkId3, linkId4).sorted)
+      unknownLimitsBefore.sorted should be (linkIds.sorted)
       testUnknownSpeedLimitUpdater.removeByMunicipality(municipalityCode)
       val unknownLimitsAfter = testUnknownSpeedLimitUpdater.dao.getMunicipalitiesWithUnknown(municipalityCode).map(_._1)
-      unknownLimitsAfter.sorted should be (Seq(linkId2))
+      unknownLimitsAfter.sorted should be (Seq(linkIds(1)))
     }
   }
 
@@ -97,25 +101,26 @@ class UnknownSpeedLimitUpdaterSpec extends FunSuite with Matchers {
   }
 
   test("Generate necessary unknown limits") {
-    val (linkId1, linkId2, linkId3, linkId4, linkId5) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
+    val linkIds = (1 to 6).map(_ => LinkIdGenerator.generateRandom())
     val municipalityCode = 235
 
-    val carRoad1 = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    val carRoad2 = RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    val walkingAndCycling = RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    val specialTransPort = RoadLink(linkId4, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, SpecialTransportWithGate, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    val privateRoad = RoadLink(linkId5, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, Private, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val carRoad1 = RoadLink(linkIds(0), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val carRoad2 = RoadLink(linkIds(1), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val walkingAndCycling = RoadLink(linkIds(2), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val specialTransPort = RoadLink(linkIds(3), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, SpecialTransportWithGate, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val privateRoad = RoadLink(linkIds(4), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, Private, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val plannedRoad = RoadLink(linkIds(5), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)), constructionType = Planned)
 
-    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)))
-    when(mockRoadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipalityCode)).thenReturn(Seq(carRoad1, carRoad2, walkingAndCycling, specialTransPort, privateRoad))
+    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkIds(0))).thenReturn(Some(RoadLinkFetched(linkIds(0), municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)))
+    when(mockRoadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipalityCode)).thenReturn(Seq(carRoad1, carRoad2, walkingAndCycling, specialTransPort, privateRoad, plannedRoad))
 
     runWithRollback {
-      testUnknownSpeedLimitUpdater.speedLimitService.createWithoutTransaction(Seq(NewLimit(linkId1, 0.0, 8.0)), SpeedLimitValue(100), "test", SideCode.BothDirections)
+      testUnknownSpeedLimitUpdater.speedLimitService.createWithoutTransaction(Seq(NewLimit(linkIds(0), 0.0, 8.0)), SpeedLimitValue(100), "test", SideCode.BothDirections)
       val unknownLimitsBefore = testUnknownSpeedLimitUpdater.dao.getMunicipalitiesWithUnknown(municipalityCode)
       unknownLimitsBefore.isEmpty should be(true)
       testUnknownSpeedLimitUpdater.generateUnknownSpeedLimitsByMunicipality(municipalityCode)
       val unknownLimitsAfter = testUnknownSpeedLimitUpdater.dao.getMunicipalitiesWithUnknown(municipalityCode).map(_._1)
-      unknownLimitsAfter.sorted should be(Seq(linkId2))
+      unknownLimitsAfter.sorted should be(Seq(linkIds(1)))
     }
   }
 
