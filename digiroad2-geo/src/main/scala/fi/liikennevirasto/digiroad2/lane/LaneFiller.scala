@@ -209,10 +209,10 @@ class LaneFiller {
   private def validateLink(title: String = "")(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
     lanes.groupBy(_.sideCode).foreach(a => {
       val lanes = a._2
-      lanes.groupBy(a => a.laneCode).foreach(a => {
-        val (laneNumber, lanes) = a
+      lanes.groupBy(a => {(a.laneCode,a.startMeasure,a.endMeasure)}).foreach(a => {
+        val (key, lanes) = a
         if (lanes.length > 1) {
-          logger.warn(s"${title}there is more than one lane number on link: ${roadLink.linkId}, lane number: ${laneNumber}, lanes ids:  ${lanes.map(_.id).mkString(",")} ")
+          logger.warn(s"${title}there is more than one lane number on link: ${roadLink.linkId}, lane number: ${key._1}, lanes ids:  ${lanes.map(_.id).mkString(",")} ")
         }
       })
     })
