@@ -36,7 +36,7 @@ trait TrafficSignLinearGenerator {
 
   val assetType: Int
 
-  private def errorMessage(newSegment: TrafficSignToLinear) = {
+  protected def errorMessage(newSegment: TrafficSignToLinear): String = {
     s"Failed to linear asset from these traffic sign:${newSegment.signId.toString()} on this link ${newSegment.roadLink.linkId}"
   }
   
@@ -747,9 +747,14 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
     logger.debug("createLinearAsset")
-    prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    try {
+      prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    } catch {
+      case e: Throwable => logger.error(errorMessage(newSegment))
+        throw e
+    }
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
@@ -828,9 +833,14 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
     logger.debug("createLinearAsset")
-    hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    try {
+      hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    } catch {
+      case e: Throwable => logger.error(errorMessage(newSegment))
+        throw e
+    }
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
@@ -994,9 +1004,14 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
     logger.debug("createLinearAsset")
-    parkingProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    try {
+      parkingProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    } catch {
+      case e: Throwable => logger.error(errorMessage(newSegment))
+        throw e
+    }
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
@@ -1199,13 +1214,12 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String): Long = {
     logger.debug("createLinearAsset")
-    val failledToCreate = errorMessage(newSegment)
     try {
       roadWorkService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
         newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
         LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
     } catch {
-      case e: Throwable => logger.error(failledToCreate)
+      case e: Throwable => logger.error(errorMessage(newSegment))
         throw e
     }
   }
