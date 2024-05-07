@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{ExpiringSoon, Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, CycleOrPedestrianPath, Municipality, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, State}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkDAO}
@@ -47,7 +47,7 @@ class UnknownSpeedLimitUpdater {
     !Seq(Municipality, State).contains(roadLink.administrativeClass) ||
       Seq(PedestrianZone, CycleOrPedestrianPath, ServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate,
         CableFerry, ServiceOrEmergencyRoad, RestArea).contains(roadLink.linkType) ||
-      Seq(Planned, UnderConstruction).contains(roadLink.constructionType)
+      Seq(Planned, UnderConstruction, ExpiringSoon).contains(roadLink.constructionType)
   }
 
   def removeByMunicipality(municipality: Int) = {
