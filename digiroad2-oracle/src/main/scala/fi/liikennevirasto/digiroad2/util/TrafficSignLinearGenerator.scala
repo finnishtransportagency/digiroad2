@@ -37,7 +37,11 @@ trait TrafficSignLinearGenerator {
   val assetType: Int
 
   protected def errorMessage(newSegment: TrafficSignToLinear): String = {
-    s"Failed to linear asset from these traffic sign:${newSegment.signId.toString()} on this link ${newSegment.roadLink.linkId}"
+    s"Failed to save linear asset from these traffic sign:${newSegment.signId.toString()} on this link ${newSegment.roadLink.linkId}"
+  }
+
+  protected def assetMissingMandatoryProperty(newSegment: TrafficSignToLinear, e: MissingMandatoryPropertyException): String = {
+    s"Failed to save linear asset from these traffic sign:${newSegment.signId.toString()} on this link ${newSegment.roadLink.linkId}, asset is missing these properties: ${e.missing.toString()}"
   }
   
   case object TrafficSignSerializer extends CustomSerializer[Property](format =>
@@ -752,6 +756,8 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
         newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
         LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
     } catch {
+      case e: MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e)) 
+        throw e
       case e: Throwable => logger.error(errorMessage(newSegment))
         throw e
     }
@@ -838,6 +844,8 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
         newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
         LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
     } catch {
+      case e: MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e))
+        throw e
       case e: Throwable => logger.error(errorMessage(newSegment))
         throw e
     }
@@ -1009,6 +1017,8 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
         newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
         LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
     } catch {
+      case e: MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e))
+        throw e
       case e: Throwable => logger.error(errorMessage(newSegment))
         throw e
     }
@@ -1219,6 +1229,8 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
         newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
         LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
     } catch {
+      case e: MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e))
+        throw e
       case e: Throwable => logger.error(errorMessage(newSegment))
         throw e
     }
