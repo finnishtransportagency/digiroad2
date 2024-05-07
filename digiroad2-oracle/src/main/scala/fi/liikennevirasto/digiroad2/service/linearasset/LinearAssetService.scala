@@ -367,6 +367,11 @@ trait LinearAssetOperations {
       dao.fetchLinearAssetsByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
   }
 
+  protected def fetchMissingLinksFromHistory(assets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]) = {
+    val missingOrDeletedLinks = assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet)
+    roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
+  }
+
   /**
     * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
     *
@@ -381,26 +386,48 @@ trait LinearAssetOperations {
       dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
-    mapPersistedAssetChanges(persistedLinearAssets, roadLinks)
+    val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
+    val historyRoadLinks = fetchMissingLinksFromHistory(persistedLinearAssets, roadLinksWithoutWalkways)
+    mapPersistedAssetChanges(persistedLinearAssets, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
   }
 
-  def mapPersistedAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinksWithoutWalkways: Seq[RoadLink]): Seq[ChangedLinearAsset] = {
-    persistedLinearAssets.flatMap { persistedLinearAsset =>
-      roadLinksWithoutWalkways.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
-        val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
-        val endPoints: Set[Point] =
-          try {
-            val ep = GeometryUtils.geometryEndpoints(points)
-            Set(ep._1, ep._2)
-          } catch {
-            case ex: NoSuchElementException =>
-              logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
-              val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
-              Set(wholeLinkPoints._1, wholeLinkPoints._2)
-          }
-        ChangedLinearAsset(
+  /**
+   * Maps PersistedLinearAssets with corresponding RoadLinks. If no RoadLink is found for an asset, it is skipped with matching log info
+   * @param persistedLinearAssets
+   * @param filteredRoadLinks
+   * @param historyRoadLinks
+   * @param excludedRoadLinks
+   * @return Asset with mapped RoadLink
+   */
+  def mapPersistedAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset],
+                               filteredRoadLinks: Seq[RoadLink],
+                               historyRoadLinks: Seq[RoadLink],
+                               excludedRoadLinks: Seq[RoadLink] = Seq.empty[RoadLink]): Seq[ChangedLinearAsset] = {
+
+    def getAssetGeometry(roadLink: RoadLink, asset: PersistedLinearAsset): (Seq[Point], Set[Point]) = {
+      val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
+      val endPoints = try {
+        val (first, last) = GeometryUtils.geometryEndpoints(points)
+        Set(first, last)
+      } catch {
+        case ex: NoSuchElementException =>
+          logger.warn(s"Asset ${asset.id} is outside of geometry for link ${asset.linkId}")
+          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+          Set(first, last)
+      }
+      (points, endPoints)
+    }
+
+    def findRoadLink(linkId: String): Option[RoadLink] = {
+      filteredRoadLinks.find(_.linkId == linkId).orElse(historyRoadLinks.find(_.linkId == linkId))
+    }
+
+    def processPersistedAsset(persistedLinearAsset: PersistedLinearAsset): Option[ChangedLinearAsset] = {
+      findRoadLink(persistedLinearAsset.linkId).flatMap { roadLink =>
+        val (geometry, endPoints) = getAssetGeometry(roadLink, persistedLinearAsset)
+        Some(ChangedLinearAsset(
           linearAsset = PieceWiseLinearAsset(
-            persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
+            persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, geometry, persistedLinearAsset.expired,
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
             endPoints, persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
             persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
@@ -408,7 +435,19 @@ trait LinearAssetOperations {
             verifiedBy = persistedLinearAsset.verifiedBy, verifiedDate = persistedLinearAsset.verifiedDate, informationSource = persistedLinearAsset.informationSource)
           ,
           link = roadLink
-        )
+        ))
+      }
+    }
+
+    persistedLinearAssets.flatMap { asset =>
+      processPersistedAsset(asset).orElse {
+        excludedRoadLinks.find(_.linkId == asset.linkId) match {
+          case Some(roadLink) =>
+            logger.info(s"Road link ${asset.linkId} not included: Skipping asset ${asset.id}")
+          case _ =>
+            logger.warn(s"Road link ${asset.linkId} no longer available: Skipping asset ${asset.id}")
+        }
+        None
       }
     }
   }
