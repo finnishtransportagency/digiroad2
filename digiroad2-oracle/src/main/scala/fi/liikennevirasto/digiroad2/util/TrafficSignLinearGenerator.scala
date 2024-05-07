@@ -35,6 +35,11 @@ trait TrafficSignLinearGenerator {
   def logger = LoggerFactory.getLogger(getClass)
 
   val assetType: Int
+
+  private def errorMessage(newSegment: TrafficSignToLinear) = {
+    s"Failed to linear asset from these traffic sign:${newSegment.signId.toString()} on this link ${newSegment.roadLink.linkId}"
+  }
+  
   case object TrafficSignSerializer extends CustomSerializer[Property](format =>
     ({
       case jsonObj: JObject =>
@@ -1192,12 +1197,19 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     }
   }
 
-  override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
+  override def createLinearAsset(newSegment: TrafficSignToLinear, username: String): Long = {
     logger.debug("createLinearAsset")
-    roadWorkService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink) )
+    val failledToCreate = errorMessage(newSegment)
+    try {
+      roadWorkService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    } catch {
+      case e: Throwable => logger.error(failledToCreate)
+        throw e
+    }
   }
+
 
   override def getStopCondition(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int, result : Seq[TrafficSignToLinear]): Option[Double] = {
     // STOP CONDITIONS:
