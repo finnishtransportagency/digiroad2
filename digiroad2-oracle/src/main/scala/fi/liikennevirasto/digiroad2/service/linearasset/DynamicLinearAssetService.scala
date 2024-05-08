@@ -286,10 +286,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       dynamicLinearAssetDao.getDynamicLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet)
-    val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
-    val historyRoadLinks = fetchMissingLinksFromHistory(persistedLinearAssets, roadLinksWithoutWalkways)
-
-    mapPersistedAssetChanges(persistedLinearAssets, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
+    processLinearAssetChanges(persistedLinearAssets, roadLinks)
   }
 
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
