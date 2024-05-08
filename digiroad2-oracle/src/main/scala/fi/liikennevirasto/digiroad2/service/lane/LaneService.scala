@@ -187,7 +187,7 @@ trait LaneOperations {
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksIds, newTransaction = newTransaction)
         val lanes = fetchAllLanesByLinkIds(roadLinks.map(_.linkId).distinct, newTransaction = newTransaction).filterNot(_.expired)
         LogUtils.time(logger, s"Check for and adjust possible lane adjustments on ${roadLinks.size} roadLinks") {
-          adjustLanes(roadLinks, lanes.groupBy(_.linkId), geometryChanged = false)
+          adjustLanes(roadLinks, lanes.groupBy(_.linkId))
         }
       } catch {
         case e: PSQLException => logger.error(s"Database error happened on links ${linksIds.mkString(",")} : ${e.getMessage}", e)
@@ -196,8 +196,8 @@ trait LaneOperations {
     }
    }
   
-  def adjustLanes(roadLinks: Seq[RoadLink], lanes: Map[String, Seq[PersistedLane]], geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLane] = {
-    val (filledTopology, adjustmentsChangeSet) = laneFiller.fillTopology(roadLinks, lanes, None, geometryChanged)
+  def adjustLanes(roadLinks: Seq[RoadLink], lanes: Map[String, Seq[PersistedLane]], counter: Int = 1): Seq[PieceWiseLane] = {
+    val (filledTopology, adjustmentsChangeSet) = laneFiller.fillTopology(roadLinks, lanes, None)
 
     adjustmentsChangeSet.isEmpty match {
       case true => laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
@@ -206,7 +206,7 @@ trait LaneOperations {
         laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
       case false if counter <= 3 =>
         updateFillTopologyChangeSet(adjustmentsChangeSet)
-        adjustLanes(roadLinks, filledTopology.groupBy(_.linkId), geometryChanged, counter + 1)
+        adjustLanes(roadLinks, filledTopology.groupBy(_.linkId), counter + 1)
     }
   }
 

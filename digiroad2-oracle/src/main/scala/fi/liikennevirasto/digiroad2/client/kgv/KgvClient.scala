@@ -79,7 +79,7 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
     match {
       case Right(features) => features.get.features.map {feature =>
         val polygonFeature = feature.asInstanceOf[PolygonFeature]
-        MunicipalityBorders(polygonFeature.properties("kuntanumer").toString.toInt, polygonFeature.polygonGeometry) }
+        MunicipalityBorders(polygonFeature.properties("natcode").toString.toInt, polygonFeature.polygonGeometry) }
       case Left(error) => throw new ClientException(error.toString)
     }
   }
