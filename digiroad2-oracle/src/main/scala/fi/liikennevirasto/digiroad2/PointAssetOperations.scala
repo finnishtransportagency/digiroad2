@@ -176,23 +176,17 @@ trait  PointAssetOperations{
    * @return
    */
   def mapPersistedAssetChanges(assets: Seq[PersistedAsset],
-                               filteredRoadLinks: Seq[RoadLink],
-                               historyRoadLinks: Seq[RoadLink],
-                               excludedRoadLinks: Seq[RoadLink] = Seq.empty[RoadLink]): Seq[ChangedPointAsset] = {
+                               roadLinks: Seq[RoadLink],
+                               historyRoadLinks: Seq[RoadLink]): Seq[ChangedPointAsset] = {
     assets.flatMap { asset =>
-      val roadLinkFetched = filteredRoadLinks
+      val roadLinkFetched = roadLinks
         .find(_.linkId == asset.linkId)
         .orElse(historyRoadLinks.find(_.linkId == asset.linkId))
 
       roadLinkFetched match {
         case Some(roadLink: RoadLink) => Some(ChangedPointAsset(asset, roadLink))
         case _ =>
-          excludedRoadLinks.find(_.linkId == asset.linkId) match {
-            case Some(roadLink) =>
-              logger.info(s"Road link not included ${asset.linkId}. Skipping asset ${asset.id}")
-            case _ =>
-              logger.warn(s"Road link no longer available ${asset.linkId}. Skipping asset ${asset.id}")
-          }
+          logger.warn(s"Road link no longer available ${asset.linkId}. Skipping asset ${asset.id}")
           None
       }
     }

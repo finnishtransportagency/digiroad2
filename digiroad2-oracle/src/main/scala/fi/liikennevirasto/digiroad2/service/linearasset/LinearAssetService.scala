@@ -372,6 +372,11 @@ trait LinearAssetOperations {
     roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
   }
 
+  protected def filterPersistedAssetsByRoadLinks(persistedAssets: Seq[PersistedLinearAsset], excludedRoadLinks: Seq[RoadLink]) = {
+    val excludedMap = excludedRoadLinks.groupBy(_.linkId)
+    persistedAssets.filterNot(asset => excludedMap.contains(asset.linkId))
+  }
+
   /**
     * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
     *
@@ -385,24 +390,34 @@ trait LinearAssetOperations {
     val persistedLinearAssets = withDynTransaction {
       dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, token)
     }
-    val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
-    val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
-    val historyRoadLinks = fetchMissingLinksFromHistory(persistedLinearAssets, roadLinksWithoutWalkways)
-    mapPersistedAssetChanges(persistedLinearAssets, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet)
+    processLinearAssetChanges(persistedLinearAssets, roadLinks)
   }
 
   /**
-   * Maps PersistedLinearAssets with corresponding RoadLinks. If no RoadLink is found for an asset, it is skipped with matching log info
+   * Prepares persistedLinearAssets and roadLinks for mapping
+   * @param persistedLinearAssets
+   * @param roadLinks
+   * @return sequence of persistedLinearAsset-roadlink pairs
+   */
+  protected def processLinearAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Seq[ChangedLinearAsset] = {
+    val (walkways, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
+    val persistedLinearAssetsWithoutWalkways = filterPersistedAssetsByRoadLinks(persistedLinearAssets, walkways)
+    val historyRoadLinks = fetchMissingLinksFromHistory(persistedLinearAssetsWithoutWalkways, roadLinksWithoutWalkways)
+
+    mapPersistedAssetChanges(persistedLinearAssetsWithoutWalkways, roadLinksWithoutWalkways, historyRoadLinks)
+  }
+
+  /**
+   * Maps PersistedLinearAssets with corresponding RoadLinks. If no RoadLink is found for an asset, it is skipped with a logger warning
    * @param persistedLinearAssets
    * @param filteredRoadLinks
    * @param historyRoadLinks
-   * @param excludedRoadLinks
    * @return Asset with mapped RoadLink
    */
   def mapPersistedAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset],
                                filteredRoadLinks: Seq[RoadLink],
-                               historyRoadLinks: Seq[RoadLink],
-                               excludedRoadLinks: Seq[RoadLink] = Seq.empty[RoadLink]): Seq[ChangedLinearAsset] = {
+                               historyRoadLinks: Seq[RoadLink]): Seq[ChangedLinearAsset] = {
 
     def getAssetGeometry(roadLink: RoadLink, asset: PersistedLinearAsset): (Seq[Point], Set[Point]) = {
       val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
@@ -441,12 +456,7 @@ trait LinearAssetOperations {
 
     persistedLinearAssets.flatMap { asset =>
       processPersistedAsset(asset).orElse {
-        excludedRoadLinks.find(_.linkId == asset.linkId) match {
-          case Some(roadLink) =>
-            logger.info(s"Road link ${asset.linkId} not included: Skipping asset ${asset.id}")
-          case _ =>
-            logger.warn(s"Road link ${asset.linkId} no longer available: Skipping asset ${asset.id}")
-        }
+        logger.warn(s"Road link ${asset.linkId} no longer available: Skipping asset ${asset.id}")
         None
       }
     }

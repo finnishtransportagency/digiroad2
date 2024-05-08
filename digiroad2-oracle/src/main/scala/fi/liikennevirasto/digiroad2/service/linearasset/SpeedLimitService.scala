@@ -123,10 +123,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitDao.getSpeedLimitsChangedSince(sinceDate, untilDate, withAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(persistedSpeedLimits.map(_.linkId).toSet)
-    val (walkWays, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
-    val historyRoadLinks = fetchMissingLinksFromHistory(persistedSpeedLimits, roadLinksWithoutWalkways)
-
-    mapPersistedAssetChanges(persistedSpeedLimits, roadLinksWithoutWalkways, historyRoadLinks, walkWays)
+    processLinearAssetChanges(persistedSpeedLimits, roadLinks)
   }
 
   /**
