@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{ExpiringSoon, Planned, UnderConstruction}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, CycleOrPedestrianPath, Municipality, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, State}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, CycleOrPedestrianPath, Municipality, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, State, TractorRoad}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
@@ -46,7 +46,7 @@ class UnknownSpeedLimitUpdater {
   private def isUnsupportedRoadLinkType(roadLink: RoadLink) = {
     !Seq(Municipality, State).contains(roadLink.administrativeClass) ||
       Seq(PedestrianZone, CycleOrPedestrianPath, ServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate,
-        CableFerry, ServiceOrEmergencyRoad, RestArea).contains(roadLink.linkType) ||
+        CableFerry, ServiceOrEmergencyRoad, RestArea, TractorRoad).contains(roadLink.linkType) ||
       Seq(Planned, UnderConstruction, ExpiringSoon).contains(roadLink.constructionType)
   }
 
