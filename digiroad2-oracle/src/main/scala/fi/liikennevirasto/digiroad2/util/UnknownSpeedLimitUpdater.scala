@@ -1,12 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{ExpiringSoon, Planned, UnderConstruction}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, CycleOrPedestrianPath, Municipality, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, State, TractorRoad}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -16,7 +18,9 @@ class UnknownSpeedLimitUpdater {
   val dummyEventBus = new DummyEventBus
   val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   val roadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, new DummySerializer)
+  val speedLimitService = new SpeedLimitService(dummyEventBus, roadLinkService)
   val dao = new PostGISSpeedLimitDao(roadLinkService)
+  val roadLinkDAO = new RoadLinkDAO()
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -28,38 +32,36 @@ class UnknownSpeedLimitUpdater {
     withDynTransaction {
       val municipalities = Queries.getMunicipalities
       municipalities.foreach { municipality =>
-        logger.info(s"Removing unnecessary unknown speed limits in municipality  + $municipality")
+        logger.info(s"Removing unnecessary unknown speed limits in municipality $municipality")
         removeByMunicipality(municipality)
-        logger.info(s"Updating admin class and municipality of the unknown speed limits in municipality + $municipality")
+        logger.info(s"Updating admin class and municipality of the unknown speed limits in municipality $municipality")
         updateAdminClassAndMunicipalityCode(municipality)
+        logger.info(s"Generating unknown speed limits in municipality $municipality")
+        generateUnknownSpeedLimitsByMunicipality(municipality)
       }
     }
+    logger.info("Batch completed.")
+  }
+
+  private def isUnsupportedRoadLinkType(roadLink: RoadLink) = {
+    !Seq(Municipality, State).contains(roadLink.administrativeClass) ||
+      Seq(PedestrianZone, CycleOrPedestrianPath, ServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate,
+        CableFerry, ServiceOrEmergencyRoad, RestArea, TractorRoad).contains(roadLink.linkType) ||
+      Seq(Planned, UnderConstruction, ExpiringSoon).contains(roadLink.constructionType)
   }
 
   def removeByMunicipality(municipality: Int) = {
     val linkIdsWithUnknownLimits = dao.getMunicipalitiesWithUnknown(municipality).map(_._1)
-    val speedLimits = dao.fetchSpeedLimitsByLinkIds(linkIdsWithUnknownLimits)
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linkIdsWithUnknownLimits.toSet, false)
-    val groupedSpeedLimits = speedLimits.groupBy(_.linkId)
+    val linkIdsWithExistingSpeedLimit = dao.fetchSpeedLimitsByLinkIds(linkIdsWithUnknownLimits).map(_.linkId)
+    val roadLinksWithUnknown = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linkIdsWithUnknownLimits.toSet, newTransaction = false)
+    val unsupportedLinkIds = roadLinksWithUnknown.filter(rl => isUnsupportedRoadLinkType(rl)).map(_.linkId)
+    val expiredLinkIds = roadLinkDAO.fetchExpiredByLinkIds(linkIdsWithUnknownLimits.toSet).map(_.linkId)
 
-    val linkIdsToDelete = groupedSpeedLimits.filter { grouped =>
-      val sideCodes = grouped._2.map(_.sideCode)
-      val speedLimitIsOnBothSides = sideCodes.contains(SideCode.BothDirections) || (sideCodes.contains(SideCode.TowardsDigitizing) && sideCodes.contains(SideCode.AgainstDigitizing))
-      if (speedLimitIsOnBothSides) {
-        true
-      } else {
-        roadLinks.find(_.linkId == grouped._1) match {
-          case Some(roadLink) =>
-            val roadLinkIsOneWay = roadLink.trafficDirection != BothDirections
-            if (roadLinkIsOneWay) true else false
-          case _ => throw new NoSuchElementException(s"Road link with id ${grouped._1} not found.")
-        }
-      }
-    }.keys.toSeq
-
-    if (linkIdsToDelete.nonEmpty) {
-      logger.info(s"Speed limits cover links - $linkIdsToDelete. Deleting unknown limits.")
-      dao.deleteUnknownSpeedLimits(linkIdsToDelete)
+    if ((linkIdsWithExistingSpeedLimit ++ unsupportedLinkIds ++ expiredLinkIds).nonEmpty) {
+      logger.info(s"Speed limits cover links - $linkIdsWithExistingSpeedLimit. Deleting unknown limits.")
+      logger.info(s"Unknown speed limits created on unsupported link types $unsupportedLinkIds. Deleting unknown limits.")
+      logger.info(s"Unknown speed limits found on expired road links $expiredLinkIds. Deleting unknown limits")
+      dao.deleteUnknownSpeedLimits(linkIdsWithExistingSpeedLimit ++ unsupportedLinkIds ++ expiredLinkIds)
     }
   }
 
@@ -74,6 +76,17 @@ class UnknownSpeedLimitUpdater {
           dao.updateUnknownSpeedLimitAdminClassAndMunicipality(linkIdForUnknown, r.administrativeClass, r.municipalityCode)
         case _ => //do nothing
       }
+    }
+  }
+
+  def generateUnknownSpeedLimitsByMunicipality(municipality: Int) = {
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipality, newTransaction = false).filterNot(rl => isUnsupportedRoadLinkType(rl))
+    val linkIdsWithSpeedLimit = dao.fetchSpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(_.linkId)
+    val roadLinksWithoutSpeedLimits = roadLinks.filterNot(rl => linkIdsWithSpeedLimit.contains(rl.linkId))
+    val unknownsToGenerate = roadLinksWithoutSpeedLimits.map(rl => UnknownSpeedLimit(rl.linkId, rl.municipalityCode, rl.administrativeClass))
+    if (unknownsToGenerate.nonEmpty) {
+      logger.info(s"Generating unknown speed limits for links ${roadLinksWithoutSpeedLimits.map(_.linkId).mkString(", ")}")
+      speedLimitService.persistUnknown(unknownsToGenerate, newTransaction = false)
     }
   }
 }

@@ -126,6 +126,12 @@
     function save() {
       eventbus.trigger(assetName + ':saving');
       current = _.omit(current, 'geometry');
+      // Filter property 'counter' as it is not a real property to save.
+      // 'counter' is used only to group nearby TrafficSigns together in UI
+      current.propertyData = _.filter(current.propertyData, function(prop) {
+        return prop.publicId !== 'counter';
+      });
+
       if (current.toBeDeleted) {
         eventbus.trigger(endPointName + ':deleted', current, 'deleted');
         backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
