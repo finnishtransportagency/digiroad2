@@ -62,7 +62,8 @@
       { typeId: 19, title: 'Sotilasajoneuvo' },
       { typeId: 13, title: 'Ajoneuvoyhdistelmä' },
       { typeId: 14, title: 'Traktori tai maatalousajoneuvo' },
-      { typeId: 28, title: 'Erikoiskuljetus'}
+      { typeId: 28, title: 'Erikoiskuljetus'},
+      { typeId: 29, title: 'Hälytysajoneuvo'}
     ];
 
     return ProhibitionFormElements(prohibitionValues, exceptionValues);
