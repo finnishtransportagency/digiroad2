@@ -367,6 +367,16 @@ trait LinearAssetOperations {
       dao.fetchLinearAssetsByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
   }
 
+  protected def fetchMissingLinksFromHistory(assets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]) = {
+    val missingOrDeletedLinks = assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet)
+    roadLinkService.getHistoryDataLinks(missingOrDeletedLinks)
+  }
+
+  protected def filterPersistedAssetsByRoadLinks(persistedAssets: Seq[PersistedLinearAsset], excludedRoadLinks: Seq[RoadLink]) = {
+    val excludedMap = excludedRoadLinks.groupBy(_.linkId)
+    persistedAssets.filterNot(asset => excludedMap.contains(asset.linkId))
+  }
+
   /**
     * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
     *
@@ -380,27 +390,59 @@ trait LinearAssetOperations {
     val persistedLinearAssets = withDynTransaction {
       dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, token)
     }
-    val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
-    mapPersistedAssetChanges(persistedLinearAssets, roadLinks)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet)
+    processLinearAssetChanges(persistedLinearAssets, roadLinks)
   }
 
-  def mapPersistedAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinksWithoutWalkways: Seq[RoadLink]): Seq[ChangedLinearAsset] = {
-    persistedLinearAssets.flatMap { persistedLinearAsset =>
-      roadLinksWithoutWalkways.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
-        val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
-        val endPoints: Set[Point] =
-          try {
-            val ep = GeometryUtils.geometryEndpoints(points)
-            Set(ep._1, ep._2)
-          } catch {
-            case ex: NoSuchElementException =>
-              logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
-              val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
-              Set(wholeLinkPoints._1, wholeLinkPoints._2)
-          }
-        ChangedLinearAsset(
+  /**
+   * Prepares persistedLinearAssets and roadLinks for mapping
+   * @param persistedLinearAssets
+   * @param roadLinks
+   * @return sequence of persistedLinearAsset-roadlink pairs
+   */
+  protected def processLinearAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Seq[ChangedLinearAsset] = {
+    val (walkways, roadLinksWithoutWalkways) = roadLinks.partition(link => link.linkType == CycleOrPedestrianPath || link.linkType == TractorRoad)
+    val persistedLinearAssetsWithoutWalkways = filterPersistedAssetsByRoadLinks(persistedLinearAssets, walkways)
+    val historyRoadLinks = fetchMissingLinksFromHistory(persistedLinearAssetsWithoutWalkways, roadLinksWithoutWalkways)
+
+    mapPersistedAssetChanges(persistedLinearAssetsWithoutWalkways, roadLinksWithoutWalkways, historyRoadLinks)
+  }
+
+  /**
+   * Maps PersistedLinearAssets with corresponding RoadLinks. If no RoadLink is found for an asset, it is skipped with a logger warning
+   * @param persistedLinearAssets
+   * @param filteredRoadLinks
+   * @param historyRoadLinks
+   * @return Asset with mapped RoadLink
+   */
+  def mapPersistedAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset],
+                               filteredRoadLinks: Seq[RoadLink],
+                               historyRoadLinks: Seq[RoadLink]): Seq[ChangedLinearAsset] = {
+
+    def getAssetGeometry(roadLink: RoadLink, asset: PersistedLinearAsset): (Seq[Point], Set[Point]) = {
+      val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
+      val endPoints = try {
+        val (first, last) = GeometryUtils.geometryEndpoints(points)
+        Set(first, last)
+      } catch {
+        case ex: NoSuchElementException =>
+          logger.warn(s"Asset ${asset.id} is outside of geometry for link ${asset.linkId}")
+          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+          Set(first, last)
+      }
+      (points, endPoints)
+    }
+
+    def findRoadLink(linkId: String): Option[RoadLink] = {
+      filteredRoadLinks.find(_.linkId == linkId).orElse(historyRoadLinks.find(_.linkId == linkId))
+    }
+
+    def processPersistedAsset(persistedLinearAsset: PersistedLinearAsset): Option[ChangedLinearAsset] = {
+      findRoadLink(persistedLinearAsset.linkId).flatMap { roadLink =>
+        val (geometry, endPoints) = getAssetGeometry(roadLink, persistedLinearAsset)
+        Some(ChangedLinearAsset(
           linearAsset = PieceWiseLinearAsset(
-            persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
+            persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, geometry, persistedLinearAsset.expired,
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
             endPoints, persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
             persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
@@ -408,7 +450,14 @@ trait LinearAssetOperations {
             verifiedBy = persistedLinearAsset.verifiedBy, verifiedDate = persistedLinearAsset.verifiedDate, informationSource = persistedLinearAsset.informationSource)
           ,
           link = roadLink
-        )
+        ))
+      }
+    }
+
+    persistedLinearAssets.flatMap { asset =>
+      processPersistedAsset(asset).orElse {
+        logger.warn(s"Road link ${asset.linkId} no longer available: Skipping asset ${asset.id}")
+        None
       }
     }
   }

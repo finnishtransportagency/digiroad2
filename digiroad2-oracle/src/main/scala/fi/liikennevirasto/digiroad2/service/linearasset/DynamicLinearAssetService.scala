@@ -286,34 +286,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       dynamicLinearAssetDao.getDynamicLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(persistedLinearAssets.map(_.linkId).toSet)
-    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
-
-    persistedLinearAssets.flatMap { persistedLinearAsset =>
-      roadLinksWithoutWalkways.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
-        val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
-        val endPoints: Set[Point] =
-          try {
-            val ep = GeometryUtils.geometryEndpoints(points)
-            Set(ep._1, ep._2)
-          } catch {
-            case ex: NoSuchElementException =>
-              logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
-              val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
-              Set(wholeLinkPoints._1, wholeLinkPoints._2)
-          }
-        ChangedLinearAsset(
-          linearAsset = PieceWiseLinearAsset(
-            persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
-            persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
-            endPoints, persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
-            persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
-            persistedLinearAsset.timeStamp, persistedLinearAsset.geomModifiedDate, persistedLinearAsset.linkSource, roadLink.administrativeClass,
-            verifiedBy = persistedLinearAsset.verifiedBy, verifiedDate = persistedLinearAsset.verifiedDate, informationSource = persistedLinearAsset.informationSource)
-          ,
-          link = roadLink
-        )
-      }
-    }
+    processLinearAssetChanges(persistedLinearAssets, roadLinks)
   }
 
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
