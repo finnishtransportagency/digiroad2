@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "devDependencies": {
     "chai": "~4.2.0",
-    "grunt": "~1.1.0",
+    "grunt": "~1.5.3",
     "grunt-cache-breaker": "~2.0.1",
     "grunt-connect-proxy": "0.1.10",
     "grunt-contrib-clean": "~2.0.0",
@@ -26,14 +26,14 @@
     "serve-static": "^1.14.1"
   },
   "dependencies": {
-    "backbone": "1.4.0",
+    "backbone": "1.5.0",
     "chai-jquery": "2.1.0",
     "jquery": "3.4.1",
     "jquery-migrate": "3.3.0",
     "jquery-ui-dist": "1.12.0",
     "jquery-validation": "^1.17.0",
-    "lodash": "4.17.15",
-    "moment": "2.24.0",
+    "lodash": "4.17.21",
+    "moment": "2.29.4",
     "multiselect-two-sides": "2.5.0",
     "ol": "^5.3.3",
     "pikaday": "1.8.0",
