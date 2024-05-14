@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadSide}
-import fi.liikennevirasto.digiroad2.{sTestTransactions, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
