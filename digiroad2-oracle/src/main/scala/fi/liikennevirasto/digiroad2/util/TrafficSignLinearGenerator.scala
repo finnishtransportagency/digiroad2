@@ -35,6 +35,15 @@ trait TrafficSignLinearGenerator {
   def logger = LoggerFactory.getLogger(getClass)
 
   val assetType: Int
+
+  protected def errorMessage(newSegment: TrafficSignToLinear): String = {
+    s"Failed to save linear asset from these traffic sign:${newSegment.signId.toString()} on this link ${newSegment.roadLink.linkId}"
+  }
+
+  protected def assetMissingMandatoryProperty(newSegment: TrafficSignToLinear, e: MissingMandatoryPropertyException): String = {
+    s"Failed to save linear asset from these traffic sign:${newSegment.signId.toString()} on this link ${newSegment.roadLink.linkId}, asset is missing these properties: ${e.missing.toString()}"
+  }
+  
   case object TrafficSignSerializer extends CustomSerializer[Property](format =>
     ({
       case jsonObj: JObject =>
@@ -147,7 +156,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def segmentsManager(roadLinks: Seq[RoadLink], trafficSigns: Seq[PersistedTrafficSign], existingSegments: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
-    if (debugger) logger.debug(s"segmentsManager : roadLinkSize = ${roadLinks.size}")
+    logger.debug(s"segmentsManager : roadLinkSize = ${roadLinks.size}")
 
     val relevantLink = relevantLinkOnChain(roadLinks, trafficSigns)
     val newSegments = relevantLink.flatMap { case (roadLink, startPointOfInterest, lastPointOfInterest) =>
@@ -166,7 +175,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[RoadLink, Seq[TrafficSignToLinear]]): Seq[TrafficSignToLinear] = {
-    if (debugger) logger.debug("fillTopology")
+    logger.debug("fillTopology")
     val fillOperations: Seq[Seq[TrafficSignToLinear] => Seq[TrafficSignToLinear]] = Seq(
       combine,
       convertOneSideCode
@@ -182,7 +191,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def findStartEndRoadLinkOnChain(roadLinks: Seq[RoadLink]): Seq[(RoadLink, Option[Point], Option[Point])] = {
-    if (debugger) logger.debug("findStartEndRoadLinkOnChain")
+    logger.debug("findStartEndRoadLinkOnChain")
     val borderRoadLinks = roadLinks.filterNot { r =>
       val (first, last) = GeometryUtils.geometryEndpoints(r.geometry)
       val roadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
@@ -212,7 +221,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def relevantLinkOnChain(roadLinks: Seq[RoadLink], trafficSigns: Seq[PersistedTrafficSign]): Seq[(RoadLink, Option[Point], Option[Point])] = {
-    if (debugger) logger.debug("relevantLinkOnChain")
+    logger.debug("relevantLinkOnChain")
     val filterRoadLinks = roadLinks.filter { road => trafficSigns.map(_.linkId).contains(road.linkId) }
     val groupedTrafficSigns = trafficSigns.groupBy(_.linkId)
 
@@ -229,7 +238,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def segmentsConverter(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): (Seq[TrafficSignToLinear], Seq[TrafficSignToLinear]) = {
-    if (debugger) logger.debug("segmentsConverter")
+    logger.debug("segmentsConverter")
     val connectedTrafficSignIds =
       if (existingAssets.nonEmpty)
         postGisLinearAssetDao.getConnectedAssetFromLinearAsset(existingAssets.map(_.id))
@@ -266,7 +275,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def baseProcess(trafficSigns: Seq[PersistedTrafficSign], roadLinks: Seq[RoadLink], actualRoadLink: RoadLink, previousInfo: (Option[Point], Option[Point], Option[Int]), result: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
-    if (debugger) logger.debug("baseProcess")
+    logger.debug("baseProcess")
     val filteredRoadLinks = roadLinks.filterNot(_.linkId == actualRoadLink.linkId)
     val filteredTrafficSigns = filterTrafficSigns(trafficSigns, actualRoadLink)
     (if (filteredTrafficSigns.nonEmpty) {
@@ -286,7 +295,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def createSegmentPieces(actualRoadLink: RoadLink, allRoadLinks: Seq[RoadLink], sign: PersistedTrafficSign, signs: Seq[PersistedTrafficSign], pointOfInterest: (Option[Point], Option[Point], Option[Int]), result: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
-    if (debugger) logger.debug("createSegmentPieces")
+    logger.debug("createSegmentPieces")
     createValue(Seq(sign)) match {
       case Some(value) =>
         val pairSign = getPairSign(actualRoadLink, sign, signs.filter(_.linkId == actualRoadLink.linkId), pointOfInterest._3.get)
@@ -308,7 +317,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def generateSegmentPieces(currentRoadLink: RoadLink, sign: PersistedTrafficSign, value: Value, pairedSign: Option[PersistedTrafficSign], direction: Int): TrafficSignToLinear = {
-    if (debugger) logger.debug("generateSegmentPieces")
+    logger.debug("generateSegmentPieces")
     pairedSign match {
       case Some(pair) =>
         if (pair.linkId == sign.linkId) {
@@ -344,7 +353,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def getPairSign(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int): Option[PersistedTrafficSign] = {
-    if (debugger) logger.debug("getPairSign")
+    logger.debug("getPairSign")
 
     allSignsRelated.filterNot(_.id == mainSign.id).filter(_.linkId == actualRoadLink.linkId).find { sign =>
       compareValue(createValue(Seq(mainSign)).get, createValue(Seq(sign)).get) && sign.validityDirection != direction
@@ -370,7 +379,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def getAdjacents(previousInfo: (Option[Point], Option[Point], Option[Int]), roadLinks: Seq[RoadLink]): Seq[(RoadLink, (Option[Point], Option[Point], Option[Int]))] = {
-    if (debugger) logger.debug("getAdjacents")
+    logger.debug("getAdjacents")
     val (prevFirst, prevLast, direction) = previousInfo
     val filter = roadLinks.filter {
       roadLink =>
@@ -392,7 +401,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def createLinearAssetAccordingSegmentsInfo(newSegment: TrafficSignToLinear, username: String): Unit = {
-    if (debugger) logger.debug("createLinearAssetAccordingSegmentsInfo")
+    logger.debug("createLinearAssetAccordingSegmentsInfo")
     val newAssetId = createLinearAsset(newSegment, username)
 
     newSegment.signId.foreach { signId =>
@@ -401,7 +410,7 @@ trait TrafficSignLinearGenerator {
   }
 
   protected def createAssetRelation(linearAssetId: Long, trafficSignId: Long): Unit = {
-    if (debugger) logger.debug("createAssetRelation")
+    logger.debug("createAssetRelation")
     try {
       postGisLinearAssetDao.insertConnectedAsset(linearAssetId, trafficSignId)
     } catch {
@@ -412,7 +421,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def deleteLinearAssets(existingSeg: Seq[TrafficSignToLinear]): Unit = {
-    if (debugger) logger.debug(s"deleteLinearAssets ${existingSeg.size}")
+    logger.debug(s"deleteLinearAssets ${existingSeg.size}")
     existingSeg.foreach { asset =>
       linearAssetService.expireAsset(assetType, asset.oldAssetId.get, userUpdate, true, false)
       postGisLinearAssetDao.expireConnectedByLinearAsset(asset.oldAssetId.get)
@@ -650,7 +659,7 @@ trait TrafficSignLinearGenerator {
 
   def createLinearAssetUsingTrafficSigns(): Unit = {
     logger.info(s"Starting create ${AssetTypeInfo.apply(assetType).layerName} using traffic signs")
-    logger.info(DateTime.now().toString)
+    logger.info(DateTime.now().toString())
     logger.info("")
 
     val roadLinks = withDynTransaction {
@@ -676,8 +685,7 @@ trait TrafficSignLinearGenerator {
     }
     logger.info("Start processing traffic signs")
     iterativeProcess(roadLinks, Seq())
-
-    logger.info("")
+    
     logger.info("Complete at time: " + DateTime.now())
   }
 }
@@ -695,7 +703,7 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
   val signAllowException = Seq(2, 3, 23)
 
   override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Prohibitions] = {
-    if (debugger) logger.debug("createValue")
+    logger.debug("createValue")
     val value = trafficSigns.flatMap { trafficSign =>
       val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
       val additionalPanel = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
@@ -743,7 +751,7 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
   }
 
   def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
-    if (debugger) logger.debug("fetchTrafficSignRelatedAssets")
+    logger.debug("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
       withDynTransaction {
         val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
@@ -756,30 +764,37 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
-    if (debugger) logger.debug("getExistingSegments")
+    logger.debug("getExistingSegments")
     prohibitionService.getPersistedAssetsByLinkIds(assetType, roadLinks.map(_.linkId), false)
   }
 
   override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {
-    if (debugger) logger.debug("signBelongTo")
+    logger.debug("signBelongTo")
     val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
     TrafficSignManager.belongsToProhibition(signType)
   }
 
   override def updateLinearAsset(oldAssetId: Long, newValue: Value, username: String): Seq[Long] = {
-    if (debugger) logger.debug("updateLinearAsset")
+    logger.debug("updateLinearAsset")
     prohibitionService.updateWithoutTransaction(Seq(oldAssetId), newValue, username)
   }
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
-    if (debugger) logger.debug("createLinearAsset")
-    prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    logger.debug("createLinearAsset")
+    try {
+      prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    } catch {
+      case e: MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e)) 
+        throw e
+      case e: Throwable => logger.error(errorMessage(newSegment))
+        throw e
+    }
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
-    if (debugger) logger.debug("assetToUpdate")
+    logger.debug("assetToUpdate")
     val groupedAssetsToUpdate = assets.map { asset =>
       (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(createdValue.asInstanceOf[Prohibitions].prohibitions))
     }.groupBy(_._2)
@@ -823,7 +838,7 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
   }
 
   override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Prohibitions] = {
-    if (debugger) logger.debug("createValue")
+    logger.debug("createValue")
     val values = trafficSigns.flatMap{ trafficSign =>
     val additionalPanels = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
     val types = additionalPanels.flatMap{ additionalPanel =>
@@ -842,25 +857,32 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
   }
 
   override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {
-    if (debugger) logger.debug("signBelongTo")
+    logger.debug("signBelongTo")
     val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
     TrafficSignManager.belongsToHazmat(signType)
   }
 
   override def updateLinearAsset(oldAssetId: Long, newValue: Value, username: String): Seq[Long] = {
-    if (debugger) logger.debug("updateLinearAsset")
+    logger.debug("updateLinearAsset")
     hazmatTransportProhibitionService.updateWithoutTransaction(Seq(oldAssetId), newValue, username)
   }
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
-    if (debugger) logger.debug("createLinearAsset")
-    hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    logger.debug("createLinearAsset")
+    try {
+      hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    } catch {
+      case e: MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e))
+        throw e
+      case e: Throwable => logger.error(errorMessage(newSegment))
+        throw e
+    }
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
-    if (debugger) logger.debug("getExistingSegments")
+    logger.debug("getExistingSegments")
     hazmatTransportProhibitionService.getPersistedAssetsByLinkIds(assetType, roadLinks.map(_.linkId), false)
   }
 }
@@ -881,7 +903,7 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
   }
 
   override def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
-    if (debugger) logger.debug("fetchTrafficSignRelatedAssets")
+    logger.debug("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
       withDynTransaction {
         val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
@@ -905,7 +927,7 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
   def getStopCondition(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int, result : Seq[TrafficSignToLinear]): Option[Double]
 
   override def createSegmentPieces(actualRoadLink: RoadLink, allRoadLinks: Seq[RoadLink], sign: PersistedTrafficSign, signs: Seq[PersistedTrafficSign], pointOfInterest: (Option[Point], Option[Point], Option[Int]), result: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
-    if (debugger) logger.debug("createSegmentPieces")
+    logger.debug("createSegmentPieces")
     createValue(Seq(sign)) match {
       case Some(value) =>
         val stopCondition = getStopCondition(actualRoadLink, sign, signs, pointOfInterest._3.get, result)
@@ -926,7 +948,7 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
   }
 
   def generateSegmentPiece(currentRoadLink: RoadLink, sign: PersistedTrafficSign, value: Value, endDistance: Option[Double], direction: Int): TrafficSignToLinear = {
-    if (debugger) logger.debug("generateSegmentPiece")
+    logger.debug("generateSegmentPiece")
     endDistance match {
       case Some(mValue) =>
         if (currentRoadLink.linkId == sign.linkId) {
@@ -976,7 +998,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
   }
 
   override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[DynamicValue] = {
-    if (debugger) logger.debug("createValue")
+    logger.debug("createValue")
     val value = trafficSigns.flatMap { trafficSign =>
       val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
       val additionalPanel = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
@@ -1008,25 +1030,32 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
   }
 
   override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {
-    if (debugger) logger.debug("signBelongTo")
+    logger.debug("signBelongTo")
     val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
     TrafficSignManager.belongsToParking(signType)
   }
 
   override def updateLinearAsset(oldAssetId: Long, newValue: Value, username: String): Seq[Long] = {
-    if (debugger) logger.debug("updateLinearAsset")
+    logger.debug("updateLinearAsset")
     parkingProhibitionService.updateWithoutTransaction(Seq(oldAssetId), newValue, username)
   }
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
-    if (debugger) logger.debug("createLinearAsset")
-    parkingProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    logger.debug("createLinearAsset")
+    try {
+      parkingProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    } catch {
+      case e: MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e))
+        throw e
+      case e: Throwable => logger.error(errorMessage(newSegment))
+        throw e
+    }
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
-    if (debugger) logger.debug("assetToUpdate")
+    logger.debug("assetToUpdate")
     val groupedAssetsToUpdate = assets.map { asset =>
       (asset.id, asset.value.get.asInstanceOf[DynamicValue].value.properties.diff(createdValue.asInstanceOf[DynamicValue].value.properties))
     }.groupBy(_._2)
@@ -1050,7 +1079,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
   }
 
   override def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
-    if (debugger) logger.debug("fetchTrafficSignRelatedAssets")
+    logger.debug("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
       withDynTransaction {
         val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
@@ -1063,7 +1092,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
-    if (debugger) logger.debug("getExistingSegments")
+    logger.debug("getExistingSegments")
     parkingProhibitionService.getPersistedAssetsByLinkIds(assetType, roadLinks.map(_.linkId), false)
   }
 
@@ -1135,7 +1164,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   }
 
   override def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
-    if (debugger) logger.debug("fetchTrafficSignRelatedAssets")
+    logger.debug("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
       withDynTransaction {
         val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
@@ -1148,13 +1177,13 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   }
 
   override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {
-    if (debugger) logger.debug("signBelongTo")
+    logger.debug("signBelongTo")
     val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
     TrafficSignManager.belongsToRoadwork(signType)
   }
 
   override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[DynamicValue] = {
-    if (debugger) logger.debug("createValue")
+    logger.debug("createValue")
     val value = trafficSigns.flatMap { trafficSign =>
       val startDate = trafficSignService.getProperty(trafficSign, trafficSignService.trafficSignStartDatePublicId).get.propertyValue
       val endDate = trafficSignService.getProperty(trafficSign, trafficSignService.trafficSignEndDatePublicId).get.propertyValue
@@ -1174,7 +1203,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
-    if (debugger) logger.debug("getExistingSegments")
+    logger.debug("getExistingSegments")
     roadWorkService.getPersistedAssetsByLinkIds(assetType, roadLinks.map(_.linkId), false)
   }
 
@@ -1184,12 +1213,12 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   }
 
   override def updateLinearAsset(oldAssetId: Long, newValue: Value, username: String): Seq[Long] = {
-    if (debugger) logger.debug("updateLinearAsset")
+    logger.debug("updateLinearAsset")
     roadWorkService.updateWithoutTransaction(Seq(oldAssetId), newValue, username)
   }
 
   override def deleteOrUpdateAssetBasedOnSign(trafficSign: PersistedTrafficSign): Unit = {
-    if (debugger) logger.debug("deleteOrUpdateAssetBasedOnSign")
+    logger.debug("deleteOrUpdateAssetBasedOnSign")
 
     val username = "automatic_trafficSign_deleted"
     val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(trafficSign.id)
@@ -1210,7 +1239,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
-    if (debugger) logger.debug("assetToUpdate")
+    logger.debug("assetToUpdate")
     val groupedAssetsToUpdate = assets.map { asset =>
       val newProperties = asset.value.get.asInstanceOf[DynamicValue].value.properties.find(_.publicId == "tyon_tunnus") ++ createdValue.asInstanceOf[DynamicValue].value.properties
 
@@ -1223,12 +1252,20 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     }
   }
 
-  override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
-    if (debugger) logger.debug("createLinearAsset")
-    roadWorkService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink) )
+  override def createLinearAsset(newSegment: TrafficSignToLinear, username: String): Long = {
+    logger.debug("createLinearAsset")
+    try {
+      roadWorkService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
+    } catch {
+      case e: MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e))
+        throw e
+      case e: Throwable => logger.error(errorMessage(newSegment))
+        throw e
+    }
   }
+
 
   override def getStopCondition(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int, result : Seq[TrafficSignToLinear]): Option[Double] = {
     // STOP CONDITIONS:
@@ -1332,7 +1369,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   }
 
   override def segmentsManager(roadLinks: Seq[RoadLink], trafficSigns: Seq[PersistedTrafficSign], existingSegments: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
-    if (debugger) logger.debug(s"segmentsManager : roadLinkSize = ${roadLinks.size}")
+    logger.debug(s"segmentsManager : roadLinkSize = ${roadLinks.size}")
 
     val relevantLink = relevantLinkOnChain(roadLinks, trafficSigns)
     val newSegments = relevantLink.flatMap { case (roadLink, startPointOfInterest, lastPointOfInterest) =>
