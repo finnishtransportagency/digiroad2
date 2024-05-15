@@ -117,7 +117,7 @@ class AwsService {
         .partNumber(partNumber)
         .build()
       val chunkInputStream = new ByteArrayInputStream(chunkData.getBytes(StandardCharsets.UTF_8))
-      val requestBody = RequestBody.fromInputStream(chunkInputStream, chunkData.length.toLong)
+      val requestBody = RequestBody.fromInputStream(chunkInputStream, chunkData.getBytes(StandardCharsets.UTF_8).length)
 
       Future {
         val uploadPartResponse = s3.uploadPart(partRequest, requestBody)
