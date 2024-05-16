@@ -405,7 +405,10 @@ trait TrafficSignLinearGenerator {
     try {
       val newAssetId = createLinearAsset(newSegment, username)
       newSegment.signId.foreach { signId =>createAssetRelation(newAssetId, signId)}
-    }catch {case e:MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e))}
+    }catch {
+      case e:MissingMandatoryPropertyException => logger.error(assetMissingMandatoryProperty(newSegment,e))
+      case e: Throwable => logger.error(errorMessage(newSegment)); throw e
+    }
   }
 
   protected def createAssetRelation(linearAssetId: Long, trafficSignId: Long): Unit = {
@@ -780,14 +783,9 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
     logger.debug("createLinearAsset")
-    try {
-      prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
-    } catch {
-      case e: Throwable => logger.error(errorMessage(newSegment))
-        throw e
-    }
+    prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
@@ -866,14 +864,9 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
     logger.debug("createLinearAsset")
-    try {
-      hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
-    } catch {
-      case e: Throwable => logger.error(errorMessage(newSegment))
-        throw e
-    }
+    hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
@@ -1037,14 +1030,9 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
     logger.debug("createLinearAsset")
-    try {
-      parkingProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
-        newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-        LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
-    } catch {
-      case e: Throwable => logger.error(errorMessage(newSegment))
-        throw e
-    }
+    parkingProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+      LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
@@ -1247,14 +1235,9 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String): Long = {
     logger.debug("createLinearAsset")
-    try {
       roadWorkService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
         newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
         LinearAssetUtils.createTimeStamp(), Some(newSegment.roadLink))
-    } catch {
-      case e: Throwable => logger.error(errorMessage(newSegment))
-        throw e
-    }
   }
 
 
