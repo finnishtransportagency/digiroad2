@@ -1,12 +1,11 @@
 package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, areMeasuresCloseEnough}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.Point
+import org.slf4j.LoggerFactory
 
 
 object LaneFiller {
@@ -54,33 +53,36 @@ class LaneFiller {
   val AllowedTolerance = 2.0
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
-
-  def getOperations(geometryChanged: Boolean) = {
-    val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
-      capSegmentsThatOverflowGeometry,
-      expireOverlappingSegments,
-      combine,
-      fuse,
-      dropShortSegments,
-      adjustAssets
-    )
-
-    val adjustmentOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
-      combine,
-      fuse,
-      dropShortSegments,
-      adjustAssets
-    )
-
-    if(geometryChanged) fillOperations
-    else adjustmentOperations
+  val logger = LoggerFactory.getLogger(getClass)
+  def debugLogging(operationName:String)(roadLink:RoadLink, segments:Seq[PersistedLane], changeSet:ChangeSet ) = {
+    logger.debug(operationName + ": " + roadLink.linkId)
+    logger.debug("asset count on link: " + segments.size)
+    logger.debug(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
+    logger.debug(s"mValue adjustment count: ${changeSet.adjustedMValues.size}")
+    logger.debug(s"expire adjustment count: ${changeSet.expiredLaneIds.size}")
+    logger.debug(s"dropped adjustment count: ${changeSet.generatedPersistedLanes.size}")
+    (segments, changeSet)
   }
-
+  
   def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[String, Seq[PersistedLane]],
-                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true ): (Seq[PersistedLane], ChangeSet) = {
+                   changedSet: Option[ChangeSet] = None): (Seq[PersistedLane], ChangeSet) = {
 
-    val operations = getOperations(geometryChanged)
+    val operations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet) => (Seq[PersistedLane], ChangeSet)] = Seq(
+      expireOverlappingSegments,
+      debugLogging("expireOverlappingSegments"),
+      validateLink("before combine "),
+      combine,
+      validateLink("after combine "),
+      debugLogging("combine"),
+      fuse,
+      debugLogging("fuse"),
+      dropShortSegments,
+      debugLogging("dropShortSegments"),
+      adjustAssets,
+      debugLogging("adjustAssets"),
+      validateLink("final validation "),
+      debugLogging("validateLink")
+    )
     val changeSet = changedSet match {
       case Some(change) => change
       case None => ChangeSet()
@@ -202,6 +204,19 @@ class LaneFiller {
         val (asset, adjustmentsMValues) = adjustAsset(lane, roadLink)
         (resultAssets ++ Seq(asset), change.copy(adjustedMValues = change.adjustedMValues ++ adjustmentsMValues))
     }
+  }
+
+  private def validateLink(title: String = "")(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
+    lanes.groupBy(_.sideCode).foreach(a => {
+      val lanes = a._2
+      lanes.groupBy(a => {(a.laneCode,a.startMeasure,a.endMeasure)}).foreach(a => {
+        val (key, lanes) = a
+        if (lanes.length > 1) {
+          logger.warn(s"${title}there is more than one lane number on link: ${roadLink.linkId}, lane number: ${key._1}, lanes ids:  ${lanes.map(_.id).mkString(",")} ")
+        }
+      })
+    })
+    (lanes, changeSet)
   }
 
   private def adjustAsset(lane: PersistedLane, roadLink: RoadLink): (PersistedLane, Seq[MValueAdjustment]) = {
