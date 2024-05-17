@@ -127,16 +127,19 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    if (linkIds.nonEmpty) {
-      val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
-      ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
-        LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
-          viiteClient.fetchAllByLinkIds(linkIds)
+    (linkIds.nonEmpty) match {
+      case true =>
+        val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
+        ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
+          LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
+            viiteClient.fetchAllByLinkIds(linkIds)
+          }
         }
-      }
-    } else Seq()
+      case false =>
+        Seq.empty[RoadAddressForLink]
+    }
   }
-  
+
   def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = {
     withDynTransaction {
       val tempAddresses = roadAddressTempDAO.getByLinkIds(linkIds)
