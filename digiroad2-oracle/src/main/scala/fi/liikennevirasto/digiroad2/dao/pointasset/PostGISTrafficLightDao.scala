@@ -280,7 +280,7 @@ object PostGISTrafficLightDao {
   }
 
   private def existingGroupedIdForAsset(assetId: Long): Set[Long] = {
-    StaticQuery.query[(Long, String), Long](existingGroupedIdForAssetQuery).apply((assetId, "trafficLight_type")).iterator.toSet
+    StaticQuery.query[(Long), Long](existingGroupedIdForAssetQuery).apply((assetId)).iterator.toSet
   }
 
   def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue], groupedId: Option[Long]) {
