@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadSide}
-import fi.liikennevirasto.digiroad2.{sTestTransactions, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
@@ -52,7 +52,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
-  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
   when(mockRoadLinkService.enrichFetchedRoadLinks(any[Seq[RoadLinkFetched]], any[Boolean])).thenReturn(roadLink)
 
   def runWithRollback(test: => Unit): Unit = sTestTransactions.runWithRollback()(test)
@@ -470,7 +470,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val yCoord = 4
       val municipalityCode = Map("MUNICIPALITYCODE" -> BigInt(837))
       val pedestrianRoadLink = Seq(RoadLink(linkId2, Seq(Point(2, 2), Point(4, 4), Point(6, 6)), 6, Municipality, 1, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, municipalityCode))
-      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(pedestrianRoadLink)
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(pedestrianRoadLink)
 
       val assetFields = Map("koordinaatti x" -> xCoord, "koordinaatti y" -> yCoord, "pysäkin tyyppi" -> "1", "tietojen ylläpitäjä" -> "1")
       val csv = massTransitStopImporterCreate.csvRead(assetFields)
@@ -496,7 +496,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     runWithRollback {
       val xCoord = 2
       val yCoord = 2
-      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(Seq.empty[RoadLink])
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(Seq.empty[RoadLink])
 
       val assetFields = Map("koordinaatti x" -> xCoord, "koordinaatti y" -> yCoord, "pysäkin tyyppi" -> "2", "tietojen ylläpitäjä" -> "1")
       val csv = massTransitStopImporterCreate.csvRead(assetFields)

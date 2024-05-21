@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty, State}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingRailwayCrossing, RailwayCrossingService}
 import fi.liikennevirasto.digiroad2.user.User
@@ -57,5 +57,21 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }
 
     result.copy(notImportedData = notImportedRailwayCrossings.toList ++ result.notImportedData)
+  }
+
+  override def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
+    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
+    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+
+    (optLon, optLat) match {
+      case (Some(lon), Some(lat)) =>
+        val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong), forCarTraffic = false, includeComplementaries = true)
+        roadLinks.isEmpty match {
+          case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+          case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+        }
+      case _ =>
+        (Nil, Nil)
+    }
   }
 }

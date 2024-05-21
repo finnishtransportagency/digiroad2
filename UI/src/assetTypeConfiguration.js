@@ -942,7 +942,7 @@
         singleElementEventCategory: 'cyclingAndWalking',
         multiElementEventCategory: 'cyclingAndWalkings',
         layerName: 'cyclingAndWalking',
-        title: 'Käpy tietolaji',
+        title: 'Käpy tietolaji (vain katselukäyttö)',
         newTitle: 'Uusi Käpy tietolaji',
         className: 'cycling-and-walking',
         isSeparable: true,
@@ -1193,7 +1193,7 @@
         form: ObstacleForm,
         saveCondition: saveConditionWithSuggested,
         hasMunicipalityValidation: true,
-        roadCollection: ObstaclesRoadCollection,
+        roadCollection: ObstaclesAndRailwayCrossingsRoadCollection,
         showRoadLinkInfo: true,
         isSuggestedAsset: true,
         label: new SuggestionLabel()
@@ -1228,7 +1228,8 @@
         isSuggestedAsset: true,
         hasMunicipalityValidation: true,
         label: new SuggestionLabel(),
-        showRoadLinkInfo: true
+        showRoadLinkInfo: true,
+        roadCollection: ObstaclesAndRailwayCrossingsRoadCollection
       },
       {
         typeId: assetType.directionalTrafficSigns,
