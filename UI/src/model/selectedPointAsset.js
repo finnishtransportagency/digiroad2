@@ -225,6 +225,7 @@
       dirty = true;
       var property = _.find(current.propertyData, {'groupedId': propertyGroupedId, 'publicId': propertyPublicId});
       property.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
+      eventbus.trigger(assetName + ':changed');
     }
 
     function removePropertyByGroupedId(propertyGroupedId) {
