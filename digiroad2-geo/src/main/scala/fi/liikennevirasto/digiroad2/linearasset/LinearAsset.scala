@@ -45,7 +45,7 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolea
   }
 }
 case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
-  override def toJson = JObject(JField("massLimitation",JArray(massLimitation.map(_.toJson).toList)))
+  override def toJson = JArray(massLimitation.map(_.toJson).toList)
 }
 
 case class DynamicAssetValue(properties: Seq[DynamicProperty]) {
@@ -72,7 +72,7 @@ case class DynamicValue(value: DynamicAssetValue) extends Value {
 }
 
 case class AssetTypes(typeId: Int, value: String, isSuggested: Int) {
-  def toJson = JObject(JField("typeId", JInt(typeId)),JField("isSuggested", JInt(isSuggested)))
+  def toJson = JObject(JField("typeId", JInt(typeId)), JField("value", JString(value)), JField("isSuggested", JInt(isSuggested)))
 }
 case class AssetProperties(name: String, value: String)
 case class ManoeuvreProperties(name: String, value: Any)
