@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 
-case class  AssetMissingProperties(msg:String) extends Exception(msg)
 
 class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
