@@ -131,7 +131,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
           case Some(x) => 
             dynamicLinearAssetDao.updateAssetProperties(id, x, typeId)
             dynamicLinearAssetDao.updateAssetLastModified(id, username)
-          case None => logger.error(s"Asset ${id} in link ${roadLink.get.linkId} is missing properties, type of ${typeId}")
+          case None => logger.warn(s"Asset ${id} in link ${roadLink.get.linkId} is missing properties, type of ${typeId}")
         }
       case _ => None
     }
@@ -147,7 +147,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       timeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, modifiedByFromUpdate, modifiedDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
     properties match {
       case Some(x) => dynamicLinearAssetDao.updateAssetProperties(id, x, typeId)
-      case None => logger.error(s"Asset ${id} in link ${linkId} is missing properties, type of ${typeId}")
+      case None => logger.warn(s"Asset ${id} in link ${linkId} is missing properties, type of ${typeId}")
     }
     id
   }
@@ -171,7 +171,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         val properties = validateAndSetDefaultProperties(a.asset.typeId, value, a.asset.roadLink)
         properties match {
           case Some(x) => dynamicLinearAssetDao.updateAssetProperties(a.id, x, a.asset.typeId)
-          case None => logger.error(s"Asset ${a.id} in link ${a.asset.roadLink} is missing properties, type of ${a.asset.typeId}")
+          case None => logger.warn(s"Asset ${a.id} in link ${a.asset.roadLink} is missing properties, type of ${a.asset.typeId}")
         }
       })
     }

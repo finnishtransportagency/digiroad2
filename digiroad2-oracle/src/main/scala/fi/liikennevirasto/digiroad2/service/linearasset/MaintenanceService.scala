@@ -91,7 +91,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     
     properties match {
       case Some(x) => dynamicLinearAssetDao.updateAssetProperties(id, x, typeId)
-      case None => throw AssetMissingProperties(s"Asset ${id} in link ${linkId} is missing properties, type of ${typeId}")
+      case None => logger.warn(s"Asset ${id} in link ${linkId} is missing properties, type of ${typeId}")
     }
     id
   }
