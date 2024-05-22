@@ -225,7 +225,14 @@ object Queries {
     "select id from number_property_value where asset_id = ? and property_id = ? and grouped_id = ?"
 
   def existingGroupedIdForAssetQuery =
-    "select grouped_id from single_choice_value where asset_id = ? and property_id = (select id from property where public_id = ?)"
+    "select COALESCE(mcv.grouped_id, scv.grouped_id, tpv.grouped_id, npv.grouped_id) " +
+      "from asset a " +
+      "join property p on a.asset_type_id = p.asset_type_id " +
+      "left join multiple_choice_value mcv ON mcv.asset_id = a.id and mcv.property_id = p.id " +
+      "left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id " +
+      "left join text_property_value tpv on tpv.asset_id = a.id and tpv.property_id = p.id " +
+      "left join number_property_value npv on npv.asset_id = a.id and npv.property_id = p.id " +
+      "where a.id = ?"
 
   def insertDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) = {
     sqlu"""
