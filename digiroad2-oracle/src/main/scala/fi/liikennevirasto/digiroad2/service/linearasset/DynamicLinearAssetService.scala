@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 
+
 class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
@@ -121,19 +122,16 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     }
   }
 
-  protected def setDefaultAndFilterProperties(multiTypeProps: DynamicAssetValue, roadLink: Option[RoadLinkLike], typeId: Int) : Seq[DynamicProperty] = {
-    val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
-    val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-    properties ++ defaultValues.toSet
-  }
-
   private def updateValues(id: Long, typeId: Int, value: Value, username: String, roadLink: Option[RoadLinkLike]): Long ={
     value match {
       case DynamicValue(multiTypeProps) =>
-        val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, typeId)
-        validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
-        dynamicLinearAssetDao.updateAssetLastModified(id, username)
+        val properties = validateAndSetDefaultProperties(typeId, value, roadLink)
+        properties match {
+          case Some(x) => 
+            dynamicLinearAssetDao.updateAssetProperties(id, x, typeId)
+            dynamicLinearAssetDao.updateAssetLastModified(id, username)
+          case None => logger.warn(s"Asset ${id} in link ${roadLink.get.linkId} is missing properties, type of ${typeId}")
+        }
       case _ => None
     }
     id
@@ -142,35 +140,37 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   override def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, timeStamp: Long = createTimeStamp(), roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                         createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
                                         modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
-
+    
+   val properties = validateAndSetDefaultProperties(typeId, value, roadLink)
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
       timeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, modifiedByFromUpdate, modifiedDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
+    properties match {
+      case Some(x) => dynamicLinearAssetDao.updateAssetProperties(id, x, typeId)
+      case None => logger.warn(s"Asset ${id} in link ${linkId} is missing properties, type of ${typeId}")
+    }
+    id
+  }
 
+  protected def validateAndSetDefaultProperties(typeId: Int, value: Value, roadLink: Option[RoadLinkLike]): Option[Seq[DynamicProperty]] = {
     value match {
       case DynamicValue(multiTypeProps) =>
         val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
         val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
         validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
+        Some(props)
       case _ => None
     }
-    id
   }
-
   override def createMultipleLinearAssets(list: Seq[NewLinearAssetMassOperation]): Unit = {
     val assetsSaved = dao.createMultipleLinearAssets(list)
     LogUtils.time(logger,"Saving assets properties"){
       assetsSaved.foreach(a => {
         val value = a.asset.value
-        value match {
-          case DynamicValue(multiTypeProps) =>
-            val properties = setPropertiesDefaultValues(multiTypeProps.properties, a.asset.roadLink)
-            val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(a.asset.typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-            val props = properties ++ defaultValues.toSet
-            validateRequiredProperties(a.asset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(a.id, props, a.asset.typeId)
-          case _ => None
+        val properties = validateAndSetDefaultProperties(a.asset.typeId, value, a.asset.roadLink)
+        properties match {
+          case Some(x) => dynamicLinearAssetDao.updateAssetProperties(a.id, x, a.asset.typeId)
+          case None => logger.warn(s"Asset ${a.id} in link ${a.asset.roadLink} is missing properties, type of ${a.asset.typeId}")
         }
       })
     }
