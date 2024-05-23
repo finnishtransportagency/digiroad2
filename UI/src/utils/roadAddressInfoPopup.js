@@ -103,11 +103,11 @@
 
             var generateInfoContent = function(roadData){
               infoContent.innerHTML = '<p>' +
-                'Tienumero: ' + (roadData.roadNumber || '') + '<br>' +
-                'Tieosanumero: ' + (roadData.roadPartNumber || '') + '<br>' +
-                'Ajorata: ' + (roadData.track || '') + '<br>' +
-                'AET: ' + (roadData.startAddrMValue || '') + '<br>' +
-                'LET: ' + (roadData.endAddrMValue || '') + '<br>' +
+                'Tienumero: ' + (roadData.roadNumber !== undefined ? roadData.roadNumber : '') + '<br>' +
+                'Tieosanumero: ' + (roadData.roadPartNumber !== undefined ? roadData.roadPartNumber : '') + '<br>' +
+                'Ajorata: ' + (roadData.track !== undefined ? roadData.track : '') + '<br>' +
+                'AET: ' + (roadData.startAddrMValue !== undefined ? roadData.startAddrMValue : '') + '<br>' +
+                'LET: ' + (roadData.endAddrMValue !== undefined ? roadData.endAddrMValue : '') + '<br>' +
                 getLaneInfo() + '</p>';
               overlay.setPosition(map.getEventCoordinate(event.originalEvent));
             };
