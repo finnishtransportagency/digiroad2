@@ -277,9 +277,8 @@
       condition: function(event) {
         var zoomOut = event.originalEvent.deltaY > 0;  // Wheel scrolled down
         if (zoomOut) {
-          var newZoomLevel = zoomlevels.getViewZoom(map);
-          applicationModel.setZoomLevel(newZoomLevel);
-          return applicationModel.canZoomOut();
+          var zoomLevel = zoomlevels.getViewZoom(map);
+          return applicationModel.canZoomOut(zoomLevel);
         }
         else
           return true;
