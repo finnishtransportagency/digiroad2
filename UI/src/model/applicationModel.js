@@ -88,8 +88,8 @@
       isFeedbackState: function(){
         return isFeedbackState();
       },
-      canZoomOut: function() {
-        return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
+      canZoomOut: function(zoomLevel) {
+        return !(isDirty() && (zoomLevel <= minDirtyZoomLevel));
       },
       assetDragDelay: 100,
       assetGroupingDistance: 36,
