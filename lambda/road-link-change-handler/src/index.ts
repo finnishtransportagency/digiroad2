@@ -10,7 +10,7 @@ const vkmClient     = new VkmClient();
 const kgvClient     = new KgvClient();
 const roadLinkDao   = new RoadLinkDao();
 
-export const handler = async (event: Event) => {
+async function mainMethod(event: Event) {
     const [since, until] = await s3Service.getChangeTimeframe(event);
     console.info(`Fetching changes since ${since} until ${until}`);
 
@@ -52,7 +52,6 @@ export const handler = async (event: Event) => {
     console.timeEnd("Convert to String")
     
     console.info(`Got ${changeSet.changeEntries.length} changes`);
-    
     //console.log(changeSetString)
     console.time("Save new links and expire old")
     await roadLinkDao.saveLinkChangesToDb(oldLinkIds, newLinks);  // Save links to Digiroad db
@@ -62,7 +61,15 @@ export const handler = async (event: Event) => {
     console.timeEnd("Load to S3")
 }
 
+export const handler = async (event: Event) => await mainMethod(event);
+
 export interface Event {
     since ?: string;
     until ?: string;
 }
+
+    handler({
+        since: process.env.SINCE,
+        until: process.env.UNTIL
+    }).then(r  =>console.info("Finish"))
+
