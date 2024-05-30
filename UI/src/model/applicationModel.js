@@ -85,8 +85,15 @@
       isDirty: function() {
         return isDirty();
       },
-      isFeedbackState: function(){
-        return isFeedbackState();
+      handleZoomOut: function(map) {
+        var zoomLevel = zoomlevels.getViewZoom(map);
+        var canZoomOut = applicationModel.canZoomOut(zoomLevel);
+        if (canZoomOut) {
+          return true;
+        } else {
+          new Confirm();
+          return false;
+        }
       },
       canZoomOut: function(zoomLevel) {
         return !(isDirty() && (zoomLevel <= minDirtyZoomLevel));
