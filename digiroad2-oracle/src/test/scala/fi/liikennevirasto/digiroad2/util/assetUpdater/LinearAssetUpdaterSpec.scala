@@ -85,7 +85,7 @@ trait UpdaterUtilsSuite {
       "MTKCLASS" -> BigInt(roadClass.value),
       "SURFACETYPE" -> BigInt(paved.value),
       "CREATED_DATE" -> BigInt(0),
-      "MUNICIPALITYCODE" -> BigInt(1)))
+      "MUNICIPALITYCODE" -> BigInt(60)))
 
   val link1 = createRoadLink(linkId1, generateGeometry(0, 10))
   val link2 = createRoadLink(linkId2, generateGeometry(0, 15))

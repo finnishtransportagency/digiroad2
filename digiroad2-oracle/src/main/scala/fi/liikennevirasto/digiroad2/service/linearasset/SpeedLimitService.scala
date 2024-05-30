@@ -152,7 +152,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
   }
 
-  def persistUnknown(limits: Seq[UnknownSpeedLimit], newTransaction: Boolean = true): Unit = {
+  def persistUnknown(limits: Seq[UnknownSpeedLimit], newTransaction: Boolean = false): Unit = {
     if (newTransaction) {
       withDynTransaction {
         speedLimitDao.persistUnknownSpeedLimits(limits)
@@ -170,32 +170,18 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   /**
-    * Removes speed limit from unknown speed limits list if speed limit exists. Used by SpeedLimitUpdater actor.
+    * Removes speed limit from unknown speed limits list if speed limit exists.
     */
   def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String], newTransaction: Boolean = true): Unit = {
-    val roadLinks = roadLinkService.fetchRoadlinksByIds(linkIds)
-    if (newTransaction) {
-      withDynTransaction {
-        if (roadLinks.nonEmpty){
-          roadLinks.foreach { rl =>
-            speedLimitDao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
-          }
+    val allToPurge = linkIds.toSeq ++ expiredLinkIds
+    if (allToPurge.nonEmpty) {
+      if (newTransaction) {
+        withDynTransaction {
+          speedLimitDao.deleteUnknownSpeedLimits(allToPurge)
         }
-       
-
-        //To remove nonexistent road links of unknown speed limits list
-        if (expiredLinkIds.nonEmpty)
-          speedLimitDao.deleteUnknownSpeedLimits(expiredLinkIds)
+      } else {
+        speedLimitDao.deleteUnknownSpeedLimits(allToPurge)
       }
-    } else {
-      if (roadLinks.nonEmpty) {
-        roadLinks.foreach { rl =>
-          speedLimitDao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
-        }
-      }
-      //To remove nonexistent road links of unknown speed limits list
-      if (expiredLinkIds.nonEmpty)
-        speedLimitDao.deleteUnknownSpeedLimits(expiredLinkIds)
     }
   }
 

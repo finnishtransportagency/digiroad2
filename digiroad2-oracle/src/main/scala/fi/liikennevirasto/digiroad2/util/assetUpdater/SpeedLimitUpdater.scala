@@ -1,6 +1,9 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{ExpiringSoon, Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.FeatureClass.WinterRoads
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Remove, Replace, Split}
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
@@ -14,35 +17,39 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   val speedLimitDao = new PostGISSpeedLimitDao(roadLinkService)
 
   override def assetFiller: AssetFiller = SpeedLimitFiller
-  
+
+  private def isUnsupportedRoadLinkType(roadLink: RoadLink) = {
+    !Seq(Municipality, State).contains(roadLink.administrativeClass) ||
+      Seq(PedestrianZone, CycleOrPedestrianPath, ServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate,
+        CableFerry, ServiceOrEmergencyRoad, RestArea, TractorRoad, HardShoulder).contains(roadLink.linkType) ||
+      Seq(Planned, UnderConstruction, ExpiringSoon).contains(roadLink.constructionType)
+  }
+
   override def operationForNewLink(change: RoadLinkChange, onlyNeededNewRoadLinks: Seq[RoadLink], changeSets: ChangeSet): Option[OperationStep] = {
     val newLinkInfo = change.newLinks.head
-    val filteredLinks = onlyNeededNewRoadLinks.filterNot(link => Seq(HardShoulder, CycleOrPedestrianPath, TractorRoad).contains(link.linkType))
+    val filteredLinks = onlyNeededNewRoadLinks.filterNot(link => isUnsupportedRoadLinkType(link))
     val roadLinkFound = filteredLinks.exists(_.linkId == newLinkInfo.linkId)
     if(roadLinkFound) {
-      service.persistUnknown(Seq(UnknownSpeedLimit(newLinkInfo.linkId, newLinkInfo.municipality.getOrElse(throw new NoSuchElementException(s"${newLinkInfo.linkId} does not have municipality code")), newLinkInfo.adminClass)),newTransaction = false)
+      service.persistUnknown(Seq(UnknownSpeedLimit(newLinkInfo.linkId, newLinkInfo.municipality.getOrElse(throw new NoSuchElementException(s"${newLinkInfo.linkId} does not have municipality code")), newLinkInfo.adminClass)))
       None
     } else None
   }
 
-  override def additionalRemoveOperationMass(expiredLinks:Seq[String]): Unit = {
-    service.purgeUnknown(Set(),expiredLinks,newTransaction = false)
+  private def updateUnknowns(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
+    val oldLinkIds = changes.filter(c => Seq(Remove, Replace, Split).contains(c.changeType)).map(c => c.oldLink.get.linkId)
+    val linkIdsWithExistingSpeedLimits = operationStep.assetsAfter.map(_.linkId)
+    val newLinkIdsWithoutSpeedLimit = changes.filter(c => c.changeType == Replace || c.changeType == Split).flatMap(_.newLinks).map(_.linkId)
+      .filterNot(linkId => linkIdsWithExistingSpeedLimits.contains(linkId))
+    val roadLinksWithoutSpeedLimit = roadLinkService.getRoadLinksByLinkIds(newLinkIdsWithoutSpeedLimit.toSet, newTransaction = false)
+    val (unSupportedLinks, supportedLinks) = roadLinksWithoutSpeedLimit.partition(link => isUnsupportedRoadLinkType(link))
+
+    service.persistUnknown(supportedLinks.map(l => UnknownSpeedLimit(l.linkId, l.municipalityCode, l.administrativeClass)))
+    service.purgeUnknown(unSupportedLinks.map(_.linkId).toSet, oldLinkIds, false)
+    Some(operationStep)
   }
 
-  override def nonAssetUpdate(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
-    change.changeType match {
-      case RoadLinkChangeType.Replace | RoadLinkChangeType.Split => {
-        val oldLinkIds = change.oldLink.get.linkId
-        val trafficDirectionChanged = isRealTrafficDirectionChange(change)
-        val oldUnknownLSpeedLimit = service.getUnknownByLinkIds(Set(oldLinkIds),newTransaction = false)
-        if (oldUnknownLSpeedLimit.nonEmpty || trafficDirectionChanged) {
-          service.purgeUnknown(Set(),oldUnknownLSpeedLimit.map(_.linkId),newTransaction = false) // recreate unknown speedlimit
-          service.persistUnknown(change.newLinks.map(l=>UnknownSpeedLimit(l.linkId, l.municipality.getOrElse(throw new NoSuchElementException(s"${l.linkId} does not have municipality code")), l.adminClass)),newTransaction = false)
-        }
-        None
-      }
-      case _ => None
-    }
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = {
+    updateUnknowns(operationStep, changes)
   }
   
   def isRealTrafficDirectionChange(change: RoadLinkChange): Boolean = {
