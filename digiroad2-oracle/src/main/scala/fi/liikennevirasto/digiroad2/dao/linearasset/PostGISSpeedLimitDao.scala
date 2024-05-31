@@ -677,24 +677,6 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
      sqlu"update asset set valid_to = current_timestamp where id in (#${ids.mkString(",")})".execute
   }
 
-  /**
-    * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
-    */
-  def purgeFromUnknownSpeedLimits(linkId: String, roadLinkLength: Double): Unit = {
-    val speedLimits = fetchSpeedLimitsByLinkId(linkId)
-
-    def calculateRemainders(sideCode: SideCode): Seq[(Double, Double)] = {
-      val limitEndPoints = speedLimits.filter(sl => sl.sideCode == SideCode.BothDirections || sl.sideCode == sideCode).map {
-        case(speedLimit) => (speedLimit.startMeasure, speedLimit.endMeasure) }
-      limitEndPoints.foldLeft(Seq((0.0, roadLinkLength)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.1}
-    }
-
-    val towardsRemainders = calculateRemainders(SideCode.TowardsDigitizing)
-    val againstRemainders = calculateRemainders(SideCode.AgainstDigitizing)
-    if (towardsRemainders.isEmpty && againstRemainders.isEmpty) {
-      sqlu"""delete from unknown_speed_limit where link_id = $linkId""".execute
-    }
-  }
 
   /**
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
