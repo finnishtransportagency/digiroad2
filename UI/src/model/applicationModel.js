@@ -103,7 +103,7 @@
         var nextZoomLevel = zoomlevels.getViewZoom(map) + 1;
         var outOfEditableBoundaries = this.isOutOfEditableBoundaries(nextZoomLevel);
         if (!outOfEditableBoundaries) {
-          eventbus.trigger('zoomedWithinEditableBoundaries');
+          eventbus.trigger('zoomedIntoEditableBoundaries');
         }
         return true;
       },

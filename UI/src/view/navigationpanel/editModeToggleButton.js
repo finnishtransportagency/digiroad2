@@ -33,7 +33,7 @@
       toggleEditMode(true);
       disableEditMode(true);
     });
-    eventbus.on('zoomedWithinEditableBoundaries', function() {
+    eventbus.on('zoomedIntoEditableBoundaries', function() {
       disableEditMode(false);
     });
     var reset = function() {
