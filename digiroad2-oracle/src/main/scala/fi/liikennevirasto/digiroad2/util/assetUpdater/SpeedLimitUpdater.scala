@@ -52,22 +52,6 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     updateUnknowns(operationStep, changes)
   }
   
-  def isRealTrafficDirectionChange(change: RoadLinkChange): Boolean = {
-    change.newLinks.exists(newLink => {
-      val oldOriginalTrafficDirection = change.oldLink.get.trafficDirection
-      val newOriginalTrafficDirection = newLink.trafficDirection
-      val replaceInfo = change.replaceInfo.find(_.newLinkId.getOrElse("") == newLink.linkId).get
-      val isDigitizationChange = replaceInfo.digitizationChange
-      val overWrittenTdValueOnNewLink = TrafficDirectionDao.getExistingValue(newLink.linkId)
-
-      if (overWrittenTdValueOnNewLink.nonEmpty) false
-      else {
-        if (isDigitizationChange) oldOriginalTrafficDirection != TrafficDirection.switch(newOriginalTrafficDirection)
-        else oldOriginalTrafficDirection != newOriginalTrafficDirection
-      }
-    })
-  }
-  
   override def adjustLinearAssets(typeId: Int,roadLinks: Seq[RoadLinkForFillTopology], assets: Map[String, Seq[PieceWiseLinearAsset]],
                                   changeSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
    assetFiller.fillTopologyChangesGeometry(roadLinks, assets, typeId, changeSet)
