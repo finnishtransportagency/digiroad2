@@ -21,23 +21,36 @@
       }
       button.text(mode ? 'Siirry muokkaustilaan' : 'Siirry katselutilaan');
     };
+    var disableEditMode = function(mode) {
+      button.prop('disabled', mode);
+    };
     button.click(function() {
       executeOrShowConfirmDialog(function() {
         toggleReadOnlyMode(!applicationModel.isReadOnly());
       });
+    });
+    eventbus.on('zoomedOutOfEditableBoundaries', function() {
+      toggleEditMode(true);
+      disableEditMode(true);
+    });
+    eventbus.on('zoomedWithinEditableBoundaries', function() {
+      disableEditMode(false);
     });
     var reset = function() {
       toggleReadOnlyMode(true);
     };
 
     var toggleEditMode = function(mode) {
+
       toggleReadOnlyMode(mode);
     };
 
-    return {
+    root.editModeToggleButtonInstance = {
       element: element,
       reset: reset,
       toggleEditMode: toggleEditMode
     };
+
+    return root.editModeToggleButtonInstance;
   };
 }(this));
