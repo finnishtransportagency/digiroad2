@@ -41,16 +41,13 @@
     };
 
     var toggleEditMode = function(mode) {
-
       toggleReadOnlyMode(mode);
     };
 
-    root.editModeToggleButtonInstance = {
+    return {
       element: element,
       reset: reset,
       toggleEditMode: toggleEditMode
     };
-
-    return root.editModeToggleButtonInstance;
   };
 }(this));
