@@ -98,7 +98,6 @@ object LinearAssetUpdateProcess {
       logger.info(s"Starting samuutus with parameter: $assetName")
       assetName match {
         // position, value and side code
-        case "animal_warnings" => getAssetUpdater(AnimalWarnings.typeId).updateLinearAssets(AnimalWarnings.typeId)
         case "care_class" => getAssetUpdater(CareClass.typeId).updateLinearAssets(CareClass.typeId)
         case "height_limit" => getAssetUpdater(HeightLimit.typeId).updateLinearAssets(HeightLimit.typeId)
         case "length_limit" => getAssetUpdater(LengthLimit.typeId).updateLinearAssets(LengthLimit.typeId)
