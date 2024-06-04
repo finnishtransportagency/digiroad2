@@ -50,5 +50,9 @@
   {
     "ParameterKey": "DigiroadDatabaseSecurityGroup",
     "ParameterValue": "sg-0ced3d4a7245fb3ed"
+  },
+  {
+    "ParameterKey": "DigiroadDevArn",
+    "ParameterValue": "arn:aws:iam::475079312496:role/DigiroadOthAdmin"
   }
 ]

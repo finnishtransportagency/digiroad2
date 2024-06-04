@@ -319,6 +319,21 @@ Resources:
                   - arn:aws:s3:::geotools-repo/*
                 Action:
                   - "s3:GetObject"
+              - Effect: "Allow"
+                Resource:
+                  - Fn::ImportValue:
+                      DigiroadCodeArtifactRepositoryArn
+                Action:
+                  - codeartifact:ReadFromRepository
+                  - codeartifact:DescribePackageVersion
+                  - codeartifact:DescribeRepository
+                  - codeartifact:GetPackageVersionReadme
+                  - codeartifact:GetRepositoryEndpoint
+                  - codeartifact:ListPackageVersionAssets
+                  - codeartifact:ListPackageVersionDependencies
+                  - codeartifact:ListPackageVersions
+                  - codeartifact:ListPackages
+                  - codeartifact:ReadFromRepository
   
   ECRRepo:
     Type: AWS::ECR::Repository

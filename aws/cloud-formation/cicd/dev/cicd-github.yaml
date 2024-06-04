@@ -44,6 +44,9 @@ Parameters:
   DigiroadDatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
     Description: Databases security group
+  DigiroadDevArn:
+    Description: ARN of dev admin account
+    Type: String
 
 Resources:
 
@@ -367,6 +370,20 @@ Resources:
                   - arn:aws:s3:::geotools-repo/*
                 Action:
                   - "s3:GetObject"
+              - Effect: "Allow"
+                Resource:
+                  - "*"
+                Action:
+                  - codeartifact:ReadFromRepository
+                  - codeartifact:DescribePackageVersion
+                  - codeartifact:DescribeRepository
+                  - codeartifact:GetPackageVersionReadme
+                  - codeartifact:GetRepositoryEndpoint
+                  - codeartifact:ListPackageVersionAssets
+                  - codeartifact:ListPackageVersionDependencies
+                  - codeartifact:ListPackageVersions
+                  - codeartifact:ListPackages
+                  - codeartifact:ReadFromRepository
   ECRRepo:
     Type: AWS::ECR::Repository
     Properties:
@@ -431,3 +448,35 @@ Resources:
                   }
               ]
           }
+
+  DigiroadCodeArtifactDomain:
+    Type: 'AWS::CodeArtifact::Domain'
+    Properties:
+      DomainName: "digiroad"
+
+  CodeArtifactRepo:
+    Type: 'AWS::CodeArtifact::Repository'
+    Properties:
+      Description: "Repository for Digiroad build packages"
+      DomainName: "digiroad"
+      RepositoryName: "digiroad_packages"
+      PermissionsPolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt CodeBuildRole.Arn
+                - !Ref DigiroadDevArn
+            Action: "codeartifact:*"
+            Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_packages"
+    DependsOn:
+      - DigiroadCodeArtifactDomain
+      - CodeBuildRole
+
+Outputs:
+  DigiroadCodeArtifactRepositoryArn:
+    Description: "ARN of the Digiroad Repository"
+    Value: !GetAtt CodeArtifactRepo.Arn
+    Export:
+      Name: DigiroadCodeArtifactRepositoryArn
