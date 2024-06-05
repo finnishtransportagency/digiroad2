@@ -112,7 +112,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode = false)
     super.getByBoundingBox(user, bounds, roadLinks)
   }
 

@@ -42,8 +42,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     linkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
     TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
   
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(roadLink), Nil))
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[Int])).thenReturn((List(roadLink), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(roadLink), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementary(any[Int])).thenReturn((List(roadLink), Nil))
 
   when(mockRoadLinkService.fetchRoadlinksAndComplementaries(Set(linkId2, linkId3, linkId4)))
     .thenReturn(Seq(RoadLinkFetched(linkId2, 91, List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
@@ -274,7 +274,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) values ('18050499',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 100 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.YYYY HH24:MI:SS'),null)""".execute
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) values ('18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.YYYY HH24:MI:SS'),null)""".execute
       
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(newRoadLink))
       when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(any[String])).thenReturn(Some(roadLinkFetched))

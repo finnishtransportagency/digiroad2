@@ -21,7 +21,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
   override def getAssetsByMunicipality(typeId: Int, municipality: Int, newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-    val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChanges(municipality)
+    val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementary(municipality)
     val linkIds = roadLinks.map(_.linkId)
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
