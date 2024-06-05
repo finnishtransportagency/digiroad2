@@ -4,7 +4,6 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, LinkGeomSource, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.kgv.RoadLinkHistoryClient
-import fi.liikennevirasto.digiroad2.client.vvh.VVHChangeInfoClient
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import org.joda.time.DateTime
 
@@ -88,6 +87,5 @@ trait Filter {
 }
 
 class RoadLinkClient(vvhRestApiEndPoint: String) {
-  lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
   lazy val historyData: RoadLinkHistoryClient = new RoadLinkHistoryClient()
 }

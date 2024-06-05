@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkClient, RoadLinkFetched}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHChangeInfoClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -51,7 +50,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val CreatedTestAssetId = 300004
   val roadLinkGeometry = List(Point(374567.632,6677255.6,0.0), Point(374603.57,6677262.009,0.0), Point(374631.683,6677267.545,0.0), Point(374651.471,6677270.245,0.0), Point(374669.739,6677273.332,0.0), Point(374684.567,6677277.323,0.0))
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val roadAddress = RoadAddress(None, 1, 1, Track.Combined, 1)
@@ -65,7 +63,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val linkId8: String = "ef043f17-dadc-435e-9e3f-50a19c3c84f3:1"
 
   when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((roadAddress , RoadSide.Right))
-  when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
   when(mockRoadLinkService.fetchByLinkId(linkId1))
     .thenReturn(Some(RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchByLinkId(linkId2))
@@ -75,8 +72,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private val fetchedRoadlinksForBoundingBox = List(
     RoadLinkFetched(linkId3, 235, Seq(Point(0, 0), Point(0, 10)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
- 
-  when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(Nil).future)
+  
   when(mockRoadLinkService.fetchByLinkId(linkId5))
     .thenReturn(Some(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchByLinkId(linkId6))
