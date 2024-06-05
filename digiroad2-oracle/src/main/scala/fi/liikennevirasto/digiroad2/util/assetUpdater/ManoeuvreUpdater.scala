@@ -16,9 +16,9 @@ import scala.collection.Seq
 class ManoeuvreUpdater() {
   def eventBus: DigiroadEventBus = new DummyEventBus
   def roadLinkClient: RoadLinkClient = new RoadLinkClient()
-  def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
+  def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus)
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-  def service = new ManoeuvreService(new RoadLinkService(roadLinkClient, eventBus, new DummySerializer),eventBus)
+  def service = new ManoeuvreService(new RoadLinkService(roadLinkClient, eventBus),eventBus)
   
   private val roadLinkChangeClient = new RoadLinkChangeClient
   

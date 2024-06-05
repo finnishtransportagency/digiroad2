@@ -112,7 +112,7 @@ class AssetDataImporter {
     val roadsByLinkId = roads.foldLeft(Map.empty[String, (String, String)]) { (m, road) => m + (road._1 -> road) }
 
     val roadLinkClient = new RoadLinkClient()
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     val vvhLinks = roadLinkService.fetchRoadlinksByIds(roadsByLinkId.keySet)
     val linksByLinkId = vvhLinks.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
@@ -170,7 +170,7 @@ class AssetDataImporter {
     val conversionTypeId = 29
     val exceptionTypeId = 1
     val roadLinkClient = new RoadLinkClient()
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     val typeId = 190
 
     println("*** Fetching prohibitions from conversion database")
@@ -491,7 +491,7 @@ class AssetDataImporter {
 
   def adjustToNewDigitization(vvhHost: String) = {
     val roadLinkClient = new RoadLinkClient()
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
     val processedLinkIds = mutable.Set[String]()
 
@@ -919,7 +919,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     */
   def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
     val roadLinkClient = new RoadLinkClient()
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     withDynTransaction {
       val idAddressFi = sql"""select p.id from property p where p.public_id = 'osoite_suomeksi'""".as[Int].list.head
       val idAddressSe = sql"""select p.id from property p where p.public_id = 'osoite_ruotsiksi'""".as[Int].list.head

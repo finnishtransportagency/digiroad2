@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.RoadWidthService
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, Point}
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -15,7 +15,7 @@ class RoadWidthGeneratorSpec extends FunSuite with Matchers {
 
   val dao = new PostGISLinearAssetDao()
   val roadLinkClient = new RoadLinkClient()
-  val roadWidthService = new RoadWidthService(new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer), new DummyEventBus)
+  val roadWidthService = new RoadWidthService(new RoadLinkService(roadLinkClient, new DummyEventBus), new DummyEventBus)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)

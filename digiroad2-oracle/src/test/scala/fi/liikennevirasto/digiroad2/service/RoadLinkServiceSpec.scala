@@ -12,8 +12,8 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.dao.lane.LaneWorkListDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions, VVHSerializer}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -30,14 +30,14 @@ import scala.concurrent.{Future, Promise}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(roadLinkClient: RoadLinkClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(roadLinkClient, eventBus, vvhSerializer) {
+  class TestService(roadLinkClient: RoadLinkClient, eventBus: DigiroadEventBus = new DummyEventBus) extends RoadLinkService(roadLinkClient, eventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
     override def roadLinkDAO: RoadLinkDAO = mockRoadLinkDao
     override def complementaryLinkDAO: ComplementaryLinkDAO = mockRoadLinkComplimentaryDao
   }
 
-  class RoadLinkTestService(roadLinkClient: RoadLinkClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(roadLinkClient, eventBus, vvhSerializer) {
+  class RoadLinkTestService(roadLinkClient: RoadLinkClient, eventBus: DigiroadEventBus = new DummyEventBus) extends RoadLinkService(roadLinkClient, eventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
     override def roadLinkDAO: RoadLinkDAO = mockRoadLinkDao
@@ -170,7 +170,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkDao.fetchByLinkId(linkId)).thenReturn(None)
     when(mockRoadLinkComplimentaryDao.fetchByLinkId(linkId)).thenReturn(None)
 
-    val service = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
+    val service = new RoadLinkService(mockRoadLinkClient, new DummyEventBus)
     val linkProperty = LinkProperties(linkId, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality)
     val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
     roadLink.map(_.linkType) should be(None)

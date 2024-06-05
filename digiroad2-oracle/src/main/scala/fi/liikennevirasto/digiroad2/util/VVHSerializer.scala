@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
 /**
   * Created by venholat on 2.6.2016.
   */
-trait VVHSerializer {
+trait VVHSerializer { //TODO DELETE
   def readCachedTinyRoadLinks(file: File): Seq[TinyRoadLink]
 
   def readCachedGeometry(file: File): Seq[RoadLink]

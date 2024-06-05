@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadLinkReplacementWorkListService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, GeometryUtils}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
 case class MatchedRoadLinks(removedRoadLink: RoadLink, addedRoadLink: RoadLink, hausdorffSimilarityMeasure: Double, areaSimilarityMeasure: Double)
@@ -22,7 +22,7 @@ object RoadLinkReplacementFinder {
   lazy val missingReplacementService: RoadLinkReplacementWorkListService = new RoadLinkReplacementWorkListService
   lazy val eventBus: DigiroadEventBus = new DummyEventBus
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus)
 
   def findMatchesWithSimilarity(addedLink: RoadLink, removedLinks: Seq[RoadLink]): Seq[MatchedRoadLinks] = {
     removedLinks.flatMap(removedLink => {

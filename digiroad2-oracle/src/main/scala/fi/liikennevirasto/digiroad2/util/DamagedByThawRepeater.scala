@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.DummyEventBus
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
@@ -20,7 +20,7 @@ class DamagedByThawRepeater {
   val today: DateTime = DateTime.now()
   val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   val dummyEventBus = new DummyEventBus
-  val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, new DummySerializer)
+  val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus)
   val damagedByThawService: DamagedByThawService = new DamagedByThawService(roadLinkService, dummyEventBus)
   val logger: Logger = LoggerFactory.getLogger(getClass)
 

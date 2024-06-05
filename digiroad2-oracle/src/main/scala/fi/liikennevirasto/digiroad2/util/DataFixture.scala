@@ -57,7 +57,7 @@ object DataFixture {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, eventbus)
   }
 
   lazy val obstacleService: ObstacleService = {
@@ -341,7 +341,7 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val roadLinkClient = new RoadLinkClient()
-    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     val batchSize = 1000
     var obstaclesFound = true
     var lastIdUpdate : Long = 0
@@ -619,7 +619,7 @@ object DataFixture {
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new PostGISLinearAssetDao()
-    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
@@ -773,7 +773,7 @@ object DataFixture {
     println("\nUpdate Information Source for RoadWidth")
     println(DateTime.now())
 
-    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
 
     //    Get All Municipalities
     val municipalities: Seq[Int] =
@@ -837,7 +837,7 @@ object DataFixture {
     println("\nUpdate Information Source for Pavement")
     println(DateTime.now())
 
-    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
 
     //Get All Municipalities
     val municipalities: Seq[Int] =

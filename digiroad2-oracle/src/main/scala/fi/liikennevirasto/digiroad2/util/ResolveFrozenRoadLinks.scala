@@ -36,7 +36,7 @@ trait ResolvingFrozenRoadLinks {
 
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
 
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
 
   lazy val roadLinkTempDao: RoadAddressTempDAO = new RoadAddressTempDAO
 

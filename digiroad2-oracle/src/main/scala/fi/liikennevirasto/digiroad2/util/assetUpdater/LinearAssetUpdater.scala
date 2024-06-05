@@ -74,7 +74,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   def eventBus: DigiroadEventBus = new DummyEventBus
   def roadLinkClient: RoadLinkClient = new RoadLinkClient()
-  def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
+  def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus)
   def assetFiller: AssetFiller = service.assetFiller
   def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)

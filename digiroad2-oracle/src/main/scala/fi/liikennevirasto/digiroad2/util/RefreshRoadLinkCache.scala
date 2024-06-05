@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.DummyEventBus
 import org.slf4j.{Logger, LoggerFactory}
 
 
@@ -17,7 +17,7 @@ object RefreshRoadLinkCache {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, new DummyEventBus)
   }
 
   def refreshCache(): Unit = {

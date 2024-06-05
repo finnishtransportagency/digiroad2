@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util._
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.sys.exit
@@ -15,7 +15,7 @@ object LinearAssetUpdateProcess {
 
   lazy val eventbus: DigiroadEventBus = new DummyEventBus
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
 
   lazy val dynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService, eventbus)
   lazy val linearAssetService = new LinearAssetService(roadLinkService, eventbus)

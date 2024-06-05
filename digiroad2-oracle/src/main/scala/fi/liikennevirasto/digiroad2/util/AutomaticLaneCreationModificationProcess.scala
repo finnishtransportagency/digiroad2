@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DummyEventBus}
 import fi.liikennevirasto.digiroad2.client.viite.{ChangeInformation, IntegrationViiteClient, SearchViiteClient}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -21,7 +21,7 @@ object AutomaticLaneCreationModificationProcess {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, new DummyEventBus)
   }
 
   lazy val roadAddressService: RoadAddressService = {

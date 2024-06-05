@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Track}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, Track}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -28,7 +28,7 @@ object LaneUtils {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus, roadAddressService)
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
   lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient() }
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)

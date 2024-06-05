@@ -89,7 +89,7 @@ case class PrivateRoadInfoStructure(privateRoadName: Option[String], association
   * @param eventbus
   * @param vvhSerializer
   */
-class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
+class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: DigiroadEventBus) {
   lazy val municipalityService = new MunicipalityService
 
   protected def roadLinkDAO: RoadLinkDAO = new RoadLinkDAO

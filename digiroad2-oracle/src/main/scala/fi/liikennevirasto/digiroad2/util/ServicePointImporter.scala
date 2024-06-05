@@ -26,7 +26,7 @@ object ServicePointImporter {
     val groupedServicePoints = servicePoints.grouped(groupSize).toList
     val totalGroupCount = groupedServicePoints.length
     val roadLinkClient = new RoadLinkClient()
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
 
     PostGISDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, municipality_code, created_date, created_by) values (?, ?, ?, current_timestamp, 'dr1_conversion')")
