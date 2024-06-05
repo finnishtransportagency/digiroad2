@@ -668,8 +668,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
-    LogUtils.time(logger,"TEST LOG Total time getRoadLinksFromVVH with boundingBox"){
+  private def getRoadLinksFromDB(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    LogUtils.time(logger,"TEST LOG Total time getRoadLinksFromDB with boundingBox"){
       val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
       validateBoundingBox(boundingRectangle)
       val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH  with boundingBox"){
@@ -685,7 +685,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadlinksWithComplementaryFromDB(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(boundingRectangle, municipalities,asyncMode = false)
@@ -696,7 +696,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     partitionRoadLinks(roadLinks,withLaneInfo=withLaneInfo)
   }
 
-  private def getRoadLinksHistoryFromVVH(municipalities: Set[Int],withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadLinksHistory(municipalities: Set[Int],withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinks = roadLinkService.getRoadLinksHistory(boundingRectangle, municipalities)
@@ -798,7 +798,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     response.setHeader("Access-Control-Allow-Headers", "*")
     val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
     params.get("bbox")
-      .map(getRoadLinksFromVVH(Set(),withLaneInfo = laneInfo))
+      .map(getRoadLinksFromDB(Set(),withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
@@ -816,7 +816,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
     params.get("bbox")
-      .map(getRoadLinksHistoryFromVVH(municipalities,withLaneInfo = laneInfo))
+      .map(getRoadLinksHistory(municipalities,withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
@@ -844,7 +844,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     response.setHeader("Access-Control-Allow-Headers", "*")
     val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
     params.get("bbox")
-      .map(getRoadlinksWithComplementaryFromVVH(Set(),withLaneInfo = laneInfo))
+      .map(getRoadlinksWithComplementaryFromDB(Set(),withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 

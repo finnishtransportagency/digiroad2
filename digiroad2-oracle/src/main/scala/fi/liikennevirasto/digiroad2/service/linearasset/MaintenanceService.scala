@@ -107,8 +107,8 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   def getActiveMaintenanceRoadByPolygon(areaId: Int): Seq[PersistedLinearAsset] = {
     val polygon = polygonTools.getPolygonByArea(areaId)
-    val vVHLinkIds = roadLinkService.getLinkIdsWithComplementaryByPolygons(polygon)
-    getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, vVHLinkIds)
+    val linkIds = roadLinkService.getLinkIdsWithComplementaryByPolygons(polygon)
+    getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, linkIds)
   }
 
   def getAssetArea(roadLink: Option[RoadLinkLike], measures: Measures, area: Option[Seq[Int]] = None): Int = {

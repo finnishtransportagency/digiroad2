@@ -233,14 +233,14 @@ object DataFixture {
 
   def importEuropeanRoads(): Unit = {
     println(s"\nCommencing European road import from conversion at time: ${DateTime.now()}")
-    dataImporter.importEuropeanRoads(Conversion.database(), Digiroad2Properties.vvhServiceHost)
+    dataImporter.importEuropeanRoads(Conversion.database())
     println(s"European road import complete at time: ${DateTime.now()}")
     println()
   }
 
   def importProhibitions(): Unit = {
     println(s"\nCommencing prohibition import from conversion at time: ${DateTime.now()}")
-    dataImporter.importProhibitions(Conversion.database(), Digiroad2Properties.vvhServiceHost)
+    dataImporter.importProhibitions(Conversion.database())
     println(s"Prohibition import complete at time: ${DateTime.now()}")
     println()
   }
@@ -255,7 +255,7 @@ object DataFixture {
   def generateDroppedAssetsCsv(): Unit = {
     println("\nGenerating list of linear assets outside geometry")
     println(DateTime.now())
-    val csvGenerator = new CsvGenerator(Digiroad2Properties.vvhServiceHost)
+    val csvGenerator = new CsvGenerator()
     csvGenerator.generateDroppedNumericalLimits()
     csvGenerator.generateCsvForTextualLinearAssets(260, "european_roads")
     csvGenerator.generateCsvForTextualLinearAssets(270, "exit_numbers")
@@ -269,7 +269,7 @@ object DataFixture {
   def generateDroppedManoeuvres(): Unit = {
     println("\nGenerating list of manoeuvres outside geometry")
     println(DateTime.now())
-    val csvGenerator = new CsvGenerator(Digiroad2Properties.vvhServiceHost)
+    val csvGenerator = new CsvGenerator()
     csvGenerator.generateDroppedManoeuvres()
     println("complete at time: ")
     println(DateTime.now())
@@ -310,7 +310,7 @@ object DataFixture {
   def adjustToNewDigitization(): Unit = {
     println("\nAdjusting side codes and m-values according new digitization directions")
     println(DateTime.now())
-    dataImporter.adjustToNewDigitization(Digiroad2Properties.vvhServiceHost)
+    dataImporter.adjustToNewDigitization()
     println("complete at time: ")
     println(DateTime.now())
     println("\n")
@@ -326,11 +326,11 @@ object DataFixture {
   /**
     * Gets list of masstransitstops and populates addresses field with street name found from VVH
     */
-  private def getMassTransitStopAddressesFromVVH(): Unit =
+  private def getMassTransitStopAddressesFromRoadLink(): Unit =
   {
     println("\nCommencing address information import from VVH road links to mass transit stops at time: ")
     println(DateTime.now())
-    dataImporter.getMassTransitStopAddressesFromVVH(Digiroad2Properties.vvhRestApiEndPoint)
+    dataImporter.getMassTransitStopAddressesFromRoadLink()
     println("complete at time: ")
     println(DateTime.now())
     println("\n")
@@ -2077,7 +2077,7 @@ object DataFixture {
       case Some("generate_floating_obstacles") =>
         FloatingObstacleTestData.generateTestData.foreach(createAndFloat)
       case Some("get_addresses_to_masstransitstops_from_vvh") =>
-        getMassTransitStopAddressesFromVVH()
+        getMassTransitStopAddressesFromRoadLink()
       case Some ("link_float_obstacle_assets") =>
         linkFloatObstacleAssets()
       case Some ("check_unknown_speedlimits") =>

@@ -282,16 +282,16 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val complRoadLink3 = RoadLinkFetched(testLinkId3, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
     val complRoadLink4 = RoadLinkFetched(testLinkId4, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
 
-    val vvhRoadLink1 = RoadLinkFetched(testLinkId5, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
-    val vvhRoadLink2 = RoadLinkFetched(testLinkId6, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.UnderConstruction)
-    val vvhRoadLink3 = RoadLinkFetched(testLinkId7, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
-    val vvhRoadLink4 = RoadLinkFetched(testLinkId8, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
+    val roadLink1 = RoadLinkFetched(testLinkId5, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
+    val roadLink2 = RoadLinkFetched(testLinkId6, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.UnderConstruction)
+    val roadLink3 = RoadLinkFetched(testLinkId7, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
+    val roadLink4 = RoadLinkFetched(testLinkId8, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
 
     PostGISDatabase.withDynTransaction {
       
       
       when(mockRoadLinkComplimentaryDao.fetchWalkwaysByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(complRoadLink1, complRoadLink2, complRoadLink3, complRoadLink4))
-      when(mockRoadLinkDao.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4))
+      when(mockRoadLinkDao.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
 
       val roadlinks = service.getRoadLinksWithComplementaryByBoundsAndMunicipalities(boundingBox, Set(91))
 
@@ -603,11 +603,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val administrativeClass = Municipality
     val attributes = Map("OBJECTID" -> BigInt(99))
 
-    val newVVHRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
-    val newVVHRoadLink2 = RoadLinkFetched(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
-    val newVVHRoadLink3 = RoadLinkFetched(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
-    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
-
     val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
     val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
     val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
@@ -637,11 +632,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val administrativeClass = Municipality
     val attributes = Map("OBJECTID" -> BigInt(99))
 
-    val newVVHRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
-    val newVVHRoadLink2 = RoadLinkFetched(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
-    val newVVHRoadLink3 = RoadLinkFetched(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
-    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
-
     val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
     val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
     val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
@@ -669,12 +659,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val municipalityCode = 564
     val administrativeClass = Municipality
     val attributes = Map("OBJECTID" -> BigInt(99))
-
-
-    val newVVHRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
-    val newVVHRoadLink2 = RoadLinkFetched(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
-    val newVVHRoadLink3 = RoadLinkFetched(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
-    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
 
     val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
     val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
@@ -722,18 +706,18 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val attributesRoad2 = Map("ROADNAME_FI" -> "Road Number 2", "MUNICIPALITYCODE" -> BigInt(16))
       val attributesRoad3 = Map("ROADNAME_FI" -> "Road Number 3", "MUNICIPALITYCODE" -> BigInt(16))
 
-      val vvhRoadLinks = Seq(
+      val roadLinks = Seq(
         RoadLinkFetched(linkId1, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad1, length = 100),
         RoadLinkFetched(linkId2, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad2, length = 200),
         RoadLinkFetched(linkId3, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad3, length = 150)
       )
 
-      val linkIds = vvhRoadLinks.map(_.linkId)
+      val linkIds = roadLinks.map(_.linkId)
 
       val service = new TestService(mockRoadLinkClient)
       
       when(mockRoadLinkComplimentaryDao.fetchByLinkIds(linkIds.toSet)).thenReturn(Seq())
-      when(mockRoadLinkDao.fetchByLinkIds(linkIds.toSet)).thenReturn(vvhRoadLinks)
+      when(mockRoadLinkDao.fetchByLinkIds(linkIds.toSet)).thenReturn(roadLinks)
       val result = service.getPrivateRoadsByAssociationName(refactoredDummyRoadAssName, false)
 
       result.length should be (3)
@@ -765,17 +749,17 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val attributesRoad2 = Map("ROADNAME_FI" -> "", "MUNICIPALITYCODE" -> BigInt(766))
       val attributesRoad3 = Map("ROADNAME_FI" -> "Road Number 3", "MUNICIPALITYCODE" -> BigInt(16))
 
-      val vvhRoadLinks = Seq(
+      val roadLinks = Seq(
         RoadLinkFetched(linkId1, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad1, length = 100),
         RoadLinkFetched(linkId2, 766, Seq(Point(386133, 6671115, 21), Point(386136, 6671029, 15)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad2, length = 200)
       )
 
-      val linkIds = vvhRoadLinks.map(_.linkId)
+      val linkIds = roadLinks.map(_.linkId)
 
       val service = new TestService(mockRoadLinkClient)
       
       when(mockRoadLinkComplimentaryDao.fetchByLinkIds(linkIds.toSet)).thenReturn(Seq())
-      when(mockRoadLinkDao.fetchByLinkIds(linkIds.toSet)).thenReturn(vvhRoadLinks)
+      when(mockRoadLinkDao.fetchByLinkIds(linkIds.toSet)).thenReturn(roadLinks)
 
       val result = service.getPrivateRoadsByAssociationName(refactoredDummyRoadAssNameNumberOne, false)
 

@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
@@ -116,10 +115,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val newRoadLink3 = newRoadLink1.copy(linkId=newLinkId3, attributes = attributes3)
     val newRoadLink4 = newRoadLink1.copy(linkId=newLinkId4, attributes = attributes3)
     List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4)
-  }
-
-  private def createChangeInfo(roadLinks: Seq[RoadLink], timeStamp: Long) = {
-    roadLinks.map(rl => ChangeInfo(Some(rl.linkId), Some(rl.linkId), 0L, 1, None, None, None, None, timeStamp))
   }
 
   test("Should not create new paved road assets and return the existing paved road assets when VVH doesn't have change information") {

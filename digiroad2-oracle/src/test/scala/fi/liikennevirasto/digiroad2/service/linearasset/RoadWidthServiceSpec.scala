@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, PostGISLinearAssetDao}
@@ -64,10 +63,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   }
 
   val assetLock = "Used to prevent deadlocks"
-
-  private def createChangeInfo(roadLinks: Seq[RoadLink], timeStamp: Long) = {
-    roadLinks.map(rl => ChangeInfo(Some(rl.linkId), Some(rl.linkId), 0L, 1, None, None, None, None, timeStamp))
-  }
 
   private def createService() = {
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {

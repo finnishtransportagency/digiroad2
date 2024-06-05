@@ -41,7 +41,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def validateMunicipalities(id: Long,  municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): Unit = {
-    getLinksWithLength(id, newTransaction).foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
+    getLinksWithLength(id, newTransaction).foreach(link => municipalityValidation(link._4, link._6))
   }
 
   def getSpeedLimitValue(optionalValue: Option[Value]): Option[SpeedLimitValue] = {

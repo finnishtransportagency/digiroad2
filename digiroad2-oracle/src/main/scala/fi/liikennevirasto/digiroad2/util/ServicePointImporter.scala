@@ -11,10 +11,11 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation
 
 object ServicePointImporter {
-  def importServicePoints(database: DatabaseDef, vvhServiceHost: String): Unit =  {
+  def importServicePoints(database: DatabaseDef): Unit =  {
     val servicePoints = database.withDynSession {
       sql"""
         select p.palv_tyyppi, p.palv_lisatieto, p.palv_rautatieaseman_tyyppi, p.palv_paikkojen_lukumaara, p.palv_lepoalue_tyyppi, to_2d(p.shape), p.dr1_oid, p.nimi_fi

@@ -69,7 +69,7 @@ trait Filter {
   /**
     *
     * @param polygon to be converted to string
-    * @return string compatible with VVH polygon query
+    * @return string compatible with polygon query
     */
   def stringifyPolygonGeometry(polygon: Polygon): String = ???
 

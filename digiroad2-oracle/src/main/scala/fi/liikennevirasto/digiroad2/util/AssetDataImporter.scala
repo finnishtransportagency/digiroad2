@@ -20,6 +20,8 @@ import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import org.joda.time._
 import org.slf4j.LoggerFactory
+import slick.driver
+import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
@@ -104,7 +106,7 @@ class AssetDataImporter {
     }
   }
 
-  def importEuropeanRoads(conversionDatabase: DatabaseDef, vvhHost: String) = {
+  def importEuropeanRoads(conversionDatabase: DatabaseDef): Unit = {
     val roads = conversionDatabase.withDynSession {
       sql"""select link_id, eur_nro from eurooppatienumero""".as[(String, String)].list
     }
@@ -113,8 +115,8 @@ class AssetDataImporter {
 
     val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
-    val vvhLinks = roadLinkService.fetchRoadlinksByIds(roadsByLinkId.keySet)
-    val linksByLinkId = vvhLinks.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
+    val links = roadLinkService.fetchRoadlinksByIds(roadsByLinkId.keySet)
+    val linksByLinkId = links.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
@@ -166,7 +168,7 @@ class AssetDataImporter {
     }
   }
 
-  def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
+  def importProhibitions(conversionDatabase: DatabaseDef): Unit = {
     val conversionTypeId = 29
     val exceptionTypeId = 1
     val roadLinkClient = new RoadLinkClient()
@@ -489,7 +491,7 @@ class AssetDataImporter {
     }
   }
 
-  def adjustToNewDigitization(vvhHost: String) = {
+  def adjustToNewDigitization(): Unit = {
     val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
@@ -913,11 +915,10 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   }
 
   /**
-    * Get address information to mass transit stop assets from VVH road link (DROTH-221).
+    * Get address information to mass transit stop assets from road link (DROTH-221).
     *
-    * @param vvhRestApiEndPoint
     */
-  def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
+  def getMassTransitStopAddressesFromRoadLink(): Unit = {
     val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     withDynTransaction {

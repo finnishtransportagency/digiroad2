@@ -83,11 +83,10 @@ object AdditionalInformation{
 case class PrivateRoadInfoStructure(privateRoadName: Option[String], associationId: Option[String], additionalInfo: Option[String], lastModifiedDate: Option[String])
 
 /**
-  * This class performs operations related to road links. It uses roadLinkClient to get data from VVH Rest API.
+  * This class performs operations related to road links.
   *
   * @param roadLinkClient
   * @param eventbus
-  * @param vvhSerializer
   */
 class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: DigiroadEventBus) {
   lazy val municipalityService = new MunicipalityService

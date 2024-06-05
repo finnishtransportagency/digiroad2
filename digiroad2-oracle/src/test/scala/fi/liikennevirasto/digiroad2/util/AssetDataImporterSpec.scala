@@ -438,13 +438,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
-    val vvhRoadLinks = Seq(
+    val roadLinks = Seq(
       RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
       RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(15,0), Point(16,21), Point(17,42)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
       RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
-    when(mockRoadLinkDao.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(roadLinks)
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 
@@ -496,12 +496,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
-    val vvhRoadLinks = Seq(
+    val roadLinks = Seq(
       RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(0,0), Point(0,20), Point(0,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
       RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(0,0), Point(20,0), Point(40,0)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
-    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(roadLinks))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
     val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus)
@@ -585,12 +585,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
-    val vvhRoadLinks = Seq(
+    val roadLinks = Seq(
       RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(20.501,0), Point(20.501,20), Point(20.501,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
       RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(30,0), Point(30,20), Point(30,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
-    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(roadLinks))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 
@@ -610,11 +610,11 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
-    val vvhRoadLinks = Seq(
+    val roadLinks = Seq(
       RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(30.001,0), Point(30.001,20), Point(30.001,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
     )
     
-    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(roadLinks))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 

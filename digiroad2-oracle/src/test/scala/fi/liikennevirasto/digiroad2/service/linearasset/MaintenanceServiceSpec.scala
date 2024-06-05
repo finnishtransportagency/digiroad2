@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
@@ -237,11 +236,6 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val newLinkId2 = LinkIdGenerator.generateRandom()
 
     val propertiesSeq :Seq[DynamicProperty] = List(prop1, prop2, prop3)
-
-    val changeInfo = Seq(
-      ChangeInfo(Some(oldLinkId1), Some(newLinkId1), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
-      ChangeInfo(Some(oldLinkId2), Some(newLinkId2), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
-    )
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(roadLinkWithLinkSource)
 
