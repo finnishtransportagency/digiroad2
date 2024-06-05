@@ -470,6 +470,8 @@ Resources:
                 - !Ref DigiroadDevArn
             Action: "codeartifact:*"
             Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_packages"
+      ExternalConnections:
+        - "public:npmjs"
     DependsOn:
       - DigiroadCodeArtifactDomain
       - CodeBuildRole
