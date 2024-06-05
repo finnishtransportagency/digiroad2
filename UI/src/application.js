@@ -273,15 +273,20 @@
         return (!originalEvent.altKey && !originalEvent.shiftKey);
       }
     }));
+
     map.addInteraction(new ol.interaction.MouseWheelZoom({
       condition: function(event) {
-        var zoomOut = event.originalEvent.deltaY > 0;  // Wheel scrolled down
-        if (zoomOut) {
-          var zoomLevel = zoomlevels.getViewZoom(map);
-          return applicationModel.canZoomOut(zoomLevel);
-        }
-        else
+        var deltaY = event.originalEvent.deltaY;
+        if (deltaY > 0) {
+          // Wheel scrolled down (Zoom out)
+          return applicationModel.handleZoomOut(map);
+        } else if (deltaY < 0) {
+          // Wheel scrolled up (Zoom in)
+          return applicationModel.handleZoomIn(map);
+        } else {
+          // no zoom -> no reason to block
           return true;
+        }
       }
     }));
     return map;
