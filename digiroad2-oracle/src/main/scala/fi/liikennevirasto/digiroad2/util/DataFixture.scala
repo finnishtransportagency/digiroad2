@@ -1696,7 +1696,7 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
-  def fillNewRoadLinksWithPreviousInfo(): Unit = {
+/*  def fillNewRoadLinksWithPreviousInfo(): Unit = { TODO DELETE
     def getAdjacentsRoadLinks(allAdjacentsRoadLinks: Seq[RoadLink], point: Point): Seq[RoadLink] = {
       allAdjacentsRoadLinks.filter(r => GeometryUtils.areAdjacent(r.geometry, point))
     }
@@ -1791,7 +1791,7 @@ object DataFixture {
     println("Complete at time: ")
     println(DateTime.now())
     println("\n")
-  }
+  }*/
 
   def updateLastModifiedAssets(): Unit = {
     println("\nUpdating last modified assets information")

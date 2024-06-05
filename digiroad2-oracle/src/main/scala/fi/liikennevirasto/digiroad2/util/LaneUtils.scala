@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane._
@@ -208,24 +207,6 @@ object LaneUtils {
   def roundMeasure(measure: Double, numberOfDecimals: Int = 3): Double = {
     val exponentOfTen = Math.pow(10, numberOfDecimals)
     Math.round(measure * exponentOfTen).toDouble / exponentOfTen
-  }
-
-  def getMappedChanges(changes: Seq[ChangeInfo]): Map[String, Seq[ChangeInfo]] = {
-    (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
-      .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
-  }
-
-  def deletedRoadLinkIds(changes: Map[String, Seq[ChangeInfo]], currentLinkIds: Set[String]): Seq[String] = {
-    changes.filter(c =>
-      !c._2.exists(ci => ci.newId.contains(c._1)) &&
-        !currentLinkIds.contains(c._1)
-    ).keys.toSeq
-  }
-
-  def newChangeInfoDetected(lane : PersistedLane, changes: Map[String, Seq[ChangeInfo]]): Boolean = {
-    changes.getOrElse(lane.linkId, Seq()).exists(c =>
-      c.timeStamp > lane.timeStamp && (c.oldId.getOrElse(0) == lane.linkId || c.newId.getOrElse(0) == lane.linkId)
-    )
   }
 
   //road link's attributes must include road address info
