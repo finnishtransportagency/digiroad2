@@ -98,7 +98,7 @@ object LaneUtils {
     // Group road addresses that exist on same link and exist on same road and road part
     val groupedAddresses = roadAddressService.groupRoadAddress(roadAddresses.toSeq)
 
-    // Get all updated information from VVH
+    // Get all updated information from DB
     val roadLinks = roadLinkService.fetchRoadlinksByIds(roadAddresses.map(_.linkId))
 
     val finalRoads = groupedAddresses.filter { elem =>  // Remove addresses which roadPart is not between our start and end
@@ -113,7 +113,7 @@ object LaneUtils {
         case Some(link) =>
           val allAddressesOnLink = roadAddresses.filter(_.linkId == road.linkId)
           Some(RoadLinkWithAddresses(road.linkId, link, allAddressesOnLink))
-        case _ => None // Remove links (and addresses) that are not in VVH
+        case _ => None // Remove links (and addresses) that are not in DB
       }
     }
   }

@@ -1102,8 +1102,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     }
 
   /**
-    * Adds text property to TEXT_PROPERTY_VALUE table. Created for getMassTransitStopAddressesFromVVH
-    * to create address information for missing mass transit stops
+    * Adds text property to TEXT_PROPERTY_VALUE table.
     *
     * @param assetId
     * @param propertyVal

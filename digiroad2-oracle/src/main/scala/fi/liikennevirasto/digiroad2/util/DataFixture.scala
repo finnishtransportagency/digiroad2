@@ -324,7 +324,7 @@ object DataFixture {
   }
 
   /**
-    * Gets list of masstransitstops and populates addresses field with street name found from VVH
+    * Gets list of masstransitstops and populates addresses field with street name found from road link
     */
   private def getMassTransitStopAddressesFromRoadLink(): Unit =
   {

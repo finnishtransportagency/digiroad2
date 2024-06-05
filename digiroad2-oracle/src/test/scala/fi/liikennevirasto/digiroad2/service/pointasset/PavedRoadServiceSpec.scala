@@ -118,6 +118,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   test("Should not create new paved road assets and return the existing paved road assets when VVH doesn't have change information") {
+    //TODO DELETE
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   
