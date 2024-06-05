@@ -21,7 +21,7 @@ object RoadLinkReplacementFinder {
   lazy val areaMeasureThreshold: Double = 0.6 // Threshold value for matching links by area measure (0-1)
   lazy val missingReplacementService: RoadLinkReplacementWorkListService = new RoadLinkReplacementWorkListService
   lazy val eventBus: DigiroadEventBus = new DummyEventBus
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
 
   def findMatchesWithSimilarity(addedLink: RoadLink, removedLinks: Seq[RoadLink]): Seq[MatchedRoadLinks] = {

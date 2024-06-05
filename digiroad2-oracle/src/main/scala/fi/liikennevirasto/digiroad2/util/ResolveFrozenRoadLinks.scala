@@ -34,7 +34,7 @@ trait ResolvingFrozenRoadLinks {
 
   lazy val eventbus: DigiroadEventBus = new DigiroadEventBus
 
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
 
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
 

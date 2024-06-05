@@ -25,7 +25,7 @@ object ServicePointImporter {
     val groupSize = 3000
     val groupedServicePoints = servicePoints.grouped(groupSize).toList
     val totalGroupCount = groupedServicePoints.length
-    val roadLinkClient = new RoadLinkClient(vvhServiceHost)
+    val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
 
     PostGISDatabase.withDynTransaction {

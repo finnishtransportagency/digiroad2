@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 class CsvGenerator(vvhServiceHost: String) {
-  val roadLinkService = new RoadLinkService(new RoadLinkClient(vvhServiceHost), new DummyEventBus, new DummySerializer)
+  val roadLinkService = new RoadLinkService(new RoadLinkClient(), new DummyEventBus, new DummySerializer)
   val linearAssetDao = new PostGISLinearAssetDao()
 
   val Source = 1

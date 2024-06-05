@@ -86,6 +86,6 @@ trait Filter {
 
 }
 
-class RoadLinkClient(vvhRestApiEndPoint: String) {
+class RoadLinkClient() {
   lazy val historyData: RoadLinkHistoryClient = new RoadLinkHistoryClient()
 }

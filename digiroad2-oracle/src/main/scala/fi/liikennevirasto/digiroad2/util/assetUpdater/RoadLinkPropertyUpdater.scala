@@ -22,7 +22,7 @@ import scala.util.Try
 
 class RoadLinkPropertyUpdater {
 
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), new DummyEventBus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(new RoadLinkClient(), new DummyEventBus, new DummySerializer)
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   val logger: Logger = LoggerFactory.getLogger(getClass)
 

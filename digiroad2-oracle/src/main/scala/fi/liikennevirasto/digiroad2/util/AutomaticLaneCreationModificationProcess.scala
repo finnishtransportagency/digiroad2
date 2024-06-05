@@ -17,7 +17,7 @@ object AutomaticLaneCreationModificationProcess {
   }
 
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val roadLinkService: RoadLinkService = {

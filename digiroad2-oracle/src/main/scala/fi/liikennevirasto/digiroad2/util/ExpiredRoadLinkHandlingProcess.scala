@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 
 object ExpiredRoadLinkHandlingProcess {
 
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   lazy val dummyEventBus: DigiroadEventBus = new DummyEventBus
   lazy val dummySerializer: VVHSerializer = new DummySerializer
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, dummySerializer)

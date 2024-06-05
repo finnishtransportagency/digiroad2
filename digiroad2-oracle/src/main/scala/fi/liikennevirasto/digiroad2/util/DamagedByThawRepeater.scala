@@ -18,7 +18,7 @@ class DamagedByThawRepeater {
   val dateFormat = "dd.MM.yyyy"
   val formatter: DateTimeFormatter = DateTimeFormat.forPattern(dateFormat)
   val today: DateTime = DateTime.now()
-  val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   val dummyEventBus = new DummyEventBus
   val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, new DummySerializer)
   val damagedByThawService: DamagedByThawService = new DamagedByThawService(roadLinkService, dummyEventBus)

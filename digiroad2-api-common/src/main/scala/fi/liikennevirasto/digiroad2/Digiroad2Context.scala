@@ -208,7 +208,7 @@ class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
     case a: AssetUpdateActor =>
       lazy val eventbus = new DummyEventBus
       lazy val roadLinkService: RoadLinkService = {
-        new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), eventbus, new JsonSerializer)
+        new RoadLinkService(new RoadLinkClient(), eventbus, new JsonSerializer)
       }
       def getLinearAssetService(typeId: Int): LinearAssetOperations = {
         typeId match {
@@ -365,7 +365,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val viiteClient: SearchViiteClient = {

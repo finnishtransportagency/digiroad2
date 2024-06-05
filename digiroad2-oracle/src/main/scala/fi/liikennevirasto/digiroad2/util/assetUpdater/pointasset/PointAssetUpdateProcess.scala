@@ -18,7 +18,7 @@ import scala.sys.exit
 
 object PointAssetUpdateProcess {
   lazy val eventBus: DigiroadEventBus = new DummyEventBus
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
 
   lazy val viiteClient: SearchViiteClient = new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())

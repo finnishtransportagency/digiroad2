@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 class RoadWidthGenerator {
 
   val dao = new PostGISLinearAssetDao()
-  val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
   val roadWidthService: RoadWidthService = new RoadWidthService(roadLinkService, new DummyEventBus)
   val logger = LoggerFactory.getLogger(getClass)

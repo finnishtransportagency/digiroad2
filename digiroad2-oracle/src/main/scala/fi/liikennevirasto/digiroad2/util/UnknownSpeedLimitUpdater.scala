@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
 class UnknownSpeedLimitUpdater {
 
   val dummyEventBus = new DummyEventBus
-  val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   val roadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, new DummySerializer)
   val speedLimitService = new SpeedLimitService(dummyEventBus, roadLinkService)
   val dao = new PostGISSpeedLimitDao(roadLinkService)

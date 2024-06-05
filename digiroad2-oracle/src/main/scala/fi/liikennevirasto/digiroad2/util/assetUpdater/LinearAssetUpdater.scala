@@ -73,7 +73,7 @@ case class FailedToFindReplaceInfo(msg:String) extends  NoSuchElementException(m
 class LinearAssetUpdater(service: LinearAssetOperations) {
 
   def eventBus: DigiroadEventBus = new DummyEventBus
-  def roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  def roadLinkClient: RoadLinkClient = new RoadLinkClient()
   def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
   def assetFiller: AssetFiller = service.assetFiller
   def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()

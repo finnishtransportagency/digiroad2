@@ -18,7 +18,7 @@ import scala.sys.exit
 object AssetValidatorProcess {
 
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val userProvider: UserProvider = {

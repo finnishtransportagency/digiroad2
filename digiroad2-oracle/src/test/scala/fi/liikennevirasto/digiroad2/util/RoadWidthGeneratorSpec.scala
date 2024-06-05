@@ -14,7 +14,7 @@ import org.scalatest.{FunSuite, Matchers}
 class RoadWidthGeneratorSpec extends FunSuite with Matchers {
 
   val dao = new PostGISLinearAssetDao()
-  val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  val roadLinkClient = new RoadLinkClient()
   val roadWidthService = new RoadWidthService(new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer), new DummyEventBus)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 

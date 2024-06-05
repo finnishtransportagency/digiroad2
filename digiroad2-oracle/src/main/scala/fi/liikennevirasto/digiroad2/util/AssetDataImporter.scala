@@ -111,7 +111,7 @@ class AssetDataImporter {
 
     val roadsByLinkId = roads.foldLeft(Map.empty[String, (String, String)]) { (m, road) => m + (road._1 -> road) }
 
-    val roadLinkClient = new RoadLinkClient(vvhHost)
+    val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     val vvhLinks = roadLinkService.fetchRoadlinksByIds(roadsByLinkId.keySet)
     val linksByLinkId = vvhLinks.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
@@ -169,7 +169,7 @@ class AssetDataImporter {
   def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
     val conversionTypeId = 29
     val exceptionTypeId = 1
-    val roadLinkClient = new RoadLinkClient(vvhServiceHost)
+    val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     val typeId = 190
 
@@ -490,7 +490,7 @@ class AssetDataImporter {
   }
 
   def adjustToNewDigitization(vvhHost: String) = {
-    val roadLinkClient = new RoadLinkClient(vvhHost)
+    val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
     val processedLinkIds = mutable.Set[String]()
@@ -918,7 +918,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     * @param vvhRestApiEndPoint
     */
   def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
-    val roadLinkClient = new RoadLinkClient(vvhRestApiEndPoint)
+    val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     withDynTransaction {
       val idAddressFi = sql"""select p.id from property p where p.public_id = 'osoite_suomeksi'""".as[Int].list.head

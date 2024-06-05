@@ -13,7 +13,7 @@ import org.slf4j.{Logger, LoggerFactory}
 object RefreshRoadLinkCache {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val roadLinkService: RoadLinkService = {

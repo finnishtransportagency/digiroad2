@@ -20,7 +20,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   lazy val eventBus: DigiroadEventBus = new DummyEventBus
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   lazy val roadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
 
   private var reportedChanges: Set[Some[ChangedAsset]] = Set()

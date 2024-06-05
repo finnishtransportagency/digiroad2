@@ -29,7 +29,7 @@ object LaneUtils {
 
   lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus, roadAddressService)
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
-  lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint) }
+  lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient() }
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
 

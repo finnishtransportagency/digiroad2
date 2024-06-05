@@ -30,7 +30,7 @@ trait UpdaterUtilsSuite {
 
   val service = new LinearAssetService(mockRoadLinkService, mockEventBus)
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val roadLinkService: RoadLinkService = {

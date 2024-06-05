@@ -49,7 +49,7 @@ object DataFixture {
   val logger = LoggerFactory.getLogger(getClass)
 
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val viiteClient: SearchViiteClient = {
@@ -340,7 +340,7 @@ object DataFixture {
   def linkFloatObstacleAssets(): Unit = {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    val roadLinkClient = new RoadLinkClient()
     val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
     val batchSize = 1000
     var obstaclesFound = true

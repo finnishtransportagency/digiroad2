@@ -20,7 +20,7 @@ import java.text.SimpleDateFormat
 object MainLanePopulationProcess {
 
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val roadLinkService: RoadLinkService = {
