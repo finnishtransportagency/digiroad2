@@ -85,11 +85,33 @@
       isDirty: function() {
         return isDirty();
       },
-      isFeedbackState: function(){
-        return isFeedbackState();
+      handleZoomOut: function(map) {
+        var nextZoomLevel = zoomlevels.getViewZoom(map) - 1;
+        var canZoomOut = this.canZoomOut(nextZoomLevel);
+        if (canZoomOut) {
+          var outOfEditableBoundaries = this.isOutOfEditableBoundaries(nextZoomLevel);
+          if (outOfEditableBoundaries) {
+            eventbus.trigger('zoomedOutOfEditableBoundaries');
+          }
+          return true;
+        } else {
+          new Confirm();
+          return false;
+        }
+      },
+      handleZoomIn: function(map) {
+        var nextZoomLevel = zoomlevels.getViewZoom(map) + 1;
+        var outOfEditableBoundaries = this.isOutOfEditableBoundaries(nextZoomLevel);
+        if (!outOfEditableBoundaries) {
+          eventbus.trigger('zoomedIntoEditableBoundaries');
+        }
+        return true;
       },
       canZoomOut: function(zoomLevel) {
-        return !(isDirty() && (zoomLevel <= minDirtyZoomLevel));
+        return !(isDirty() && (this.isOutOfEditableBoundaries(zoomLevel)));
+      },
+      isOutOfEditableBoundaries: function(zoomLevel) {
+        return (zoomLevel < minDirtyZoomLevel);
       },
       assetDragDelay: 100,
       assetGroupingDistance: 36,
