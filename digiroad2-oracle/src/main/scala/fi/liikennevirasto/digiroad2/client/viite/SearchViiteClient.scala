@@ -7,15 +7,15 @@ import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.CloseableHttpClient
 import org.json4s.jackson.Serialization
 
-class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpClient) extends ViiteClientOperations {
+class SearchViiteClient(viiteRestApiEndPoint: String, httpClient: CloseableHttpClient) extends ViiteClientOperations {
 
   override type ViiteType = RoadAddressForLink
 
   override protected def client: CloseableHttpClient = httpClient
 
-  override protected def restApiEndPoint: String = vvhRestApiEndPoint
+  override protected def restApiEndPoint: String = viiteRestApiEndPoint
 
-  override protected def serviceName: String = vvhRestApiEndPoint + "search/"
+  override protected def serviceName: String = viiteRestApiEndPoint + "search/"
 
   def fetchAllRoadNumbers(): Seq[Long] = {
     get[Seq[BigInt]](serviceName + "road_numbers") match {
