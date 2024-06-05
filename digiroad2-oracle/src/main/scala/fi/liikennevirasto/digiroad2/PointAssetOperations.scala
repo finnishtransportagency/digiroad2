@@ -1,8 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
@@ -209,39 +207,6 @@ trait  PointAssetOperations{
     }
   }
 
-  private def floatingTreatment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], persistedAsset: PersistedAsset, floating: Boolean, reason: Option[FloatingReason]) = {
-    if (floating && !persistedAsset.floating) {
-      val logger = LoggerFactory.getLogger(getClass)
-      val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-      logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
-    }
-    Some(AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, reason))
-  }
-
-  protected def floatingAdjustment(adjustmentOperation: (PersistedAsset, AssetAdjustment, RoadLink) => Any, createOperation: (PersistedAsset, AssetAdjustment) => PersistedAsset)
-                                      (roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], persistedAsset: PersistedAsset, floating: Boolean, floatingReason: Option[FloatingReason]
-  ): Option[AssetBeforeUpdate]= {
-
-    roadLinks.find(_.linkId == persistedAsset.linkId) match {
-      case Some(roadLink) =>
-        PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match {
-          case Some(adjustment) =>
-            adjustmentOperation(persistedAsset, adjustment, roadLink)
-            val persitedAsset = createOperation(persistedAsset, adjustment)
-            Some(AssetBeforeUpdate(persitedAsset, adjustment.floating, Some(FloatingReason.Unknown)))
-          case None if floating =>  None
-          case _ =>
-            PointAssetFiller.snapPersistedAssetToRoadLink(persistedAsset, roadLink) match {
-              case Some(adjustment) =>
-                adjustmentOperation(persistedAsset, adjustment, roadLink)
-                Some(AssetBeforeUpdate(createOperation(persistedAsset, adjustment), adjustment.floating, Some(FloatingReason.Unknown)))
-              case _ => None
-            }
-        }
-      case _ => None
-    }
-  }
-
   protected def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, String, Option[Long])] ={
     var query = s"""
           select a.$idField, m.name_fi, lrm.link_id, null
@@ -410,21 +375,6 @@ trait  PointAssetOperations{
                                         (persistedStop: PersistedAsset): (T, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
     (setFloating(persistedStop, floating), floatingReason)
-  }
-
-  protected def adjustPersistedAsset[T](setFloating: (PersistedAsset, Boolean) => T,
-                                        roadLinkByLinkId: String => Option[RoadLinkLike],
-                                        changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink],
-                                        adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate])
-                                       (persistedAsset: PersistedAsset): (T, Option[FloatingReason]) = {
-    val (floating, floatingReason) = isFloating(persistedAsset, roadLinkByLinkId(persistedAsset.linkId))
-
-    adjustment(roadLinks, changeInfo, persistedAsset, floating, floatingReason)  match {
-      case Some(adjustment) =>
-        (setFloating(adjustment.asset, adjustment.persistedFloating), adjustment.floatingReason)
-      case _ =>
-        (setFloating(persistedAsset, floating), floatingReason)
-    }
   }
 
   protected def withFilter(filter: String)(query: String): String = {
