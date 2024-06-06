@@ -96,7 +96,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List()))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
@@ -110,7 +110,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Can fetch by municipality") {
     when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn((Seq(
-      RoadLinkFetched("388553074", 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+      RoadLinkFetched("388553074", 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink)))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600073).get
@@ -489,7 +489,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Pedestrian crossings are filtered") {
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List()))
 
       val linkId1 = randomLinkId1
       val linkId2 = randomLinkId2
@@ -698,7 +698,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Get by municipality and group"){
     when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn((Seq(
-      RoadLinkFetched(randomLinkId1, 235,Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+      RoadLinkFetched(randomLinkId1, 235,Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink)))
 
     runWithRollback {
     val properties = simpleProperties82
@@ -724,7 +724,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Should not return nothing on get by municipality and group"){
     when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn((Seq(
-      RoadLinkFetched(randomLinkId1, 235,Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+      RoadLinkFetched(randomLinkId1, 235,Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink)))
 
     runWithRollback {
 
@@ -741,7 +741,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Should return false on temporary sign verifications") {
     when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn((Seq(
-      RoadLinkFetched(randomLinkId1, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+      RoadLinkFetched(randomLinkId1, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink)))
     val properties81 = Set(
       SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("1"))),
       SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("81"))),

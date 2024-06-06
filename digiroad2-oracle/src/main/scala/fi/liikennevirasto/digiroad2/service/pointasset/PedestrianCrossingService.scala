@@ -112,7 +112,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode = false)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode = false)
     super.getByBoundingBox(user, bounds, roadLinks).filterNot(_.expired)
   }
 

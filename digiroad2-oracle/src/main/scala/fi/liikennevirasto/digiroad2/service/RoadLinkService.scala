@@ -877,7 +877,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
 
   def getRoadLinksAndComplementaryLinksByMunicipality(municipality: Int, newTransaction: Boolean = true): Seq[RoadLink] = {
-    val (roadLinks,_, complementaries) =  LogUtils.time(logger,"Get roadlinks with cache")(
+    val (roadLinks, complementaries) =  LogUtils.time(logger,"Get roadlinks with cache")(
       getCachedRoadLinks(municipality, newTransaction)
     )
     roadLinks ++ complementaries

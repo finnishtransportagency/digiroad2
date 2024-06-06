@@ -41,8 +41,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     linkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
     TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
   
-  when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(roadLink), Nil))
-  when(mockRoadLinkService.getRoadLinksWithComplementary(any[Int])).thenReturn((List(roadLink), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(roadLink)))
+  when(mockRoadLinkService.getRoadLinksWithComplementary(any[Int])).thenReturn((List(roadLink)))
 
   when(mockRoadLinkService.fetchRoadlinksAndComplementaries(Set(linkId2, linkId3, linkId4)))
     .thenReturn(Seq(RoadLinkFetched(linkId2, 91, List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
@@ -257,8 +257,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val roadLinkFetched = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(424.557, 0.0)), 424.557, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val changeInfo = Seq()
-
     PostGISDatabase.withDynTransaction {
       sqlu"""Insert into ASSET (ID,NATIONAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050499',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.YYYY HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
       sqlu"""Insert into ASSET (ID,NATIONAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050501',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.YYYY HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
@@ -273,7 +271,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) values ('18050499',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 100 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.YYYY HH24:MI:SS'),null)""".execute
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) values ('18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.YYYY HH24:MI:SS'),null)""".execute
       
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(newRoadLink)))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(newRoadLink))
       when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(any[String])).thenReturn(Some(roadLinkFetched))
