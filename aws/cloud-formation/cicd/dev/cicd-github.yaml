@@ -372,7 +372,8 @@ Resources:
                   - "s3:GetObject"
               - Effect: "Allow"
                 Resource:
-                  - "*"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
                 Action:
                   - codeartifact:ReadFromRepository
                   - codeartifact:DescribePackageVersion
@@ -454,12 +455,12 @@ Resources:
     Properties:
       DomainName: "digiroad"
 
-  CodeArtifactRepo:
+  CodeArtifactNpmRepo:
     Type: 'AWS::CodeArtifact::Repository'
     Properties:
-      Description: "Repository for Digiroad build packages"
+      Description: "Repository for Digiroad build npm packages"
       DomainName: "digiroad"
-      RepositoryName: "digiroad_packages"
+      RepositoryName: "digiroad_npm_packages"
       PermissionsPolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -469,16 +470,31 @@ Resources:
                 - !GetAtt CodeBuildRole.Arn
                 - !Ref DigiroadDevArn
             Action: "codeartifact:*"
-            Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_packages"
+            Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
       ExternalConnections:
         - "public:npmjs"
     DependsOn:
       - DigiroadCodeArtifactDomain
       - CodeBuildRole
 
-Outputs:
-  DigiroadCodeArtifactRepositoryArn:
-    Description: "ARN of the Digiroad Repository"
-    Value: !GetAtt CodeArtifactRepo.Arn
-    Export:
-      Name: DigiroadCodeArtifactRepositoryArn
+  CodeArtifactMavenRepo:
+    Type: 'AWS::CodeArtifact::Repository'
+    Properties:
+      Description: "Repository for Digiroad build maven packages"
+      DomainName: "digiroad"
+      RepositoryName: "digiroad_maven_packages"
+      PermissionsPolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt CodeBuildRole.Arn
+                - !Ref DigiroadDevArn
+            Action: "codeartifact:*"
+            Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
+      ExternalConnections:
+        - "public:maven-central"
+    DependsOn:
+      - DigiroadCodeArtifactDomain
+      - CodeBuildRole
