@@ -1149,7 +1149,7 @@ class PostGISLinearAssetDao() {
   private def addGeometry(measures: Measures, geometry: Seq[Point]): String = {
     if (geometry.nonEmpty) {
       val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
-      //TODO This IF clause it's to be removed when VIITE finally stops using frozen VVH because besides we have different road links, we can have different or empty geometries between them too. In that case we don't want to store that.
+      //TODO This IF clause it's to be removed when VIITE finally stops using frozen roadlinks because besides we have different road links, we can have different or empty geometries between them too. In that case we don't want to store that.
       if (geom.nonEmpty) {
         val assetLength = measures.endMeasure - measures.startMeasure
         val line = Queries.linearGeometry(Point(geom.head.x, geom.head.y), Point(geom.last.x, geom.last.y), assetLength)
@@ -1161,7 +1161,7 @@ class PostGISLinearAssetDao() {
   private def addPGGeometry(measures: Measures, geometry: Seq[Point]): Option[PGgeometry] = {
     if (geometry.nonEmpty) {
       val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
-      //TODO This IF clause it's to be removed when VIITE finally stops using frozen VVH because besides we have different road links, we can have different or empty geometries between them too. In that case we don't want to store that.
+      //TODO This IF clause it's to be removed when VIITE finally stops using frozen roadlinks because besides we have different road links, we can have different or empty geometries between them too. In that case we don't want to store that.
       if (geom.nonEmpty) {
         val assetLength = measures.endMeasure - measures.startMeasure
         val line = Queries.linearGeometry(Point(geom.head.x, geom.head.y), Point(geom.last.x, geom.last.y), assetLength)

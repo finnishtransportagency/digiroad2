@@ -145,7 +145,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Adjust link traffic direction to value that is in VVH") {
+  test("Adjust link traffic direction to value that is in road link") {
     PostGISDatabase.withDynTransaction {
       val linkId = testLinkId1
       when(mockRoadLinkDao.fetchByLinkId(linkId))

@@ -108,7 +108,7 @@ class CsvGenerator() {
     println(s"*** fetched prohibitions of type ID $assetTypeId from DB in $elapsedTime seconds")
 
     val existingLinkIds = roadLinkService.fetchRoadlinksByIds(limits.map(_._1).toSet).map(_.linkId)
-    println(s"*** fetched all road links from VVH in $elapsedTime seconds")
+    println(s"*** fetched all road links in $elapsedTime seconds")
 
     val nonExistingLimits = limits.filter { limit => !existingLinkIds.contains(limit._1) }
     println(s"*** calculated dropped links in $elapsedTime seconds")
@@ -207,7 +207,7 @@ class CsvGenerator() {
 
     val assetLinkIds = limits.map(_._1)
     val existingLinkIds = roadLinkService.fetchRoadlinksByIds(assetLinkIds)
-    println(s"*** fetched associated road links from VVH in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
+    println(s"*** fetched associated road links in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
     val nonExistingLimits = limits.filter { limit => !existingLinkIds.contains(limit._1) }
@@ -240,7 +240,7 @@ class CsvGenerator() {
 
     val assetLinkIds = limits.map(_._1).toSet
     val existingLinkIds = roadLinkService.fetchRoadlinksByIds(assetLinkIds)
-    println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    println("*** fetched associated road links " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
     val nonExistingLimits = limits.filter { limit => !existingLinkIds.contains(limit._1) }
