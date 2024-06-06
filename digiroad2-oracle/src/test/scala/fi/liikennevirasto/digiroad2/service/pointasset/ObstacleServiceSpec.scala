@@ -83,8 +83,6 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire obstacle") {
-    when(mockRoadLinkService.getRoadLinks(any[Int])).thenReturn((List()))
-
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
       result.id should equal(600046)

@@ -267,15 +267,17 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @return Road links
     */
   def getRoadLinksByMunicipalityUsingCache(municipality: Int): Seq[RoadLink] = {
-    LogUtils.time(logger,"Get roadlink with cache")(
-    getCachedRoadLinks5(municipality)
-    )
+    LogUtils.time(logger,"Get roadlink with cache") {
+      val (roadLinks,_) = getCachedRoadLinks(municipality)
+      (roadLinks)
+    }
   }
 
   def getRoadLinksWithComplementaryByMunicipalityUsingCache(municipality: Int): Seq[RoadLink] = {
-    LogUtils.time(logger,"Get roadlink with cache")(
-    getCachedRoadLinksWithComplementary3(municipality)
-    )
+    LogUtils.time(logger,"Get roadlink with cache") {
+      val (roadLinks, complementary) = getCachedRoadLinks(municipality)
+      (roadLinks ++ complementary)
+    }
   }
 
   def getTinyRoadLinksByMunicipality(municipality: Int): Seq[TinyRoadLink] = {
@@ -521,7 +523,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     else enrichFetchedRoadLinks(links ++ complementaryLinks)
   }
 
-  def reloadRoadLinksWithComplementary(municipalities: Int, newTransaction: Boolean = true): (Seq[RoadLink], Seq[RoadLink]) = {
+  private def reloadRoadLinksWithComplementary(municipalities: Int, newTransaction: Boolean = true): (Seq[RoadLink], Seq[RoadLink]) = {
     val  (complementaryLinks, links) = withDbConnection {
       (complementaryLinkDAO.fetchWalkwaysByMunicipalities(municipalities),roadLinkDAO.fetchByMunicipality(municipalities))
     }
@@ -534,23 +536,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  
-  /**
-    * This method returns road links and change data by municipality.
-    *
-    * @param municipality
-    * @return Road links and change data
-    */
-  def getRoadLinks(municipality: Int): Seq[RoadLink]= {
-    LogUtils.time(logger,"Get roadlinks with cache")(
-    getCachedRoadLinks5(municipality)
-    )
-  }
-
   def getRoadLinksWithComplementary(municipality: Int): Seq[RoadLink]= {
-    LogUtils.time(logger,"Get roadlinks with cache")(
-      getCachedRoadLinksWithComplementary3(municipality)
-    )
+    LogUtils.time(logger,"Get roadlinks with cache"){
+    val (roadLinks, complementaries) = getCachedRoadLinks(municipality)
+    (roadLinks ++ complementaries)
+    }
   }
 
   /**
@@ -1219,15 +1209,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
           reverseMap.getOrElse(p, Seq()).filterNot(rl => rl.linkId == tuple._1))
       }))
     )
-  }
-  
-  def getCachedRoadLinks5(municipalityCode: Int): (Seq[RoadLink]) = {
-    val (roadLinks, _) = getCachedRoadLinks(municipalityCode)
-    (roadLinks)
-  }
-  private def getCachedRoadLinksWithComplementary3(municipalityCode: Int): (Seq[RoadLink]) = {
-    val (roadLinks, complementaries) = getCachedRoadLinks(municipalityCode)
-    (roadLinks ++ complementaries)
   }
 
   /**
