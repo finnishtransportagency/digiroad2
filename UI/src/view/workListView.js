@@ -97,7 +97,7 @@
               container: '#work-list',
               successCallback: function () {
                 $(".verificationCheckbox:checkbox:checked").each(function () {
-                  selected.push(parseInt(($(this).attr('value'))));
+                  selected.push($(this).attr('value'));
                 });
                 backend.deleteUnknownSpeedLimit(selected, function (){
                   new GenericConfirmPopup("Valitut tuntemattomat nopeusrajoitukset poistettu!", {container: '#work-list',type: "alert", okCallback: function() {location.reload();}});
