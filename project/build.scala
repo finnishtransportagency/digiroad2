@@ -15,7 +15,8 @@ object Digiroad2Build extends Build {
   val ScalatraVersion = "2.6.3"
   val AwsSdkVersion = "2.17.148"
 
-  val codeArtifactRealm = "CodeArtifact"
+  val codeArtifactRealm = "digiroad/digiroad_maven_packages"
+  val codeArtifactResolver = "digiroad--digiroad_maven_packages"
   val codeArtifactDomain = "digiroad-475079312496.d.codeartifact.eu-west-1.amazonaws.com"
   val awsCodeArtifactRepoURL: String = "https://digiroad-475079312496.d.codeartifact.eu-west-1.amazonaws.com/maven/digiroad_maven_packages/"
   val awsCodeArtifactAuthToken: String = scala.util.Properties.envOrElse("CODE_ARTIFACT_AUTH_TOKEN", null)
@@ -29,7 +30,7 @@ object Digiroad2Build extends Build {
           name := Digiroad2GeoName,
           version := Version,
           scalaVersion := ScalaVersion,
-          resolvers += codeArtifactRealm at awsCodeArtifactRepoURL,
+          resolvers += codeArtifactResolver at awsCodeArtifactRepoURL,
           // Add credentials for accessing the CodeArtifact repository
           credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
           scalacOptions ++= Seq("-unchecked", "-feature"),
@@ -38,14 +39,14 @@ object Digiroad2Build extends Build {
             "joda-time" % "joda-time" % "2.9.9",
             "com.typesafe.akka" %% "akka-actor" % "2.5.12",
             "org.json4s" %% "json4s-jackson" % "3.5.3",
-            "javax.media" % "jai_core" % "1.1.3",
+            "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
             "org.geotools" % "gt-graph" % "19.0",
             "org.geotools" % "gt-main" % "19.0",
             "org.geotools" % "gt-api" % "19.0",
             "org.geotools" % "gt-referencing" % "19.0",
             "org.geotools" % "gt-metadata" % "19.0",
             "org.geotools" % "gt-opengis" % "19.0",
-            "jgridshift" % "jgridshift" % "1.0",
+            "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
             "com.vividsolutions" % "jts-core" % "1.14.0",
             "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
             "ch.qos.logback" % "logback-classic" % "1.2.3"
@@ -62,7 +63,8 @@ object Digiroad2Build extends Build {
       name := Digiroad2OracleName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += codeArtifactRealm at awsCodeArtifactRepoURL,
+      resolvers += codeArtifactResolver at awsCodeArtifactRepoURL,
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -105,7 +107,8 @@ object Digiroad2Build extends Build {
       name := Digiroad2ApiName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += codeArtifactRealm at awsCodeArtifactRepoURL,
+      resolvers += codeArtifactResolver at awsCodeArtifactRepoURL,
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       //      parallelExecution in Test := false,
       testOptions in Test ++= (
@@ -140,7 +143,8 @@ object Digiroad2Build extends Build {
       name := Digiroad2OTHApiName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += codeArtifactRealm at awsCodeArtifactRepoURL,
+      resolvers += codeArtifactResolver at awsCodeArtifactRepoURL,
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       //      parallelExecution in Test := false,
       testOptions in Test ++= (
@@ -177,7 +181,8 @@ object Digiroad2Build extends Build {
       name := Digiroad2Name,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += codeArtifactRealm at awsCodeArtifactRepoURL,
+      resolvers += codeArtifactResolver at awsCodeArtifactRepoURL,
+      credentials += Credentials(codeArtifactRealm, codeArtifactDomain, "aws", awsCodeArtifactAuthToken),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       parallelExecution in Test := false,
       fork in (Compile,run) := true,
