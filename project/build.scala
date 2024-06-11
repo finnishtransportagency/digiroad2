@@ -19,7 +19,7 @@ object Digiroad2Build extends Build {
   val codeArtifactResolver = "digiroad--digiroad_maven_packages"
   val codeArtifactDomain = "digiroad-475079312496.d.codeartifact.eu-west-1.amazonaws.com"
   val awsCodeArtifactRepoURL: String = "https://digiroad-475079312496.d.codeartifact.eu-west-1.amazonaws.com/maven/digiroad_maven_packages/"
-  val awsCodeArtifactAuthToken: String = scala.sys.env.get("CODE_ARTIFACT_AUTH_TOKEN").get
+  val awsCodeArtifactAuthToken: String = scala.sys.env("CODE_ARTIFACT_AUTH_TOKEN")
 
   lazy val geoJar =
       Project (
