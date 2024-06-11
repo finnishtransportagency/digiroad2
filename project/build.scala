@@ -46,7 +46,7 @@ object Digiroad2Build extends Build {
             "org.geotools" % "gt-referencing" % "19.0",
             "org.geotools" % "gt-metadata" % "19.0",
             "org.geotools" % "gt-opengis" % "19.0",
-            "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
+            "jgridshift" % "jgridshift" % "1.0",
             "com.vividsolutions" % "jts-core" % "1.14.0",
             "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
             "ch.qos.logback" % "logback-classic" % "1.2.3"
