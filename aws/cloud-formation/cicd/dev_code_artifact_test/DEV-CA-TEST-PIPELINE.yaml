@@ -351,16 +351,7 @@ Resources:
                   - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
                   - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
                 Action:
-                  - codeartifact:ReadFromRepository
-                  - codeartifact:DescribePackageVersion
-                  - codeartifact:DescribeRepository
-                  - codeartifact:GetPackageVersionReadme
-                  - codeartifact:GetRepositoryEndpoint
-                  - codeartifact:ListPackageVersionAssets
-                  - codeartifact:ListPackageVersionDependencies
-                  - codeartifact:ListPackageVersions
-                  - codeartifact:ListPackages
-                  - codeartifact:ReadFromRepository
+                  - codeartifact:*
   ECRRepo:
     Type: AWS::ECR::Repository
     Properties:
