@@ -350,6 +350,7 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
                   - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/digiroad"
                 Action:
                   - codeartifact:*
   ECRRepo:
