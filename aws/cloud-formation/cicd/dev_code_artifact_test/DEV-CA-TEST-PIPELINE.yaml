@@ -353,6 +353,9 @@ Resources:
                   - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/digiroad"
                 Action:
                   - codeartifact:*
+              - Effect: "Allow"
+                Resource: "*"
+                Action: "sts:GetServiceBearerToken"
   ECRRepo:
     Type: AWS::ECR::Repository
     Properties:
