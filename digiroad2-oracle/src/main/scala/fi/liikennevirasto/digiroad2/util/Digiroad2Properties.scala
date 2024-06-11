@@ -9,14 +9,8 @@ trait Digiroad2Properties {
   val userProvider: String
   val municipalityProvider: String
   val eventBus: String
-  val useVVHGeometry: String
-  val vvhServiceHost: String
-  val vvhRestApiEndPoint: String
-  val vvhRoadlinkFrozen: Boolean
   val kgvEndpoint:String
   val kgvApiKey:String
-  val vvhRestUsername: String
-  val vvhRestPassword: String
   val viiteRestApiEndPoint: String
   val vkmUrl: String
   val vkmApiKey: String
@@ -67,10 +61,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
   val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
   val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
-  val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
-  val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
-  val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
-  val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
  
   val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
   val kgvEndpoint: String = scala.util.Properties.envOrElse("kgv.endpoint", null)
@@ -122,9 +112,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
         codebuildVersion
     }
   }
-
-  val vvhRestUsername: String = selectEnvType(scala.util.Properties.envOrElse("vvhRest_username", null), scala.util.Properties.envOrElse("vvhRest.username", null))
-  val vvhRestPassword: String = selectEnvType(scala.util.Properties.envOrElse("vvhRest_password", null), scala.util.Properties.envOrElse("vvhRest.password", null))
+  
   val googleMapApiClientId: String = selectEnvType(scala.util.Properties.envOrElse("googlemapapi_client_id", null), scala.util.Properties.envOrElse("googlemapapi.client_id", null))
   val googleMapApiCryptoKey: String = selectEnvType(scala.util.Properties.envOrElse("googlemapapi_crypto_key", null), scala.util.Properties.envOrElse("googlemapapi.crypto_key", null))
   val bonecpJdbcUrl: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_jdbcUrl", null), scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
@@ -155,12 +143,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val userProvider: String = envProps.getProperty("userProvider")
   override val municipalityProvider: String = envProps.getProperty("municipalityProvider")
   override val eventBus: String = envProps.getProperty("eventBus")
-  override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
-  override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
-  override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
-  override val vvhRestUsername: String = envOrProperties("vvhRest.username")
-  override val vvhRestPassword: String = envOrProperties("vvhRest.password")
-  override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val kgvEndpoint: String = envProps.getProperty("kgv.endpoint", null)
   override val kgvApiKey: String = envOrProperties("kgv.apikey")
   override val viiteRestApiEndPoint: String =  envOrProperties("viiteRestApiEndPoint")
@@ -244,12 +226,6 @@ object Digiroad2Properties {
   lazy val userProvider: String = properties.userProvider
   lazy val municipalityProvider: String = properties.municipalityProvider
   lazy val eventBus: String = properties.eventBus
-  lazy val useVVHGeometry: String = properties.useVVHGeometry
-  lazy val vvhServiceHost: String = properties.vvhServiceHost
-  lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
-  lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
-  lazy val vvhRestUsername: String = properties.vvhRestUsername
-  lazy val vvhRestPassword: String = properties.vvhRestPassword
   lazy val kgvEndpoint: String = properties.kgvEndpoint
   lazy val kgvApiKey: String = properties.kgvApiKey
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint

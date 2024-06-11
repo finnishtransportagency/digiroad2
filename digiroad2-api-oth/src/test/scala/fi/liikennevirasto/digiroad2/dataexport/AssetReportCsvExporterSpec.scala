@@ -65,8 +65,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
   val linkId1 = "388562360L"
   val linkId2 = "38856690L"
 
-  val vvhRoadlinks1 = Seq(RoadLink(linkId1, Seq(Point(0, 0), Point(10, 0)), 10.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
-  val vvhRoadlinks2 = Seq(RoadLink(linkId2, Seq(Point(10, 0), Point(65, 0)), 55.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
+  val roadlinks1 = Seq(RoadLink(linkId1, Seq(Point(0, 0), Point(10, 0)), 10.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
+  val roadlinks2 = Seq(RoadLink(linkId2, Seq(Point(10, 0), Point(65, 0)), 55.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
 
   val operatorUser = User(26867454, "k647320", Configuration(None, None, None, None, None, Set(), Set(), Set("operator"), Some("2018-11-27"), None), None)
 
@@ -89,8 +89,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockUserProvider.getUsers()).thenReturn(users)
       when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesList)
 
-      when(mockRoadLinkService.getRoadLinksByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
-      when(mockRoadLinkService.getRoadLinksByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
+      when(mockRoadLinkService.getRoadLinksByMunicipality(408, false)).thenReturn(roadlinks1)
+      when(mockRoadLinkService.getRoadLinksByMunicipality(739, false)).thenReturn(roadlinks2)
 
       when(mockAssetReporterDAO.linearAssetQuery(Seq(linkId1), Seq(130))).thenReturn(assetReportsList1)
       when(mockAssetReporterDAO.linearAssetQuery(Seq(linkId2), Seq(130))).thenReturn(assetReportsList2)
@@ -130,8 +130,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockUserProvider.getUsers()).thenReturn(users)
       when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfoList)
 
-      when(mockRoadLinkService.getRoadLinksByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
-      when(mockRoadLinkService.getRoadLinksByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
+      when(mockRoadLinkService.getRoadLinksByMunicipality(408, false)).thenReturn(roadlinks1)
+      when(mockRoadLinkService.getRoadLinksByMunicipality(739, false)).thenReturn(roadlinks2)
 
       when(mockAssetReporterDAO.pointAssetQuery(Seq(linkId1), Seq(300))).thenReturn(assetReportsList1)
       when(mockAssetReporterDAO.pointAssetQuery(Seq(linkId2), Seq(300))).thenReturn(assetReportsList2)

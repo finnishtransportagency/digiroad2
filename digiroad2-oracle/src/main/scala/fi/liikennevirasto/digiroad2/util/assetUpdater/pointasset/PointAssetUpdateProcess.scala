@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{getClass, logger}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, PointAssetOperations}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -18,8 +18,8 @@ import scala.sys.exit
 
 object PointAssetUpdateProcess {
   lazy val eventBus: DigiroadEventBus = new DummyEventBus
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus)
 
   lazy val viiteClient: SearchViiteClient = new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)

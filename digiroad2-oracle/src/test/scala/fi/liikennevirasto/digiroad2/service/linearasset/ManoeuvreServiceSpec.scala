@@ -20,7 +20,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 
 class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  private def vvhRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
+  private def roadLinkTemplate(linkId: String, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
     RoadLink(linkId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
   }
   val testUser = User(
@@ -49,18 +49,18 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean]))
     .thenReturn(Seq(
-      vvhRoadLink(linkId1, 235),
-      vvhRoadLink(linkId2, 235),
-      vvhRoadLink(linkId3, 235)))
+      roadLinkTemplate(linkId1, 235),
+      roadLinkTemplate(linkId2, 235),
+      roadLinkTemplate(linkId3, 235)))
   when(mockRoadLinkService.getRoadLinksByMunicipalityUsingCache(municipality = 235))
     .thenReturn(Seq(
-      vvhRoadLink(linkId5, 235),
-      vvhRoadLink(linkId7, 235),
-      vvhRoadLink(linkId6, 235),
-      vvhRoadLink(linkId9, 235),
-      vvhRoadLink(linkId10, 235, Seq(Point(15, 0), Point(20, 0)))))
+      roadLinkTemplate(linkId5, 235),
+      roadLinkTemplate(linkId7, 235),
+      roadLinkTemplate(linkId6, 235),
+      roadLinkTemplate(linkId9, 235),
+      roadLinkTemplate(linkId10, 235, Seq(Point(15, 0), Point(20, 0)))))
   when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean]))
-    .thenReturn(Seq(vvhRoadLink(linkId4, 235), vvhRoadLink("a1b6659b-41ac-4cc7-9367-e742d7f9216f:1", 235)))
+    .thenReturn(Seq(roadLinkTemplate(linkId4, 235), roadLinkTemplate("a1b6659b-41ac-4cc7-9367-e742d7f9216f:1", 235)))
 
   val manoeuvreService = new ManoeuvreService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -264,22 +264,22 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadLinksSeq2: Seq[String] = Seq(linkId5, linkId6, linkId7, linkId8)
       var result: Boolean = false
 
-      val roadLinksNoValid = Seq(vvhRoadLink(linkId5, 235), vvhRoadLink(linkId6, 235, Seq(Point(25, 0), Point(30, 0))))
+      val roadLinksNoValid = Seq(roadLinkTemplate(linkId5, 235), roadLinkTemplate(linkId6, 235, Seq(Point(25, 0), Point(30, 0))))
       val manoeuvreNoValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq, None, false)
       result = manoeuvreService.isValid(manoeuvreNoValid, roadLinksNoValid)
       result should be(false)
 
-      val roadLinksValid = Seq(vvhRoadLink(linkId5, 235), vvhRoadLink(linkId6, 235))
+      val roadLinksValid = Seq(roadLinkTemplate(linkId5, 235), roadLinkTemplate(linkId6, 235))
       val manoeuvreValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq, None, false)
       result = manoeuvreService.isValid(manoeuvreValid, roadLinksValid)
       result should be(true)
 
-      val roadLinksValid2 = Seq(vvhRoadLink(linkId5, 235), vvhRoadLink(linkId6, 235), vvhRoadLink(linkId7, 235), vvhRoadLink(linkId8, 235))
+      val roadLinksValid2 = Seq(roadLinkTemplate(linkId5, 235), roadLinkTemplate(linkId6, 235), roadLinkTemplate(linkId7, 235), roadLinkTemplate(linkId8, 235))
       val manoeuvreValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2, None, false)
       result = manoeuvreService.isValid(manoeuvreValid2, roadLinksValid2)
       result should be(true)
 
-      val roadLinksNoValid2 = Seq(vvhRoadLink(linkId5, 235), vvhRoadLink(linkId6, 235, Seq(Point(25, 0), Point(30, 0))), vvhRoadLink(linkId7, 235), vvhRoadLink(linkId8, 235))
+      val roadLinksNoValid2 = Seq(roadLinkTemplate(linkId5, 235), roadLinkTemplate(linkId6, 235, Seq(Point(25, 0), Point(30, 0))), roadLinkTemplate(linkId7, 235), roadLinkTemplate(linkId8, 235))
       val manoeuvreNoValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2, None, false)
       result = manoeuvreService.isValid(manoeuvreNoValid2, roadLinksNoValid2)
       result should be(false)

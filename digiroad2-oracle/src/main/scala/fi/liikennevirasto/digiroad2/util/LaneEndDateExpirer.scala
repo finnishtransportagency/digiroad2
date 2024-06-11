@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.DummySerializer
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -14,8 +13,8 @@ object LaneEndDateExpirer {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
   lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus, roadAddressService)
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   lazy val username = "LaneEndDateExpirer"
 
   def expireLanesByEndDates(): Unit = {

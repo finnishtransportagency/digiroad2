@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LinearAssetUtils}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.DummyEventBus
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -22,7 +22,7 @@ import scala.util.Try
 
 class RoadLinkPropertyUpdater {
 
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), new DummyEventBus, new DummySerializer)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(new RoadLinkClient(), new DummyEventBus)
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
   val logger: Logger = LoggerFactory.getLogger(getClass)
 

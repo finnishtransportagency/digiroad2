@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinkIdGenerator, PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.DummyEventBus
 import org.joda.time.DateTime
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.mockito.MockitoSugar.mock
@@ -35,7 +35,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
   val laneHistoryDao = new LaneHistoryDao()
 
   val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
+  val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus)
   val laneWorkListService = new LaneWorkListService
   val autoProcessedLanesWorkListService: AutoProcessedLanesWorkListService = new AutoProcessedLanesWorkListService
 

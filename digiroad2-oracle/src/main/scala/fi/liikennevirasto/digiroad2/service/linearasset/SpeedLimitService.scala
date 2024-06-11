@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISSpeedLimitDao, UnknownLimit}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
@@ -41,7 +40,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def validateMunicipalities(id: Long,  municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): Unit = {
-    getLinksWithLength(id, newTransaction).foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
+    getLinksWithLength(id, newTransaction).foreach(link => municipalityValidation(link._4, link._6))
   }
 
   def getSpeedLimitValue(optionalValue: Option[Value]): Option[SpeedLimitValue] = {
@@ -511,21 +510,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
                                         createdByFromUpdate: Option[String] = Some(""),
                                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long={
     speedLimitDao.createSpeedLimit(username,linkId, measures, SideCode(sideCode),value.asInstanceOf[SpeedLimitValue], timeStamp, (_, _) => Unit).get
-  }
-
-  def getAssetsAndPoints(existingAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, PieceWiseLinearAsset)] = {
-    existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.timeStamp)}
-      .flatMap { asset =>
-        val roadLink = roadLinks.find(_.linkId == asset.linkId)
-        if (roadLink.nonEmpty && roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
-          GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.endMeasure).map(point => (point, asset)) ++
-            (if (asset.startMeasure == 0)
-              GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.startMeasure).map(point => (point, asset))
-            else
-              Seq())
-        } else
-          Seq()
-      }
   }
 
   def getAdjacentAssetByPoint(assets: Seq[(Point, PieceWiseLinearAsset)], point: Point) : Seq[PieceWiseLinearAsset] = {
