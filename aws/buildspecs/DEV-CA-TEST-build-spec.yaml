@@ -11,7 +11,7 @@ phases:
       java: corretto8
     commands:
       - export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain digiroad --domain-owner 475079312496 --region eu-west-1 --query authorizationToken --output text)
-      - aws codeartifact login --tool npm --repository digiroad_packages --domain digiroad --domain-owner 475079312496
+      - aws codeartifact login --tool npm --repository digiroad_npm_packages --domain digiroad --domain-owner 475079312496
       - echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | tee -a  /etc/apt/sources.list.d/sbt.list
       - curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | apt-key add
       - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
