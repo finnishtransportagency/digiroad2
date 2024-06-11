@@ -36,7 +36,7 @@ phases:
       - sbt assembly
       - docker build -f aws/fargate/Dockerfile --build-arg image=public.ecr.aws/docker/library/amazoncorretto:8-alpine-jre  -t $ECR_REPOSITORY_NAME:latest .
       - echo Post-build started on `date`
-      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:ca_pipeline_test_image
+      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:latest
       - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
       - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:$COMMIT_HASH
       - docker push $ECR_REPOSITORY_URI:latest
