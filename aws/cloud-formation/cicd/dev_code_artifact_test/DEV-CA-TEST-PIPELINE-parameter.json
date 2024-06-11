@@ -1,11 +1,11 @@
 [
   {
     "ParameterKey": "PipelineName",
-    "ParameterValue": "DEV-CA-TEST-devpipeline"
+    "ParameterValue": "dev-ca-test-devpipeline"
   },
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "DEV-CA-TEST-digiroad2"
+    "ParameterValue": "dev-ca-test-digiroad2"
   },
   {
     "ParameterKey": "TestDatabaseString",
@@ -17,7 +17,7 @@
   },
   {
     "ParameterKey": "EcrRepositoryName",
-    "ParameterValue": "DEV-CA-TEST-digiroad2"
+    "ParameterValue": "devcatest"
   },
   {
     "ParameterKey": "GitBranchName",
