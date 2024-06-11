@@ -8,15 +8,15 @@ import fi.liikennevirasto.digiroad2.linearasset.MTKClassWidth
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, RoadWidthService}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.DummyEventBus
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 class RoadWidthGenerator {
 
   val dao = new PostGISLinearAssetDao()
-  val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-  val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
+  val roadLinkClient: RoadLinkClient = new RoadLinkClient()
+  val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
   val roadWidthService: RoadWidthService = new RoadWidthService(roadLinkService, new DummyEventBus)
   val logger = LoggerFactory.getLogger(getClass)
 
