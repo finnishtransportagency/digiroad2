@@ -104,16 +104,6 @@ Resources:
               Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
             - Name: eventBus
               Value: 'fi.liikennevirasto.digiroad2.DigiroadEventBus'
-            - Name: useVVHGeometry
-              Value: 'true'
-            - Name: vvhServiceHost
-              Value: 'api.vayla.fi'
-            - Name: vvhRestApiEndPoint
-              Value: 'https://api.vayla.fi/vvhdata/'
-            - Name: vvhRest.username
-              Value: 'svc_vvh_digiroad'
-            - Name: vvhRoadlink.frozen
-              Value: 'false'
             - Name: kgv.endpoint
               Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/'
             - Name: viiteRestApiEndPoint

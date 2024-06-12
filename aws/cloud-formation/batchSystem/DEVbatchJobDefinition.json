@@ -49,26 +49,6 @@
         "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus"
       },
       {
-        "name": "useVVHGeometry",
-        "value": "true"
-      },
-      {
-        "name": "vvhServiceHost",
-        "value": "api.vayla.fi"
-      },
-      {
-        "name": "vvhRestApiEndPoint",
-        "value": "https://api.vayla.fi/vvhdata/"
-      },
-      {
-        "name": "vvhRest.username",
-        "value": "svc_vvh_digiroad"
-      },
-      {
-        "name": "vvhRoadlink.frozen",
-        "value": "false"
-      },
-      {
         "name": "kgv.endpoint",
         "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/"
       },
@@ -147,10 +127,6 @@
       {
         "name": "bonecp.password",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
-      },
-      {
-        "name": "vvhRest.password",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/vvhRest.password"
       },
       {
         "name": "kgv.apikey",
