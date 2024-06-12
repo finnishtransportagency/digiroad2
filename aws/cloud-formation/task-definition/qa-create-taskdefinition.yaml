@@ -105,16 +105,6 @@ Resources:
               Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
             - Name: eventBus
               Value: 'fi.liikennevirasto.digiroad2.DigiroadEventBus'
-            - Name: useVVHGeometry
-              Value: 'true'
-            - Name: vvhServiceHost
-              Value: 'api.vayla.fi'
-            - Name: vvhRestApiEndPoint
-              Value: 'https://api.vayla.fi/vvhdata/'
-            - Name: vvhRest.username
-              Value: 'svc_vvh_digiroad'
-            - Name: vvhRoadlink.frozen
-              Value: 'false'
             - Name: kgv.endpoint
               Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/'
             - Name: viiteRestApiEndPoint
@@ -180,8 +170,6 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/ses_username'
             - Name: ses.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/ses_password'
-            - Name: vvhRest.password
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/vvhRest.password'
             - Name: kgv.apikey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/kgv.apikey'
             - Name: vallu.apikey
