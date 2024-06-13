@@ -38,6 +38,7 @@
     this.stop = function() {
       if (me.isStarted()) {
         me.removeLayerFeatures();
+        me.deactivateSelection();
         me.eventListener.stopListening(eventbus);
         me.eventListener.running = false;
       }
