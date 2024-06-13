@@ -2,10 +2,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   Template for CodeArtifact domain, repositories and S3 bucket for sbt
 
-Resources:
+Parameters:
   DigiroadDevArn:
     Description: ARN of dev admin account
     Type: String
+
+Resources:
 
   DigiroadCodeArtifactDomain:
     Type: 'AWS::CodeArtifact::Domain'
@@ -16,18 +18,21 @@ Resources:
     Type: 'AWS::CodeArtifact::Repository'
     Properties:
       Description: "Repository for Digiroad build npm packages"
-      DomainName: "digiroad"
+      DomainName:
+        !GetAtt DigiroadCodeArtifactDomain.DomainName
       RepositoryName: "digiroad_npm_packages"
       PermissionsPolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
               AWS:
-                - !ImportValue: 'DevCodeBuildRole'
-                - !Ref DigiroadDevArn
+                - Fn::ImportValue: DevCodeBuildRole
+                - Fn::ImportValue: QaCodeBuildRole
+                - Ref: DigiroadDevArn
             Action: "codeartifact:*"
-            Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
+            Resource:
+              Fn::Sub: "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
       ExternalConnections:
         - "public:npmjs"
 
@@ -35,18 +40,21 @@ Resources:
     Type: 'AWS::CodeArtifact::Repository'
     Properties:
       Description: "Repository for Digiroad build maven packages"
-      DomainName: "digiroad"
+      DomainName:
+        !GetAtt DigiroadCodeArtifactDomain.DomainName
       RepositoryName: "digiroad_maven_packages"
       PermissionsPolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
               AWS:
-                - !ImportValue: 'DevCodeBuildRole'
-                - !Ref DigiroadDevArn
+                - Fn::ImportValue: DevCodeBuildRole
+                - Fn::ImportValue: QaCodeBuildRole
+                - Ref: DigiroadDevArn
             Action: "codeartifact:*"
-            Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
+            Resource:
+              Fn::Sub: "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
       ExternalConnections:
         - "public:maven-central"
 
