@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Template for CodeArtifact domain, repositories and S3 bucket for sbt
+
+Resources:
+  DigiroadDevArn:
+    Description: ARN of dev admin account
+    Type: String
+
+  DigiroadCodeArtifactDomain:
+    Type: 'AWS::CodeArtifact::Domain'
+    Properties:
+      DomainName: "digiroad"
+
+  CodeArtifactNpmRepo:
+    Type: 'AWS::CodeArtifact::Repository'
+    Properties:
+      Description: "Repository for Digiroad build npm packages"
+      DomainName: "digiroad"
+      RepositoryName: "digiroad_npm_packages"
+      PermissionsPolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !ImportValue: 'DevCodeBuildRole'
+                - !Ref DigiroadDevArn
+            Action: "codeartifact:*"
+            Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
+      ExternalConnections:
+        - "public:npmjs"
+
+  CodeArtifactMavenRepo:
+    Type: 'AWS::CodeArtifact::Repository'
+    Properties:
+      Description: "Repository for Digiroad build maven packages"
+      DomainName: "digiroad"
+      RepositoryName: "digiroad_maven_packages"
+      PermissionsPolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !ImportValue: 'DevCodeBuildRole'
+                - !Ref DigiroadDevArn
+            Action: "codeartifact:*"
+            Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
+      ExternalConnections:
+        - "public:maven-central"
+
+  SbtRepoBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: sbt-repository
+  SbtRepoBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref SbtRepoBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: !Sub "${SbtRepoBucket.Arn}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
