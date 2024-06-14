@@ -162,7 +162,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode = false)
     val result = super.getByBoundingBox(user, bounds, roadLinks)
     val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt == PedestrianCrossingSign.OTHvalue)
 
@@ -242,7 +242,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   }
 
   def getByMunicipalityExcludeByAdminClass(municipalityCode: Int, filterAdministrativeClass: AdministrativeClass): Seq[PersistedAsset] = {
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesByMunicipality(municipalityCode)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryByMunicipality(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
     val assets = getByMunicipality(withMunicipality(municipalityCode) _)
     val filterRoadLinks = mapRoadLinks.filterNot(_._2.administrativeClass == filterAdministrativeClass)

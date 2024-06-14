@@ -20,7 +20,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{SpeedLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform, JsonSerializer}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform}
 import fi.liikennevirasto.digiroad2.vallu.{ValluSender, ValluStoreStopChangeMessage}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
@@ -208,7 +208,7 @@ class AssetUpdater(linearAssetService: LinearAssetService) extends Actor {
     case a: AssetUpdateActor =>
       lazy val eventbus = new DummyEventBus
       lazy val roadLinkService: RoadLinkService = {
-        new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), eventbus, new JsonSerializer)
+        new RoadLinkService(new RoadLinkClient(), eventbus)
       }
       def getLinearAssetService(typeId: Int): LinearAssetOperations = {
         typeId match {
@@ -365,7 +365,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val viiteClient: SearchViiteClient = {
@@ -378,7 +378,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(roadLinkClient, eventbus, new JsonSerializer)
+    new RoadLinkService(roadLinkClient, eventbus)
   }
 
   lazy val roadAddressService: RoadAddressService = {

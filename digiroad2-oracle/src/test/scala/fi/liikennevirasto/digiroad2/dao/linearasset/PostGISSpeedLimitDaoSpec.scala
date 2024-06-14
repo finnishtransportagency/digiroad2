@@ -123,36 +123,6 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("speed limit purge removes fully covered link from unknown speed limit list") {
-    runWithRollback {
-      val linkId = "ef7d2b83-aaa7-40aa-8f62-f8c32afeda80:1"
-      sqlu"""delete from unknown_speed_limit""".execute
-      sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId, 235, 1)""".execute
-      val dao = daoWithRoadLinks(Nil)
-      dao.purgeFromUnknownSpeedLimits(linkId, 59.934)
-      sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[String].firstOption should be(None)
-    }
-  }
-
-  test("speed limit purge does not remove partially covered link from unknown speed limit list") {
-    runWithRollback {
-      val linkId = "b0115e5b-e96f-4970-a587-286488917872:1"
-      sqlu"""delete from unknown_speed_limit""".execute
-      sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId, 235, 1)""".execute
-      val roadLink = RoadLinkFetched(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      val dao = daoWithRoadLinks(List(roadLink))
-
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
-      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
-      dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
-      sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[String].firstOption should be(Some(linkId))
-
-      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
-      dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
-      sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[String].firstOption should be(None)
-    }
-  }
-
   test("unknown speed limits can be filtered by municipality") {
     runWithRollback {
       val linkId = LinkIdGenerator.generateRandom()

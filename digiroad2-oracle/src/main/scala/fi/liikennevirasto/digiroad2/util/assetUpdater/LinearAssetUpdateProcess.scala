@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util._
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.sys.exit
@@ -14,8 +14,8 @@ import scala.sys.exit
 object LinearAssetUpdateProcess {
 
   lazy val eventbus: DigiroadEventBus = new DummyEventBus
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
 
   lazy val dynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService, eventbus)
   lazy val linearAssetService = new LinearAssetService(roadLinkService, eventbus)
@@ -98,7 +98,6 @@ object LinearAssetUpdateProcess {
       logger.info(s"Starting samuutus with parameter: $assetName")
       assetName match {
         // position, value and side code
-        case "animal_warnings" => getAssetUpdater(AnimalWarnings.typeId).updateLinearAssets(AnimalWarnings.typeId)
         case "care_class" => getAssetUpdater(CareClass.typeId).updateLinearAssets(CareClass.typeId)
         case "height_limit" => getAssetUpdater(HeightLimit.typeId).updateLinearAssets(HeightLimit.typeId)
         case "length_limit" => getAssetUpdater(LengthLimit.typeId).updateLinearAssets(LengthLimit.typeId)

@@ -11,10 +11,11 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation
 
 object ServicePointImporter {
-  def importServicePoints(database: DatabaseDef, vvhServiceHost: String): Unit =  {
+  def importServicePoints(database: DatabaseDef): Unit =  {
     val servicePoints = database.withDynSession {
       sql"""
         select p.palv_tyyppi, p.palv_lisatieto, p.palv_rautatieaseman_tyyppi, p.palv_paikkojen_lukumaara, p.palv_lepoalue_tyyppi, to_2d(p.shape), p.dr1_oid, p.nimi_fi
@@ -25,8 +26,8 @@ object ServicePointImporter {
     val groupSize = 3000
     val groupedServicePoints = servicePoints.grouped(groupSize).toList
     val totalGroupCount = groupedServicePoints.length
-    val roadLinkClient = new RoadLinkClient(vvhServiceHost)
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+    val roadLinkClient = new RoadLinkClient()
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
 
     PostGISDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, municipality_code, created_date, created_by) values (?, ?, ?, current_timestamp, 'dr1_conversion')")

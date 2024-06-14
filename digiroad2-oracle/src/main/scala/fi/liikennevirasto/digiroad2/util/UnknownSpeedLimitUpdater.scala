@@ -9,15 +9,15 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.DummyEventBus
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 class UnknownSpeedLimitUpdater {
 
   val dummyEventBus = new DummyEventBus
-  val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-  val roadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, new DummySerializer)
+  val roadLinkClient: RoadLinkClient = new RoadLinkClient()
+  val roadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus)
   val speedLimitService = new SpeedLimitService(dummyEventBus, roadLinkService)
   val dao = new PostGISSpeedLimitDao(roadLinkService)
   val roadLinkDAO = new RoadLinkDAO()

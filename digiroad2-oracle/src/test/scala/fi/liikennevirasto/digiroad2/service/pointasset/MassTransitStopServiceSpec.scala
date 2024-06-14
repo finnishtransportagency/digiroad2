@@ -47,7 +47,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   val randomLinkId6: String = LinkIdGenerator.generateRandom()
   val randomLinkId7: String = LinkIdGenerator.generateRandom()
 
-  val vvhRoadLinks = List(
+  val roadLinks = List(
     RoadLinkFetched(testLinkId1, 90, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
     RoadLinkFetched(testLinkId2, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     RoadLinkFetched(testLinkId3, 90, Nil, Private, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers),
@@ -72,14 +72,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
   before {
     // Reset the mocks here so individual tests don't have to
-    vvhRoadLinks.foreach(rl =>
+    roadLinks.foreach(rl =>
       when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(rl.linkId))
         .thenReturn(Some(rl)))
-    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
-    vvhRoadLinks.foreach(rl =>
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(roadLinks.map(toRoadLink))
+    roadLinks.foreach(rl =>
       when(mockRoadLinkService.getRoadLinkByLinkId(rl.linkId, false))
         .thenReturn(Some(toRoadLink(rl))))
-    when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(roadLinks.map(toRoadLink))
     when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(toRoadLink(RoadLinkFetched(testLinkId5, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
     when(mockRoadLinkService.getHistoryDataLink(any[String], any[Boolean])).thenReturn(None)
 

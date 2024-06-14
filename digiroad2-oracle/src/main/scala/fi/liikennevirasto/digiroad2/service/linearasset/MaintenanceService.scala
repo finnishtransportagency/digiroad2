@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -83,18 +82,15 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
                                         createdByFromUpdate: Option[String] = Some(""),
                                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
 
+    val properties = validateAndSetDefaultProperties(typeId, value, roadLink)
+    
     val area = getAssetArea(roadLink, measures)
     val id = maintenanceDAO.createLinearAsset(MaintenanceRoadAsset.typeId, linkId, expired = false, sideCode, measures, username,
       timeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, modifiedByFromUpdate, modifiedDateTimeFromUpdate, area = area)
-
-    value match {
-      case DynamicValue(multiTypeProps) =>
-        val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
-        val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-        val props = properties ++ defaultValues.toSet
-        validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
-      case _ => None
+    
+    properties match {
+      case Some(x) => dynamicLinearAssetDao.updateAssetProperties(id, x, typeId)
+      case None => logger.warn(s"Asset ${id} in link ${linkId} is missing properties, type of ${typeId}")
     }
     id
   }
@@ -108,8 +104,8 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   def getActiveMaintenanceRoadByPolygon(areaId: Int): Seq[PersistedLinearAsset] = {
     val polygon = polygonTools.getPolygonByArea(areaId)
-    val vVHLinkIds = roadLinkService.getLinkIdsWithComplementaryByPolygons(polygon)
-    getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, vVHLinkIds)
+    val linkIds = roadLinkService.getLinkIdsWithComplementaryByPolygons(polygon)
+    getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, linkIds)
   }
 
   def getAssetArea(roadLink: Option[RoadLinkLike], measures: Measures, area: Option[Seq[Int]] = None): Int = {
