@@ -258,19 +258,10 @@ Resources:
             Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
           - Name: eventBus
             Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
-          - Name: useVVHGeometry
-            Value: true
-          - Name: vvhRestApiEndPoint
-            Value: 'https://api.vayla.fi/vvhdata/'
-          - Name: vvhRest_username
-            Value: 'svc_vvh_digiroad'
           - Name: viiteRestApiEndPoint
             Value: http://localhost:9080/api/viite/
           - Name: authenticationTestMode
             Value: true
-          - Name: vvhRest_password
-            Value: '/dev/vvhRest.password'
-            Type: PARAMETER_STORE
           - Name: bonecp_password
             Value: "/test/bonecp.password"
             Type: PARAMETER_STORE
