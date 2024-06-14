@@ -71,7 +71,7 @@ trait TrafficSignLinearGenerator {
 
   final val userCreate = "automatic_trafficSign_created"
   final val userUpdate = "automatic_trafficSign_updated"
-  final val debbuger = false
+  final val debugger = false
 
   lazy val userProvider: UserProvider = {
     Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
@@ -163,7 +163,12 @@ trait TrafficSignLinearGenerator {
       baseProcess(trafficSigns, roadLinks, roadLink, (startPointOfInterest, lastPointOfInterest, None), Seq())
     }.distinct
 
-    val groupedAssets = (newSegments ++ existingSegments).groupBy(_.roadLink)
+    val (validNewSegments, invalidNewSegments) = newSegments.partition(segment => segment.endMeasure > segment.startMeasure)
+
+    invalidNewSegments.foreach(segment => logger.error(s"discarded an invalid linear asset of length ${segment.endMeasure - segment.startMeasure} " +
+      s"from traffic sign ${segment.signId} on road link ${segment.roadLink.linkId}"))
+
+    val groupedAssets = (validNewSegments ++ existingSegments).groupBy(_.roadLink)
     val assets = fillTopology(roadLinks, groupedAssets)
 
     convertRoadSegments(assets, findStartEndRoadLinkOnChain(roadLinks)).toSet
@@ -296,7 +301,7 @@ trait TrafficSignLinearGenerator {
         val pairSign = getPairSign(actualRoadLink, sign, signs.filter(_.linkId == actualRoadLink.linkId), pointOfInterest._3.get)
         val generatedSegmentPieces = generateSegmentPieces(actualRoadLink, sign, value, pairSign, pointOfInterest._3.get)
 
-        (if (pairSign.isEmpty) {
+        val allGeneratedSegmentPieces = if (pairSign.isEmpty) {
           val adjRoadLinks = getAdjacents(pointOfInterest, allRoadLinks.filterNot(_.linkId == actualRoadLink.linkId))
           if (adjRoadLinks.nonEmpty) {
             adjRoadLinks.flatMap { case (newRoadLink, (nextFirst, nextLast, nextDirection)) =>
@@ -305,7 +310,8 @@ trait TrafficSignLinearGenerator {
           } else
             generatedSegmentPieces +: result
         } else
-          generatedSegmentPieces +: result).toSet
+          generatedSegmentPieces +: result
+          allGeneratedSegmentPieces.toSet
       case _ => Set()
     }
   }
@@ -322,7 +328,7 @@ trait TrafficSignLinearGenerator {
           val (starMeasure, endMeasure) = if (SideCode.apply(direction) == TowardsDigitizing)
             (0.toDouble, pair.mValue)
           else {
-            val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
+            val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
             (pair.mValue, length)
           }
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), starMeasure, endMeasure, Set(sign.id))
@@ -332,7 +338,7 @@ trait TrafficSignLinearGenerator {
           val (starMeasure, endMeasure) = if (SideCode.apply(direction) == AgainstDigitizing)
             (0L.toDouble, sign.mValue)
           else {
-            val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
+            val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
             (sign.mValue, length)
           }
 
@@ -340,7 +346,7 @@ trait TrafficSignLinearGenerator {
         }
         else {
 
-          val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
+          val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, length, Set(sign.id))
         }
     }
@@ -410,7 +416,7 @@ trait TrafficSignLinearGenerator {
     try {
       postGisLinearAssetDao.insertConnectedAsset(linearAssetId, trafficSignId)
     } catch {
-      case ex: SQLIntegrityConstraintViolationException => logger.warn("") //the key already exist with a valid date
+      case ex: SQLIntegrityConstraintViolationException => logger.error("") //the key already exist with a valid date
       case e: Exception => logger.error("SQL Exception ")
         throw new RuntimeException("SQL exception " + e.getMessage)
     }
@@ -722,6 +728,30 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
     if(value.nonEmpty) Some(Prohibitions(value)) else None
   }
 
+  override def createSegmentPieces(actualRoadLink: RoadLink, allRoadLinks: Seq[RoadLink], sign: PersistedTrafficSign, signs: Seq[PersistedTrafficSign], pointOfInterest: (Option[Point], Option[Point], Option[Int]), result: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
+    if (debugger) logger.debug("createSegmentPieces")
+    createValue(Seq(sign)) match {
+      case Some(value) =>
+        val pairSign = getPairSign(actualRoadLink, sign, signs.filter(_.linkId == actualRoadLink.linkId), pointOfInterest._3.get)
+        val generatedSegmentPieces = generateSegmentPieces(actualRoadLink, sign, value, pairSign, pointOfInterest._3.get)
+
+        val allGeneratedSegmentPieces = if (pairSign.isEmpty) {
+          val allAdjacentLinks = roadLinkService.getAdjacent(actualRoadLink.linkId, Seq(pointOfInterest._1.getOrElse(pointOfInterest._2.get)), false)
+          val adjRoadLinksOfSameName = getAdjacents(pointOfInterest, allRoadLinks.filterNot(_.linkId == actualRoadLink.linkId))
+          val roadContinuesWithoutIntersection = adjRoadLinksOfSameName.nonEmpty && allAdjacentLinks.size == 1
+          if (roadContinuesWithoutIntersection) {
+            adjRoadLinksOfSameName.flatMap { case (newRoadLink, (nextFirst, nextLast, nextDirection)) =>
+              createSegmentPieces(newRoadLink, allRoadLinks.filterNot(_.linkId == newRoadLink.linkId), sign, signs, (nextFirst, nextLast, nextDirection), generatedSegmentPieces +: result)
+            }
+          } else
+            generatedSegmentPieces +: result
+        } else
+          generatedSegmentPieces +: result
+          allGeneratedSegmentPieces.toSet
+      case _ => Set()
+    }
+  }
+
   def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
     logger.debug("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
@@ -917,8 +947,8 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
           val (starMeasure, endMeasure) = if (SideCode.apply(direction) == TowardsDigitizing)
             (0.toDouble, mValue)
           else {
-            val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-            (length - mValue, "%.3f".formatLocal(java.util.Locale.US, length).toDouble)
+            val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
+            (length - mValue, length)
           }
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), starMeasure, endMeasure, Set(sign.id))
         }
@@ -927,16 +957,16 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
           val (starMeasure, endMeasure) = if (SideCode.apply(direction) == AgainstDigitizing)
             (0L.toDouble, sign.mValue)
           else {
-            val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-            (sign.mValue, "%.3f".formatLocal(java.util.Locale.US, length).toDouble)
+            val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
+            (sign.mValue, length)
           }
 
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), starMeasure, endMeasure, Set(sign.id))
         }
         else {
 
-          val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-          TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, "%.3f".formatLocal(java.util.Locale.US, length).toDouble, Set(sign.id))
+          val length = "%.3f".formatLocal(java.util.Locale.US, GeometryUtils.geometryLength(currentRoadLink.geometry)).toDouble
+          TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, length, Set(sign.id))
         }
     }
   }
@@ -1084,7 +1114,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
       val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(direction))
       val getAdjacents = roadLinkService.getAdjacent(actualRoadLink.linkId, Seq(pointOfInterest._1.getOrElse(pointOfInterest._2.get)), false)
       if (getAdjacents.size > 1)
-        if(pointOfInterest._1.nonEmpty) Some(0) else Some(length)
+        if(pointOfInterest._1.nonEmpty && mainSign.linkId == actualRoadLink.linkId) Some(0) else Some(length)
       else
         None
     }

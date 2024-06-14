@@ -135,7 +135,7 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     if (was(asset)) {
       val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
       update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
-        username)
+          username)
     } else {
       //Updates the asset in OTH with new liviId
       update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, toLiviId.format(asset.nationalId),
