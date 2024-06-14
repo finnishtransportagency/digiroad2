@@ -317,6 +317,7 @@ Resources:
               - Effect: "Allow"
                 Resource:
                   - arn:aws:s3:::geotools-repo/*
+                  - arn:aws:s3:::sbt-repository/*
                 Action:
                   - "s3:GetObject"
               - Effect: "Allow"
