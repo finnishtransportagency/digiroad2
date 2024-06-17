@@ -83,7 +83,6 @@ object Digiroad2Build extends Build {
         "com.github.tototoshi" %% "slick-joda-mapper" % "2.2.0",
         "com.github.tototoshi" %% "scala-csv" % "1.3.5",
         "org.apache.httpcomponents" % "httpclient" % "4.5.5",
-        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1",
@@ -166,7 +165,6 @@ object Digiroad2Build extends Build {
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "commons-io" % "commons-io" % "2.6",
-        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
       ),
@@ -206,7 +204,6 @@ object Digiroad2Build extends Build {
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "commons-io" % "commons-io" % "2.6",
-        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.eclipse.jetty" % "jetty-webapp" % "9.2.15.v20160210" % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % "9.2.15.v20160210" % "container;compile",

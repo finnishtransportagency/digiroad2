@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2
 
 import java.security.InvalidParameterException
 import java.time.LocalDate
-import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
@@ -916,7 +915,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case valuee: AssetValueException => halt(NotAcceptable("Invalid asset value: " + valuee.getMessage))
     case e: Exception =>
       logger.error("API Error", e)
-      NewRelic.noticeError(e)
       halt(InternalServerError("API error"))
   }
 
