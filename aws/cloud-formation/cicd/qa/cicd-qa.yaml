@@ -317,8 +317,24 @@ Resources:
               - Effect: "Allow"
                 Resource:
                   - arn:aws:s3:::geotools-repo/*
+                  - arn:aws:s3:::sbt-repository/*
                 Action:
                   - "s3:GetObject"
+              - Effect: "Allow"
+                Resource:
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
+                Action:
+                  - codeartifact:ReadFromRepository
+                  - codeartifact:DescribePackageVersion
+                  - codeartifact:DescribeRepository
+                  - codeartifact:GetPackageVersionReadme
+                  - codeartifact:GetRepositoryEndpoint
+                  - codeartifact:ListPackageVersionAssets
+                  - codeartifact:ListPackageVersionDependencies
+                  - codeartifact:ListPackageVersions
+                  - codeartifact:ListPackages
+                  - codeartifact:ReadFromRepository
   
   ECRRepo:
     Type: AWS::ECR::Repository
@@ -384,3 +400,9 @@ Resources:
                   }
               ]
           }
+Outputs:
+  DevCodeBuildRole:
+    Description: ARN of role for QA pipeline CodeBuild
+    Value: !GetAtt CodeBuildRole.Arn
+    Export:
+      Name: 'QaCodeBuildRole'

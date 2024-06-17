@@ -1,0 +1,6 @@
+[
+  {
+    "ParameterKey": "DigiroadDevArn",
+    "ParameterValue": "arn:aws:iam::475079312496:role/DigiroadOthAdmin"
+  }
+]
