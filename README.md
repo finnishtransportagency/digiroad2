@@ -14,8 +14,10 @@ Ympäristön pystytys
 
 
 3. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
-
+Digiroadin käyttämät paketit on säilötty AWS CodeArtifact, kirjaudu AWS SSO ja aseta npm käyttämään CodeArtifact repositoryä
   ```
+  aws sso login --profile <profiilin nimi>
+  aws codeartifact login --tool npm --repository digiroad_npm_packages --domain digiroad --domain-owner 475079312496
   npm install
   ```
 
@@ -79,11 +81,22 @@ Kehityspalvelin ohjaa API-kutsut API-palvelimelle. Jotta järjestelmä toimii tu
 API-palvelin
 ============
 
-API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa olevaa launcher-skriptiä sbt. Esim.
+API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa olevaa launcher-skriptiä sbt.
+Buildatessa ensimmäisen kerran, sbt hakee paketit CodeArtifact repositorystä.
 
+Hae CodeArtifact Authorization token
 ```
-./sbt test
+aws codeartifact get-authorization-token --domain digiroad --domain-owner 475079312496 --region eu-west-1 --query authorizationToken --output text
 ```
+Aseta se ympäristö muuttujaksi
+```
+set CODE_ARTIFACT_AUTH_TOKEN=<token>
+```
+Aja sbt. SBT buildaa projektin ja hakee tarvitut riippuvuudet CodeArtifactista
+```
+sbt
+```
+
 
 Palvelimen voi käynnistää ajamalla Server configuration myös.
 
