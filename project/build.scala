@@ -1,4 +1,3 @@
-import io.gatling.sbt.GatlingPlugin
 import sbt._
 import sbt.Keys.{unmanagedResourceDirectories, _}
 import org.scalatra.sbt._
@@ -214,13 +213,6 @@ object Digiroad2Build extends Build {
     )
   ) dependsOn(geoJar, oracleJar, commonApiJar, othApiJar) aggregate
     (geoJar, oracleJar, commonApiJar, othApiJar)
-
-  lazy val gatling = project.in(file("digiroad2-gatling"))
-    .enablePlugins(GatlingPlugin)
-    .settings(scalaVersion := ScalaVersion)
-    .settings(libraryDependencies ++= Seq(
-    "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
-    "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
