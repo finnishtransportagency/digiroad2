@@ -5,10 +5,10 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, T
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Remove, Replace, Split}
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.{Queries}
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService, RoadLinkValueCollection}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LinearAssetUtils}
 import fi.liikennevirasto.digiroad2.DummyEventBus
@@ -400,11 +400,11 @@ class RoadLinkPropertyUpdater {
     val (addChanges, removeChanges, otherChanges) = partitionChanges(changes)
     val allLinkIds = getAllLinkIds(changes)
 
-    val (functionalClassMap, linkTypeMap, trafficDirectionMap, adminClassMap, linkAttributeMap) = roadLinkService.getRoadLinkValuesMass(allLinkIds)
+    val valueCollection = roadLinkService.getRoadLinkValuesMass(allLinkIds)
 
-    val removeReports = createReportsForPropertiesToBeDeleted(removeChanges, trafficDirectionMap, adminClassMap, functionalClassMap, linkTypeMap, linkAttributeMap)
-    val transferredProperties = transferOverriddenPropertiesAndPrivateRoadInfo(otherChanges, trafficDirectionMap, adminClassMap, linkAttributeMap)
-    val (createdProperties, incompleteLinks) = transferOrGenerateFunctionalClassesAndLinkTypes(addChanges ++ otherChanges, functionalClassMap, linkTypeMap)
+    val removeReports = createReportsForPropertiesToBeDeleted(removeChanges, valueCollection.trafficDirectionValues, valueCollection.adminClassValues, valueCollection.functionalClassValues, valueCollection.linkTypeValues, valueCollection.linkAttributeValues)
+    val transferredProperties = transferOverriddenPropertiesAndPrivateRoadInfo(otherChanges, valueCollection.trafficDirectionValues, valueCollection.adminClassValues, valueCollection.linkAttributeValues)
+    val (createdProperties, incompleteLinks) = transferOrGenerateFunctionalClassesAndLinkTypes(addChanges ++ otherChanges, valueCollection.functionalClassValues, valueCollection.linkTypeValues)
 
     val (oldLinkList, newLinkList) = compileOldAndNewLinkLists(addChanges ++ otherChanges)
 
@@ -414,7 +414,15 @@ class RoadLinkPropertyUpdater {
     val administrativeClassChanges = accumulateAdministrativeClassChanges(transferredProperties)
     val linkAttributeChanges = accumulateLinkAttributeChanges(transferredProperties)
 
-    roadLinkService.insertRoadLinkValuesMass(functionalClassChanges, linkTypeChanges, trafficDirectionChanges, administrativeClassChanges, linkAttributeChanges)
+    val updatedValueCollection = RoadLinkValueCollection(
+      functionalClassValues = functionalClassChanges.map { case (k, v) => k -> Some(v) },
+      linkTypeValues = valueCollection.linkTypeValues ++ linkTypeChanges.map { case (k, v) => k -> Some(v) },
+      trafficDirectionValues = valueCollection.trafficDirectionValues ++ trafficDirectionChanges.map { case (k, v) => k -> Some(v) },
+      adminClassValues = valueCollection.adminClassValues ++ administrativeClassChanges.map { case (k, v) => k -> Some(v) },
+      linkAttributeValues = valueCollection.linkAttributeValues ++ linkAttributeChanges
+    )
+
+    roadLinkService.insertRoadLinkValuesMass(updatedValueCollection)
     performIncompleteLinkUpdate(incompleteLinks)
 
     val finalChanges = transferredProperties ++ createdProperties ++ removeReports

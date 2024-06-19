@@ -73,7 +73,7 @@ sealed trait RoadLinkOverrideDAO{
     }
   }
 
-  def insertValuesMass(linkValues: Map[String, Int], username: Option[String], timeStamp: String): Int = {
+  def insertValuesMass(linkValues: Map[String, Int], username: Option[String], timeStamp: String) = {
     if (linkValues.nonEmpty) {
       val insertSQL =
         s"""
@@ -81,9 +81,7 @@ sealed trait RoadLinkOverrideDAO{
       select nextval('primary_key_seq'), ?, ?, to_timestamp(?, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), ?
       where not exists (select * from $table where link_id = ?)
       """.stripMargin
-
-      val preparedStatement = dynamicSession.prepareStatement(insertSQL)
-      try {
+      MassQuery.executeBatch(insertSQL) { preparedStatement =>
         linkValues.foreach { case (linkId, value) =>
           preparedStatement.setString(1, linkId)
           preparedStatement.setInt(2, value)
@@ -92,12 +90,7 @@ sealed trait RoadLinkOverrideDAO{
           preparedStatement.setString(5, linkId)
           preparedStatement.addBatch()
         }
-        preparedStatement.executeBatch().sum
-      } finally {
-        preparedStatement.close()
       }
-    } else {
-      0
     }
   }
 
@@ -445,7 +438,7 @@ object RoadLinkOverrideDAO{
               where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
-    def insertValuesMass(linkValues: Map[String, Int], username: Option[String]): Int = {
+    def insertValuesMass(linkValues: Map[String, Int], username: Option[String]) = {
       if (linkValues.nonEmpty) {
         val insertSQL =
           s"""
@@ -453,9 +446,7 @@ object RoadLinkOverrideDAO{
         select nextval('primary_key_seq'), ?, ?, ?
         where not exists (select * from $table where link_id = ?)
         """.stripMargin
-
-        val preparedStatement = dynamicSession.prepareStatement(insertSQL)
-        try {
+        MassQuery.executeBatch(insertSQL) { preparedStatement =>
           linkValues.foreach { case (linkId, value) =>
             preparedStatement.setString(1, linkId)
             preparedStatement.setInt(2, value)
@@ -463,12 +454,7 @@ object RoadLinkOverrideDAO{
             preparedStatement.setString(4, linkId)
             preparedStatement.addBatch()
           }
-          preparedStatement.executeBatch().sum
-        } finally {
-          preparedStatement.close()
         }
-      } else {
-        0
       }
     }
 
@@ -581,17 +567,15 @@ object RoadLinkOverrideDAO{
       throw new UnsupportedOperationException("Not Implemented")
     }
 
-    def insertValuesMass(linkAttributes: Map[String, Map[String, String]], username: Option[String], timeStamp: String): Int = {
+    def insertValuesMass(linkAttributes: Map[String, Map[String, String]], username: Option[String], timeStamp: String) = {
       if (linkAttributes.nonEmpty) {
         val insertSQL =
           s"""
-        insert into $table (id, link_id, name, value, modified_date, modified_by)
-        select nextval('primary_key_seq'), ?, ?, ?, to_timestamp(?, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), ?
-        where not exists (select * from $table where link_id = ? and name = ?)
-      """.stripMargin
-
-        val preparedStatement = dynamicSession.prepareStatement(insertSQL)
-        try {
+          insert into $table (id, link_id, name, value, modified_date, modified_by)
+          select nextval('primary_key_seq'), ?, ?, ?, to_timestamp(?, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), ?
+          where not exists (select * from $table where link_id = ? and name = ?)
+          """.stripMargin
+        MassQuery.executeBatch(insertSQL) { preparedStatement =>
           linkAttributes.foreach { case (linkId, attributes) =>
             attributes.foreach { case (attributeName, attributeValue) =>
               preparedStatement.setString(1, linkId)
@@ -604,12 +588,7 @@ object RoadLinkOverrideDAO{
               preparedStatement.addBatch()
             }
           }
-          preparedStatement.executeBatch().sum
-        } finally {
-          preparedStatement.close()
         }
-      } else {
-        0
       }
     }
 
