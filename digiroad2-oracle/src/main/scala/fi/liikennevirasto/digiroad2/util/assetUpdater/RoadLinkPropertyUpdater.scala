@@ -16,6 +16,7 @@ import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 
 class RoadLinkPropertyUpdater {
 
@@ -296,8 +297,6 @@ class RoadLinkPropertyUpdater {
 
     (createdProperties, incompleteLink)
   }
-
-  import scala.collection.mutable
 
   def transferOverriddenPropertiesAndPrivateRoadInfo(
                                                       changes: Seq[RoadLinkChange],
