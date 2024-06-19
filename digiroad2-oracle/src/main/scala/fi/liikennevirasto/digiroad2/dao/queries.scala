@@ -5,7 +5,6 @@ import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LorryParkingInDATEX2
-import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.jolbox.bonecp.ConnectionHandle
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -15,11 +14,9 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import slick.jdbc.StaticQuery._
 import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
-import Q._
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import org.postgis.PGgeometry
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.postgresql.util.PGobject
-import java.util.Locale
 
 
 object Queries {
@@ -37,7 +34,7 @@ object Queries {
 
   def objectToPoint(geometry: Object): Point = {
     val pgObject = geometry.asInstanceOf[PGobject]
-    val geom = PGgeometry.geomFromString(pgObject.getValue)
+    val geom = GeometryBuilder.geomFromString(pgObject.getValue)
     val point =geom.getFirstPoint
     Point(point.x, point.y)
   }
