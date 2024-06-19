@@ -445,7 +445,7 @@ object RoadLinkOverrideDAO{
               where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
-    override def insertValuesMass(linkValues: Map[String, Int], username: Option[String], timeStamp: String): Int = {
+    def insertValuesMass(linkValues: Map[String, Int], username: Option[String]): Int = {
       if (linkValues.nonEmpty) {
         val insertSQL =
           s"""
