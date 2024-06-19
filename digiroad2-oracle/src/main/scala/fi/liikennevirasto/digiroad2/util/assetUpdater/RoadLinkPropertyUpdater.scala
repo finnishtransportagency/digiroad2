@@ -131,12 +131,8 @@ class RoadLinkPropertyUpdater {
    * @return An Option containing the FunctionalClassChange, or None if no change is made.
    */
   private def transferOrGenerateFunctionalClass(changeType: RoadLinkChangeType, optionalOldLink: Option[RoadLinkInfo], newLink: RoadLinkInfo, existingFunctionalClasses: Map[String, Option[Int]]): Option[FunctionalClassChange] = {
-    val alreadyUpdatedFunctionalClass = existingFunctionalClasses.get(newLink.linkId).flatten
-
-    (alreadyUpdatedFunctionalClass, optionalOldLink) match {
-      case (Some(_), _) =>
-        None
-      case (None, Some(oldLink)) =>
+    optionalOldLink match {
+      case Some(oldLink) =>
         transferFunctionalClass(changeType, oldLink, newLink, existingFunctionalClasses) match {
           case Some(functionalClassChange) => Some(functionalClassChange)
           case _ =>
@@ -145,7 +141,7 @@ class RoadLinkPropertyUpdater {
               case _ => None
             }
         }
-      case (None, None) =>
+      case None =>
         generateFunctionalClass(changeType, newLink) match {
           case Some(generatedFunctionalClass) => Some(generatedFunctionalClass)
           case _ => None
@@ -163,12 +159,8 @@ class RoadLinkPropertyUpdater {
    * @return An Option containing the LinkTypeChange, or None if no change is made.
    */
   private def transferOrGenerateLinkType(changeType: RoadLinkChangeType, optionalOldLink: Option[RoadLinkInfo], newLink: RoadLinkInfo, existingLinkTypes: Map[String, Option[Int]]): Option[LinkTypeChange] = {
-    val alreadyUpdatedLinkType = existingLinkTypes.get(newLink.linkId).flatten
-
-    (alreadyUpdatedLinkType, optionalOldLink) match {
-      case (Some(_), _) =>
-        None
-      case (None, Some(oldLink)) =>
+    optionalOldLink match {
+      case (Some(oldLink)) =>
         transferLinkType(changeType, oldLink, newLink, existingLinkTypes) match {
           case Some(linkTypeChange) => Some(linkTypeChange)
           case _ =>
@@ -177,7 +169,7 @@ class RoadLinkPropertyUpdater {
               case _ => None
             }
         }
-      case (None, None) =>
+      case None =>
         generateLinkType(changeType, newLink) match {
           case Some(generatedLinkType) => Some(generatedLinkType)
           case _ => None
