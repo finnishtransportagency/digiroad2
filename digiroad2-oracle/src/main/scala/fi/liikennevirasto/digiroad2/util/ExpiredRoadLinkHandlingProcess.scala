@@ -8,16 +8,15 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLinkWithMeasures, Post
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{AssetOnExpiredLink, AssetsOnExpiredLinksService, RoadLinkService, RoadLinkWithExpiredDate}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, GeometryUtils}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 object ExpiredRoadLinkHandlingProcess {
 
-  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   lazy val dummyEventBus: DigiroadEventBus = new DummyEventBus
-  lazy val dummySerializer: VVHSerializer = new DummySerializer
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus, dummySerializer)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, dummyEventBus)
   lazy val postGISLinearAssetDao: PostGISLinearAssetDao = new PostGISLinearAssetDao
   lazy val assetsOnExpiredLinksService: AssetsOnExpiredLinksService = new AssetsOnExpiredLinksService
   lazy val laneDao: LaneDao = new LaneDao

@@ -258,19 +258,10 @@ Resources:
             Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
           - Name: eventBus
             Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
-          - Name: useVVHGeometry
-            Value: true
-          - Name: vvhRestApiEndPoint
-            Value: 'https://api.vayla.fi/vvhdata/'
-          - Name: vvhRest_username
-            Value: 'svc_vvh_digiroad'
           - Name: viiteRestApiEndPoint
             Value: http://localhost:9080/api/viite/
           - Name: authenticationTestMode
             Value: true
-          - Name: vvhRest_password
-            Value: '/dev/vvhRest.password'
-            Type: PARAMETER_STORE
           - Name: bonecp_password
             Value: "/test/bonecp.password"
             Type: PARAMETER_STORE
@@ -364,9 +355,19 @@ Resources:
                   - "s3:PutObject"
               - Effect: "Allow"
                 Resource:
-                  - arn:aws:s3:::geotools-repo/*
+                  - arn:aws:s3:::sbt-repository/*
                 Action:
                   - "s3:GetObject"
+              - Effect: "Allow"
+                Resource:
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/digiroad"
+                Action:
+                  - codeartifact:*
+              - Effect: "Allow"
+                Resource: "*"
+                Action: "sts:GetServiceBearerToken"
   ECRRepo:
     Type: AWS::ECR::Repository
     Properties:
@@ -431,3 +432,10 @@ Resources:
                   }
               ]
           }
+
+Outputs:
+  DevCodeBuildRole:
+    Description: ARN of role for dev pipeline CodeBuild
+    Value: !GetAtt CodeBuildRole.Arn
+    Export:
+      Name: 'DevCodeBuildRole'

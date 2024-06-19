@@ -209,9 +209,6 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
                   result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
               }
             }
-            //if (propertiesVVH.nonEmpty) {
-            // possible future logic to update complimentary links
-            //} else 
           result
           }
         } else {

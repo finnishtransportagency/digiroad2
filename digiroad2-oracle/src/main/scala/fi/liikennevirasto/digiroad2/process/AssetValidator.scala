@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
@@ -26,10 +26,10 @@ trait AssetServiceValidator {
   val eventbus = new DummyEventBus
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  lazy val roadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
+  lazy val roadLinkService = new RoadLinkService(roadLinkClient, eventbus)
   lazy val manoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService = new ProhibitionService(roadLinkService, eventbus)
-  lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint) }
+  lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient() }
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 

@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClass
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SurfaceType}
 import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Point}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, Point}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
@@ -25,7 +25,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers {
   val jsonFile = Source.fromFile(filePath).mkString
   val roadLinkPropertyUpdater = new TestRoadLinkPropertyUpdater
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
+  val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus)
   val roadLinkChangeClient = roadLinkPropertyUpdater.roadLinkChangeClient
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)

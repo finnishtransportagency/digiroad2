@@ -8,7 +8,7 @@ import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.Point
 import com.vividsolutions.jts.io.WKTReader
-import fi.liikennevirasto.digiroad2.client.vvh.Filter
+import fi.liikennevirasto.digiroad2.client.kgv.Filter
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 
 

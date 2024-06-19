@@ -261,13 +261,32 @@
         projection: 'EPSG:3067',
         zoom: startupParameters.zoom,
         resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625]
-      })
+      }),
+      interactions: ol.interaction.defaults({
+        mouseWheelZoom: false
+      }),
     });
     map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
     map.addInteraction(new ol.interaction.DragPan({
       condition: function (mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
         return (!originalEvent.altKey && !originalEvent.shiftKey);
+      }
+    }));
+
+    map.addInteraction(new ol.interaction.MouseWheelZoom({
+      condition: function(event) {
+        var deltaY = event.originalEvent.deltaY;
+        if (deltaY > 0) {
+          // Wheel scrolled down (Zoom out)
+          return applicationModel.handleZoomOut(map);
+        } else if (deltaY < 0) {
+          // Wheel scrolled up (Zoom in)
+          return applicationModel.handleZoomIn(map);
+        } else {
+          // no zoom -> no reason to block
+          return true;
+        }
       }
     }));
     return map;

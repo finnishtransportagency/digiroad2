@@ -38,7 +38,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
-    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode = false)
     super.getByBoundingBox(user, bounds, roadLinks)
   }
 

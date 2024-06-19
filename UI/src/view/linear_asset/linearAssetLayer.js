@@ -11,7 +11,7 @@ root.LinearAssetLayer  = function(params) {
       layerName = params.layerName,
       assetLabel = params.assetLabel,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
-      massLimitation = params.massLimitation,
+      massLimitation = params.massLimitation === 'Muut massarajoitukset',
       trafficSignReadOnlyLayer = params.readOnlyLayer,
       isMultipleLinkSelectionAllowed = params.isMultipleLinkSelectionAllowed,
       authorizationPolicy = params.authorizationPolicy,
@@ -178,7 +178,15 @@ root.LinearAssetLayer  = function(params) {
   });
   map.addLayer(me.indicatorLayer);
   me.indicatorLayer.setVisible(false);
-  this.readOnlyLayer = new GroupedLinearAssetLayer(params, map);
+  this.readOnlyLayer = massLimitation ? new GroupedLinearAssetLayer(params, map) : {
+    refreshView: function () {},
+    redrawLinearAssets: function (linearAssetChains) {},
+    hideLayer: function () {},
+    showLayer: function () {},
+    removeLayerFeatures: function () {},
+    showWithComplementary: function () {},
+    hideComplementary: function () {}
+  };
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, me.vectorLayer, collection);
 

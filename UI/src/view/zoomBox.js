@@ -14,10 +14,10 @@
       });
     });
     container.find('.minus').click(function() {
-      if (applicationModel.canZoomOut()) {
-        var zoom= zoomlevels.getViewZoom(map);
+      var zoomLevel = zoomlevels.getViewZoom(map);
+      if (applicationModel.canZoomOut(zoomLevel)) {
         map.getView().animate({
-          zoom: zoom -1,
+          zoom: zoomLevel -1,
           duration: 150
         });
       } else {

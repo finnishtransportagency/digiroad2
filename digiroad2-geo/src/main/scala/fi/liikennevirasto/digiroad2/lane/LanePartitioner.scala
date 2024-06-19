@@ -15,9 +15,9 @@ object LanePartitioner {
   def getLaneRoadIdentifierByUsingViiteRoadNumber(lane: PieceWiseLane, roadLink: RoadLink): String = {
     val roadNumber = lane.attributes.get("ROAD_NUMBER").toString
     val roadPartNumber = lane.attributes.get("ROAD_PART_NUMBER").toString
-    val vvhRoadIdentifier = roadLink.roadIdentifier.toString
+    val roadIdentifier = roadLink.roadIdentifier.toString
     if(roadNumber != "None" && roadPartNumber != "None") roadNumber + "/" + roadPartNumber
-    else vvhRoadIdentifier
+    else roadIdentifier
   }
 
   //Returns lanes continuing from from given lane

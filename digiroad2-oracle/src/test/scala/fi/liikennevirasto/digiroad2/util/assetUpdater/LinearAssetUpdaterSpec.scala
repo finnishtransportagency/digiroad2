@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport._
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -30,11 +30,11 @@ trait UpdaterUtilsSuite {
 
   val service = new LinearAssetService(mockRoadLinkService, mockEventBus)
   lazy val roadLinkClient: RoadLinkClient = {
-    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    new RoadLinkClient()
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(roadLinkClient, mockEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, mockEventBus)
   }
 
   val roadLinkChangeClient = new RoadLinkChangeClient
@@ -85,7 +85,7 @@ trait UpdaterUtilsSuite {
       "MTKCLASS" -> BigInt(roadClass.value),
       "SURFACETYPE" -> BigInt(paved.value),
       "CREATED_DATE" -> BigInt(0),
-      "MUNICIPALITYCODE" -> BigInt(1)))
+      "MUNICIPALITYCODE" -> BigInt(60)))
 
   val link1 = createRoadLink(linkId1, generateGeometry(0, 10))
   val link2 = createRoadLink(linkId2, generateGeometry(0, 15))

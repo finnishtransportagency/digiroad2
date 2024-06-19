@@ -20,6 +20,8 @@ import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import org.joda.time._
 import org.slf4j.LoggerFactory
+import slick.driver
+import slick.driver.JdbcDriver
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 
@@ -104,17 +106,17 @@ class AssetDataImporter {
     }
   }
 
-  def importEuropeanRoads(conversionDatabase: DatabaseDef, vvhHost: String) = {
+  def importEuropeanRoads(conversionDatabase: DatabaseDef): Unit = {
     val roads = conversionDatabase.withDynSession {
       sql"""select link_id, eur_nro from eurooppatienumero""".as[(String, String)].list
     }
 
     val roadsByLinkId = roads.foldLeft(Map.empty[String, (String, String)]) { (m, road) => m + (road._1 -> road) }
 
-    val roadLinkClient = new RoadLinkClient(vvhHost)
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
-    val vvhLinks = roadLinkService.fetchRoadlinksByIds(roadsByLinkId.keySet)
-    val linksByLinkId = vvhLinks.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
+    val roadLinkClient = new RoadLinkClient()
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
+    val links = roadLinkService.fetchRoadlinksByIds(roadsByLinkId.keySet)
+    val linksByLinkId = links.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
@@ -166,11 +168,11 @@ class AssetDataImporter {
     }
   }
 
-  def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
+  def importProhibitions(conversionDatabase: DatabaseDef): Unit = {
     val conversionTypeId = 29
     val exceptionTypeId = 1
-    val roadLinkClient = new RoadLinkClient(vvhServiceHost)
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+    val roadLinkClient = new RoadLinkClient()
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     val typeId = 190
 
     println("*** Fetching prohibitions from conversion database")
@@ -489,9 +491,9 @@ class AssetDataImporter {
     }
   }
 
-  def adjustToNewDigitization(vvhHost: String) = {
-    val roadLinkClient = new RoadLinkClient(vvhHost)
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+  def adjustToNewDigitization(): Unit = {
+    val roadLinkClient = new RoadLinkClient()
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
     val processedLinkIds = mutable.Set[String]()
 
@@ -913,13 +915,12 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   }
 
   /**
-    * Get address information to mass transit stop assets from VVH road link (DROTH-221).
+    * Get address information to mass transit stop assets from road link (DROTH-221).
     *
-    * @param vvhRestApiEndPoint
     */
-  def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
-    val roadLinkClient = new RoadLinkClient(vvhRestApiEndPoint)
-    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
+  def getMassTransitStopAddressesFromRoadLink(): Unit = {
+    val roadLinkClient = new RoadLinkClient()
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
     withDynTransaction {
       val idAddressFi = sql"""select p.id from property p where p.public_id = 'osoite_suomeksi'""".as[Int].list.head
       val idAddressSe = sql"""select p.id from property p where p.public_id = 'osoite_ruotsiksi'""".as[Int].list.head
@@ -1101,8 +1102,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     }
 
   /**
-    * Adds text property to TEXT_PROPERTY_VALUE table. Created for getMassTransitStopAddressesFromVVH
-    * to create address information for missing mass transit stops
+    * Adds text property to TEXT_PROPERTY_VALUE table.
     *
     * @param assetId
     * @param propertyVal
