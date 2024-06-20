@@ -41,16 +41,15 @@ object Digiroad2Build extends Build {
           "com.typesafe.akka" %% "akka-actor" % "2.5.12",
           "org.json4s" %% "json4s-jackson" % "3.5.3",
           "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-          "org.geotools" % "gt-graph" % "19.0",
-          "org.geotools" % "gt-main" % "19.0",
-          "org.geotools" % "gt-api" % "19.0",
-          "org.geotools" % "gt-referencing" % "19.0",
-          "org.geotools" % "gt-metadata" % "19.0",
-          "org.geotools" % "gt-opengis" % "19.0",
-          "jgridshift" % "jgridshift" % "1.0",
-          "com.vividsolutions" % "jts-core" % "1.14.0",
+          "org.geotools" % "gt-graph" % "28.5" exclude("javax.media", "jai_core"),
+          "org.geotools" % "gt-main" % "28.5" exclude("javax.media", "jai_core"),
+          "org.geotools" % "gt-referencing" % "28.5" exclude("javax.media", "jai_core"),
+          "org.geotools" % "gt-metadata" % "28.5" exclude("javax.media", "jai_core"),
+          "org.geotools" % "gt-opengis" % "28.5" exclude("javax.media", "jai_core"),
+          "it.geosolutions.jgridshift" % "jgridshift" % "1.3",
+          "org.locationtech.jts" % "jts-core" % "1.19.0",
           "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
-          "ch.qos.logback" % "logback-classic" % "1.2.3"
+          "ch.qos.logback" % "logback-classic" % "1.3.11"
         )
       )
     )
@@ -163,7 +162,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
@@ -202,7 +201,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.eclipse.jetty" % "jetty-webapp" % jettyVersion % "container;compile",
