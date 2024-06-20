@@ -49,7 +49,7 @@ object Digiroad2Build extends Build {
           "jgridshift" % "jgridshift" % "1.0",
           "com.vividsolutions" % "jts-core" % "1.14.0",
           "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
-          "ch.qos.logback" % "logback-classic" % "1.2.3"
+          "ch.qos.logback" % "logback-classic" % "1.3.11"
         )
       )
     )
@@ -89,7 +89,7 @@ object Digiroad2Build extends Build {
         "com.sun.mail" % "javax.mail" % "1.6.1",
         "org.postgresql" % "postgresql" % "42.2.5",
         "net.postgis" % "postgis-jdbc" % "2.3.0",
-        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
         "net.spy" % "spymemcached" % "2.12.3",
         "software.amazon.awssdk" % "s3" % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
@@ -162,7 +162,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
@@ -201,7 +201,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.eclipse.jetty" % "jetty-webapp" % "9.2.15.v20160210" % "container;compile",
