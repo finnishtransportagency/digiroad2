@@ -9,7 +9,7 @@ import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import Database.dynamicSession
-import com.vividsolutions.jts.geom.Polygon
+import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 object PostGISDatabase {

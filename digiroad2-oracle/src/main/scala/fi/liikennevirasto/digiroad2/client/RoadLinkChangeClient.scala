@@ -12,7 +12,8 @@ import org.json4s.FieldSerializer.{renameFrom, renameTo}
 import org.json4s.JsonAST.JString
 import org.json4s.jackson.parseJson
 import org.json4s.{CustomSerializer, _}
-import org.postgis.PGgeometry
+import net.postgis.jdbc.PGgeometry
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -67,7 +68,7 @@ class RoadLinkChangeClient {
   }
 
   private def lineStringToPoints(lineString: String): List[Point] = {
-    val geometry = PGgeometry.geomFromString(lineString)
+    val geometry = GeometryBuilder.geomFromString(lineString)
     val pointsList = ListBuffer[List[Double]]()
     for (i <- 0 until geometry.numPoints()) {
       val point = geometry.getPoint(i)

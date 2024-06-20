@@ -13,6 +13,7 @@ object Digiroad2Build extends Build {
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
   val AwsSdkVersion = "2.17.148"
+  val jettyVersion = "9.2.30.v20200428"
 
   val codeArtifactRealm = "digiroad/digiroad_maven_packages"
   val codeArtifactResolver = "digiroad--digiroad_maven_packages"
@@ -40,14 +41,13 @@ object Digiroad2Build extends Build {
           "com.typesafe.akka" %% "akka-actor" % "2.5.12",
           "org.json4s" %% "json4s-jackson" % "3.5.3",
           "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-          "org.geotools" % "gt-graph" % "19.0",
-          "org.geotools" % "gt-main" % "19.0",
-          "org.geotools" % "gt-api" % "19.0",
-          "org.geotools" % "gt-referencing" % "19.0",
-          "org.geotools" % "gt-metadata" % "19.0",
-          "org.geotools" % "gt-opengis" % "19.0",
-          "jgridshift" % "jgridshift" % "1.0",
-          "com.vividsolutions" % "jts-core" % "1.14.0",
+          "org.geotools" % "gt-graph" % "28.5" exclude("javax.media", "jai_core"),
+          "org.geotools" % "gt-main" % "28.5" exclude("javax.media", "jai_core"),
+          "org.geotools" % "gt-referencing" % "28.5" exclude("javax.media", "jai_core"),
+          "org.geotools" % "gt-metadata" % "28.5" exclude("javax.media", "jai_core"),
+          "org.geotools" % "gt-opengis" % "28.5" exclude("javax.media", "jai_core"),
+          "it.geosolutions.jgridshift" % "jgridshift" % "1.3",
+          "org.locationtech.jts" % "jts-core" % "1.19.0",
           "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
           "ch.qos.logback" % "logback-classic" % "1.3.11"
         )
@@ -87,9 +87,9 @@ object Digiroad2Build extends Build {
         "com.googlecode.flyway" % "flyway-core" % "2.3.1",
         "javax.mail" % "javax.mail-api" % "1.6.1",
         "com.sun.mail" % "javax.mail" % "1.6.1",
-        "org.postgresql" % "postgresql" % "42.2.5",
-        "net.postgis" % "postgis-jdbc" % "2.3.0",
-        "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
+        "org.postgresql" % "postgresql" % "42.3.9",
+        "net.postgis" % "postgis-jdbc" % "2023.1.0" exclude("org.postgresql","postgresql"),
+        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "net.spy" % "spymemcached" % "2.12.3",
         "software.amazon.awssdk" % "s3" % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
@@ -126,9 +126,9 @@ object Digiroad2Build extends Build {
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "org.joda" % "joda-convert" % "2.0.1",
         "joda-time" % "joda-time" % "2.9.9",
-        "org.eclipse.jetty" % "jetty-webapp" % "9.2.15.v20160210" % "compile",
-        "org.eclipse.jetty" % "jetty-servlets" % "9.2.15.v20160210" % "compile",
-        "org.eclipse.jetty" % "jetty-proxy" % "9.2.15.v20160210" % "compile",
+        "org.eclipse.jetty" % "jetty-webapp" % jettyVersion % "compile",
+        "org.eclipse.jetty" % "jetty-servlets" % jettyVersion % "compile",
+        "org.eclipse.jetty" % "jetty-proxy" % jettyVersion % "compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
@@ -204,10 +204,10 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
-        "org.eclipse.jetty" % "jetty-webapp" % "9.2.15.v20160210" % "container;compile",
-        "org.eclipse.jetty" % "jetty-servlets" % "9.2.15.v20160210" % "container;compile",
-        "org.eclipse.jetty" % "jetty-proxy" % "9.2.15.v20160210" % "container;compile",
-        "org.eclipse.jetty" % "jetty-jmx" % "9.2.15.v20160210" % "container;compile",
+        "org.eclipse.jetty" % "jetty-webapp" % jettyVersion % "container;compile",
+        "org.eclipse.jetty" % "jetty-servlets" % jettyVersion % "container;compile",
+        "org.eclipse.jetty" % "jetty-proxy" % jettyVersion % "container;compile",
+        "org.eclipse.jetty" % "jetty-jmx" % jettyVersion % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       )
     )
