@@ -12,19 +12,14 @@ import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId, propertyIdByPublicId, propertyIdByPublicIdAndTypeId}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, ValueAdjustment}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewLinearAssetMassOperation}
-import fi.liikennevirasto.digiroad2.util.DataFixture.linearAssetService.getLinkSource
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import org.postgis.PGgeometry
-import org.postgresql.geometric.PGcircle
-import org.postgresql.jdbc.PgStatement
+import net.postgis.jdbc.PGgeometry
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 import java.sql.PreparedStatement
-import scala.collection.Seq
 import scala.language.implicitConversions
  
 case class NewLinearAssetWithId(asset:NewLinearAssetMassOperation, id:Long, positionId:Long)
