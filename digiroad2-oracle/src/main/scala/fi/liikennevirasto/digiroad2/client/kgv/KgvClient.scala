@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import com.vividsolutions.jts.geom.Polygon
+import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils.isPointInsideGeometry
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}

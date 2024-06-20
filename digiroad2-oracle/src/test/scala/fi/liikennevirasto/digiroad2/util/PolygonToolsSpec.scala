@@ -2,12 +2,12 @@ package fi.liikennevirasto.digiroad2.util
 
 
 import java.util.Properties
-import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, Polygon}
+import org.locationtech.jts.geom.{Coordinate, GeometryFactory, Polygon}
 import org.scalatest.{FunSuite, Matchers}
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.Point
-import com.vividsolutions.jts.io.WKTReader
+import org.locationtech.jts.io.WKTReader
 import fi.liikennevirasto.digiroad2.client.kgv.Filter
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 

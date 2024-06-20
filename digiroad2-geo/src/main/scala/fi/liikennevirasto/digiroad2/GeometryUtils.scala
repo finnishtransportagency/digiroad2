@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
-import com.vividsolutions.jts.algorithm.`match`.{AreaSimilarityMeasure, HausdorffSimilarityMeasure}
-import com.vividsolutions.jts.geom.{Geometry => JtsGeometry}
-import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, LineString}
-import com.vividsolutions.jts.io.WKTReader
+
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
-import com.vividsolutions.jts.geom._
 import org.geotools.geometry.jts.JTSFactoryFinder
+import org.locationtech.jts.algorithm.`match`.{AreaSimilarityMeasure, HausdorffSimilarityMeasure}
+import org.locationtech.jts.geom.{Coordinate, GeometryFactory, LineString, Polygon}
+import org.locationtech.jts.io.WKTReader
+import org.locationtech.jts.geom.{Geometry => JtsGeometry}
 
 
 sealed case class GeometryString( format:String,string: String)
