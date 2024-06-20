@@ -13,6 +13,7 @@ object Digiroad2Build extends Build {
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
   val AwsSdkVersion = "2.17.148"
+  val jettyVersion = "9.2.30.v20200428"
 
   val codeArtifactRealm = "digiroad/digiroad_maven_packages"
   val codeArtifactResolver = "digiroad--digiroad_maven_packages"
@@ -126,9 +127,9 @@ object Digiroad2Build extends Build {
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "org.joda" % "joda-convert" % "2.0.1",
         "joda-time" % "joda-time" % "2.9.9",
-        "org.eclipse.jetty" % "jetty-webapp" % "9.2.15.v20160210" % "compile",
-        "org.eclipse.jetty" % "jetty-servlets" % "9.2.15.v20160210" % "compile",
-        "org.eclipse.jetty" % "jetty-proxy" % "9.2.15.v20160210" % "compile",
+        "org.eclipse.jetty" % "jetty-webapp" % jettyVersion % "compile",
+        "org.eclipse.jetty" % "jetty-servlets" % jettyVersion % "compile",
+        "org.eclipse.jetty" % "jetty-proxy" % jettyVersion % "compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
@@ -204,10 +205,10 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
-        "org.eclipse.jetty" % "jetty-webapp" % "9.2.15.v20160210" % "container;compile",
-        "org.eclipse.jetty" % "jetty-servlets" % "9.2.15.v20160210" % "container;compile",
-        "org.eclipse.jetty" % "jetty-proxy" % "9.2.15.v20160210" % "container;compile",
-        "org.eclipse.jetty" % "jetty-jmx" % "9.2.15.v20160210" % "container;compile",
+        "org.eclipse.jetty" % "jetty-webapp" % jettyVersion % "container;compile",
+        "org.eclipse.jetty" % "jetty-servlets" % jettyVersion % "container;compile",
+        "org.eclipse.jetty" % "jetty-proxy" % jettyVersion % "container;compile",
+        "org.eclipse.jetty" % "jetty-jmx" % jettyVersion % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       )
     )
