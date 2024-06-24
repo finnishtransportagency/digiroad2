@@ -222,8 +222,13 @@ object Digiroad2Build extends Build {
       case x if x.endsWith("about.html") => MergeStrategy.discard
       case x if x.endsWith("env.properties") => MergeStrategy.discard
       case x if x.endsWith("mime.types") => MergeStrategy.last
+      case x if x.endsWith("module-info.class") => MergeStrategy.discard
+      case x if x.endsWith("about.properties") => MergeStrategy.discard
+      case x if x.endsWith("plugin.properties") => MergeStrategy.discard
+      case x if x.endsWith("plugin.xml") => MergeStrategy.discard
       case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
       case PathList("META-INF", "maven", "com.fasterxml.jackson.core", "jackson-core", _*) => MergeStrategy.discard
+      case PathList("META-INF", "ECLIPSE_.RSA") => MergeStrategy.discard
       case x => old(x)
     } }
   )
