@@ -51,7 +51,7 @@ trait ViiteClientOperations {
       } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         return Right(ViiteError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
       }
-      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
+      Left(parse(StreamInput(response.getEntity.getContent).stream).values.asInstanceOf[T])
     } catch {
       case e: Exception => Right(ViiteError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
     } finally {
@@ -71,7 +71,7 @@ trait ViiteClientOperations {
       } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         return Right(ViiteError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
       }
-      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[O])
+      Left(parse(StreamInput(response.getEntity.getContent).stream).values.asInstanceOf[O])
     } catch {
       case e: Exception => Right(ViiteError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
     } finally {

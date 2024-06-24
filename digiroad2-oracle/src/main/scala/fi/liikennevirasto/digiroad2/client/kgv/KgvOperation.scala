@@ -331,7 +331,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
         response = client.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
         if (statusCode == HttpStatus.SC_OK) {
-          val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+          val feature = parse(StreamInput(response.getEntity.getContent).stream).values.asInstanceOf[Map[String, Any]]
           val resort = feature("type").toString match {
             case "Feature" => 
               if (roadLinkStatusFilter(feature)){

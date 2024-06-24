@@ -11,9 +11,17 @@ object Digiroad2Build extends Build {
   val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.7"
+  /**
+    * ScalaVersion 2.8.x does not support scala 2.11
+    */
   val ScalatraVersion = "2.6.3"
+  
   val AwsSdkVersion = "2.17.148"
   val jettyVersion = "9.2.30.v20200428"
+  /**
+    * ScalaVersion 2.6.x and 2.7.x is no compatible with newer json4s. 
+    */
+  val json4sVersion =  "3.6.12" 
 
   val codeArtifactRealm = "digiroad/digiroad_maven_packages"
   val codeArtifactResolver = "digiroad--digiroad_maven_packages"
@@ -39,7 +47,7 @@ object Digiroad2Build extends Build {
           "org.joda" % "joda-convert" % "2.0.1",
           "joda-time" % "joda-time" % "2.9.9",
           "com.typesafe.akka" %% "akka-actor" % "2.5.12",
-          "org.json4s" %% "json4s-jackson" % "3.5.3",
+          "org.json4s" %% "json4s-jackson" % json4sVersion,
           "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
           "org.geotools" % "gt-graph" % "28.5" exclude("javax.media", "jai_core"),
           "org.geotools" % "gt-main" % "28.5" exclude("javax.media", "jai_core"),
@@ -75,7 +83,7 @@ object Digiroad2Build extends Build {
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "com.typesafe.slick" %% "slick" % "3.0.0",
-        "org.json4s"   %% "json4s-jackson" % "3.5.3",
+        "org.json4s"   %% "json4s-jackson" % json4sVersion,
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
         "org.joda" % "joda-convert" % "2.0.1",
         "joda-time" % "joda-time" % "2.9.9",
@@ -154,8 +162,8 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % "3.5.3",
-        "org.json4s"   %% "json4s-native" % "3.5.2",
+        "org.json4s"   %% "json4s-jackson" % json4sVersion,
+        "org.json4s"   %% "json4s-native" % json4sVersion,
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
@@ -193,7 +201,7 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % "3.5.3",
+        "org.json4s"   %% "json4s-jackson" % json4sVersion,
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
