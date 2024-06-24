@@ -10,6 +10,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
 case class RoadLinkValue(linkId: String, value: Option[Int])
+case class RoadLinkAttribute(linkId: String, attributes: Map[String, String])
 case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int, timeStamp:Option[String], mmlId: Option[Long])
 
 sealed trait RoadLinkOverrideDAO{
@@ -73,7 +74,7 @@ sealed trait RoadLinkOverrideDAO{
     }
   }
 
-  def insertValuesMass(linkValues: Map[String, Int], username: Option[String], timeStamp: String) = {
+  def insertValuesMass(linkValues: Seq[RoadLinkValue], username: Option[String], timeStamp: String) = {
     if (linkValues.nonEmpty) {
       val insertSQL =
         s"""
@@ -82,7 +83,7 @@ sealed trait RoadLinkOverrideDAO{
       where not exists (select * from $table where link_id = ?)
       """.stripMargin
       MassQuery.executeBatch(insertSQL) { preparedStatement =>
-        linkValues.foreach { case (linkId, value) =>
+        linkValues.foreach { case RoadLinkValue(linkId, Some(value)) =>
           preparedStatement.setString(1, linkId)
           preparedStatement.setInt(2, value)
           preparedStatement.setString(3, timeStamp)
@@ -438,7 +439,7 @@ object RoadLinkOverrideDAO{
               where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
-    def insertValuesMass(linkValues: Map[String, Int], username: Option[String]) = {
+    def insertValuesMass(linkValues: Seq[RoadLinkValue], username: Option[String]) = {
       if (linkValues.nonEmpty) {
         val insertSQL =
           s"""
@@ -447,7 +448,7 @@ object RoadLinkOverrideDAO{
         where not exists (select * from $table where link_id = ?)
         """.stripMargin
         MassQuery.executeBatch(insertSQL) { preparedStatement =>
-          linkValues.foreach { case (linkId, value) =>
+          linkValues.foreach { case RoadLinkValue(linkId, Some(value)) =>
             preparedStatement.setString(1, linkId)
             preparedStatement.setInt(2, value)
             preparedStatement.setString(3, username.getOrElse(""))
@@ -567,7 +568,7 @@ object RoadLinkOverrideDAO{
       throw new UnsupportedOperationException("Not Implemented")
     }
 
-    def insertValuesMass(linkAttributes: Map[String, Map[String, String]], username: Option[String], timeStamp: String) = {
+    def insertValuesMass(linkAttributes: Seq[RoadLinkAttribute], username: Option[String], timeStamp: String) = {
       if (linkAttributes.nonEmpty) {
         val insertSQL =
           s"""
@@ -576,7 +577,7 @@ object RoadLinkOverrideDAO{
           where not exists (select * from $table where link_id = ? and name = ?)
           """.stripMargin
         MassQuery.executeBatch(insertSQL) { preparedStatement =>
-          linkAttributes.foreach { case (linkId, attributes) =>
+          linkAttributes.foreach { case RoadLinkAttribute(linkId, attributes) =>
             attributes.foreach { case (attributeName, attributeValue) =>
               preparedStatement.setString(1, linkId)
               preparedStatement.setString(2, attributeName)
