@@ -14,7 +14,6 @@ object Digiroad2Build extends Build {
     * ScalaVersion 2.8.x does not support scala 2.11
     */
   val ScalatraVersion = "2.6.3"
-  //val AwsSdkVersion = "2.17.148"
   val AwsSdkVersion = "2.26.7"
   val jettyVersion = "9.2.30.v20200428"
   /**
