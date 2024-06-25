@@ -336,7 +336,7 @@ object ChangeReporter {
   }
 
   def generateCSV(changeReport: ChangeReport, withGeometry: Boolean = false): (String, Int) = {
-    LogUtils.time(logger, s"TEST LOG ChangeReporter generateCSV for ${changeReport.changes.size} changes") {
+    LogUtils.time(logger, s"TEST LOG ChangeReporter generateCSV for ${changeReport.assetType} with ${changeReport.changes.size} changes") {
       val stringWriter = new StringWriter()
       val csvWriter = new CSVWriter(stringWriter)
       csvWriter.writeRow(Seq("sep=,"))
