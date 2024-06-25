@@ -211,7 +211,7 @@ class RoadLinkPropertyUpdater {
   def transferOrGenerateFunctionalClassesAndLinkTypes(changes: Seq[RoadLinkChange],
                                                       existingFunctionalClasses: Seq[RoadLinkValue],
                                                       existingLinkTypes: Seq[RoadLinkValue]): (Seq[ReportedChange], Seq[IncompleteLink]) = {
-    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater transferOrGenerateFunctionalClassesAndLinkTypes with ${changes.size} changes") {
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater transferOrGenerateFunctionalClassesAndLinkTypes with ${changes.size} changes", startLogging = true) {
       var iteratedNewLinks = Set[String]()
       var incompleteLinks = List[IncompleteLink]()
       var createdProperties = List[ReportedChange]()
@@ -220,34 +220,39 @@ class RoadLinkPropertyUpdater {
       val linkTypeMap = existingLinkTypes.map(lt => lt.linkId -> lt.value).toMap
 
       changes.foreach { change =>
-        change.changeType match {
-          case Replace =>
-            val newLink = change.newLinks.head
-            val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-            if (!iteratedNewLinks.contains(newLink.linkId) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-              val relatedMerges = changes.filter(chg => chg.changeType == Replace && chg.newLinks.head.linkId == newLink.linkId)
-              val (created, failed) = transferFunctionalClassAndLinkTypeForSingleReplace(relatedMerges, newLink, DateTime.now().toString, functionalClassMap, linkTypeMap)
-              createdProperties = createdProperties ++ created.flatten
-              incompleteLinks = incompleteLinks ++ failed
-              iteratedNewLinks = iteratedNewLinks + newLink.linkId
-            }
-          case _ =>
-            val processableNewLinks = change.newLinks.filter(newLink =>
-              isProcessableLink(newLink, functionalClassMap, linkTypeMap) && !iteratedNewLinks.contains(newLink.linkId)
-            )
-            processableNewLinks.foreach { newLink =>
-              val functionalClassChange = transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink, functionalClassMap)
-              val linkTypeChange = transferOrGenerateLinkType(change.changeType, change.oldLink, newLink, linkTypeMap)
-              if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
-                incompleteLinks = incompleteLinks :+ IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
+        LogUtils.time(logger, s"TEST LOG transferOrGenerateFunctionalClassesAndLinkTypes, process single ${change.changeType} change", startLogging = true) {
+          change.changeType match {
+            case Replace =>
+              val newLink = change.newLinks.head
+              val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+              if (!iteratedNewLinks.contains(newLink.linkId) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+                val relatedMerges = changes.filter(chg => chg.changeType == Replace && chg.newLinks.head.linkId == newLink.linkId)
+                val (created, failed) = transferFunctionalClassAndLinkTypeForSingleReplace(relatedMerges, newLink, DateTime.now().toString, functionalClassMap, linkTypeMap)
+                createdProperties = createdProperties ++ created.flatten
+                incompleteLinks = incompleteLinks ++ failed
+                iteratedNewLinks = iteratedNewLinks + newLink.linkId
               }
-              createdProperties = createdProperties ++ functionalClassChange
-              createdProperties = createdProperties ++ linkTypeChange
-              iteratedNewLinks = iteratedNewLinks + newLink.linkId
-            }
+            case _ =>
+              val processableNewLinks = change.newLinks.filter(newLink =>
+                isProcessableLink(newLink, functionalClassMap, linkTypeMap) && !iteratedNewLinks.contains(newLink.linkId)
+              )
+              processableNewLinks.foreach { newLink =>
+                val functionalClassChange = LogUtils.time(logger, s"TEST LOG transferOrGenerateFunctionalClass for single ${change.changeType}", startLogging = true) {
+                  transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink, functionalClassMap)
+                }
+                val linkTypeChange = LogUtils.time(logger, s"TEST LOG transferOrGenerateLinkType for single ${change.changeType}", startLogging = true) {
+                  transferOrGenerateLinkType(change.changeType, change.oldLink, newLink, linkTypeMap)
+                }
+                if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
+                  incompleteLinks = incompleteLinks :+ IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
+                }
+                createdProperties = createdProperties ++ functionalClassChange
+                createdProperties = createdProperties ++ linkTypeChange
+                iteratedNewLinks = iteratedNewLinks + newLink.linkId
+              }
+          }
         }
       }
-
       (createdProperties.distinct, incompleteLinks)
     }
   }
@@ -269,38 +274,40 @@ class RoadLinkPropertyUpdater {
                                                              existingFunctionalClasses: Map[String, Option[Int]],
                                                              existingLinkTypes: Map[String, Option[Int]]
                                                            ): (List[Option[ReportedChange]], List[IncompleteLink]) = {
-    var incompleteLink = List[IncompleteLink]()
-    var createdProperties = List[Option[ReportedChange]]()
-    var functionalClassTransferred = false
-    var linkTypeTransferred = false
+    LogUtils.time(logger, "TEST LOG transferFunctionalClassAndLinkTypeForSingleReplace", startLogging = true) {
+      var incompleteLink = List[IncompleteLink]()
+      var createdProperties = List[Option[ReportedChange]]()
+      var functionalClassTransferred = false
+      var linkTypeTransferred = false
 
-    relatedMerges.foreach { merge =>
-      if (incompleteLink.isEmpty) {
-        if (!functionalClassTransferred) {
-          transferFunctionalClass(merge.changeType, merge.oldLink.get, newLink, existingFunctionalClasses) match {
-            case Some(functionalClassChange) =>
-              createdProperties = createdProperties :+ Some(functionalClassChange)
-              functionalClassTransferred = true
-            case None =>
+      relatedMerges.foreach { merge =>
+        if (incompleteLink.isEmpty) {
+          if (!functionalClassTransferred) {
+            transferFunctionalClass(merge.changeType, merge.oldLink.get, newLink, existingFunctionalClasses) match {
+              case Some(functionalClassChange) =>
+                createdProperties = createdProperties :+ Some(functionalClassChange)
+                functionalClassTransferred = true
+              case None =>
+            }
           }
-        }
 
-        if (!linkTypeTransferred) {
-          transferLinkType(merge.changeType, merge.oldLink.get, newLink, existingLinkTypes) match {
-            case Some(linkTypeChange) =>
-              createdProperties = createdProperties :+ Some(linkTypeChange)
-              linkTypeTransferred = true
-            case None =>
+          if (!linkTypeTransferred) {
+            transferLinkType(merge.changeType, merge.oldLink.get, newLink, existingLinkTypes) match {
+              case Some(linkTypeChange) =>
+                createdProperties = createdProperties :+ Some(linkTypeChange)
+                linkTypeTransferred = true
+              case None =>
+            }
           }
-        }
 
-        if (!functionalClassTransferred || !linkTypeTransferred) {
-          incompleteLink = incompleteLink :+ IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
+          if (!functionalClassTransferred || !linkTypeTransferred) {
+            incompleteLink = incompleteLink :+ IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
+          }
         }
       }
-    }
 
-    (createdProperties, incompleteLink)
+      (createdProperties, incompleteLink)
+    }
   }
 
   def transferOverriddenPropertiesAndPrivateRoadInfo(
@@ -332,49 +339,51 @@ class RoadLinkPropertyUpdater {
       val adminClassMap = existingAdministrativeClasses.map(adminClass => adminClass.linkId -> adminClass.value).toMap
       val linkAttributeMap = existingLinkAttributes.map(linkAttribute => linkAttribute.linkId -> (linkAttribute.attributes)).toMap
       changes.foreach { change =>
-        val oldLink = change.oldLink.get
-        val versionChange = oldLink.linkId.substring(0, 36) == change.newLinks.head.linkId.substring(0, 36)
-        if (versionChange) {
-          val overriddenTrafficDirection = trafficDirectionMap.getOrElse(oldLink.linkId, None)
-          overriddenTrafficDirection.foreach { direction =>
-            change.newLinks.foreach { newLink =>
-              if (!processedNewLinksTraffic.contains(newLink.linkId)) {
-                val alreadyUpdatedValue = trafficDirectionMap.get(newLink.linkId).flatten
-                val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-                val digitizationChange = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get.digitizationChange
-                val trafficDirectionWithDigitizationCheck = applyDigitizationChange(digitizationChange, direction)
-                if (trafficDirectionWithDigitizationCheck != newLink.trafficDirection.value && alreadyUpdatedValue.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-                  transferredProperties += TrafficDirectionChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), direction, Some(trafficDirectionWithDigitizationCheck), Some(oldLink.linkId))
-                  processedNewLinksTraffic += newLink.linkId
+        LogUtils.time(logger, s"TEST LOG transferOverriddenPropertiesAndPrivateRoadInfo, processing single ${change.changeType} change", startLogging = true) {
+          val oldLink = change.oldLink.get
+          val versionChange = oldLink.linkId.substring(0, 36) == change.newLinks.head.linkId.substring(0, 36)
+          if (versionChange) {
+            val overriddenTrafficDirection = trafficDirectionMap.getOrElse(oldLink.linkId, None)
+            overriddenTrafficDirection.foreach { direction =>
+              change.newLinks.foreach { newLink =>
+                if (!processedNewLinksTraffic.contains(newLink.linkId)) {
+                  val alreadyUpdatedValue = trafficDirectionMap.get(newLink.linkId).flatten
+                  val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+                  val digitizationChange = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get.digitizationChange
+                  val trafficDirectionWithDigitizationCheck = applyDigitizationChange(digitizationChange, direction)
+                  if (trafficDirectionWithDigitizationCheck != newLink.trafficDirection.value && alreadyUpdatedValue.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+                    transferredProperties += TrafficDirectionChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), direction, Some(trafficDirectionWithDigitizationCheck), Some(oldLink.linkId))
+                    processedNewLinksTraffic += newLink.linkId
+                  }
+                }
+              }
+            }
+
+            val overriddenAdminClass = adminClassMap.getOrElse(oldLink.linkId, None)
+            overriddenAdminClass.foreach { adminClass =>
+              change.newLinks.foreach { newLink =>
+                if (!processedNewLinksAdmin.contains(newLink.linkId)) {
+                  val alreadyUpdatedValue = adminClassMap.get(newLink.linkId).flatten
+                  val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+                  if (adminClass != newLink.adminClass.value && alreadyUpdatedValue.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+                    transferredProperties += AdministrativeClassChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), adminClass, Some(adminClass), Some(oldLink.linkId))
+                    processedNewLinksAdmin += newLink.linkId
+                  }
                 }
               }
             }
           }
 
-          val overriddenAdminClass = adminClassMap.getOrElse(oldLink.linkId, None)
-          overriddenAdminClass.foreach { adminClass =>
+          val roadLinkAttributes = linkAttributeMap.getOrElse(oldLink.linkId, Map())
+          if (roadLinkAttributes.nonEmpty) {
             change.newLinks.foreach { newLink =>
-              if (!processedNewLinksAdmin.contains(newLink.linkId)) {
-                val alreadyUpdatedValue = adminClassMap.get(newLink.linkId).flatten
+              if (!processedNewLinksAttributes.contains(newLink.linkId)) {
+                val alreadyUpdatedValues = linkAttributeMap.getOrElse(newLink.linkId, Map())
                 val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-                if (adminClass != newLink.adminClass.value && alreadyUpdatedValue.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-                  transferredProperties += AdministrativeClassChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), adminClass, Some(adminClass), Some(oldLink.linkId))
-                  processedNewLinksAdmin += newLink.linkId
+                if (alreadyUpdatedValues.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+                  transferredProperties += RoadLinkAttributeChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), roadLinkAttributes, roadLinkAttributes, Some(oldLink.linkId))
+                  processedNewLinksAttributes += newLink.linkId
                 }
-              }
-            }
-          }
-        }
-
-        val roadLinkAttributes = linkAttributeMap.getOrElse(oldLink.linkId, Map())
-        if (roadLinkAttributes.nonEmpty) {
-          change.newLinks.foreach { newLink =>
-            if (!processedNewLinksAttributes.contains(newLink.linkId)) {
-              val alreadyUpdatedValues = linkAttributeMap.getOrElse(newLink.linkId, Map())
-              val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-              if (alreadyUpdatedValues.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-                transferredProperties += RoadLinkAttributeChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), roadLinkAttributes, roadLinkAttributes, Some(oldLink.linkId))
-                processedNewLinksAttributes += newLink.linkId
               }
             }
           }
@@ -407,7 +416,7 @@ class RoadLinkPropertyUpdater {
   }
 
   def runProcess(changes: Seq[RoadLinkChange]): ChangeReport = {
-    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater runProcess with ${changes.size} changes") {
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater runProcess with ${changes.size} changes", startLogging = true) {
       val (addChanges, removeChanges, otherChanges) = partitionChanges(changes)
       val allLinkIds = getAllLinkIds(changes)
 
@@ -419,11 +428,17 @@ class RoadLinkPropertyUpdater {
 
       val (oldLinkList, newLinkList) = compileOldAndNewLinkLists(addChanges ++ otherChanges)
 
-      val functionalClassChanges = accumulateFunctionalClassChanges(createdProperties)
+      val functionalClassChanges = LogUtils.time(logger, s"TEST LOG accumulateFunctionalClassChanges for ${createdProperties.size} created properties", startLogging = true) {
+        accumulateFunctionalClassChanges(createdProperties)
+      }
       val linkTypeChanges = accumulateLinkTypeChanges(createdProperties)
-      val trafficDirectionChanges = accumulateTrafficDirectionChanges(transferredProperties)
+      val trafficDirectionChanges = LogUtils.time(logger, s"TEST LOG accumulateTrafficDirectionChanges for ${transferredProperties.size} transferred properties", startLogging = true) {
+        accumulateTrafficDirectionChanges(transferredProperties)
+      }
       val administrativeClassChanges = accumulateAdministrativeClassChanges(transferredProperties)
-      val linkAttributeChanges = accumulateLinkAttributeChanges(transferredProperties)
+      val linkAttributeChanges = LogUtils.time(logger, s"TEST LOG accumulateLinkAttributeChanges for ${transferredProperties.size} transferred properties", startLogging = true) {
+        accumulateLinkAttributeChanges(transferredProperties)
+      }
 
       val updatedValueCollection = RoadLinkValueCollection(
         functionalClassValues = functionalClassChanges,
@@ -491,7 +506,7 @@ class RoadLinkPropertyUpdater {
                                                oldLinkList: ListBuffer[RoadLinkInfo],
                                                newLinkList: ListBuffer[RoadLinkInfo]
                                              ): Seq[ConstructionTypeChange] = {
-    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater finalizeConstructionTypeChanges with ${changes.size} changes") {
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater finalizeConstructionTypeChanges with ${changes.size} changes", startLogging = true) {
       changes.collect {
         case AdministrativeClassChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
         case TrafficDirectionChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
@@ -522,7 +537,7 @@ class RoadLinkPropertyUpdater {
                                              removeChanges: Seq[RoadLinkChange],
                                              roadLinkValues: RoadLinkValueCollection
                                            ): Seq[ReportedChange] = {
-    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater createReportsForPropertiesToBeDeleted with ${removeChanges.size} changes") {
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater createReportsForPropertiesToBeDeleted with ${removeChanges.size} changes", startLogging = true) {
       val groupedChanges = removeChanges.groupBy(_.oldLink.get.linkId)
       val oldLinkIds = groupedChanges.keys.toSet
 
