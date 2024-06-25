@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService, RoadLinkValueCollection}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LinearAssetUtils}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LinearAssetUtils, LogUtils}
 import fi.liikennevirasto.digiroad2.DummyEventBus
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
@@ -211,43 +211,45 @@ class RoadLinkPropertyUpdater {
   def transferOrGenerateFunctionalClassesAndLinkTypes(changes: Seq[RoadLinkChange],
                                                       existingFunctionalClasses: Seq[RoadLinkValue],
                                                       existingLinkTypes: Seq[RoadLinkValue]): (Seq[ReportedChange], Seq[IncompleteLink]) = {
-    var iteratedNewLinks = Set[String]()
-    var incompleteLinks = List[IncompleteLink]()
-    var createdProperties = List[ReportedChange]()
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater transferOrGenerateFunctionalClassesAndLinkTypes with ${changes.size} changes") {
+      var iteratedNewLinks = Set[String]()
+      var incompleteLinks = List[IncompleteLink]()
+      var createdProperties = List[ReportedChange]()
 
-    val functionalClassMap = existingFunctionalClasses.map(fc => fc.linkId -> fc.value).toMap
-    val linkTypeMap = existingLinkTypes.map(lt => lt.linkId -> lt.value).toMap
+      val functionalClassMap = existingFunctionalClasses.map(fc => fc.linkId -> fc.value).toMap
+      val linkTypeMap = existingLinkTypes.map(lt => lt.linkId -> lt.value).toMap
 
-    changes.foreach { change =>
-      change.changeType match {
-        case Replace =>
-          val newLink = change.newLinks.head
-          val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-          if (!iteratedNewLinks.contains(newLink.linkId) && !FeatureClass.featureClassesToIgnore.contains(featureClass)){
-            val relatedMerges = changes.filter(chg => chg.changeType == Replace && chg.newLinks.head.linkId == newLink.linkId)
-            val (created, failed) = transferFunctionalClassAndLinkTypeForSingleReplace(relatedMerges, newLink, DateTime.now().toString, functionalClassMap, linkTypeMap)
-            createdProperties = createdProperties ++ created.flatten
-            incompleteLinks = incompleteLinks ++ failed
-            iteratedNewLinks = iteratedNewLinks + newLink.linkId
-          }
-        case _ =>
-          val processableNewLinks = change.newLinks.filter(newLink =>
-            isProcessableLink(newLink, functionalClassMap, linkTypeMap) && !iteratedNewLinks.contains(newLink.linkId)
-          )
-          processableNewLinks.foreach { newLink =>
-            val functionalClassChange = transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink, functionalClassMap)
-            val linkTypeChange = transferOrGenerateLinkType(change.changeType, change.oldLink, newLink, linkTypeMap)
-            if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
-              incompleteLinks = incompleteLinks :+ IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
+      changes.foreach { change =>
+        change.changeType match {
+          case Replace =>
+            val newLink = change.newLinks.head
+            val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+            if (!iteratedNewLinks.contains(newLink.linkId) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+              val relatedMerges = changes.filter(chg => chg.changeType == Replace && chg.newLinks.head.linkId == newLink.linkId)
+              val (created, failed) = transferFunctionalClassAndLinkTypeForSingleReplace(relatedMerges, newLink, DateTime.now().toString, functionalClassMap, linkTypeMap)
+              createdProperties = createdProperties ++ created.flatten
+              incompleteLinks = incompleteLinks ++ failed
+              iteratedNewLinks = iteratedNewLinks + newLink.linkId
             }
-            createdProperties = createdProperties ++ functionalClassChange
-            createdProperties = createdProperties ++ linkTypeChange
-            iteratedNewLinks = iteratedNewLinks + newLink.linkId
-          }
+          case _ =>
+            val processableNewLinks = change.newLinks.filter(newLink =>
+              isProcessableLink(newLink, functionalClassMap, linkTypeMap) && !iteratedNewLinks.contains(newLink.linkId)
+            )
+            processableNewLinks.foreach { newLink =>
+              val functionalClassChange = transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink, functionalClassMap)
+              val linkTypeChange = transferOrGenerateLinkType(change.changeType, change.oldLink, newLink, linkTypeMap)
+              if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
+                incompleteLinks = incompleteLinks :+ IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
+              }
+              createdProperties = createdProperties ++ functionalClassChange
+              createdProperties = createdProperties ++ linkTypeChange
+              iteratedNewLinks = iteratedNewLinks + newLink.linkId
+            }
+        }
       }
-    }
 
-    (createdProperties.distinct, incompleteLinks)
+      (createdProperties.distinct, incompleteLinks)
+    }
   }
 
   /**
@@ -320,64 +322,66 @@ class RoadLinkPropertyUpdater {
       }
     }
 
-    val transferredProperties = ListBuffer[ReportedChange]()
-    val processedNewLinksTraffic = mutable.Set[String]()
-    val processedNewLinksAdmin = mutable.Set[String]()
-    val processedNewLinksAttributes = mutable.Set[String]()
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater transferOverriddenPropertiesAndPrivateRoadInfo with ${changes.size} changes") {
+      val transferredProperties = ListBuffer[ReportedChange]()
+      val processedNewLinksTraffic = mutable.Set[String]()
+      val processedNewLinksAdmin = mutable.Set[String]()
+      val processedNewLinksAttributes = mutable.Set[String]()
 
-    val trafficDirectionMap = existingTrafficDirections.map(direction => direction.linkId -> direction.value).toMap
-    val adminClassMap = existingAdministrativeClasses.map(adminClass => adminClass.linkId -> adminClass.value).toMap
-    val linkAttributeMap = existingLinkAttributes.map(linkAttribute => linkAttribute.linkId -> (linkAttribute.attributes)).toMap
-    changes.foreach { change =>
-      val oldLink = change.oldLink.get
-      val versionChange = oldLink.linkId.substring(0, 36) == change.newLinks.head.linkId.substring(0, 36)
-      if (versionChange) {
-        val overriddenTrafficDirection = trafficDirectionMap.getOrElse(oldLink.linkId, None)
-        overriddenTrafficDirection.foreach { direction =>
-          change.newLinks.foreach { newLink =>
-            if (!processedNewLinksTraffic.contains(newLink.linkId)) {
-              val alreadyUpdatedValue = trafficDirectionMap.get(newLink.linkId).flatten
-              val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-              val digitizationChange = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get.digitizationChange
-              val trafficDirectionWithDigitizationCheck = applyDigitizationChange(digitizationChange, direction)
-              if (trafficDirectionWithDigitizationCheck != newLink.trafficDirection.value && alreadyUpdatedValue.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-                transferredProperties += TrafficDirectionChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), direction, Some(trafficDirectionWithDigitizationCheck), Some(oldLink.linkId))
-                processedNewLinksTraffic += newLink.linkId
+      val trafficDirectionMap = existingTrafficDirections.map(direction => direction.linkId -> direction.value).toMap
+      val adminClassMap = existingAdministrativeClasses.map(adminClass => adminClass.linkId -> adminClass.value).toMap
+      val linkAttributeMap = existingLinkAttributes.map(linkAttribute => linkAttribute.linkId -> (linkAttribute.attributes)).toMap
+      changes.foreach { change =>
+        val oldLink = change.oldLink.get
+        val versionChange = oldLink.linkId.substring(0, 36) == change.newLinks.head.linkId.substring(0, 36)
+        if (versionChange) {
+          val overriddenTrafficDirection = trafficDirectionMap.getOrElse(oldLink.linkId, None)
+          overriddenTrafficDirection.foreach { direction =>
+            change.newLinks.foreach { newLink =>
+              if (!processedNewLinksTraffic.contains(newLink.linkId)) {
+                val alreadyUpdatedValue = trafficDirectionMap.get(newLink.linkId).flatten
+                val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+                val digitizationChange = change.replaceInfo.find(_.newLinkId.get == newLink.linkId).get.digitizationChange
+                val trafficDirectionWithDigitizationCheck = applyDigitizationChange(digitizationChange, direction)
+                if (trafficDirectionWithDigitizationCheck != newLink.trafficDirection.value && alreadyUpdatedValue.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+                  transferredProperties += TrafficDirectionChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), direction, Some(trafficDirectionWithDigitizationCheck), Some(oldLink.linkId))
+                  processedNewLinksTraffic += newLink.linkId
+                }
+              }
+            }
+          }
+
+          val overriddenAdminClass = adminClassMap.getOrElse(oldLink.linkId, None)
+          overriddenAdminClass.foreach { adminClass =>
+            change.newLinks.foreach { newLink =>
+              if (!processedNewLinksAdmin.contains(newLink.linkId)) {
+                val alreadyUpdatedValue = adminClassMap.get(newLink.linkId).flatten
+                val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+                if (adminClass != newLink.adminClass.value && alreadyUpdatedValue.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+                  transferredProperties += AdministrativeClassChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), adminClass, Some(adminClass), Some(oldLink.linkId))
+                  processedNewLinksAdmin += newLink.linkId
+                }
               }
             }
           }
         }
 
-        val overriddenAdminClass = adminClassMap.getOrElse(oldLink.linkId, None)
-        overriddenAdminClass.foreach { adminClass =>
+        val roadLinkAttributes = linkAttributeMap.getOrElse(oldLink.linkId, Map())
+        if (roadLinkAttributes.nonEmpty) {
           change.newLinks.foreach { newLink =>
-            if (!processedNewLinksAdmin.contains(newLink.linkId)) {
-              val alreadyUpdatedValue = adminClassMap.get(newLink.linkId).flatten
+            if (!processedNewLinksAttributes.contains(newLink.linkId)) {
+              val alreadyUpdatedValues = linkAttributeMap.getOrElse(newLink.linkId, Map())
               val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-              if (adminClass != newLink.adminClass.value && alreadyUpdatedValue.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-                transferredProperties += AdministrativeClassChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), adminClass, Some(adminClass), Some(oldLink.linkId))
-                processedNewLinksAdmin += newLink.linkId
+              if (alreadyUpdatedValues.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+                transferredProperties += RoadLinkAttributeChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), roadLinkAttributes, roadLinkAttributes, Some(oldLink.linkId))
+                processedNewLinksAttributes += newLink.linkId
               }
             }
           }
         }
       }
-
-      val roadLinkAttributes = linkAttributeMap.getOrElse(oldLink.linkId, Map())
-      if (roadLinkAttributes.nonEmpty) {
-        change.newLinks.foreach { newLink =>
-          if (!processedNewLinksAttributes.contains(newLink.linkId)) {
-            val alreadyUpdatedValues = linkAttributeMap.getOrElse(newLink.linkId, Map())
-            val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-            if (alreadyUpdatedValues.isEmpty && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-              transferredProperties += RoadLinkAttributeChange(newLink.linkId, roadLinkChangeToChangeType(change.changeType), roadLinkAttributes, roadLinkAttributes, Some(oldLink.linkId))
-              processedNewLinksAttributes += newLink.linkId
-            }
-          }
-        }
-      }
+      transferredProperties.distinct
     }
-    transferredProperties.distinct
   }
 
 
@@ -403,38 +407,40 @@ class RoadLinkPropertyUpdater {
   }
 
   def runProcess(changes: Seq[RoadLinkChange]): ChangeReport = {
-    val (addChanges, removeChanges, otherChanges) = partitionChanges(changes)
-    val allLinkIds = getAllLinkIds(changes)
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater runProcess with ${changes.size} changes") {
+      val (addChanges, removeChanges, otherChanges) = partitionChanges(changes)
+      val allLinkIds = getAllLinkIds(changes)
 
-    val valueCollection = roadLinkService.getRoadLinkValuesMass(allLinkIds)
+      val valueCollection = roadLinkService.getRoadLinkValuesMass(allLinkIds)
 
-    val removeReports = createReportsForPropertiesToBeDeleted(removeChanges, valueCollection)
-    val transferredProperties = transferOverriddenPropertiesAndPrivateRoadInfo(otherChanges, valueCollection.trafficDirectionValues, valueCollection.adminClassValues, valueCollection.linkAttributeValues)
-    val (createdProperties, incompleteLinks) = transferOrGenerateFunctionalClassesAndLinkTypes(addChanges ++ otherChanges, valueCollection.functionalClassValues, valueCollection.linkTypeValues)
+      val removeReports = createReportsForPropertiesToBeDeleted(removeChanges, valueCollection)
+      val transferredProperties = transferOverriddenPropertiesAndPrivateRoadInfo(otherChanges, valueCollection.trafficDirectionValues, valueCollection.adminClassValues, valueCollection.linkAttributeValues)
+      val (createdProperties, incompleteLinks) = transferOrGenerateFunctionalClassesAndLinkTypes(addChanges ++ otherChanges, valueCollection.functionalClassValues, valueCollection.linkTypeValues)
 
-    val (oldLinkList, newLinkList) = compileOldAndNewLinkLists(addChanges ++ otherChanges)
+      val (oldLinkList, newLinkList) = compileOldAndNewLinkLists(addChanges ++ otherChanges)
 
-    val functionalClassChanges = accumulateFunctionalClassChanges(createdProperties)
-    val linkTypeChanges = accumulateLinkTypeChanges(createdProperties)
-    val trafficDirectionChanges = accumulateTrafficDirectionChanges(transferredProperties)
-    val administrativeClassChanges = accumulateAdministrativeClassChanges(transferredProperties)
-    val linkAttributeChanges = accumulateLinkAttributeChanges(transferredProperties)
+      val functionalClassChanges = accumulateFunctionalClassChanges(createdProperties)
+      val linkTypeChanges = accumulateLinkTypeChanges(createdProperties)
+      val trafficDirectionChanges = accumulateTrafficDirectionChanges(transferredProperties)
+      val administrativeClassChanges = accumulateAdministrativeClassChanges(transferredProperties)
+      val linkAttributeChanges = accumulateLinkAttributeChanges(transferredProperties)
 
-    val updatedValueCollection = RoadLinkValueCollection(
-      functionalClassValues = functionalClassChanges,
-      linkTypeValues = linkTypeChanges,
-      trafficDirectionValues = trafficDirectionChanges,
-      adminClassValues = administrativeClassChanges,
-      linkAttributeValues = linkAttributeChanges
-    )
+      val updatedValueCollection = RoadLinkValueCollection(
+        functionalClassValues = functionalClassChanges,
+        linkTypeValues = linkTypeChanges,
+        trafficDirectionValues = trafficDirectionChanges,
+        adminClassValues = administrativeClassChanges,
+        linkAttributeValues = linkAttributeChanges
+      )
 
-    roadLinkService.insertRoadLinkValuesMass(updatedValueCollection)
-    performIncompleteLinkUpdate(incompleteLinks)
+      roadLinkService.insertRoadLinkValuesMass(updatedValueCollection)
+      performIncompleteLinkUpdate(incompleteLinks)
 
-    val finalChanges = transferredProperties ++ createdProperties ++ removeReports
-    val constructionTypeChanges = finalizeConstructionTypeChanges(finalChanges, oldLinkList, newLinkList)
+      val finalChanges = transferredProperties ++ createdProperties ++ removeReports
+      val constructionTypeChanges = finalizeConstructionTypeChanges(finalChanges, oldLinkList, newLinkList)
 
-    ChangeReport(RoadLinkProperties.typeId, finalChanges ++ constructionTypeChanges)
+      ChangeReport(RoadLinkProperties.typeId, finalChanges ++ constructionTypeChanges)
+    }
   }
 
   private def partitionChanges(changes: Seq[RoadLinkChange]): (Seq[RoadLinkChange], Seq[RoadLinkChange], Seq[RoadLinkChange]) = {
@@ -485,13 +491,15 @@ class RoadLinkPropertyUpdater {
                                                oldLinkList: ListBuffer[RoadLinkInfo],
                                                newLinkList: ListBuffer[RoadLinkInfo]
                                              ): Seq[ConstructionTypeChange] = {
-    changes.collect {
-      case AdministrativeClassChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-      case TrafficDirectionChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-      case RoadLinkAttributeChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-      case FunctionalClassChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-      case LinkTypeChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-    }.flatten.distinct
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater finalizeConstructionTypeChanges with ${changes.size} changes") {
+      changes.collect {
+        case AdministrativeClassChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
+        case TrafficDirectionChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
+        case RoadLinkAttributeChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
+        case FunctionalClassChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
+        case LinkTypeChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
+      }.flatten.distinct
+    }
   }
 
   private def addConstructionTypeChange(oldLinkList: ListBuffer[RoadLinkInfo], newLinkList:ListBuffer[RoadLinkInfo], newLinkId: String, oldLinkId: Option[String]): Option[ConstructionTypeChange] = {
@@ -514,40 +522,42 @@ class RoadLinkPropertyUpdater {
                                              removeChanges: Seq[RoadLinkChange],
                                              roadLinkValues: RoadLinkValueCollection
                                            ): Seq[ReportedChange] = {
-    val groupedChanges = removeChanges.groupBy(_.oldLink.get.linkId)
-    val oldLinkIds = groupedChanges.keys.toSet
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater createReportsForPropertiesToBeDeleted with ${removeChanges.size} changes") {
+      val groupedChanges = removeChanges.groupBy(_.oldLink.get.linkId)
+      val oldLinkIds = groupedChanges.keys.toSet
 
-    val deletedTrafficDirections: Seq[ReportedChange] = roadLinkValues.trafficDirectionValues
-      .filter { case RoadLinkValue(linkId, value) => oldLinkIds.contains(linkId) && value.isDefined }
-      .map { case RoadLinkValue(linkId, Some(value)) =>
-        TrafficDirectionChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), value, None, linkIdOld = Some(linkId))
-      }
+      val deletedTrafficDirections: Seq[ReportedChange] = roadLinkValues.trafficDirectionValues
+        .filter { case RoadLinkValue(linkId, value) => oldLinkIds.contains(linkId) && value.isDefined }
+        .map { case RoadLinkValue(linkId, Some(value)) =>
+          TrafficDirectionChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), value, None, linkIdOld = Some(linkId))
+        }
 
-    val deletedAdministrativeClasses: Seq[ReportedChange] = roadLinkValues.adminClassValues
-      .filter { case RoadLinkValue(linkId, value) => oldLinkIds.contains(linkId) && value.isDefined }
-      .map { case RoadLinkValue(linkId, Some(value)) =>
-        AdministrativeClassChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), value, None, linkIdOld = Some(linkId))
-      }
+      val deletedAdministrativeClasses: Seq[ReportedChange] = roadLinkValues.adminClassValues
+        .filter { case RoadLinkValue(linkId, value) => oldLinkIds.contains(linkId) && value.isDefined }
+        .map { case RoadLinkValue(linkId, Some(value)) =>
+          AdministrativeClassChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), value, None, linkIdOld = Some(linkId))
+        }
 
-    val deletedFunctionalClasses: Seq[ReportedChange] = roadLinkValues.functionalClassValues
-      .filter { case RoadLinkValue(linkId, value) => oldLinkIds.contains(linkId) && value.isDefined }
-      .map { case RoadLinkValue(linkId, Some(value)) =>
-        FunctionalClassChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), Some(value), None, linkIdOld = Some(linkId))
-      }
+      val deletedFunctionalClasses: Seq[ReportedChange] = roadLinkValues.functionalClassValues
+        .filter { case RoadLinkValue(linkId, value) => oldLinkIds.contains(linkId) && value.isDefined }
+        .map { case RoadLinkValue(linkId, Some(value)) =>
+          FunctionalClassChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), Some(value), None, linkIdOld = Some(linkId))
+        }
 
-    val deletedLinkTypes: Seq[ReportedChange] = roadLinkValues.linkTypeValues
-      .filter { case RoadLinkValue(linkId, value) => oldLinkIds.contains(linkId) && value.isDefined }
-      .map { case RoadLinkValue(linkId, Some(value)) =>
-        LinkTypeChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), Some(value), None, linkIdOld = Some(linkId))
-      }
+      val deletedLinkTypes: Seq[ReportedChange] = roadLinkValues.linkTypeValues
+        .filter { case RoadLinkValue(linkId, value) => oldLinkIds.contains(linkId) && value.isDefined }
+        .map { case RoadLinkValue(linkId, Some(value)) =>
+          LinkTypeChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), Some(value), None, linkIdOld = Some(linkId))
+        }
 
-    val deletedAttributes: Seq[ReportedChange] = roadLinkValues.linkAttributeValues
-      .filter { case RoadLinkAttribute(linkId, _) => oldLinkIds.contains(linkId) }
-      .map { case RoadLinkAttribute(linkId, oldAttributes) =>
-        RoadLinkAttributeChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), oldAttributes, Map(), linkIdOld = Some(linkId))
-      }
+      val deletedAttributes: Seq[ReportedChange] = roadLinkValues.linkAttributeValues
+        .filter { case RoadLinkAttribute(linkId, _) => oldLinkIds.contains(linkId) }
+        .map { case RoadLinkAttribute(linkId, oldAttributes) =>
+          RoadLinkAttributeChange(linkId, roadLinkChangeToChangeType(groupedChanges(linkId).head.changeType), oldAttributes, Map(), linkIdOld = Some(linkId))
+        }
 
-    (deletedTrafficDirections ++ deletedAdministrativeClasses ++ deletedFunctionalClasses ++ deletedLinkTypes ++ deletedAttributes).distinct
+      (deletedTrafficDirections ++ deletedAdministrativeClasses ++ deletedFunctionalClasses ++ deletedLinkTypes ++ deletedAttributes).distinct
+    }
   }
 
 
