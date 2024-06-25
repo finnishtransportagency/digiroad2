@@ -89,7 +89,7 @@ object Digiroad2Build extends Build {
         "com.sun.mail" % "javax.mail" % "1.6.1",
         "org.postgresql" % "postgresql" % "42.3.9",
         "net.postgis" % "postgis-jdbc" % "2023.1.0" exclude("org.postgresql","postgresql"),
-        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
         "net.spy" % "spymemcached" % "2.12.3",
         "software.amazon.awssdk" % "s3" % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
