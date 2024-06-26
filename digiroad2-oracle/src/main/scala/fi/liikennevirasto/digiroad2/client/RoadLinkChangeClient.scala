@@ -113,6 +113,7 @@ class RoadLinkChangeClient {
         case 2 => TrafficDirection.AgainstDigitizing
         case _ => TrafficDirection.UnknownDirection
       }
+    case JNull => TrafficDirection.UnknownDirection
   },
   {
     case trafficDirection: TrafficDirection =>
@@ -133,6 +134,7 @@ class RoadLinkChangeClient {
         case 2 => SurfaceType.Paved
         case _ => SurfaceType.Unknown
       }
+    case JNull => SurfaceType.Unknown
   },
   {
     case surfaceType: SurfaceType =>
@@ -154,6 +156,7 @@ class RoadLinkChangeClient {
         case 5 => ConstructionType.ExpiringSoon
         case _ => ConstructionType.UnknownConstructionType
       }
+    case JNull => ConstructionType.UnknownConstructionType
   }, {
     case c: ConstructionType =>
       c match {
