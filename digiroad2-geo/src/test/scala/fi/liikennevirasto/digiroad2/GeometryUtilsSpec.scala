@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import com.vividsolutions.jts.geom.LineString
+import org.locationtech.jts.geom.LineString
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import org.scalatest._
 

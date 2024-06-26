@@ -355,9 +355,19 @@ Resources:
                   - "s3:PutObject"
               - Effect: "Allow"
                 Resource:
-                  - arn:aws:s3:::geotools-repo/*
+                  - arn:aws:s3:::sbt-repository/*
                 Action:
                   - "s3:GetObject"
+              - Effect: "Allow"
+                Resource:
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/digiroad"
+                Action:
+                  - codeartifact:*
+              - Effect: "Allow"
+                Resource: "*"
+                Action: "sts:GetServiceBearerToken"
   ECRRepo:
     Type: AWS::ECR::Repository
     Properties:
@@ -422,3 +432,10 @@ Resources:
                   }
               ]
           }
+
+Outputs:
+  DevCodeBuildRole:
+    Description: ARN of role for dev pipeline CodeBuild
+    Value: !GetAtt CodeBuildRole.Arn
+    Export:
+      Name: 'DevCodeBuildRole'

@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import java.nio.charset.StandardCharsets
-import java.util.{Base64, NoSuchElementException}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -14,7 +12,6 @@ import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, Sequenc
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewSpeedLimitMassOperation}
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
-import org.postgis.PGgeometry
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 

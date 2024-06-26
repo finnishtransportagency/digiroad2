@@ -94,7 +94,7 @@ class VKMClient {
       }
       
       val aux = response.getEntity.getContent
-      val content: FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
+      val content: FeatureCollection = parse(StreamInput(aux).stream).extract[FeatureCollection]
       val contentFiltered = content.copy(features = content.features.filterNot(_.properties.contains("virheet")))
       Left(contentFiltered)
     } catch {
@@ -118,7 +118,7 @@ class VKMClient {
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
       }
       val aux = response.getEntity.getContent
-      val content:FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
+      val content:FeatureCollection = parse(StreamInput(aux).stream).extract[FeatureCollection]
       val (errorFeatures, okFeatures) = content.features.partition(_.properties.contains("virheet"))
       if (errorFeatures.nonEmpty && okFeatures.isEmpty) {
         return Right(VKMError(Map("error" -> errorFeatures.head.properties("virheet")), url))

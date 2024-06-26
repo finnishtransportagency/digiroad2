@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.service.AssetOnExpiredLink
 import org.joda.time.DateTime
-import org.postgis.PGgeometry
+import net.postgis.jdbc.PGgeometry
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.postgresql.util.PGobject
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -18,7 +19,7 @@ class AssetsOnExpiredLinksDAO {
     if (geometry == null) Nil
     else {
       val geomValue = geometry.getValue
-      val geom = PGgeometry.geomFromString(geomValue)
+      val geom = GeometryBuilder.geomFromString(geomValue)
       val listOfPoint= ListBuffer[List[Double]]()
       for (i <- 0 until geom.numPoints() ){
         val point =geom.getPoint(i)
