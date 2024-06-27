@@ -108,6 +108,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     {
       case JString(dateTimeStr) =>
         DateTimePropertyFormat.parseDateTime(dateTimeStr)
+      case JNull => null
     },
     {
       case dateTime: DateTime => JString(dateTime.toString(DateTimePropertyFormat))
@@ -122,36 +123,42 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   case object WidthLimitReasonSerializer extends CustomSerializer[WidthLimitReason](format => ({
     case JInt(lg) => WidthLimitReason.apply(lg.toInt)
+    case JNull => WidthLimitReason.Unknown
   }, {
     case lg: WidthLimitReason => JInt(lg.value)
   }))
 
   case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
     case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+    case JNull => LinkGeomSource.Unknown
   }, {
     case lg: LinkGeomSource => JInt(lg.value)
   }))
 
   case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ( {
     case JString(direction) => TrafficDirection(direction)
+    case JNull => TrafficDirection.UnknownDirection
   }, {
     case t: TrafficDirection => JString(t.toString)
   }))
 
   case object DayofWeekSerializer extends CustomSerializer[ValidityPeriodDayOfWeek](format => ( {
     case JString(dayOfWeek) => ValidityPeriodDayOfWeek(dayOfWeek)
+    case JNull => ValidityPeriodDayOfWeek.Unknown
   }, {
     case d: ValidityPeriodDayOfWeek => JString(d.toString)
   }))
 
   case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ( {
     case JInt(linkType) => LinkType(linkType.toInt)
+    case JNull => UnknownLinkType
   }, {
     case lt: LinkType => JInt(BigInt(lt.value))
   }))
 
   case object AdministrativeClassSerializer extends CustomSerializer[AdministrativeClass](format => ( {
     case JString(administrativeClass) => AdministrativeClass(administrativeClass)
+    case JNull => Unknown
   }, {
     case ac: AdministrativeClass => JString(ac.toString)
   }))
@@ -164,6 +171,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         val groupedId: Long =  (jsonObj \ "groupedId").extractOrElse(0)
 
         SimplePointAssetProperty(publicId, propertyValue, groupedId)
+      case JNull => null
     },
       {
         case tv : SimplePointAssetProperty => Extraction.decompose(tv)
@@ -171,6 +179,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   case object AdditionalInfoClassSerializer extends CustomSerializer[AdditionalInformation](format => ( {
     case JString(additionalInfo) => AdditionalInformation(additionalInfo)
+    case JNull => null
   }, {
     case ai: AdditionalInformation => JString(ai.toString)
   }))
