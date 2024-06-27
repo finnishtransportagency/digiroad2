@@ -202,54 +202,62 @@ class RoadLinkPropertyUpdater {
   }
 
   /**
-   * Processes a sequence of road link changes to generate or transfer functional classes and link types.
-   * Minimizes database calls by fetching existing values in bulk and processes changes in memory before doing bulk inserts.
+   * Transfers or generates functional classes and link types for a given set of road link changes.
    *
-   * @param changes The sequence of RoadLinkChange instances to process.
-   * @return A sequence of ReportedChange containing the generated or transferred properties, a sequence of Links where generation of transfer of properties failed
+   * Processes a sequence of road link changes and updates the functional classes and link types based on the changes.
+   * Replace changes are partitioned from other changes and processed separately.
+   * During Replace, any new link inherits or generates properties only once and is ignored afterwards.
+   * Any incomplete links or reported changes are collected and returned.
+   *
+   * @param changes A sequence of road link changes to process.
+   * @param existingFunctionalClasses A sequence of existing functional class values per road link.
+   * @param existingLinkTypes A sequence of existing link type values per road link.
+   * @return A tuple containing:
+   *         - A sequence of reported changes that were successfully created.
+   *         - A sequence of incomplete links that could not be fully processed.
    */
   def transferOrGenerateFunctionalClassesAndLinkTypes(changes: Seq[RoadLinkChange],
                                                       existingFunctionalClasses: Seq[RoadLinkValue],
                                                       existingLinkTypes: Seq[RoadLinkValue]): (Seq[ReportedChange], Seq[IncompleteLink]) = {
     LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater transferOrGenerateFunctionalClassesAndLinkTypes with ${changes.size} changes", startLogging = true) {
-      var iteratedNewLinks = Set[String]()
-      var incompleteLinks = List[IncompleteLink]()
-      var createdProperties = List[ReportedChange]()
+      val iteratedNewLinks = mutable.Set[String]()
+      val incompleteLinks = ListBuffer[IncompleteLink]()
+      val createdProperties = ListBuffer[ReportedChange]()
 
       val functionalClassMap = existingFunctionalClasses.map(fc => fc.linkId -> fc.value).toMap
       val linkTypeMap = existingLinkTypes.map(lt => lt.linkId -> lt.value).toMap
+      val (replaceChanges, otherChanges) = changes.partition(_.changeType == Replace)
+      val replaceGrouped = replaceChanges.groupBy(_.newLinks.head)
 
-      changes.foreach { change =>
+      replaceGrouped.foreach { case (newLink, relatedMerges) =>
+        val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
+        LogUtils.time(logger, s"TEST LOG transferOrGenerateFunctionalClassesAndLinkTypes, process single Replace change", startLogging = true) {
+          if (!iteratedNewLinks.contains(newLink.linkId) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
+            val (created, failed) = transferFunctionalClassAndLinkTypeForSingleReplace(relatedMerges, newLink, DateTime.now().toString, functionalClassMap, linkTypeMap)
+            createdProperties ++= created
+            incompleteLinks ++= failed
+            iteratedNewLinks += newLink.linkId
+          }
+        }
+      }
+      otherChanges.foreach { change =>
         LogUtils.time(logger, s"TEST LOG transferOrGenerateFunctionalClassesAndLinkTypes, process single ${change.changeType} change", startLogging = true) {
-          change.changeType match {
-            case Replace =>
-              val newLink = change.newLinks.head
-              val featureClass = KgvUtil.extractFeatureClass(newLink.roadClass)
-              if (!iteratedNewLinks.contains(newLink.linkId) && !FeatureClass.featureClassesToIgnore.contains(featureClass)) {
-                val relatedMerges = changes.filter(chg => chg.changeType == Replace && chg.newLinks.head.linkId == newLink.linkId)
-                val (created, failed) = transferFunctionalClassAndLinkTypeForSingleReplace(relatedMerges, newLink, DateTime.now().toString, functionalClassMap, linkTypeMap)
-                createdProperties = createdProperties ++ created.flatten
-                incompleteLinks = incompleteLinks ++ failed
-                iteratedNewLinks = iteratedNewLinks + newLink.linkId
-              }
-            case _ =>
-              val processableNewLinks = change.newLinks.filter(newLink =>
-                isProcessableLink(newLink, functionalClassMap, linkTypeMap) && !iteratedNewLinks.contains(newLink.linkId)
-              )
-              processableNewLinks.foreach { newLink =>
-                val functionalClassChange = LogUtils.time(logger, s"TEST LOG transferOrGenerateFunctionalClass for single ${change.changeType}", startLogging = true) {
-                  transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink, functionalClassMap)
-                }
-                val linkTypeChange = LogUtils.time(logger, s"TEST LOG transferOrGenerateLinkType for single ${change.changeType}", startLogging = true) {
-                  transferOrGenerateLinkType(change.changeType, change.oldLink, newLink, linkTypeMap)
-                }
-                if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
-                  incompleteLinks = incompleteLinks :+ IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
-                }
-                createdProperties = createdProperties ++ functionalClassChange
-                createdProperties = createdProperties ++ linkTypeChange
-                iteratedNewLinks = iteratedNewLinks + newLink.linkId
-              }
+          val processableNewLinks = change.newLinks.filter(newLink =>
+            isProcessableLink(newLink, functionalClassMap, linkTypeMap) && !iteratedNewLinks.contains(newLink.linkId)
+          )
+          processableNewLinks.foreach { newLink =>
+            val functionalClassChange = LogUtils.time(logger, s"TEST LOG transferOrGenerateFunctionalClass for single ${change.changeType}", startLogging = true) {
+              transferOrGenerateFunctionalClass(change.changeType, change.oldLink, newLink, functionalClassMap)
+            }
+            val linkTypeChange = LogUtils.time(logger, s"TEST LOG transferOrGenerateLinkType for single ${change.changeType}", startLogging = true) {
+              transferOrGenerateLinkType(change.changeType, change.oldLink, newLink, linkTypeMap)
+            }
+            if (functionalClassChange.isEmpty || linkTypeChange.isEmpty) {
+              incompleteLinks += IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
+            }
+            createdProperties ++= functionalClassChange
+            createdProperties ++= linkTypeChange
+            iteratedNewLinks += newLink.linkId
           }
         }
       }
@@ -269,39 +277,35 @@ class RoadLinkPropertyUpdater {
    * @return A tuple (List of created properties, List of incomplete links).
    */
   private def transferFunctionalClassAndLinkTypeForSingleReplace(relatedMerges: Seq[RoadLinkChange],
-                                                             newLink: RoadLinkInfo,
-                                                             timestamp: String,
-                                                             existingFunctionalClasses: Map[String, Option[Int]],
-                                                             existingLinkTypes: Map[String, Option[Int]]
-                                                           ): (List[Option[ReportedChange]], List[IncompleteLink]) = {
+                                                                 newLink: RoadLinkInfo,
+                                                                 timestamp: String,
+                                                                 existingFunctionalClasses: Map[String, Option[Int]],
+                                                                 existingLinkTypes: Map[String, Option[Int]]
+                                                                ): (ListBuffer[ReportedChange], ListBuffer[IncompleteLink]) = {
     LogUtils.time(logger, "TEST LOG transferFunctionalClassAndLinkTypeForSingleReplace", startLogging = true) {
-      var incompleteLink = List[IncompleteLink]()
-      var createdProperties = List[Option[ReportedChange]]()
+      val incompleteLink = ListBuffer[IncompleteLink]()
+      val createdProperties = ListBuffer[ReportedChange]()
       var functionalClassTransferred = false
       var linkTypeTransferred = false
 
       relatedMerges.foreach { merge =>
         if (incompleteLink.isEmpty) {
           if (!functionalClassTransferred) {
-            transferFunctionalClass(merge.changeType, merge.oldLink.get, newLink, existingFunctionalClasses) match {
-              case Some(functionalClassChange) =>
-                createdProperties = createdProperties :+ Some(functionalClassChange)
-                functionalClassTransferred = true
-              case None =>
+            transferFunctionalClass(merge.changeType, merge.oldLink.get, newLink, existingFunctionalClasses).foreach { functionalClassChange =>
+              createdProperties += functionalClassChange
+              functionalClassTransferred = true
             }
           }
 
           if (!linkTypeTransferred) {
-            transferLinkType(merge.changeType, merge.oldLink.get, newLink, existingLinkTypes) match {
-              case Some(linkTypeChange) =>
-                createdProperties = createdProperties :+ Some(linkTypeChange)
-                linkTypeTransferred = true
-              case None =>
+            transferLinkType(merge.changeType, merge.oldLink.get, newLink, existingLinkTypes).foreach { linkTypeChange =>
+              createdProperties += linkTypeChange
+              linkTypeTransferred = true
             }
           }
 
           if (!functionalClassTransferred || !linkTypeTransferred) {
-            incompleteLink = incompleteLink :+ IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
+            incompleteLink += IncompleteLink(newLink.linkId, newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code")), newLink.adminClass)
           }
         }
       }
@@ -405,7 +409,7 @@ class RoadLinkPropertyUpdater {
       ChangeReporter.saveReportToS3("roadLinkProperties", changeSet.targetDate, reportBody, contentRowCount)
       Queries.updateLatestSuccessfulSamuutus(RoadLinkProperties.typeId, changeSet.targetDate)
     }
-    
+
     })
   }
 
@@ -525,10 +529,10 @@ class RoadLinkPropertyUpdater {
     Some(ConstructionTypeChange(newLinkId, ChangeTypeReport.Dummy, lifeCycleStatusOld, lifeCycleStatusNew))
   }
   /**
-    *  Create ReportedChange objects for removed road link properties.
-    *  Expired road links and their properties are only deleted later after all samuutus-batches have completed
-    *  and the expired links have no assets left on them
-    *
+   *  Create ReportedChange objects for removed road link properties.
+   *  Expired road links and their properties are only deleted later after all samuutus-batches have completed
+   *  and the expired links have no assets left on them
+   *
    * @param removeChanges  A sequence of RoadLinkChange objects representing the changes to be removed.
    * @param roadLinkValues A RoadLinkValueCollection containing the existing values of various road link properties.
    * @return A sequence of ReportedChange objects representing the properties that were deleted.
