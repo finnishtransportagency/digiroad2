@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 import org.json4s.jackson.Json
-import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JObject}
+import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JNull, JObject}
 import org.slf4j.LoggerFactory
 
 import scala.util.Try
@@ -55,16 +55,20 @@ trait TrafficSignLinearGenerator {
         val numCharacterMax = (jsonObj \ "numCharacterMax").extractOpt[Int]
 
         Property(id, publicId, propertyType, required, values, numCharacterMax)
+      case JNull => null
     },
       {
         case tv : Property =>
           Extraction.decompose(tv)
+        case _ => JNull
       }))
 
   case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
     case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+    case JNull => LinkGeomSource.Unknown
   }, {
     case lg: LinkGeomSource => JInt(lg.value)
+    case _ => JNull
   }))
 
   protected implicit val jsonFormats: Formats = DefaultFormats + TrafficSignSerializer + LinkGeomSourceSerializer
