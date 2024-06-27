@@ -85,10 +85,12 @@ class RoadLinkChangeClient {
     {
       case JString(stringValue) =>
         RoadLinkChangeType(stringValue)
+      case JNull => RoadLinkChangeType.Unknown
     },
     {
       case changeType: RoadLinkChangeType =>
         JObject(JField("changeType", JString(changeType.value)))
+      case _ => JNull
     }
   ))
 
@@ -101,6 +103,7 @@ class RoadLinkChangeClient {
     {
       case adminClass: AdministrativeClass =>
         JObject(JField("adminClass", JInt(adminClass.value)))
+      case _ => JNull
     }
   ))
 
@@ -113,6 +116,7 @@ class RoadLinkChangeClient {
         case 2 => TrafficDirection.AgainstDigitizing
         case _ => TrafficDirection.UnknownDirection
       }
+    case JNull => TrafficDirection.UnknownDirection
   },
   {
     case trafficDirection: TrafficDirection =>
@@ -133,6 +137,7 @@ class RoadLinkChangeClient {
         case 2 => SurfaceType.Paved
         case _ => SurfaceType.Unknown
       }
+    case JNull => SurfaceType.Unknown
   },
   {
     case surfaceType: SurfaceType =>
@@ -154,6 +159,7 @@ class RoadLinkChangeClient {
         case 5 => ConstructionType.ExpiringSoon
         case _ => ConstructionType.UnknownConstructionType
       }
+    case JNull => ConstructionType.UnknownConstructionType
   }, {
     case c: ConstructionType =>
       c match {
@@ -172,10 +178,12 @@ class RoadLinkChangeClient {
     {
       case JString(lineString) =>
         lineStringToPoints(lineString)
+      case JNull => null
     },
     {
       case points: List[Point] =>
         JObject(JField("geometry", JString(""))) // not implemented until reverse operation is needed
+      case _ => JNull
     }
   ))
 

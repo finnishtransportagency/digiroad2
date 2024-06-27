@@ -17,7 +17,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
   test("test json convert with whole set and filter changes missing municipality") {
-    changes.size should be(89)
+    changes.size should be(90)
   }
 
   test("RoadLinkChange for 'add' contains correct info") {
@@ -173,5 +173,16 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     roadlinkChanges_all.size should not be(0)
     roadlinkChanges_all.foreach(
       _.changes.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true)))
+  }
+
+  test("null surfaceType should be serialized as Unknown") {
+    val replaceChange = changes.find(c => c.changeType == Replace && c.oldLink.get.linkId == "8619f047-cf35-4d2e-a9d7-ae00349e872b:1").get
+    replaceChange.changeType should be(Replace)
+    replaceChange.oldLink.get.linkId should be("8619f047-cf35-4d2e-a9d7-ae00349e872b:1")
+    replaceChange.oldLink.get.surfaceType should be(SurfaceType.Unknown)
+
+    replaceChange.newLinks.size should be(1)
+    replaceChange.newLinks.head.linkId should be("8619f047-cf35-4d2e-a9d7-ae00349e872b:2")
+    replaceChange.oldLink.get.surfaceType should be(SurfaceType.Unknown)
   }
 }
