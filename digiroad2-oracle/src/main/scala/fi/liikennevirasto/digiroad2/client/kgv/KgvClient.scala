@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import com.vividsolutions.jts.geom.Polygon
+import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils.isPointInsideGeometry
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
@@ -116,7 +116,7 @@ class KgvMunicipalityBorderClient(collection: Option[KgvCollection], linkGeomSou
         response = client.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
         if (statusCode == HttpStatus.SC_OK) {
-          val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+          val feature = parse(StreamInput(response.getEntity.getContent).stream).values.asInstanceOf[Map[String, Any]]
           val resort = feature("type").toString match {
             case "FeatureCollection" =>
               Some(FeatureCollection(

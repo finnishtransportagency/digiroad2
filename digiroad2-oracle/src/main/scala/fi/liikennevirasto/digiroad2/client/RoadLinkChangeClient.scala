@@ -12,7 +12,8 @@ import org.json4s.FieldSerializer.{renameFrom, renameTo}
 import org.json4s.JsonAST.JString
 import org.json4s.jackson.parseJson
 import org.json4s.{CustomSerializer, _}
-import org.postgis.PGgeometry
+import net.postgis.jdbc.PGgeometry
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -67,7 +68,7 @@ class RoadLinkChangeClient {
   }
 
   private def lineStringToPoints(lineString: String): List[Point] = {
-    val geometry = PGgeometry.geomFromString(lineString)
+    val geometry = GeometryBuilder.geomFromString(lineString)
     val pointsList = ListBuffer[List[Double]]()
     for (i <- 0 until geometry.numPoints()) {
       val point = geometry.getPoint(i)
@@ -84,10 +85,12 @@ class RoadLinkChangeClient {
     {
       case JString(stringValue) =>
         RoadLinkChangeType(stringValue)
+      case JNull => RoadLinkChangeType.Unknown
     },
     {
       case changeType: RoadLinkChangeType =>
         JObject(JField("changeType", JString(changeType.value)))
+      case _ => JNull
     }
   ))
 
@@ -100,6 +103,7 @@ class RoadLinkChangeClient {
     {
       case adminClass: AdministrativeClass =>
         JObject(JField("adminClass", JInt(adminClass.value)))
+      case _ => JNull
     }
   ))
 
@@ -112,6 +116,7 @@ class RoadLinkChangeClient {
         case 2 => TrafficDirection.AgainstDigitizing
         case _ => TrafficDirection.UnknownDirection
       }
+    case JNull => TrafficDirection.UnknownDirection
   },
   {
     case trafficDirection: TrafficDirection =>
@@ -132,6 +137,7 @@ class RoadLinkChangeClient {
         case 2 => SurfaceType.Paved
         case _ => SurfaceType.Unknown
       }
+    case JNull => SurfaceType.Unknown
   },
   {
     case surfaceType: SurfaceType =>
@@ -153,6 +159,7 @@ class RoadLinkChangeClient {
         case 5 => ConstructionType.ExpiringSoon
         case _ => ConstructionType.UnknownConstructionType
       }
+    case JNull => ConstructionType.UnknownConstructionType
   }, {
     case c: ConstructionType =>
       c match {
@@ -171,10 +178,12 @@ class RoadLinkChangeClient {
     {
       case JString(lineString) =>
         lineStringToPoints(lineString)
+      case JNull => null
     },
     {
       case points: List[Point] =>
         JObject(JField("geometry", JString(""))) // not implemented until reverse operation is needed
+      case _ => JNull
     }
   ))
 

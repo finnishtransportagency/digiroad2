@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import com.vividsolutions.jts.geom.Polygon
+import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
