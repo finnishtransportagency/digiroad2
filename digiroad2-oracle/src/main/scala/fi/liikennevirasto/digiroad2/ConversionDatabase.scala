@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import org.postgis.PGgeometry
+import net.postgis.jdbc.PGgeometry
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.postgresql.util.PGobject
 import slick.jdbc.{GetResult, PositionedResult}
 import scala.collection.mutable.ListBuffer
@@ -13,7 +14,7 @@ object ConversionDatabase {
   private def toPoints(bytes: Object): Seq[Point] = {
     val geometry = bytes.asInstanceOf[PGobject]
     if (geometry == null) Nil else{
-      val geom = PGgeometry.geomFromString(geometry.getValue)
+      val geom = GeometryBuilder.geomFromString(geometry.getValue)
       if(geom.numPoints()==1 ) {
         val point = geom.getFirstPoint
         List(Point(point.x, point.y))

@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import org.joda.time.DateTime
 import org.json4s.jackson.Json
-import org.json4s.{CustomSerializer, DefaultFormats, Formats, JInt, JString}
+import org.json4s.{CustomSerializer, DefaultFormats, Formats, JInt, JNull, JString}
 
 
 object TrafficSignManager {
@@ -47,14 +47,17 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
 
   case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
     case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+    case JNull => LinkGeomSource.Unknown
   }, {
     case lg: LinkGeomSource => JInt(lg.value)
+    case _ => JNull
   }))
 
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
     case _ => throw new NotImplementedError("DateTime deserialization")
   }, {
     case d: DateTime => JString(DateParser.dateToString(d, DateParser.DateTimePropertyFormat))
+    case JNull => null
   }))
 
   protected implicit val jsonFormats: Formats = DefaultFormats + LinkGeomSourceSerializer + DateTimeSerializer

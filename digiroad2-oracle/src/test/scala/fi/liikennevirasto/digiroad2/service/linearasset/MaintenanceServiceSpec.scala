@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
+import org.locationtech.jts.geom.{GeometryFactory, Polygon}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}

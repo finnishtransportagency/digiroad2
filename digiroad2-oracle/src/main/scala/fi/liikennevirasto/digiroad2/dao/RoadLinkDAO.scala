@@ -2,17 +2,16 @@ package fi.liikennevirasto.digiroad2.dao
 
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import com.vividsolutions.jts.geom.Polygon
+import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, LinkIdAndExpiredDate, RoadLinkFetched}
-import fi.liikennevirasto.digiroad2.linearasset.LinkId
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, PositionedResult}
@@ -457,7 +456,7 @@ class RoadLinkDAO {
     if (geometry == null) Nil
     else {
       val geomValue = geometry.getValue
-      val geom = PGgeometry.geomFromString(geomValue)
+      val geom = GeometryBuilder.geomFromString(geomValue)
       val listOfPoint= ListBuffer[List[Double]]()
       for (i <- 0 until geom.numPoints() ){
         val point =geom.getPoint(i)
