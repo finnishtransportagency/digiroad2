@@ -46,11 +46,13 @@ class RoadLinkPropertyUpdater {
    * @return An Option containing the FunctionalClassChange, or None if the transfer was not possible.
    */
   private def transferFunctionalClass(changeType: RoadLinkChangeType, oldLink: RoadLinkInfo, newLink: RoadLinkInfo, existingFunctionalClasses: Map[String, Option[Int]]): Option[FunctionalClassChange] = {
-    existingFunctionalClasses.get(oldLink.linkId).flatten match {
-      case Some(functionalClass) =>
-        Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), Some(functionalClass), Some(functionalClass), "oldLink", Some(oldLink.linkId)))
-      case _ => None
-    }
+      existingFunctionalClasses.get(oldLink.linkId).flatten match {
+        case Some(functionalClass) =>
+          Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), Some(functionalClass), Some(functionalClass), "oldLink", Some(oldLink.linkId)))
+        case _ =>
+          logger.info(s"TEST LOG No functional class found from ${existingFunctionalClasses.size} existing functional classes")
+          None
+      }
   }
 
   private def generateFunctionalClass(changeType: RoadLinkChangeType, newLink: RoadLinkInfo): Option[FunctionalClassChange] = {
@@ -65,9 +67,13 @@ class RoadLinkPropertyUpdater {
       case FeatureClass.CarRoad_IIIa => newLink.adminClass match {
         case State => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(FunctionalClass4.value), "mtkClass",None))
         case Municipality | Private => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(FunctionalClass5.value), "mtkClass",None))
-        case _ => None
+        case _ =>
+          logger.info(s"TEST LOG No functional class generated from feature class ${featureClass}")
+          None
       }
-      case _ => None
+      case _ =>
+        logger.info(s"TEST LOG No functional class generated for new link ${newLink.linkId} from road class ${newLink.roadClass}")
+        None
     }
   }
 
@@ -108,7 +114,9 @@ class RoadLinkPropertyUpdater {
       case FeatureClass.SpecialTransportWithoutGate => SpecialTransportWithoutGate.value
       case FeatureClass.SpecialTransportWithGate => SpecialTransportWithGate.value
       case FeatureClass.CarRoad_IIIa => SingleCarriageway.value
-      case _ => return None
+      case _ =>
+        logger.info(s"TEST LOG No link type generated for new link ${newLink.linkId} with road class ${newLink.roadClass}")
+        return None
     }
 
     Some(LinkTypeChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(newLinkType), "mtkClass", None))
@@ -261,6 +269,7 @@ class RoadLinkPropertyUpdater {
           }
         }
       }
+      logger.info(s"TEST LOG generated ${incompleteLinks.size} incomplete links")
       (createdProperties.distinct, incompleteLinks)
     }
   }
@@ -472,15 +481,16 @@ class RoadLinkPropertyUpdater {
     changes.flatMap(change => change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)).toSet.toSeq
   }
 
-  private def compileOldAndNewLinkLists(changes: Seq[RoadLinkChange]): (ListBuffer[RoadLinkInfo], ListBuffer[RoadLinkInfo]) = {
-    val oldLinkList = ListBuffer[RoadLinkInfo]()
-    val newLinkList = ListBuffer[RoadLinkInfo]()
+  private def compileOldAndNewLinkLists(changes: Seq[RoadLinkChange]): (mutable.HashMap[String, RoadLinkInfo], mutable.HashMap[String, RoadLinkInfo]) = {
+    val oldLinkMap = mutable.HashMap[String, RoadLinkInfo]()
+    val newLinkMap = mutable.HashMap[String, RoadLinkInfo]()
     changes.foreach { change =>
-      newLinkList ++= change.newLinks
-      oldLinkList ++= change.oldLink.toSeq
+      change.newLinks.foreach { newLink => newLinkMap += (newLink.linkId -> newLink) }
+      change.oldLink.foreach { oldLink => oldLinkMap += (oldLink.linkId -> oldLink) }
     }
-    (oldLinkList, newLinkList)
+    (oldLinkMap, newLinkMap)
   }
+
 
   private def accumulateFunctionalClassChanges(createdProperties: Seq[ReportedChange]): Seq[RoadLinkValue] = {
     createdProperties.collect { case f: FunctionalClassChange => RoadLinkValue(f.linkId, f.newValue) }
@@ -505,29 +515,32 @@ class RoadLinkPropertyUpdater {
     }
   }
 
-  private def finalizeConstructionTypeChanges(
-                                               changes: Seq[ReportedChange],
-                                               oldLinkList: ListBuffer[RoadLinkInfo],
-                                               newLinkList: ListBuffer[RoadLinkInfo]
-                                             ): Seq[ConstructionTypeChange] = {
-    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater finalizeConstructionTypeChanges with ${changes.size} changes", startLogging = true) {
+  private def finalizeConstructionTypeChanges(changes: Seq[ReportedChange], oldLinkMap: mutable.HashMap[String, RoadLinkInfo], newLinkMap: mutable.HashMap[String, RoadLinkInfo]): Seq[ConstructionTypeChange] = {
+    LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater finalizeConstructionTypeChanges with " +
+      s"${changes.size} changes and " +
+      s"${oldLinkMap.size} old links and " +
+      s"${newLinkMap.size} new links",
+      startLogging = true) {
       changes.collect {
-        case AdministrativeClassChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-        case TrafficDirectionChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-        case RoadLinkAttributeChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-        case FunctionalClassChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
-        case LinkTypeChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkList, newLinkList, newLinkId, oldLinkId)
+        case AdministrativeClassChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkMap, newLinkMap, newLinkId, oldLinkId)
+        case TrafficDirectionChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkMap, newLinkMap, newLinkId, oldLinkId)
+        case RoadLinkAttributeChange(newLinkId, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkMap, newLinkMap, newLinkId, oldLinkId)
+        case FunctionalClassChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkMap, newLinkMap, newLinkId, oldLinkId)
+        case LinkTypeChange(newLinkId, _, _, _, _, oldLinkId) => addConstructionTypeChange(oldLinkMap, newLinkMap, newLinkId, oldLinkId)
       }.flatten.distinct
     }
   }
 
-  private def addConstructionTypeChange(oldLinkList: ListBuffer[RoadLinkInfo], newLinkList:ListBuffer[RoadLinkInfo], newLinkId: String, oldLinkId: Option[String]): Option[ConstructionTypeChange] = {
-    val oldLink = oldLinkList.find(_.linkId == oldLinkId.getOrElse(""))
-    val newLink = newLinkList.find(_.linkId == newLinkId)
-    val lifeCycleStatusOld = if (oldLink.nonEmpty) Some(oldLink.get.lifeCycleStatus) else None
-    val lifeCycleStatusNew = if (newLink.nonEmpty) Some(newLink.get.lifeCycleStatus) else None
-    Some(ConstructionTypeChange(newLinkId, ChangeTypeReport.Dummy, lifeCycleStatusOld, lifeCycleStatusNew))
+  private def addConstructionTypeChange(oldLinkMap: mutable.HashMap[String, RoadLinkInfo], newLinkMap: mutable.HashMap[String, RoadLinkInfo], newLinkId: String, oldLinkId: Option[String]): Option[ConstructionTypeChange] = {
+    LogUtils.time(logger,"TEST LOG addConstructionTypeChange") {
+      val oldLink = oldLinkId.flatMap(oldLinkMap.get)
+      val newLink = newLinkMap.get(newLinkId)
+      val lifeCycleStatusOld = oldLink.map(_.lifeCycleStatus)
+      val lifeCycleStatusNew = newLink.map(_.lifeCycleStatus)
+      Some(ConstructionTypeChange(newLinkId, ChangeTypeReport.Dummy, lifeCycleStatusOld, lifeCycleStatusNew))
+    }
   }
+
   /**
    *  Create ReportedChange objects for removed road link properties.
    *  Expired road links and their properties are only deleted later after all samuutus-batches have completed
