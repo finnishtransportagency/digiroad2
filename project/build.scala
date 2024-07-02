@@ -169,7 +169,7 @@ object Digiroad2Build extends Build {
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
         "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
-        "commons-io" % "commons-io" % "2.6",
+        "commons-io" % "commons-io" % "2.7",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
       ),
@@ -208,7 +208,7 @@ object Digiroad2Build extends Build {
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
         "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
-        "commons-io" % "commons-io" % "2.6",
+        "commons-io" % "commons-io" % "2.7",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.eclipse.jetty" % "jetty-webapp" % jettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % jettyVersion % "container;compile",
