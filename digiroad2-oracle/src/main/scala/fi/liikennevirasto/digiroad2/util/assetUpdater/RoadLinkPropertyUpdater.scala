@@ -425,6 +425,9 @@ class RoadLinkPropertyUpdater {
   def performIncompleteLinkUpdate(incompleteLinks: Seq[IncompleteLink]) = {
     val roadLinkData = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(incompleteLinks.map(_.linkId).toSet, false)
     val incompleteLinksInUse = incompleteLinks.filter(il => incompleteLinkIsInUse(il, roadLinkData))
+    logger.info(s"TEST LOG Total of ${incompleteLinks} incomplete links generated, " +
+      s"of which ${incompleteLinksInUse.size} are in use. " +
+      s"Total number of roadLinks is ${roadLinkData.size}")
     roadLinkService.updateIncompleteLinks(incompleteLinksInUse)
   }
 
