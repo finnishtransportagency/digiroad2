@@ -143,6 +143,60 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
+    test("on a change from tractor road to drive path, link type and functional classes are not transferred but generated") {
+      val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+      val newLinkId = "6eec9a4a-bcac-4afb-afc8-f4e6d40ec571:1"
+      val replaceChange = RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId, 45.317, List(Point(370276.441, 6670348.945, 7.94),
+        Point(370234.985, 6670367.114, 9.638)), 12316, Municipality, Some(49), BothDirections)), List(RoadLinkInfo(newLinkId, 35.212,
+        List(Point(370276.441, 6670348.945, 7.94), Point(370243.874, 6670361.794, 9.145)), 12141, Municipality, Some(49), BothDirections)),
+        List(ReplaceInfo(Option(oldLinkId), Option(newLinkId), Option(0.0), Option(45.317), Option(0.0), Option(35.212), false)))
+      runWithRollback {
+        RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId, Some("test"), PrimitiveRoad.value)
+        RoadLinkOverrideDAO.get(FunctionalClass, oldLinkId).get should be(PrimitiveRoad.value)
+        RoadLinkOverrideDAO.insert(LinkType, oldLinkId, Some("test"), TractorRoad.value)
+        RoadLinkOverrideDAO.get(LinkType, oldLinkId).get should be(TractorRoad.value)
+        val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(replaceChange)).changes
+        val functionalClassChange = reportedChanges.find(c => c.isInstanceOf[FunctionalClassChange]).get.asInstanceOf[FunctionalClassChange]
+        functionalClassChange.oldValue should be(Some(PrimitiveRoad.value))
+        functionalClassChange.newValue should be(Some(AnotherPrivateRoad.value))
+        functionalClassChange.source should be("tractorRoadToDrivePath")
+        val linkTypeChange = reportedChanges.find(c => c.isInstanceOf[LinkTypeChange]).get.asInstanceOf[LinkTypeChange]
+        linkTypeChange.oldValue should be(Some(TractorRoad.value))
+        linkTypeChange.newValue should be(Some(SingleCarriageway.value))
+        linkTypeChange.source should be("tractorRoadToDrivePath")
+        RoadLinkOverrideDAO.get(FunctionalClass, newLinkId).get should be(AnotherPrivateRoad.value)
+        RoadLinkOverrideDAO.get(LinkType, newLinkId).get should be(SingleCarriageway.value)
+        roadLinkService.getIncompleteLinks(None, false).size should be(0)
+      }
+    }
+
+  test("on a change from drive path to tractor road, link type and functional classes are not transferred but generated") {
+    val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+    val newLinkId = "6eec9a4a-bcac-4afb-afc8-f4e6d40ec571:1"
+    val replaceChange = RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId, 45.317, List(Point(370276.441, 6670348.945, 7.94),
+      Point(370234.985, 6670367.114, 9.638)), 12141, Municipality, Some(49), BothDirections)), List(RoadLinkInfo(newLinkId, 35.212,
+      List(Point(370276.441, 6670348.945, 7.94), Point(370243.874, 6670361.794, 9.145)), 12317, Municipality, Some(49), BothDirections)),
+      List(ReplaceInfo(Option(oldLinkId), Option(newLinkId), Option(0.0), Option(45.317), Option(0.0), Option(35.212), false)))
+    runWithRollback {
+      RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId, Some("test"), AnotherPrivateRoad.value)
+      RoadLinkOverrideDAO.get(FunctionalClass, oldLinkId).get should be(AnotherPrivateRoad.value)
+      RoadLinkOverrideDAO.insert(LinkType, oldLinkId, Some("test"), SingleCarriageway.value)
+      RoadLinkOverrideDAO.get(LinkType, oldLinkId).get should be(SingleCarriageway.value)
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(replaceChange)).changes
+      val functionalClassChange = reportedChanges.find(c => c.isInstanceOf[FunctionalClassChange]).get.asInstanceOf[FunctionalClassChange]
+      functionalClassChange.oldValue should be(Some(AnotherPrivateRoad.value))
+      functionalClassChange.newValue should be(Some(PrimitiveRoad.value))
+      functionalClassChange.source should be("drivePathToTractorRoad")
+      val linkTypeChange = reportedChanges.find(c => c.isInstanceOf[LinkTypeChange]).get.asInstanceOf[LinkTypeChange]
+      linkTypeChange.oldValue should be(Some(SingleCarriageway.value))
+      linkTypeChange.newValue should be(Some(TractorRoad.value))
+      linkTypeChange.source should be("drivePathToTractorRoad")
+      RoadLinkOverrideDAO.get(FunctionalClass, newLinkId).get should be(PrimitiveRoad.value)
+      RoadLinkOverrideDAO.get(LinkType, newLinkId).get should be(TractorRoad.value)
+      roadLinkService.getIncompleteLinks(None, false).size should be(0)
+    }
+  }
+
   test("with no old link values, functional class and link type are generated for a new link with a suitable mtkClass") {
     runWithRollback {
       val cycleOrPedestrianPathAddChanges = changes.filter(c => c.changeType == Add && c.newLinks.forall(_.roadClass == 12314))
