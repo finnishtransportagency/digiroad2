@@ -62,7 +62,7 @@ class RoadLinkPropertyUpdater {
       case Some(functionalClassChange) =>
         Some(functionalClassChange)
       case _ =>
-        existingFunctionalClasses.get(oldLink.linkId).flatten match {
+        functionalClassForOldLink match {
           case Some(functionalClass) =>
             Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), Some(functionalClass), Some(functionalClass), "oldLink", Some(oldLink.linkId)))
           case _ =>
@@ -122,7 +122,7 @@ class RoadLinkPropertyUpdater {
       case Some(linkTypeChange) =>
         Some(linkTypeChange)
       case _ =>
-        existingLinkTypes.get(oldLink.linkId).flatten match {
+        linkTypeForOldLink match {
           case Some(linkType) =>
             Some(LinkTypeChange(newLink.linkId, roadLinkChangeToChangeType(changeType), Some(linkType), Some(linkType), "oldLink", Some(oldLink.linkId)))
           case _ =>
