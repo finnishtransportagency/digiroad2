@@ -923,7 +923,7 @@
         form: new DynamicAssetForm ( {
           fields : [
             {
-              label: 'Rajoitus', required: 'required', type: 'single_choice', publicId: "parking_prohibition", defaultValue: "1", weight: 1,
+              label: 'Rajoitus', required: true, type: 'single_choice', publicId: "parking_prohibition", defaultValue: "1", weight: 1,
               values: [
                 {id: 1, label: 'Pysähtyminen kielletty'},
                 {id: 2, label: 'Pysäköinti kielletty'}
