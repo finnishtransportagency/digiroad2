@@ -22,6 +22,7 @@ phases:
   pre_build:
     commands:
       - pip install --upgrade awscli
+      - $(aws ecr get-login --no-include-email --region eu-west-1)
       - rm conf/env.properties
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
   build:
@@ -33,10 +34,16 @@ phases:
       - npm ci --only=production
       - sbt clean
       - sbt assembly
+      - docker build -f aws/fargate/Dockerfile --build-arg image=public.ecr.aws/docker/library/amazoncorretto:8-alpine-jre  -t $ECR_REPOSITORY_NAME:latest .
       - echo Post-build started on `date`
+      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:latest
+      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:$COMMIT_HASH
+      - docker push $ECR_REPOSITORY_URI:latest
+      - docker push $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+      - docker push $ECR_REPOSITORY_URI:$COMMIT_HASH
   post_build:
     commands:
       - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_SERVICE_NAME $ECR_REPOSITORY_URI:latest > imagedefinitions.json
-      - printf "\nNPM Dependencies:\n%s\n" "$(npm list --json)"
 artifacts:
   files: imagedefinitions.json
