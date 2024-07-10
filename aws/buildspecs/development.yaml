@@ -19,6 +19,7 @@ phases:
       - npm install -g yarn
       - yarn install --ignore-engines --production
       - npm install -g grunt-cli
+      - npm install -g grunt
   pre_build:
     commands:
       - pip install --upgrade awscli
@@ -30,6 +31,7 @@ phases:
       - sbt "project digiroad2-oracle" "run-main fi.liikennevirasto.digiroad2.util.DataFixture test"
       - sbt test
       - grunt deploy
+      - npm ci --only=production
       - sbt clean
       - sbt assembly
       - docker build -f aws/fargate/Dockerfile --build-arg image=public.ecr.aws/docker/library/amazoncorretto:8-alpine-jre  -t $ECR_REPOSITORY_NAME:latest .
