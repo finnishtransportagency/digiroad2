@@ -17,7 +17,6 @@ phases:
       - sudo apt-get install sbt
       - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
       - npm install -g yarn
-      - npm ci --only=production
       - yarn install --ignore-engines --production
       - npm install -g grunt-cli
   pre_build:
