@@ -24,7 +24,6 @@ phases:
   pre_build:
     commands:
       - pip install --upgrade awscli
-      - $(aws ecr get-login --no-include-email --region eu-west-1)
       - rm conf/env.properties
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
   build:
