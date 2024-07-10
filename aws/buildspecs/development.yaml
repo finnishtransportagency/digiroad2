@@ -17,8 +17,10 @@ phases:
       - sudo apt-get install sbt
       - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
       - npm install -g yarn
-      - npm install && yarn install --ignore-engines
+      - npm ci --only=production
+      - yarn install --ignore-engines --production
       - npm install -g grunt-cli
+      - npm install -g grunt
   pre_build:
     commands:
       - pip install --upgrade awscli

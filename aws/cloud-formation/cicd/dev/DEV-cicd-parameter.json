@@ -1,11 +1,11 @@
 [
   {
     "ParameterKey": "PipelineName",
-    "ParameterValue": "devpipeline"
+    "ParameterValue": "droth-4035-buildtest"
   },
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "digiroad2"
+    "ParameterValue": "droth-4035-buildtest"
   },
   {
     "ParameterKey": "TestDatabaseString",
@@ -29,7 +29,7 @@
   },
   {
     "ParameterKey": "GitBranchName",
-    "ParameterValue": "development"
+    "ParameterValue": "DROTH-4035_change_UI_build_to_exclude_dev_dependencies"
   },
   {
     "ParameterKey": "GitRepositoryName",
@@ -50,5 +50,9 @@
   {
     "ParameterKey": "DigiroadDatabaseSecurityGroup",
     "ParameterValue": "sg-0ced3d4a7245fb3ed"
+  },
+  {
+    "ParameterKey": "CodeBuildSecurityGroup",
+    "ParameterValue": "sg-0d065d4bf2e3c3527"
   }
 ]
