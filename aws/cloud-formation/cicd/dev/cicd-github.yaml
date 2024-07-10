@@ -1,0 +1,441 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Based on vaylas cicd-github.yaml template
+Parameters:
+  PipelineName:
+    Description: Pipeline name, no capital letter
+    Type: String
+  ApplicationName:
+    Description: Application name
+    Type: String
+  EcsClusterName:
+    Description: ECS cluster name
+    Type: String
+  EcsServiceName:
+    Description: ECS service name
+    Type: String
+  EcrRepositoryName:
+    Description: ECR image name
+    Type: String
+    AllowedPattern: "^[a-z0-9]+$"
+  TestDatabaseString:
+    Description: Database for running test
+    Type: String
+  TestDatabaseUser:
+    Description: username
+    Type: String
+  GitBranchName:
+    Description: GitHub branch name
+    Type: String
+    Default: master
+  GitRepositoryName:
+    Description: GitHub repository name
+    Type: String
+  GitHubOwner:
+    Type: String
+  GitHubWebhookSecret:
+    Description: Personal access token that is needed to access the webhook of Codepipeline to invoke the pipeline
+    Type: String
+    NoEcho: true
+    MinLength: 20
+  VpcIDOfSystem:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC of your system
+  DigiroadDatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Databases security group
+
+Resources:
+
+  CodePipelineArtifactStoreBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub "${PipelineName}-artifact-store-bucket"
+
+  CodePipelineArtifactStoreBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref CodePipelineArtifactStoreBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DenyUnEncryptedObjectUploads
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:PutObject'
+            Resource: !Sub "${CodePipelineArtifactStoreBucket.Arn}/*"
+            Condition:
+              StringNotEquals:
+                's3:x-amz-server-side-encryption': 'aws:kms'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: !Sub "${CodePipelineArtifactStoreBucket.Arn}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
+
+  AppPipelineWebhook:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: !Sub "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
+      Filters:
+        - JsonPath: $.ref
+          MatchEquals: 'refs/heads/{Branch}'
+      TargetPipeline: !Ref AppPipeline
+      TargetAction: SourceAction
+      Name: AppPipelineWebhook
+      TargetPipelineVersion: !GetAtt AppPipeline.Version
+      RegisterWithThirdParty: true
+
+  AppPipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      Name: !Ref PipelineName
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref CodePipelineArtifactStoreBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                Owner: !Ref GitHubOwner
+                Repo: !Ref GitRepositoryName
+                Branch: !Ref GitBranchName
+                OAuthToken: !Sub "{{resolve:secretsmanager:${GitHubWebhookSecret}:SecretString:::}}"
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              InputArtifacts:
+                - Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: Built
+              Configuration:
+                ProjectName: !Ref CodeBuild
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: ECS
+              Configuration:
+                ClusterName: !Ref EcsClusterName
+                ServiceName: !Ref EcsServiceName
+                FileName: !Sub "imagedefinitions.json"
+              InputArtifacts:
+                - Name: Built
+              RunOrder: 1
+
+  CodePipelineServiceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub "${PipelineName}-codepipeline-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: !Sub "${PipelineName}-codepipeline-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'codebuild:BatchGetBuilds'
+                  - 'codebuild:StartBuild'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'lambda:InvokeFunction'
+                  - 'lambda:ListFunctions'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'iam:PassRole'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'cloudwatch:*'
+                  - 's3:*'
+                  - 'cloudformation:*'
+                  - 'ecs:*'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'secretsmanager:DescribeSecret'
+                  - 'secretsmanager:GetSecretValue'
+                Resource: !Ref GitHubWebhookSecret
+  CodeBuildSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
+      GroupName: CodeBuildSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcIDOfSystem
+
+  CodeBuild:
+    DependsOn:
+      - CodeBuildRole
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref ApplicationName
+      Description: "Build project for the application"
+      ServiceRole: !Ref CodeBuildRole
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref CodeBuildSecurityGroup
+        Subnets:
+          - subnet-0d38ee507d838207c
+        VpcId: !Ref VpcIDOfSystem
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: "aws/buildspecs/development.yaml"
+      Environment:
+        ComputeType: BUILD_GENERAL1_LARGE
+        Image: aws/codebuild/standard:5.0 # https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: ECR_REPOSITORY_NAME
+            Value: !Ref EcrRepositoryName
+          - Name: ECR_REPOSITORY_URI
+            Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
+          - Name: ECS_SERVICE_NAME
+            Value: !Ref ApplicationName
+          - Name: bonecp_jdbcUrl
+            Value: !Ref TestDatabaseString
+          - Name: bonecp_username
+            Value: !Ref TestDatabaseUser
+          - Name: featureProvider
+            Value: fi.liikennevirasto.digiroad2.service.AssetPropertyService
+          - Name: speedLimitProvider
+            Value: fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
+          - Name: userProvider
+            Value: fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
+          - Name: municipalityProvider
+            Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
+          - Name: eventBus
+            Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
+          - Name: viiteRestApiEndPoint
+            Value: http://localhost:9080/api/viite/
+          - Name: authenticationTestMode
+            Value: true
+          - Name: bonecp_password
+            Value: "/test/bonecp.password"
+            Type: PARAMETER_STORE
+          - Name: cache_directory
+            Value: tmp/digiroad.cache
+          - Name: googlemapapi_client_id
+            Value: XYZ123
+          - Name: googlemapapi_crypto_key
+            Value: ZYX321
+          - Name: oag_username
+            Value: svc_clouddigiroad
+          - Name: oag_password
+            Value: svc_clouddigiroad
+          - Name: cacheTTL
+            Value: 0
+          - Name: cacheHostPort
+            Value: empty
+          - Name: cacheHostname
+            Value: empty
+          - Name: caching
+            Value: false
+
+      Artifacts:
+        Name: !Ref ApplicationName
+        Type: CODEPIPELINE
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: !Sub "${PipelineName}-codebuild-role"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub "${PipelineName}-codebuild-policy"
+          PolicyDocument:
+            Statement:
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:GetRepositoryPolicy"
+                  - "ecr:DescribeRepositories"
+                  - "ecr:ListImages"
+                  - "ecr:DescribeImages"
+                  - "ecr:BatchGetImage"
+                  - "ecr:GetLifecyclePolicy"
+                  - "ecr:GetLifecyclePolicyPreview"
+                  - "ecr:ListTagsForResource"
+                  - "ecr:DescribeImageScanFindings"
+                  - "ecr:InitiateLayerUpload"
+                  - "ecr:UploadLayerPart"
+                  - "ecr:CompleteLayerUpload"
+                  - "ecr:PutImage"
+                  - "ssm:GetParameters"
+                  - 'ec2:DescribeSecurityGroups'
+                  - 'ec2:DescribeNetworkInterfaces'
+                  - 'ec2:DescribeSubnets'
+                  - 'ec2:DescribeDhcpOptions'
+                  - 'ec2:DescribeVpcs'
+                  - 'ec2:DeleteNetworkInterface'
+                  - 'ec2:CreateNetworkInterface'
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterfacePermission
+                Resource: arn:aws:ec2:eu-west-1:475079312496:network-interface/*
+                Condition:
+                  StringEquals:
+                    ec2:Subnet:
+                      - arn:aws:ec2:eu-west-1:475079312496:subnet/subnet-0d38ee507d838207c
+                    ec2:AuthorizedService: codebuild.amazonaws.com
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+              - Effect: "Allow"
+                Resource:
+                  - !Sub "arn:aws:s3:::${CodePipelineArtifactStoreBucket}/*"
+                Action:
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:PutObject"
+              - Effect: "Allow"
+                Resource:
+                  - arn:aws:s3:::sbt-repository/*
+                Action:
+                  - "s3:GetObject"
+              - Effect: "Allow"
+                Resource:
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_npm_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/digiroad/digiroad_maven_packages"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/digiroad"
+                Action:
+                  - codeartifact:*
+              - Effect: "Allow"
+                Resource: "*"
+                Action: "sts:GetServiceBearerToken"
+  ECRRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref EcrRepositoryName
+      ImageScanningConfiguration:
+        ScanOnPush: "true"
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+              "rules": [
+                  {
+                      "rulePriority": 1,
+                      "description": "Retain images tagged with prod",
+                      "selection": {
+                          "tagStatus": "tagged",
+                          "tagPrefixList": ["prod"],
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 999999
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  },
+                  {
+                      "rulePriority": 2,
+                      "description": "Retain images tagged with qa",
+                      "selection": {
+                          "tagStatus": "tagged",
+                          "tagPrefixList": ["qa"],
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 999999
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  },
+                  {
+                      "rulePriority": 3,
+                      "description": "Retain images tagged with latest",
+                      "selection": {
+                          "tagStatus": "tagged",
+                          "tagPrefixList": ["latest"],
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 999999
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  },
+                  {
+                      "rulePriority": 4,
+                      "description": "Expire images not tagged with qa or prod after 90 days",
+                      "selection": {
+                          "tagStatus": "any",
+                          "countType": "sinceImagePushed",
+                          "countUnit": "days",
+                          "countNumber": 90
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  }
+              ]
+          }
+
+Outputs:
+  DevCodeBuildRole:
+    Description: ARN of role for dev pipeline CodeBuild
+    Value: !GetAtt CodeBuildRole.Arn
+    Export:
+      Name: 'DevCodeBuildRole'

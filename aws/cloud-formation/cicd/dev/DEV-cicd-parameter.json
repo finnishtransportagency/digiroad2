@@ -1,0 +1,54 @@
+[
+  {
+    "ParameterKey": "PipelineName",
+    "ParameterValue": "devpipeline"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "TestDatabaseString",
+    "ParameterValue": "jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2"
+  },
+  {
+    "ParameterKey": "TestDatabaseUser",
+    "ParameterValue": "digiroaduserfortest"
+  },
+  {
+    "ParameterKey": "EcsClusterName",
+    "ParameterValue": "dev-digiroad2-ECS-Cluster-Private"
+  },
+  {
+    "ParameterKey": "EcsServiceName",
+    "ParameterValue": "dev-digiroad2-ECS-Service-Private"
+  },
+  {
+    "ParameterKey": "EcrRepositoryName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "GitBranchName",
+    "ParameterValue": "development"
+  },
+  {
+    "ParameterKey": "GitRepositoryName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "GitHubOwner",
+    "ParameterValue": "finnishtransportagency"
+  },
+  {
+    "ParameterKey": "GitHubWebhookSecret",
+    "ParameterValue": "arn:aws:secretsmanager:eu-west-1:475079312496:secret:GITHUB_PAT-CqR1N2"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0f430b7fedef04ba3"
+  },
+  {
+    "ParameterKey": "DigiroadDatabaseSecurityGroup",
+    "ParameterValue": "sg-0ced3d4a7245fb3ed"
+  }
+]
