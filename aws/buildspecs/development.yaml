@@ -20,7 +20,6 @@ phases:
       - npm ci --only=production
       - yarn install --ignore-engines --production
       - npm install -g grunt-cli
-      - npm install -g grunt
   pre_build:
     commands:
       - pip install --upgrade awscli

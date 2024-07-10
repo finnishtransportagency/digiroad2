@@ -90,7 +90,7 @@ Resources:
           MatchEquals: 'refs/heads/{Branch}'
       TargetPipeline: !Ref AppPipeline
       TargetAction: SourceAction
-      Name: AppPipelineWebhook-droth-4035
+      Name: AppPipelineWebhook-droth4035
       TargetPipelineVersion: !GetAtt AppPipeline.Version
       RegisterWithThirdParty: true
 
