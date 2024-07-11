@@ -1,11 +1,11 @@
 [
   {
     "ParameterKey": "PipelineName",
-    "ParameterValue": "droth-4036-buildtest"
+    "ParameterValue": "devpipeline"
   },
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "droth-4036-buildtest"
+    "ParameterValue": "digiroad2"
   },
   {
     "ParameterKey": "TestDatabaseString",
@@ -29,7 +29,7 @@
   },
   {
     "ParameterKey": "GitBranchName",
-    "ParameterValue": "DROTH-4036_fix_remaining_AWS_Inspector_warnings_after_removing_devDependencies_from_build"
+    "ParameterValue": "development"
   },
   {
     "ParameterKey": "GitRepositoryName",
@@ -50,9 +50,5 @@
   {
     "ParameterKey": "DigiroadDatabaseSecurityGroup",
     "ParameterValue": "sg-0ced3d4a7245fb3ed"
-  },
-  {
-    "ParameterKey": "CodeBuildSecurityGroup",
-    "ParameterValue": "sg-0d065d4bf2e3c3527"
   }
 ]
