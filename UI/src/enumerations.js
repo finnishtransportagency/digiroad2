@@ -93,7 +93,6 @@
       Manoeuvres: { typeId: 380, geometryType: 'linear', label: 'Manoeuvre', layerName: 'manoeuvre', nameFI: 'Kääntymisrajoitus' },
       CareClass: { typeId: 390, geometryType: 'linear', label: 'CareClass', layerName: 'careClass', nameFI: 'Hoitoluokat' },
       CarryingCapacity: { typeId: 400, geometryType: 'linear', label: 'CarryingCapacity', layerName: 'carryingCapacity', nameFI: 'Kantavuus' },
-      AnimalWarnings: { typeId: 410, geometryType: 'linear', label: 'AnimalWarnings', layerName: 'animalWarnings', nameFI: 'Elainvaroitukset' },
       RoadWorksAsset: { typeId: 420, geometryType: 'linear', label: 'RoadWorks', layerName: 'roadWorks', nameFI: 'Tietyot' },
       ParkingProhibition: { typeId: 430, geometryType: 'linear', label: 'ParkingProhibition', layerName: 'parkingProhibition', nameFI: 'Pysäköintikielto' },
       CyclingAndWalking: { typeId: 440, geometryType: 'linear', label: 'CyclingAndWalking', layerName: 'cyclingAndWalking', nameFI: 'Käpy tietolaji' },
