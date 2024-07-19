@@ -1180,8 +1180,10 @@
             {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'},
+          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Muu pysyvä esterakennelma'},
           {symbolUrl: 'images/point-assets/point_green.svg', label: 'Avattava puomi'},
+          {symbolUrl: 'images/point-assets/point_yellow.svg', label: 'Kaivanne'},
+          {symbolUrl: 'images/point-assets/point_grey.svg', label: 'Ei tiedossa'},
           {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
         ],
         formLabels: {

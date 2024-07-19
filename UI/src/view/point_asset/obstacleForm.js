@@ -15,8 +15,10 @@
     };
 
     var obstacleTypes = {
-      1: 'Suljettu yhteys',
-      2: 'Avattava puomi'
+      1: 'Muu pysyvä esterakenne',
+      2: 'Avattava puomi',
+      3: 'Kaivanne',
+      99: 'Ei tiedossa'
     };
 
     var propertyOrdering = ['suggest_box'];
@@ -28,8 +30,10 @@
         '      <label class="control-label">Esterakennelma</label>' +
         '      <p class="form-control-static">' + obstacleTypes[me.selectedAsset.getByProperty('esterakennelma')] + '</p>' +
         '      <select class="form-control" style="display:none">  ' +
-        '        <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Suljettu yhteys</option>' +
+        '        <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Muu pysyvä esterakennelma</option>' +
         '        <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
+        '        <option value="3" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 3 ? 'selected' : '') +'>Kaivanne</option>' +
+        '        <option value="99" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 99 ? 'selected' : '') +'>Ei tiedossa</option>' +
         '      </select>' +
         '    </div>' +
           components;
