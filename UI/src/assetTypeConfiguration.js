@@ -34,12 +34,6 @@
       maintenanceRoad: 290,
       trafficSigns: 300,
       trSpeedLimits: 310, //TODO hidden for now
-      trWeightLimits: 320, //TODO hidden for now
-      trTrailerTruckWeightLimits: 330, //TODO hidden for now
-      trAxleWeightLimits: 340, //TODO hidden for now
-      trBogieWeightLimits: 350, //TODO hidden for now
-      trHeightLimits: 360, //TODO hidden for now
-      trWidthLimits: 370,  //TODO hidden for now
       manoeuvre: 380,
       careClass: 390,
       carryingCapacity: 400,
@@ -47,10 +41,6 @@
       parkingProhibition: 430,
       cyclingAndWalking: 440,
       laneModellingTool: 450
-    };
-    //TODO these are hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
-    var assetGroups = {
-      trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
     var dateValueExtract = function (fields, publicId) {
@@ -1513,84 +1503,6 @@
         readOnlyLayer: TrafficSignReadOnlyLayer,
         showRoadLinkInfo: true,
         lanePreview: true
-      },
-      {     //TODO these are commented/hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
-
-        typeId: assetType.trHeightLimits,
-        layerName: 'trHeightLimits',
-        title: 'TR suurin sallittu korkeus',
-        allowComplementaryLinks: true,
-        allowGrouping: true,
-        groupingDistance: Math.pow(5, 2), //geometry-calculations calculates the squared distance between two points, so give the grouping distance in meters x^2
-        legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
-          {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
-        ],
-        formLabels: {
-          title: 'Rajoitus',
-          showUnit: true,
-          manyFloatingAssetsLabel: 'rajoitus',
-          singleFloatingAssetLabel: 'rajoitukset'
-        },
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
-        nonModifiableBox: true,
-        form: HeightLimitForm,
-        label: new HeightLimitLabel(Math.pow(5, 2)),
-        showRoadLinkInfo: true
-      },
-      {     //TODO these are commented/hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
-
-        typeId: assetType.trWidthLimits,
-        layerName: 'trWidthLimits',
-        title: 'TR suurin sallittu leveys',
-        allowComplementaryLinks: true,
-        allowGrouping: true,
-        groupingDistance: Math.pow(5, 2), //geometry-calculations calculates the squared distance between two points, so give the grouping distance in meters x^2
-        legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
-          {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
-        ],
-        formLabels: {
-          title: 'Rajoitus',
-          showUnit: true,
-          manyFloatingAssetsLabel: 'rajoitus',
-          singleFloatingAssetLabel: 'rajoitukset'
-        },
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
-        nonModifiableBox: true,
-        form: WidthLimitForm,
-        label: new WidthLimitLabel(Math.pow(5, 2)),
-        showRoadLinkInfo: true
-      }
-    ];
-    //TODO these are hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
-    var groupedPointAssetSpecs = [
-      { 
-        typeIds: assetGroups.trWeightGroup,
-        layerName: 'trWeightLimits',
-        title: 'TR painorajoitukset',
-        allowComplementaryLinks: true,
-        allowGrouping: false,
-        legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rajoitus'},
-          {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
-        ],
-        formLabels: {
-          title: 'Painorajoitus',
-          showUnit: true,
-          manyFloatingAssetsLabel: 'rajoitus',
-          singleFloatingAssetLabel: 'rajoitukset'
-        },
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
-        nonModifiableBox: true,
-        label: new WeightLimitLabel(),
-        propertyData: [
-          {'propertyTypeId': assetType.trWeightLimits, 'propertyType': 'number', 'publicId': "suurin_sallittu_massa_mittarajoitus", values: []},
-          {'propertyTypeId': assetType.trTrailerTruckWeightLimits, 'propertyType': 'number', 'publicId': "yhdistelman_suurin_sallittu_massa", values: []},
-          {'propertyTypeId': assetType.trAxleWeightLimits, 'propertyType': 'number', 'publicId': "suurin_sallittu_akselimassa", values: []},
-          {'propertyTypeId': assetType.trBogieWeightLimits, 'propertyType': 'number', 'publicId': "suurin_sallittu_telimassa", values: []}
-        ],
-        showRoadLinkInfo: true
       }
     ];
 
@@ -1609,11 +1521,6 @@
             typeId: assetType.manoeuvre,
             title: 'Kääntymisrajoitus',
             layerName: "manoeuvre"
-        },
-        {
-            typeId: assetType.trWeightLimits,
-            title: 'TR painorajoitukset',
-            layerName: "trWeightLimits"
         }
     ];
 
@@ -1623,9 +1530,7 @@
                                            _.map(pointAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); })),
       linearAssetsConfig : linearAssetSpecs,
       experimentalAssetsConfig : experimentalLinearAssetSpecs,
-      pointAssetsConfig : pointAssetSpecs,
-      groupedPointAssetSpecs: groupedPointAssetSpecs,
-      assetGroups: assetGroups
+      pointAssetsConfig : pointAssetSpecs
     };
   };
 })(this);
