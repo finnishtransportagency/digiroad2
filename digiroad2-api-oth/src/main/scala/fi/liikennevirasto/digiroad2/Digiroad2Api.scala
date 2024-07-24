@@ -1373,7 +1373,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       val speedLimits = speedLimitService.getSpeedLimitsByBboxExperimental(boundingRectangle)
-      speedLimits.map { speedLimitAsset =>
+      speedLimits.map { speedLimitGroup => speedLimitGroup.map {
+        speedLimitAsset =>
           Map(
             "id" -> (if (speedLimitAsset.id == 0) None else Some(speedLimitAsset.id)),
             "linkId" -> speedLimitAsset.linkId,
@@ -1392,6 +1393,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "municipalityCode" -> extractIntValue(speedLimitAsset.attributes, "municipality"),
             "constructionType" -> extractIntValue(speedLimitAsset.attributes, "constructionType")
           )
+      }
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
