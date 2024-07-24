@@ -449,8 +449,6 @@
     var speedLimitBox = new SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
     var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
-    //TODO these are commented/hidden for now, Tierekisteri is in end of life cycle but we still have tierekisteri specific data
-    var trSpeedLimitBox = isExperimental ? [new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}))] : [];
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
@@ -490,8 +488,6 @@
           .concat([winterSpeedLimits])
           .concat(getLinearAsset(assetType.trafficVolume)),
       []
-      //TODO these are commented/hidden for now, Tierekisteri is in end of life cycle but we still have tierekisteri specific data
-         /// .concat(trSpeedLimitBox)
     ];
 
     function getLinearAsset(typeId) {

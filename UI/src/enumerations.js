@@ -82,7 +82,6 @@
       TrafficLights: { typeId: 280, geometryType: 'point', label: 'TrafficLights', layerName: 'trafficLights', nameFI: 'Liikennevalo' },
       MaintenanceRoadAsset: { typeId: 290, geometryType: 'linear', label: 'MaintenanceRoads', layerName: 'maintenanceRoads', nameFI: 'Huoltotie' },
       TrafficSigns: { typeId: 300, geometryType: 'point', label: 'TrafficSigns', layerName: 'trafficSigns', nameFI: 'Liikennemerkki' },
-      StateSpeedLimit: { typeId: 310, geometryType: 'linear', label: 'StateSpeedLimit', layerName: 'totalWeightLimit', nameFI: 'Tierekisteri Nopeusrajoitukset' },
       UnknownAssetTypeId: { typeId: 99, geometryType: '', label: '', layerName: '', nameFI: '' },
       Manoeuvres: { typeId: 380, geometryType: 'linear', label: 'Manoeuvre', layerName: 'manoeuvre', nameFI: 'Kääntymisrajoitus' },
       CareClass: { typeId: 390, geometryType: 'linear', label: 'CareClass', layerName: 'careClass', nameFI: 'Hoitoluokat' },

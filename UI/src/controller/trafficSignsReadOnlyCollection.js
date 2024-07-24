@@ -6,7 +6,6 @@
 
     var trafficSignsShowing = {
       speedLimit: false,
-      trSpeedLimits: false,
       totalWeightLimit: false,
       trailerTruckWeightLimit: false,
       axleWeightLimit: false,
@@ -24,7 +23,6 @@
 
     var trafficSignValues = {
       speedLimit: { values : [1, 2, 3, 4, 5, 6]},
-      trSpeedLimits: { values : [1, 2, 3, 4, 5, 6]},
       totalWeightLimit: {values : [32, 33, 34, 35]},
       trailerTruckWeightLimit: {values : [32, 33, 34, 35]},
       axleWeightLimit:{values : [32, 33, 34, 35]},

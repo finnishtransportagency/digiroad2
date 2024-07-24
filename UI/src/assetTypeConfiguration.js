@@ -33,7 +33,6 @@
       trafficLights: 280,
       maintenanceRoad: 290,
       trafficSigns: 300,
-      trSpeedLimits: 310, //TODO hidden for now
       manoeuvre: 380,
       careClass: 390,
       carryingCapacity: 400,
@@ -1108,30 +1107,6 @@
         laneReadOnlyLayer: ViewOnlyLaneModellingLayer
       }
     ];
-    //TODO these are hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
-    var experimentalLinearAssetSpecs = [
-      {
-        typeId: assetType.trSpeedLimits,
-        singleElementEventCategory: 'trSpeedLimit',
-        multiElementEventCategory: 'trSpeedLimits',
-        layerName: 'trSpeedLimits',
-        title: 'Tierekisteri nopeusrajoitus',
-        newTitle: 'Uusi nopeusrajoitus',
-        className: 'tr-speed-limits',
-        unit: 'km/h',
-        isSeparable: true,
-        allowComplementaryLinks: false,
-        editControlLabels: {
-          title: '',
-          enabled: 'Nopeusrajoitus',
-          disabled: 'Tuntematon'
-        },
-        label: new TRSpeedLimitAssetLabel(),
-        readOnlyLayer: TrafficSignReadOnlyLayer,
-        style: new TRSpeedLimitStyle(),
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy()
-      }
-    ];
 
     var pointAssetSpecs = [
       {
@@ -1529,7 +1504,6 @@
       assetTypeInfo: assetTypeInfo.concat( _.map(linearAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); }),
                                            _.map(pointAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); })),
       linearAssetsConfig : linearAssetSpecs,
-      experimentalAssetsConfig : experimentalLinearAssetSpecs,
       pointAssetsConfig : pointAssetSpecs
     };
   };

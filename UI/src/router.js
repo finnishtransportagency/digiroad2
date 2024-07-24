@@ -187,7 +187,6 @@
         'numberOfLanes/:id': 'numberOfLanes',
         'massTransitLanes/:id': 'massTransitLanes',
         'winterSpeedLimits/:id': 'winterSpeedLimits',
-        'trSpeedLimits/:id': 'trSpeedLimits',
         'prohibition/:id': 'prohibition',
         'hazardousMaterialTransportProhibition/:id': 'hazardousMaterialTransportProhibition',
         'europeanRoads/:id' : 'europeanRoads',
@@ -577,10 +576,6 @@
 
       winterSpeedLimits: function (id) {
         linearCentering('winterSpeedLimits', id);
-      },
-
-      trSpeedLimits:  function (id) {
-        linearCentering('trSpeedLimits', id);
       },
 
       prohibition: function (id) {
