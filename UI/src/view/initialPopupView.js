@@ -116,11 +116,7 @@ window.InitialPopupView = function(backend, location, userRole, places, assetTyp
             assetTypeConfig.assetTypes.pedestrianCrossings,
             assetTypeConfig.assetTypes.trafficLights,
             assetTypeConfig.assetTypes.trafficSigns,
-            assetTypeConfig.assetTypes.servicePoints,
-
-            assetTypeConfig.assetTypes.trHeightLimits,
-            assetTypeConfig.assetTypes.trWidthLimits,
-            assetTypeConfig.assetTypes.trWeightLimits
+            assetTypeConfig.assetTypes.servicePoints
         ];
 
         var options = '';

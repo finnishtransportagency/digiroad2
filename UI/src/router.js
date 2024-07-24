@@ -178,9 +178,6 @@
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
         'servicePoints/:id': 'servicePoints',
         'trafficSigns/:id': 'trafficSigns',
-        'trHeightLimits/:id': 'trHeightLimits',
-        'trWidthLimits/:id' : 'trWidthLimits',
-        'trWeightLimits/:id'  : 'trWeightLimits',
         'maintenanceRoad/:id': 'maintenanceRoad',
         'litRoad/:id': 'litRoad',
         'roadDamagedByThaw/:id' : 'roadDamagedByThaw',
@@ -190,7 +187,6 @@
         'numberOfLanes/:id': 'numberOfLanes',
         'massTransitLanes/:id': 'massTransitLanes',
         'winterSpeedLimits/:id': 'winterSpeedLimits',
-        'trSpeedLimits/:id': 'trSpeedLimits',
         'prohibition/:id': 'prohibition',
         'hazardousMaterialTransportProhibition/:id': 'hazardousMaterialTransportProhibition',
         'europeanRoads/:id' : 'europeanRoads',
@@ -368,22 +364,6 @@
 
       servicePoints: function (id) {
         pointAssetCentering('servicePoints', id,  models.selectedServicePoint);
-      },
-
-      trHeightLimits : function (id) {
-        pointAssetCentering('trHeightLimits', id,  models.selectedTrHeightLimits);
-      },
-
-      trWidthLimits:  function (id) {
-        pointAssetCentering('trWidthLimits', id,  models.selectedTrWidthLimits);
-      },
-
-      trWeightLimits: function (id) {
-        applicationModel.selectLayer('trWeightLimits');
-        backend.getPointAssetById(id, 'groupedPointAssets').then(function (result) {
-            mapCenterAndZoom(result[0].lon, result[0].lat, 12);
-            models.selectedGroupPointAsset.open(result[0]);
-        });
       },
 
       speedLimitWorkList: function (municipality) {
@@ -596,10 +576,6 @@
 
       winterSpeedLimits: function (id) {
         linearCentering('winterSpeedLimits', id);
-      },
-
-      trSpeedLimits:  function (id) {
-        linearCentering('trSpeedLimits', id);
       },
 
       prohibition: function (id) {

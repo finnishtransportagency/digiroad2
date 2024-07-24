@@ -121,9 +121,6 @@ class FeedbackDataService extends Feedback {
 
     val url = body.typeId match {
 
-      case Some(id) if id == TrTrailerTruckWeightLimit.typeId || TrBogieWeightLimit.typeId  == id || TrAxleWeightLimit.typeId == id || TrWeightLimit.typeId == id =>
-        s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$ids>#${AssetTypeInfo.apply(id).layerName}/$ids</a>"""
-
       case Some(id) if id == Manoeuvres.typeId=>
         s"""<a href=$directLink#${AssetTypeInfo.apply(id).layerName}/$linkIds>#${AssetTypeInfo.apply(id).layerName}/$linkIds</a>"""
 
