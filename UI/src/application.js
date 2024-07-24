@@ -14,7 +14,7 @@
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
     var assetConfiguration = new AssetTypeConfiguration();
-    var enabledExperimentalAssets = isExperimental ? assetConfiguration.experimentalAssetsConfig : [];
+    var enabledExperimentalAssets = [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
     var authorizationPolicy = new AuthorizationPolicy();
     var municipalitySituationCollection = new MunicipalitySituationCollection(backend);
