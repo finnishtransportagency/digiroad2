@@ -63,7 +63,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         case Prohibition.typeId => prohibitionService
         case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId | LitRoad.typeId => testDynamicLinearAssetService
+        case CareClass.typeId | CarryingCapacity.typeId | LitRoad.typeId => testDynamicLinearAssetService
         case LengthLimit.typeId => linearLengthLimitService
         case TotalWeightLimit.typeId => testLinearTotalWeightLimitService
         case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService

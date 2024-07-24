@@ -401,27 +401,6 @@ object ServicePointsClass {
   case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true; val labelName = "Unknown";}
 }
 
-
-/**
-  * Values for AnimalWarningTypes types enumeration
-  */
-sealed trait AnimalWarningsType {
-  def value: Int
-  def typeDescription: String
-}
-object AnimalWarningsType {
-  val values = Set(MooseWarningArea, MooseFence, DeerWarningArea, Unknown)
-
-  def apply(value: Int): AnimalWarningsType = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  case object MooseWarningArea extends AnimalWarningsType { def value = 1; def typeDescription = "Moose Warning Area";}
-  case object MooseFence extends AnimalWarningsType { def value = 2; def typeDescription = "Moose Fence";}
-  case object DeerWarningArea extends AnimalWarningsType { def value = 3; def typeDescription = "Deer Warning Area";}
-  case object Unknown extends AnimalWarningsType { def value = 99;  def typeDescription = "Unknown";}
-}
-
 sealed trait TimePeriodClass {
   def value: Int
 
@@ -1008,7 +987,7 @@ object AssetTypeInfo {
                     HeightLimit, LengthLimit, WidthLimit, LitRoad, PavedRoad, RoadWidth, DamagedByThaw, NumberOfLanes, MassTransitLane,
                     TrafficVolume, WinterSpeedLimit, Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers, TrafficLights,
-                    MaintenanceRoadAsset, TrafficSigns, Manoeuvres, CareClass, CarryingCapacity, AnimalWarnings, RoadWorksAsset,
+                    MaintenanceRoadAsset, TrafficSigns, Manoeuvres, CareClass, CarryingCapacity, RoadWorksAsset,
                     ParkingProhibition, CyclingAndWalking, Lanes, RoadLinkProperties,
                     UnknownAssetTypeId)
 
@@ -1079,7 +1058,6 @@ case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geom
 case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryType = "linear"; val label = "Manoeuvre"; val layerName = "manoeuvre"; val nameFI = "Kääntymisrajoitus" }
 case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType = "linear"; val label = "CareClass"; val layerName = "careClass"; val nameFI = "Hoitoluokat"}
 case object CarryingCapacity extends AssetTypeInfo { val typeId = 400; def geometryType = "linear"; val label = "CarryingCapacity" ; val layerName = "carryingCapacity"; val nameFI = "Kantavuus"}
-case object AnimalWarnings extends AssetTypeInfo { val typeId = 410; def geometryType = "linear"; val label = "AnimalWarnings" ; val layerName = "animalWarnings"; val nameFI = "Elainvaroitukset"}
 case object RoadWorksAsset extends AssetTypeInfo { val typeId = 420; def geometryType = "linear"; val label = "RoadWorks" ; val layerName = "roadWorks"; val nameFI = "Tietyot"}
 case object ParkingProhibition extends AssetTypeInfo { val typeId = 430; def geometryType = "linear"; val label = "ParkingProhibition" ; val layerName = "parkingProhibition"; val nameFI = "Pysäköintikielto"}
 case object CyclingAndWalking extends AssetTypeInfo { val typeId = 440; def geometryType = "linear"; val label = "CyclingAndWalking" ; val layerName = "cyclingAndWalking"; val nameFI = "Käpy tietolaji"}

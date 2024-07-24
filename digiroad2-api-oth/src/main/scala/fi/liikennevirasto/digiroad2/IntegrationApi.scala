@@ -294,7 +294,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId | LitRoad.typeId => dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId | LitRoad.typeId => dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -855,7 +855,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       tags "Integration API (Kalpa API)"
       summary "List all valid assets on a specific municipality."
       authorizations "Contact your service provider for more information"
-      description "Example URL: /api/integration/animal_warnings?municipality=749"
+      description "Example URL: /api/integration/speed_limits?municipality=749"
       )
 
   get("/:assetType", operation(getAssetsByTypeMunicipality)) {
@@ -897,7 +897,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
           case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
           case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
-          case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
           case "road_works_asset" => roadWorksToApi(municipalityNumber)
           case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
           case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
