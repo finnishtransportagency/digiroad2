@@ -60,10 +60,21 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def getSpeedLimitsByBboxExperimental(bbox: BoundingRectangle): Seq[Seq[PieceWiseLinearAsset]] = {
-    val speedLimits = withDynTransaction {
+    val (speedLimits, emptyRoadLinks) = withDynTransaction {
       speedLimitDao.fetchByBBoxExperimental(bbox)
     }
-    LinearAssetPartitioner.partition(speedLimits)
+    val unknownSpeedLimits = emptyRoadLinkToUnknownSpeedLimit(emptyRoadLinks)
+    LinearAssetPartitioner.partition(speedLimits ++ unknownSpeedLimits)
+  }
+
+  def emptyRoadLinkToUnknownSpeedLimit(emptyRoadLinks: Seq[RoadLinkForUnknownGeneration]): Seq[PieceWiseLinearAsset] = {
+    emptyRoadLinks.map(rl => {
+      PieceWiseLinearAsset(id = 0L, linkId = rl.linkId, sideCode = SideCode.BothDirections, value = None, geometry = rl.geometry,
+        expired = false, startMeasure = 0.0, endMeasure = rl.length, endpoints = Set(rl.geometry.head, rl.geometry.last),
+        modifiedBy = None, modifiedDateTime = None, createdBy = None, createdDateTime = None, typeId = SpeedLimitAsset.typeId,
+        trafficDirection = rl.trafficDirection, timeStamp = 0L, geomModifiedDate = None, linkSource = rl.linkSource,
+        administrativeClass = rl.administrativeClass, attributes = Map.empty, verifiedBy = None, verifiedDate = None, informationSource = None)
+    })
   }
 
   def getSpeedLimitAssetsByIds(ids: Set[Long], newTransaction: Boolean = true): Seq[PieceWiseLinearAsset] = {

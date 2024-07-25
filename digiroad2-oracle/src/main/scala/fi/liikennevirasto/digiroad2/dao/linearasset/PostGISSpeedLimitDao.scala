@@ -65,6 +65,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val path = r.nextObjectOption().map(roadLinkDAO.extractGeometry).get
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
+      val geometryLength = r.nextDouble()
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextStringOption()
@@ -77,13 +78,12 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val trafficDirection = roadLinkDAO.extractTrafficDirection(directionType)
       val constructionType = ConstructionType.apply(constructionTypeValue)
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
-      val (head, last) = GeometryUtils.geometryEndpoints(geometry)
       val sideCode = SideCode.apply(sideCodeValue.getOrElse(99))
       val adminClass = AdministrativeClass.apply(adminClassValue)
 
 
       SpeedLimitRowExperimental(id = id, linkId = linkId, sideCode = sideCode, trafficDirection = trafficDirection,
-        value = value, geometry = geometry, startMeasure = startMeasure, endMeasure = endMeasure, modifiedBy = modifiedBy,
+        value = value, geometry = geometry, startMeasure = startMeasure, endMeasure = endMeasure, roadLinkLength = geometryLength, modifiedBy = modifiedBy,
         modifiedDate = modifiedDateTime, createdBy = createdBy, createdDate = createdDateTime, administrativeClass = adminClass,
         municipalityCode = municipality, constructionType = constructionType, linkSource = NormalLinkInterface, publicId = publicId)
       }
@@ -98,33 +98,100 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     }
   }
 
-  def fetchByBBoxExperimental(bbox: BoundingRectangle): Seq[PieceWiseLinearAsset] = {
+  def fetchByBBoxExperimental(bbox: BoundingRectangle): (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
     val bboxFilter = PostGISDatabase.boundingBoxFilter(bbox, "shape")
-    val query = sql"""
-        select a.id, pos.link_id, pos.side_code, kgv.directiontype, e.value,
-               ST_LineSubstring(kgv.shape, (pos.start_measure / kgv.geometrylength), (pos.end_measure / kgv.geometrylength)),
-               pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date,
-               kgv.adminclass, kgv.municipalitycode, kgv.constructiontype, p.public_id
-           from asset a
-           join asset_link al on a.id = al.asset_id
-           join lrm_position pos on al.position_id = pos.id
-           join kgv_roadlink kgv on pos.link_id = kgv.linkid
-           join property p on a.asset_type_id = p.asset_type_id
-           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
-           left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-        where #$bboxFilter
-        and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
-        and a.asset_type_id = 20
-        and a.floating = '0'
-         """
+
+    val query =
+      sql"""
+      WITH cte_kgv_roadlink AS (
+        SELECT
+          kgv.linkid,
+          kgv.directiontype,
+          kgv.shape,
+          kgv.geometrylength,
+          kgv.adminclass,
+          kgv.municipalitycode,
+          kgv.constructiontype
+        FROM kgv_roadlink kgv
+        JOIN link_type lt ON kgv.linkid = lt.link_id
+        JOIN functional_class fc ON kgv.linkid = fc.link_id
+        WHERE #$bboxFilter
+          AND kgv.expired_date IS NULL
+          AND kgv.constructiontype NOT IN (1, 2)
+          AND kgv.mtkclass NOT IN (12318, 12312) -- Filter out HardShoulder and WinterRoad links
+          AND (kgv.adminclass != 1 OR (kgv.adminclass = 1 AND lt.link_type NOT IN (7, 8, 9, 10, 12, 13, 14, 15, 21))) -- Filter out PedestrianZone and CableFerry links
+          AND fc.functional_class IN (1, 2, 3, 4, 5, 6) -- Filter by allowed FunctionalClass values
+      )
+
+      SELECT
+        a.id,
+        pos.link_id,
+        pos.side_code,
+        cte_kgv.directiontype,
+        e.value,
+        COALESCE(
+          ST_LineSubstring(
+            cte_kgv.shape,
+            (pos.start_measure / cte_kgv.geometrylength),
+            (pos.end_measure / cte_kgv.geometrylength)
+          ),
+          cte_kgv.shape
+        ) AS asset_geometry,
+        pos.start_measure,
+        pos.end_measure,
+        cte_kgv.geometrylength,
+        a.modified_by,
+        a.modified_date,
+        a.created_by,
+        a.created_date,
+        cte_kgv.adminclass,
+        cte_kgv.municipalitycode,
+        cte_kgv.constructiontype,
+        p.public_id
+      FROM asset a
+      JOIN asset_link al ON a.id = al.asset_id
+      JOIN lrm_position pos ON al.position_id = pos.id
+      JOIN cte_kgv_roadlink cte_kgv ON pos.link_id = cte_kgv.linkid
+      LEFT JOIN property p ON a.asset_type_id = p.asset_type_id
+      LEFT JOIN single_choice_value s ON s.asset_id = a.id AND s.property_id = p.id
+      LEFT JOIN multiple_choice_value mc ON mc.asset_id = a.id AND mc.property_id = p.id AND p.property_type = 'checkbox'
+      LEFT JOIN enumerated_value e ON s.enumerated_value_id = e.id OR mc.enumerated_value_id = e.id
+      WHERE a.asset_type_id = 20
+        AND (a.valid_to IS NULL OR a.valid_to > current_timestamp)
+        AND a.floating = '0'
+
+      UNION ALL
+
+      SELECT
+        NULL AS id,
+        cte_kgv.linkid,
+        NULL AS side_code,
+        cte_kgv.directiontype,
+        NULL AS value,
+        cte_kgv.shape AS asset_geometry,
+        NULL AS start_measure,
+        NULL AS end_measure,
+        cte_kgv.geometrylength,
+        NULL AS modified_by,
+        NULL AS modified_date,
+        NULL AS created_by,
+        NULL AS created_date,
+        cte_kgv.adminclass,
+        cte_kgv.municipalitycode,
+        cte_kgv.constructiontype,
+        NULL AS public_id
+      FROM cte_kgv_roadlink cte_kgv;
+    """
+
     val speedLimitRows = query.as[SpeedLimitRowExperimental].list
     groupSpeedLimitsResultExperimental(speedLimitRows)
   }
 
-  def groupSpeedLimitsResultExperimental(speedLimitRows: Seq[SpeedLimitRowExperimental]) : Seq[PieceWiseLinearAsset] = {
-    val groupedSpeedLimit = speedLimitRows.groupBy(_.id)
-    groupedSpeedLimit.keys.map { assetId =>
+  def groupSpeedLimitsResultExperimental(speedLimitRows: Seq[SpeedLimitRowExperimental]) : (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
+    val (assetRows, roadLinkRows) = speedLimitRows.partition(_.id != 0)
+    val emptyRoadLinkRows = roadLinkRows.filterNot(rlRow => assetRows.map(_.linkId).contains(rlRow.linkId))
+    val groupedSpeedLimit = assetRows.groupBy(_.id)
+    val speedLimitAssets = groupedSpeedLimit.keys.map { assetId =>
       val rows = groupedSpeedLimit(assetId)
       val asset = rows.head
       val suggestBoxValue =
@@ -145,8 +212,13 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         startMeasure = asset.startMeasure, endMeasure = asset.endMeasure, endpoints = Set(asset.geometry.head, asset.geometry.last),
         modifiedBy = asset.modifiedBy, modifiedDateTime = asset.modifiedDate, createdBy = asset.createdBy,
         createdDateTime = asset.createdDate, typeId = SpeedLimitAsset.typeId, trafficDirection = asset.trafficDirection, timeStamp = 0L, geomModifiedDate = None, linkSource = asset.linkSource,
-        administrativeClass = asset.administrativeClass, attributes = Map.empty, verifiedBy = None, verifiedDate = None, informationSource = None)
+        administrativeClass = asset.administrativeClass, attributes = attributes, verifiedBy = None, verifiedDate = None, informationSource = None)
     }.toSeq
+
+    val emptyRoadLinks = emptyRoadLinkRows.map(rl => {
+      RoadLinkForUnknownGeneration(rl.linkId, rl.roadLinkLength, rl.geometry, rl.trafficDirection, rl.administrativeClass, rl.linkSource)
+    })
+    (speedLimitAssets, emptyRoadLinks)
   }
 
   private def fetchByLinkIds(linkIds: Seq[String], queryFilter: String) : Seq[PersistedLinearAsset] = {
