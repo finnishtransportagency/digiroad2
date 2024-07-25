@@ -119,7 +119,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           AND kgv.expired_date IS NULL
           AND kgv.constructiontype NOT IN (1, 2)
           AND kgv.mtkclass NOT IN (12318, 12312) -- Filter out HardShoulder and WinterRoad links
-          AND (kgv.adminclass != 1 OR (kgv.adminclass = 1 AND lt.link_type NOT IN (7, 8, 9, 10, 12, 13, 14, 15, 21))) -- Filter out PedestrianZone and CableFerry links
+          AND (kgv.adminclass != 1 OR (kgv.adminclass = 1 AND lt.link_type NOT IN (7, 8, 9, 10, 12, 13, 14, 15, 21))) -- Filter out unallowed types on state roads
           AND fc.functional_class IN (1, 2, 3, 4, 5, 6) -- Filter by allowed FunctionalClass values
       )
 
