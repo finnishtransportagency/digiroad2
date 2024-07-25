@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, Width
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPointMassLimitationDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.UnknownSpeedLimit
@@ -542,34 +541,6 @@ object Digiroad2Context {
 
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkService, eventbus)
-  }
-
-  lazy val weightLimitService: WeightLimitService = {
-    new TotalWeightLimitService(roadLinkService)
-  }
-
-  lazy val axleWeightLimitService: AxleWeightLimitService = {
-    new AxleWeightLimitService(roadLinkService)
-  }
-
-  lazy val bogieWeightLimitService: BogieWeightLimitService = {
-    new BogieWeightLimitService(roadLinkService)
-  }
-
-  lazy val trailerTruckWeightLimitService: TrailerTruckWeightLimitService = {
-    new TrailerTruckWeightLimitService(roadLinkService)
-  }
-
-  lazy val heightLimitService: HeightLimitService = {
-    new HeightLimitService(roadLinkService)
-  }
-
-  lazy val widthLimitService: WidthLimitService = {
-    new WidthLimitService(roadLinkService)
-  }
-
-  lazy val pointMassLimitationService: PointMassLimitationService = {
-    new PointMassLimitationService(roadLinkService, new PostGISPointMassLimitationDao)
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
