@@ -39,7 +39,7 @@
     "pikaday": "1.8.0",
     "proj4": "^2.6.0",
     "requirejs": "2.3.7",
-    "web-console-reporter": "1.0.0",
+    "web-console-reporter": "1.0.0"
   },
   "engines": {
     "node": ">=8.12.0"
