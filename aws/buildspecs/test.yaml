@@ -28,6 +28,7 @@ phases:
   build:
     commands:
       - grunt deploy
+      - npm ci --only=production
       - sbt clean
       - sbt assembly
       - docker build -f aws/fargate/Dockerfile --build-arg image=public.ecr.aws/docker/library/amazoncorretto:8-alpine-jre  -t $ECR_REPOSITORY_NAME:latest .

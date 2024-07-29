@@ -438,7 +438,7 @@ class RoadLinkDAO {
     KgvUtil.extractFeatureClass(code)
   }
 
-  protected def extractTrafficDirection(code: Option[Int]): TrafficDirection = {
+  def extractTrafficDirection(code: Option[Int]): TrafficDirection = {
     code match {
       case Some(0) => TrafficDirection.BothDirections
       case Some(1) => TrafficDirection.TowardsDigitizing
@@ -451,7 +451,7 @@ class RoadLinkDAO {
     KgvUtil.extractModifiedAt(createdDate,lastEdited)
   }
 
-  protected def extractGeometry(data: Object): List[List[Double]] = {
+  def extractGeometry(data: Object): List[List[Double]] = {
     val geometry = data.asInstanceOf[PGobject]
     if (geometry == null) Nil
     else {
