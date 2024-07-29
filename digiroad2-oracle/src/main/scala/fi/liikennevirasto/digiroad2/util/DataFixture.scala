@@ -1841,9 +1841,6 @@ object DataFixture {
     println("\n")
   }
 
-  def newRoadAddressFromViite(): Unit ={
-    AutomaticLaneCreationModificationProcess.process()
-  }
 
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
@@ -2065,8 +2062,6 @@ object DataFixture {
         restoreExpiredAssetsFromTRImport()
       case Some("move_old_expired_assets") =>
         moveOldExpiredAssets()
-      case Some("new_road_address_from_viite") =>
-        newRoadAddressFromViite()
       case Some("populate_new_link_with_main_lanes") =>
         MainLanePopulationProcess.process()
       case Some("redundant_traffic_direction_removal") =>
