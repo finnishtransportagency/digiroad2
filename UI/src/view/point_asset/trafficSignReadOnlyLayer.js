@@ -21,7 +21,6 @@
 
     var isShowingForLayer = {
       speedLimit: false,
-      trSpeedLimits: false,
       totalWeightLimit: false,
       trailerTruckWeightLimit: false,
       axleWeightLimit: false,

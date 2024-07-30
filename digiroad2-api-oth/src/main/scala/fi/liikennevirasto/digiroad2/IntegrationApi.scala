@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturda
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
-import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
+import fi.liikennevirasto.digiroad2.service.pointasset._
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
@@ -294,7 +294,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId | LitRoad.typeId => dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId | LitRoad.typeId => dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -759,54 +759,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def trWeightLimitationsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
-    weightLimits.filterNot(_.floating).map { weightLimit =>
-      val longitude = doubleToDefaultPrecision(weightLimit.lon)
-      val latitude = doubleToDefaultPrecision(weightLimit.lat)
-      Map("id" -> weightLimit.id,
-        "linkId" -> weightLimit.linkId,
-        "point" -> Point(longitude, latitude),
-        geometryWKTForPoints(longitude, latitude),
-        "m_value" -> doubleToDefaultPrecision(weightLimit.mValue),
-        "value" -> doubleToDefaultPrecision(weightLimit.limit),
-        latestModificationTime(weightLimit.createdAt, weightLimit.modifiedAt),
-        lastModifiedBy(weightLimit.createdBy, weightLimit.modifiedBy),
-        "linkSource" -> weightLimit.linkSource.value)
-    }
-  }
-
-  def trHeightLimitsToApi(heightLimits: Seq[HeightLimit]): Seq[Map[String, Any]] = {
-    heightLimits.filterNot(_.floating).map { heightLimit =>
-      val longitude = doubleToDefaultPrecision(heightLimit.lon)
-      val latitude = doubleToDefaultPrecision(heightLimit.lat)
-      Map("id" -> heightLimit.id,
-        "linkId" -> heightLimit.linkId,
-        "point" -> Point(longitude, latitude),
-        geometryWKTForPoints(longitude, latitude),
-        "m_value" -> doubleToDefaultPrecision(heightLimit.mValue),
-        "value" -> doubleToDefaultPrecision(heightLimit.limit),
-        latestModificationTime(heightLimit.createdAt, heightLimit.modifiedAt),
-        lastModifiedBy(heightLimit.createdBy, heightLimit.modifiedBy),
-        "linkSource" -> heightLimit.linkSource.value)
-    }
-  }
-
-  def trWidthLimitsToApi(widthLimits: Seq[WidthLimit]): Seq[Map[String, Any]] = {
-    widthLimits.filterNot(_.floating).map { widthLimit =>
-      val longitude = doubleToDefaultPrecision(widthLimit.lon)
-      val latitude = doubleToDefaultPrecision(widthLimit.lat)
-      Map("id" -> widthLimit.id,
-        "linkId" -> widthLimit.linkId,
-        "point" -> Point(longitude, latitude),
-        geometryWKTForPoints(longitude, latitude),
-        "m_value" -> doubleToDefaultPrecision(widthLimit.mValue),
-        "value" -> doubleToDefaultPrecision(widthLimit.limit),
-        "reason" -> widthLimit.reason.value,
-        latestModificationTime(widthLimit.createdAt, widthLimit.modifiedAt),
-        lastModifiedBy(widthLimit.createdBy, widthLimit.modifiedBy),
-        "linkSource" -> widthLimit.linkSource.value)
-    }
-  }
   def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
 
     def showOldTrafficCode(trafficSign: PersistedTrafficSign): Option[Int] = {
@@ -903,7 +855,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       tags "Integration API (Kalpa API)"
       summary "List all valid assets on a specific municipality."
       authorizations "Contact your service provider for more information"
-      description "Example URL: /api/integration/animal_warnings?municipality=749"
+      description "Example URL: /api/integration/speed_limits?municipality=749"
       )
 
   get("/:assetType", operation(getAssetsByTypeMunicipality)) {
@@ -942,16 +894,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case "road_link_properties" => roadLinkPropertiesToApi(roadAddressService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipalityNumber), s"Get roadaddress by municipality code: ${municipalityNumber}"))
           case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
           case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-          case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
-          case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
-          case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
-          case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
-          case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
-          case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
           case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
           case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
           case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
-          case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
           case "road_works_asset" => roadWorksToApi(municipalityNumber)
           case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
           case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
