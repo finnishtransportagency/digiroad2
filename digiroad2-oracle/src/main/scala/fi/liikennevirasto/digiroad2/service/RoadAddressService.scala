@@ -3,13 +3,14 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
 import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils}
-import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, Track}
+import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, Track, client}
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -47,7 +48,8 @@ case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, 
   }
 }
 
-class RoadAddressService(viiteClient: SearchViiteClient ) {
+class RoadAddressService(viiteClient: SearchViiteClient) {
+  val vkmClient = new VKMClient
   val roadAddressTempDAO = new RoadAddressTempDAO
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -88,7 +90,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
       val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
       ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
         LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
-          viiteClient.fetchAllByLinkIds(linkIds)
+          vkmClient.fetchRoadAddressesByLinkIds(linkIds)
         }
       }
     } else Seq()

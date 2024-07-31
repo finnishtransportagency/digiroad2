@@ -165,7 +165,7 @@ class VKMClient {
     def verify(s: String, sslSession: SSLSession) = true
   }
 
-  def fetchRoadAddressesByLinkIds(linkIds: Seq[String]): List[Some[RoadAddressForLink]] = {
+  def fetchRoadAddressesByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     val params = linkIds.map(linkId =>
       Map(
         VkmQueryIdentifier -> "TestiTunniste",
@@ -175,7 +175,7 @@ class VKMClient {
     ))
     val response = baseRequest(params)
     val result = response match {
-      case Left(address) => address.features.map(feature => mapRoadAddressForLinkFields(feature))
+      case Left(address) => address.features.flatMap(feature => mapRoadAddressForLinkFields(feature))
       case Right(error) => throw new RoadAddressException(error.toString)
     }
     result
