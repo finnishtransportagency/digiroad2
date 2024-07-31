@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.service.RoadAddressForLink
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, Track, Vector3d}
 import org.apache.http.{HttpStatus, NameValuePair}
@@ -47,6 +48,8 @@ class VKMClient {
   private def VkmRoadPartEnd = "osa_loppu"
   private def VkmDistance = "etaisyys"
   private def VkmDistanceEnd = "etaisyys_loppu"
+  private def VkmMValueStart = "m_arvo"
+  private def VkmMValueEnd = "m_arvo_loppu"
   private def VkmTrackCodes = "ajorata"
   private def VkmTrackCode = "ajorata"
   private def VkmLinkId = "link_id"
@@ -56,10 +59,17 @@ class VKMClient {
   private def VkmSearchRadius = "sade"
   private def VkmQueryIdentifier = "tunniste"
   private def VkmMunicipalityCode = "kuntakoodi"
+  private def VkmRangeSearch = "valihaku"
+  private def VkmResponseValues = "palautusarvot"
   private def NonPedestrianRoadNumbers = "1-62999"
   private def AllRoadNumbers = "1-99999"
   private def DefaultToleranceMeters = 20.0
-  
+
+  private def coordinateFrameWorkValue = 1
+  private def roadAddressFrameWorkValue = 2
+  private def linearLocationFrameWorkValue = 6
+
+
   private def VkmMaxBatchSize =1000
 
   private val logger = LoggerFactory.getLogger(getClass)
@@ -155,6 +165,22 @@ class VKMClient {
     def verify(s: String, sslSession: SSLSession) = true
   }
 
+  def fetchRoadAddressesByLinkIds(linkIds: Seq[String]): List[Some[RoadAddressForLink]] = {
+    val params = linkIds.map(linkId =>
+      Map(
+        VkmQueryIdentifier -> "TestiTunniste",
+        VkmLinkId -> linkId,
+        VkmRangeSearch -> "true",
+        VkmResponseValues -> s"$roadAddressFrameWorkValue,$linearLocationFrameWorkValue"
+    ))
+    val response = baseRequest(params)
+    val result = response match {
+      case Left(address) => address.features.map(feature => mapRoadAddressForLinkFields(feature))
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
+    result
+  }
+
   def fetchLinkIdsBetweenTwoRoadLinks(startLinkId: String, endLinkId: String, roadNumber: Long): Set[String] = {
     val params = Map(
       VkmLinkId -> Some(startLinkId),
@@ -213,7 +239,12 @@ class VKMClient {
   
   private def validateRange(params: Seq[Map[String, Any]]): Map[String, RoadAddress] ={
    val response = baseRequest(params)
-    response.filter(_.isDefined).flatMap(_.get).groupBy(_._1)
+    val result = response match {
+      case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
+
+    result.filter(_.isDefined).flatMap(_.get).groupBy(_._1)
       .map(a => {
         val id = a._1
         val address = a._2.map(_._2)
@@ -225,16 +256,12 @@ class VKMClient {
       })
   }
 
-  private def baseRequest(params: Seq[Map[String, Any]]): List[Option[Map[String, RoadAddress]]] = {
+  private def baseRequest(params: Seq[Map[String, Any]]): Either[FeatureCollection, VKMError] = {
     val jsonValue = Serialization.write(params)
     val url = vkmBaseUrl + "muunna/"
-    val response = ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $jsonValue") {postRequest(url, jsonValue)}
-    val result = response match {
-      case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
-      case Right(error) => throw new RoadAddressException(error.toString)
-    }
-    result
+    ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $jsonValue") {postRequest(url, jsonValue)}
   }
+
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
@@ -396,6 +423,21 @@ class VKMClient {
     (behind, front)
   }
 
+  private def mapRoadAddressForLinkFields(data: Feature): Some[RoadAddressForLink] = {
+    val roadNumber = validateAndConvertToInt(VkmRoad, data.properties)
+    val roadPartNumber = validateAndConvertToInt(VkmRoadPart, data.properties)
+    val trackCode = Track.apply(validateAndConvertToInt(VkmTrackCode, data.properties))
+    val startAddrM = validateAndConvertToInt(VkmDistance, data.properties)
+    val endAddrM = validateAndConvertToInt(VkmDistanceEnd, data.properties)
+    val linkId = data.properties(VkmLinkId).asInstanceOf[String]
+    val startMValue = validateAndConvertToDouble(VkmMValueStart, data.properties)
+    val endMValue = validateAndConvertToDouble(VkmMValueEnd, data.properties)
+
+    val sideCode = if(startAddrM <= endAddrM) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+
+    Some(RoadAddressForLink(0, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, sideCode, Seq(), expired = false, None, None, None))
+  }
+
   private def mapMassQueryFields(data: Feature): Option[Map[String, RoadAddress]] = {
     try{
       val municipalityCode = data.properties.get(VkmMunicipalityCode).asInstanceOf[Option[String]]
@@ -472,16 +514,18 @@ class VKMClient {
     }
   }
 
-  private def convertToDouble(value: Option[Any]): Option[Double] = {
-    value.map {
-      case x: Object =>
-        try {
-          x.toString.toDouble
-        } catch {
-          case e: NumberFormatException =>
-            throw new RoadAddressException("Invalid value in response: Double expected, got '%s'".format(x))
-        }
-      case _ => throw new RoadAddressException("Invalid value in response: Double expected, got '%s'".format(value.get))
+  private def validateAndConvertToDouble(fieldName: String, map: Map[String, Any]) = {
+    def value = map.get(fieldName).asInstanceOf[Option[Double]]
+    if (value.isEmpty) {
+      throw new RoadAddressException(
+        "Missing mandatory field in response: %s".format(
+          fieldName))
+    }
+    try {
+      value.get
+    } catch {
+      case e: NumberFormatException =>
+        throw new RoadAddressException("Invalid value in response: %s, Double expected, got '%s'".format(fieldName, value.get))
     }
   }
 }
