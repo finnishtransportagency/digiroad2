@@ -923,7 +923,7 @@
         form: new DynamicAssetForm ( {
           fields : [
             {
-              label: 'Rajoitus', required: 'required', type: 'single_choice', publicId: "parking_prohibition", defaultValue: "1", weight: 1,
+              label: 'Rajoitus', required: true, type: 'single_choice', publicId: "parking_prohibition", defaultValue: "1", weight: 1,
               values: [
                 {id: 1, label: 'Pysähtyminen kielletty'},
                 {id: 2, label: 'Pysäköinti kielletty'}
@@ -959,7 +959,7 @@
         form: new DynamicAssetForm ( {
           fields : [
             {
-              label: 'Käpy tietolaji', required: 'required', type: 'single_choice', publicId: "cyclingAndWalking_type", defaultValue: "99", weight: 1,
+              label: 'Käpy tietolaji', required: true, type: 'single_choice', publicId: "cyclingAndWalking_type", defaultValue: "99", weight: 1,
               values: [
                 {id: 99, label: 'Ei tietoa', disabled: true },
                 {id: 1 , label:'Pyöräily ja kävely kielletty'},
@@ -1030,7 +1030,7 @@
               label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11, cssClass: 'lane-code'
             },
             {
-              label: 'Kaistan tyyppi', required: 'required', type: 'single_choice', publicId: "lane_type",
+              label: 'Kaistan tyyppi', required: true, type: 'single_choice', publicId: "lane_type",
               values: [
                 {id: 2, label: 'Ohituskaista'},
                 {id: 3, label: 'Kääntymiskaista oikealle'},
