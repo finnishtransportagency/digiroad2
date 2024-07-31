@@ -43,7 +43,6 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   when(mockRoadLinkService.getRoadLinksByMunicipalityUsingCache(any[Int])).thenReturn(Seq(roadLink1))
   when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1))
   when(mockGeometryTransform.getLinkIdsInRoadAddressRange(any[RoadAddressRange])).thenReturn(Set(linkId1))
-  when(mockRoadAddressService.getAllByRoadNumber(any())).thenReturn(Seq(roadAddress))
   when(mockRoadAddressService.laneWithRoadAddress(any())).thenReturn(Seq(pieceWiseLane))
 
   // Returns four geometrically connected road links

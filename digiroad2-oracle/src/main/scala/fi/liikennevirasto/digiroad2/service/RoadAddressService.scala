@@ -53,24 +53,6 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  /**
-    * Return all the current existing road numbers
-    *
-    * @return
-    */
-  def getAllRoadNumbers(): Seq[Long] = {
-    viiteClient.fetchAllRoadNumbers()
-  }
-
-  /**
-    * Returns all the existing road address for given road number
-    *
-    * @param roadNumber The road number
-    * @return
-    */
-  def getAllByRoadNumber(roadNumber: Long): Seq[RoadAddressForLink] = {
-    viiteClient.fetchAllByRoadNumber(roadNumber, Seq())
-  }
 
   /**
     * Returns all the existing road address for the given road number and road parts
@@ -86,19 +68,6 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   }
 
   /**
-    * Returns the current road address for the given road, road part and track code at road address measure
-    *
-    * @param road        Road number
-    * @param roadPart    Road part number
-    * @param track       Track code
-    * @param addrMeasure Road address measure
-    * @return
-    */
-  def getByRoadSection(road: Long, roadPart: Long, track: Track, addrMeasure: Long): Option[RoadAddressForLink] = {
-    viiteClient.fetchAllBySection(road, roadPart, addrMeasure, Seq(track)).headOption
-  }
-
-  /**
     * Returns the road address at given road link id and geometry measure
     *
     * @param linkId Road link ID
@@ -106,18 +75,6 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     */
   def getByLrmPosition(linkId: String, mValue: Double): Option[RoadAddressForLink] = {
     viiteClient.fetchByLrmPosition(linkId, mValue).headOption
-  }
-
-  /**
-    * Returns the road address at given road link id and geometry measures
-    *
-    * @param linkId       Road link ID
-    * @param startMeasure Start measure
-    * @param endMeasure   End measure
-    * @return
-    */
-  def getAllByLrmPositions(linkId: String, startMeasure: Double, endMeasure: Double): Seq[RoadAddressForLink] = {
-    viiteClient.fetchByLrmPositions(linkId, startMeasure, endMeasure)
   }
 
   /**
