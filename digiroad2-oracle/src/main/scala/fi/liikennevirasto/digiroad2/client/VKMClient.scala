@@ -181,6 +181,22 @@ class VKMClient {
     result
   }
 
+  def fetchRoadAddressByLrmPosition(linkId: String, mValue: Double): Seq[RoadAddressForLink] = {
+    val params = Seq(Map(
+      VkmLinkId -> linkId,
+      VkmMValueStart -> mValue,
+      VkmRangeSearch -> "true",
+      VkmResponseValues -> s"$roadAddressFrameWorkValue,$linearLocationFrameWorkValue"
+    ))
+
+    val response = baseRequest(params)
+    val result = response match {
+      case Left(address) => address.features.flatMap(feature => mapRoadAddressForLinkFields(feature))
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
+    result
+  }
+
   def fetchLinkIdsBetweenTwoRoadLinks(startLinkId: String, endLinkId: String, roadNumber: Long): Set[String] = {
     val params = Map(
       VkmLinkId -> Some(startLinkId),

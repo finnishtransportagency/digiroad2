@@ -76,7 +76,7 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
     * @param mValue Road geometry measure
     */
   def getByLrmPosition(linkId: String, mValue: Double): Option[RoadAddressForLink] = {
-    viiteClient.fetchByLrmPosition(linkId, mValue).headOption
+    vkmClient.fetchRoadAddressByLrmPosition(linkId, mValue).headOption
   }
 
   /**
