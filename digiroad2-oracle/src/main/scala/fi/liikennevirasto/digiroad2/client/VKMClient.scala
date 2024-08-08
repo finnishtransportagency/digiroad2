@@ -197,22 +197,24 @@ class VKMClient {
     result
   }
 
-  def fetchLinkIdsBetweenTwoRoadLinks(startLinkId: String, endLinkId: String, roadNumber: Long): Set[String] = {
+  def fetchLinkIdsBetweenTwoRoadLinks(startLinkId: String, endLinkId: String, roadNumber: Long): Seq[RoadAddressForLink] = {
     val params = Map(
       VkmLinkId -> Some(startLinkId),
       VkmLinkIdEnd -> Some(endLinkId),
-      VkmRoad -> Some(roadNumber)
+      VkmRoad -> Some(roadNumber),
+      VkmRangeSearch -> Some("true"),
+      VkmResponseValues -> Some(s"$roadAddressFrameWorkValue,$linearLocationFrameWorkValue")
     )
 
-    request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=6&" + urlParams(params)) match {
-      case Left(featureCollection) => featureCollection.features.map(_.properties(VkmLinkId).asInstanceOf[String]).toSet
+    request(vkmBaseUrl + "muunna?" + urlParams(params)) match {
+      case Left(featureCollection) => featureCollection.features.flatMap(feature => mapRoadAddressForLinkFields(feature))
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
 
   // TODO VKM does not provide all road links when transforming road address range to roadLinks, only start and end links
   //  Support for this is coming to VKM in early 2023, change implementation to use the feature when it's available.
-  def fetchStartAndEndLinkIdForAddrRange(roadAddressRange: RoadAddressRange): Set[(String, String)] = {
+  def fetchStartAndEndLinkIdForAddrRange(roadAddressRange: RoadAddressRange): Seq[RoadAddressForLink] = {
     val params = Map(
       VkmRoad -> Some(roadAddressRange.roadNumber),
       VkmRoadPart -> Some(roadAddressRange.startRoadPartNumber),
@@ -225,10 +227,9 @@ class VKMClient {
       }
     )
 
-    request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=6&" + urlParams(params)) match {
+    request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=2,6&" + urlParams(params)) match {
       case Left(featureCollection) =>
-        featureCollection.features.map(feature => (feature.properties(VkmLinkId).asInstanceOf[String],
-          feature.properties(VkmLinkIdEnd).asInstanceOf[String])).toSet
+        featureCollection.features.flatMap(feature => mapRoadAddressForLinkFields(feature))
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }

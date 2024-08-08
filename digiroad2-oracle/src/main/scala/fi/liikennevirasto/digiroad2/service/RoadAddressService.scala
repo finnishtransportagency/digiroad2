@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils}
-import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, Track, client}
+import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, RoadAddressRange}
+import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, RoadAddressException, Track, client}
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -56,16 +56,14 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
 
-  /**
-    * Returns all the existing road address for the given road number and road parts
-    *
-    * @param roadNumber The road number
-    * @param roadParts  All the road number parts
-    * @return
-    */
-  def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long], tracks: Seq[Track] = Seq()): Seq[RoadAddressForLink] = {
-    ClientUtils.retry(2, logger){
-      viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
+  def getRoadAddressesByRoadAddressRange(roadAddressRange: RoadAddressRange): Seq[RoadAddressForLink] = {
+    val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
+    if (startAndEndLinkIdsForAllSegments.isEmpty) {
+      throw new RoadAddressException(s"Could not fetch start and end link id for RoadAddressRange: $roadAddressRange")
+    } else {
+      val startLinkId = startAndEndLinkIdsForAllSegments.head.linkId
+      val endLinkId = startAndEndLinkIdsForAllSegments.last.linkId
+      vkmClient.fetchLinkIdsBetweenTwoRoadLinks(startLinkId, endLinkId, roadAddressRange.roadNumber)
     }
   }
 

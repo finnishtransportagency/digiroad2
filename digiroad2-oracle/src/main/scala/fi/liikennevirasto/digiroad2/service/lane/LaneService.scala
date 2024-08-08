@@ -591,7 +591,7 @@ trait LaneOperations {
   }
 
   def getLanesInRoadAddressRange(roadAddressRange: RoadAddressRange): (Seq[PieceWiseLane], Map[String, RoadLink]) = {
-    val linkIds = geometryTransform.getLinkIdsInRoadAddressRange(roadAddressRange)
+    val linkIds = roadAddressService.getRoadAddressesByRoadAddressRange(roadAddressRange).map(_.linkId).toSet
 
     val roadLinksInRange = roadLinkService.getRoadLinksByLinkIds(linkIds)
     val roadLinksFiltered = roadLinksInRange.filter(_.functionalClass != WalkingAndCyclingPath.value)

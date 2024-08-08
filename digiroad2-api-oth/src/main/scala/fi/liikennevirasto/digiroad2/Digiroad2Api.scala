@@ -1787,12 +1787,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateUserRightsForRoadAddress(laneRoadAddressInfo: LaneRoadAddressInfo, user: User) : Unit = {
-
-    val roadParts = laneRoadAddressInfo.startRoadPart to laneRoadAddressInfo.endRoadPart
-
-    // Get the LinkIds from road address information from Viite
-    val linkIds = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track)))
-                                    .map(_.linkId)
+    val roadAddressRange = RoadAddressRange(laneRoadAddressInfo.roadNumber, Some(Track(laneRoadAddressInfo.track)),
+      laneRoadAddressInfo.startRoadPart, laneRoadAddressInfo.endRoadPart, laneRoadAddressInfo.startDistance, laneRoadAddressInfo.endDistance)
+    val linkIds = roadAddressService.getRoadAddressesByRoadAddressRange(roadAddressRange).map(_.linkId)
 
     //Validate the user rights on those LinkIds
     validateUserRightsForLanes(linkIds.toSet, user)

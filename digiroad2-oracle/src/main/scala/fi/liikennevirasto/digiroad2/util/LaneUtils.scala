@@ -85,22 +85,16 @@ object LaneUtils {
   }
 
   def getRoadAddressToProcess(laneRoadAddressInfo: LaneRoadAddressInfo): Set[RoadLinkWithAddresses] = {
+    val roadAddressRange = RoadAddressRange(laneRoadAddressInfo.roadNumber, Some(Track(laneRoadAddressInfo.track)),
+      laneRoadAddressInfo.startRoadPart, laneRoadAddressInfo.endRoadPart, laneRoadAddressInfo.startDistance, laneRoadAddressInfo.endDistance)
 
-    // Generate a sequence from startRoadPart to endRoadPart
-    // If startRoadPart = 1 and endRoadPart = 4
-    // Result will be Seq(1,2,3,4)
-    val roadParts = laneRoadAddressInfo.startRoadPart to laneRoadAddressInfo.endRoadPart
-
-    // Get the road address information from Viite
-    val roadAddresses = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track))).toSet
-
-    // Group road addresses that exist on same link and exist on same road and road part
-    val groupedAddresses = roadAddressService.groupRoadAddress(roadAddresses.toSeq)
+    // Get the road address information from VKM
+    val roadAddresses = roadAddressService.getRoadAddressesByRoadAddressRange(roadAddressRange)
 
     // Get all updated information from DB
-    val roadLinks = roadLinkService.fetchRoadlinksByIds(roadAddresses.map(_.linkId))
+    val roadLinks = roadLinkService.fetchRoadlinksByIds(roadAddresses.map(_.linkId).toSet)
 
-    val finalRoads = groupedAddresses.filter { elem =>  // Remove addresses which roadPart is not between our start and end
+    val finalRoads = roadAddresses.filter { elem =>  // Remove addresses which roadPart is not between our start and end
       val roadPartNumber = elem.roadPartNumber
       val inStartAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.startRoadPart && roadPartNumber <= laneRoadAddressInfo.endRoadPart
 
@@ -110,7 +104,7 @@ object LaneUtils {
     finalRoads.flatMap { road =>
       roadLinks.find(_.linkId == road.linkId) match {
         case Some(link) =>
-          val allAddressesOnLink = roadAddresses.filter(_.linkId == road.linkId)
+          val allAddressesOnLink = roadAddresses.filter(_.linkId == road.linkId).toSet
           Some(RoadLinkWithAddresses(road.linkId, link, allAddressesOnLink))
         case _ => None // Remove links (and addresses) that are not in DB
       }
