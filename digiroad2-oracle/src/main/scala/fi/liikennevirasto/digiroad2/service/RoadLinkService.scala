@@ -1309,8 +1309,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
           linkAttributeValues
         )
       }
-      val propertyRows = fetchRoadLinkPropertyRows(linkIds, withPrivateRoadModification = false)
-      propertyRowsToValueCollection(propertyRows)
+      val propertyRows = LogUtils.time(logger, s"TEST LOG fetchRoadLinkPropertyRows with ${linkIds.size} links", startLogging = true) {
+        fetchRoadLinkPropertyRows(linkIds, withPrivateRoadModification = false)
+      }
+      LogUtils.time(logger, s"TEST LOG convert fetched RoadLinkPropertyRows to a RoadLinkValueCollection", startLogging = true) {
+        propertyRowsToValueCollection(propertyRows)
+      }
     }
   }
 
