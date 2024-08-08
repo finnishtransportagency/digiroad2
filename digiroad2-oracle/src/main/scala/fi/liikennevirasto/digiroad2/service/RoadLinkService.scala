@@ -1279,46 +1279,39 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getRoadLinkValuesMass(linkIds: Set[String]): RoadLinkValueCollection = {
     LogUtils.time(logger, s"TEST LOG getRoadLinkValuesMass for ${linkIds.size} links", startLogging = true) {
-      /*val functionalClassMap = FunctionalClassDao.getExistingValues(linkIds)
-      val linkTypeMap = LinkTypeDao.getExistingValues(linkIds)
-      val trafficDirectionMap = TrafficDirectionDao.getExistingValues(linkIds)
-      val adminClassMap = AdministrativeClassDao.getExistingValues(linkIds)
-      val linkAttributeMap = linkIds.map(linkId => RoadLinkAttribute(linkId, LinkAttributesDao.getExistingValues(linkId)))
-      RoadLinkValueCollection(functionalClassMap, linkTypeMap, trafficDirectionMap, adminClassMap, linkAttributeMap)*/
+      def propertyRowsToValueCollection(rows: RoadLinkPropertyRows): RoadLinkValueCollection = {
+
+        val functionalClassValues = rows.functionalClassRowsByLinkId.map {
+          case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
+        }.toSeq
+
+        val linkTypeValues = rows.linkTypeRowsByLinkId.map {
+          case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
+        }.toSeq
+
+        val trafficDirectionValues = rows.trafficDirectionRowsByLinkId.map {
+          case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
+        }.toSeq
+
+        val adminClassValues = rows.administrativeClassRowsByLinkId.map {
+          case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
+        }.toSeq
+
+        val linkAttributeValues = rows.roadLinkAttributesByLinkId.map {
+          case (linkId, attributes) => RoadLinkAttribute(linkId, attributes.toMap)
+        }.toSeq
+
+        RoadLinkValueCollection(
+          functionalClassValues,
+          linkTypeValues,
+          trafficDirectionValues,
+          adminClassValues,
+          linkAttributeValues
+        )
+      }
       val propertyRows = fetchRoadLinkPropertyRows(linkIds, withPrivateRoadModification = false)
       propertyRowsToValueCollection(propertyRows)
     }
-  }
-
-  def propertyRowsToValueCollection(rows: RoadLinkPropertyRows): RoadLinkValueCollection = {
-
-    val functionalClassValues = rows.functionalClassRowsByLinkId.map {
-      case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
-    }.toSeq
-
-    val linkTypeValues = rows.linkTypeRowsByLinkId.map {
-      case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
-    }.toSeq
-
-    val trafficDirectionValues = rows.trafficDirectionRowsByLinkId.map {
-      case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
-    }.toSeq
-
-    val adminClassValues = rows.administrativeClassRowsByLinkId.map {
-      case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
-    }.toSeq
-
-    val linkAttributeValues = rows.roadLinkAttributesByLinkId.map {
-      case (linkId, attributes) => RoadLinkAttribute(linkId, attributes.toMap)
-    }.toSeq
-
-    RoadLinkValueCollection(
-      functionalClassValues,
-      linkTypeValues,
-      trafficDirectionValues,
-      adminClassValues,
-      linkAttributeValues
-    )
   }
 
   def insertRoadLinkValuesMass(valueCollection: RoadLinkValueCollection): Unit = {
