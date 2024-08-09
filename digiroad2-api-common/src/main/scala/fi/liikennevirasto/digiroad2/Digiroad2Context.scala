@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import akka.actor.{Actor, ActorSystem, Props}
+import akka.event.Logging
+import akka.pattern.ask
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
@@ -27,8 +29,8 @@ import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration.FiniteDuration
-
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
   val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
@@ -96,6 +98,44 @@ class SpeedLimitUpdater[A, B, C](speedLimitProvider: SpeedLimitService) extends 
     case (affectedLinkIds: Set[A], expiredLinkIds: Seq[A]) => speedLimitProvider.purgeUnknown(affectedLinkIds.asInstanceOf[Set[String]], expiredLinkIds.asInstanceOf[Seq[String]])
     case _ => println("speedLimitFiller: Received unknown message")
   }
+}
+
+
+class LaneServiceActor(laneService: LaneService) extends Actor {
+  val log = Logging(context.system, this)
+  def receive: Receive = {
+    case msg =>
+      //log.info(s"Received message: $msg")
+      println(s"Received:  $msg")
+      msg match {
+        case x: laneService.MoveToHistoryMessage =>
+          laneService.moveToHistory(x.oldId, x.newId, x.expireHistoryLane, x.deleteFromLanes, x.username)
+        case _ =>
+          println("laneService: Received unknown message")
+      }
+  }
+
+  /*def receive: Receive = {
+    case x: laneService.MoveToHistoryMessage =>
+      laneService.moveToHistory(x.oldId, x.newId, x.expireHistoryLane, x.deleteFromLanes, x.username)
+    case _ =>
+      println("laneService: Received unknown message")
+  }*/
+
+  /*val log = Logging(context.system, this)
+
+  def receive: Receive = {
+    case msg =>
+      log.info(s"Received message: $msg")
+      msg match {
+        case x: laneService.MoveToHistoryMessage =>
+          val result = laneService.moveToHistory(x.oldId, x.newId, x.expireHistoryLane, x.deleteFromLanes, x.username)
+          sender() ! laneService.MoveToHistoryResult(result)
+        case _ =>
+          println("laneService: Received unknown message")
+      }
+  }*/
+
 }
 
 class HazmatTransportProhibitionValidation(prohibitionValidator: HazmatTransportProhibitionValidator) extends Actor {
@@ -286,6 +326,9 @@ object Digiroad2Context {
 
   val roadLinkPropertyChanged = system.actorOf(Props(classOf[RoadLinkPropertyChangedActor], laneService), name = "roadLinkPropertyChanged")
   eventbus.subscribe(roadLinkPropertyChanged, "roadLinkProperty:changed")
+
+  val laneToHistory = system.actorOf(Props(classOf[LaneServiceActor], laneService), name = "laneToHistory")
+  eventbus.subscribe(laneToHistory, "laneServiceActor:moveToHistory")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")

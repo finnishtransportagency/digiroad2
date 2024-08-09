@@ -61,6 +61,9 @@ trait LaneOperations {
                              lanesToInsert: Set[NewLane] = Set(),
                              multiLanesOnLink: Set[NewLane] = Set())
 
+  case class MoveToHistoryMessage(oldId: Long, newId: Option[Long], expireHistoryLane: Boolean = false, deleteFromLanes: Boolean = false, username: String)
+  case class MoveToHistoryResult(result: Long)
+
   def getByZoomLevel( linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLane]] = {
     withDynTransaction {
       val assets = dao.fetchLanes( linkGeomSource)
@@ -700,7 +703,8 @@ trait LaneOperations {
                 }
                 val persistedLaneToUpdate = PersistedLane(lane.id, linkId, sideCode, laneCode, lane.municipalityCode,
                   lane.startMeasure, lane.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
-                moveToHistory(lane.id, None, false, false, username)
+                eventBus.publish("laneServiceActor:moveToHistory", MoveToHistoryMessage(lane.id, None, false, false, username))
+                //moveToHistory(lane.id, None, false, false, username)
                 newLaneID = dao.updateEntryLane(persistedLaneToUpdate, username)
                 if(checkForExpireByEndDate(persistedLaneToUpdate)) {
                   expireByEndDate(persistedLaneToUpdate, username)
@@ -710,7 +714,8 @@ trait LaneOperations {
             } else if (linkIds.size == 1 &&
               (oldLane.startMeasure != laneToUpdate.startMeasure || oldLane.endMeasure != laneToUpdate.endMeasure)) {
               val newLaneID = create(Seq(laneToUpdate), Set(linkId), sideCode, username)
-              moveToHistory(oldLane.id, Some(newLaneID.head), true, true, username)
+              eventBus.publish("laneServiceActor:moveToHistory", MoveToHistoryMessage(oldLane.id, Some(newLaneID.head), true, true, username))
+              //moveToHistory(oldLane.id, Some(newLaneID.head), true, true, username)
               newLaneID.head
             } else if (oldLane.laneCode != laneToUpdateOriginalLaneCode || isSomePropertyDifferent(oldLane, laneToUpdate.properties) || laneToUpdate.newLaneCode.nonEmpty) {
               //Something changed on properties or lane code
@@ -721,7 +726,8 @@ trait LaneOperations {
               val persistedLaneToUpdate = PersistedLane(oldLane.id, linkId, sideCodeForLink, laneCode, oldLane.municipalityCode,
                 oldLane.startMeasure, oldLane.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
 
-              moveToHistory(oldLane.id, None, false, false, username)
+              eventBus.publish("laneServiceActor:moveToHistory", MoveToHistoryMessage(oldLane.id, None, false, false, username))
+              //moveToHistory(oldLane.id, None, false, false, username)
               dao.updateEntryLane(persistedLaneToUpdate, username)
               if(checkForExpireByEndDate(persistedLaneToUpdate)) {
                 expireByEndDate(persistedLaneToUpdate, username)
@@ -737,13 +743,15 @@ trait LaneOperations {
             if (linkIds.size == 1 &&
               (laneRelatedByLaneCode.startMeasure != laneToUpdate.startMeasure || laneRelatedByLaneCode.endMeasure != laneToUpdate.endMeasure)) {
               val newLaneID = create(Seq(laneToUpdate), Set(linkId), sideCode, username)
-              moveToHistory(laneRelatedByLaneCode.id, Some(newLaneID.head), true, true, username)
+              eventBus.publish("laneServiceActor:moveToHistory", MoveToHistoryMessage(laneRelatedByLaneCode.id, Some(newLaneID.head), true, true, username))
+              //moveToHistory(laneRelatedByLaneCode.id, Some(newLaneID.head), true, true, username)
               newLaneID.head
             } else if(isSomePropertyDifferent(laneRelatedByLaneCode, laneToUpdate.properties)){
               val persistedLaneToUpdate = PersistedLane(laneRelatedByLaneCode.id, linkId, sideCodeForLink, laneToUpdateOriginalLaneCode, laneToUpdate.municipalityCode,
                 laneToUpdate.startMeasure, laneToUpdate.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
 
-              moveToHistory(laneRelatedByLaneCode.id, None, false, false, username)
+              eventBus.publish("laneServiceActor:moveToHistory", MoveToHistoryMessage(laneRelatedByLaneCode.id, None, false, false, username))
+              //moveToHistory(laneRelatedByLaneCode.id, None, false, false, username)
               dao.updateEntryLane(persistedLaneToUpdate, username)
 
               if(checkForExpireByEndDate(persistedLaneToUpdate)) {
@@ -969,20 +977,21 @@ trait LaneOperations {
     * @param lanesToExpire  existing lanes to be expired
     * @param username username of the one who expired the lanes
     */
-  def deleteMultipleLanes(lanesToExpire: Seq[PersistedLane], username: String): Seq[Long] = {
+  def deleteMultipleLanes(lanesToExpire: Seq[PersistedLane], username: String) = {
     if (lanesToExpire.nonEmpty) {
       lanesToExpire.map(laneToExpire => {
         // If lane which is to be expired has no end_date property, give current date as end_date
         if(!laneToExpire.attributes.exists(laneProp => laneProp.publicId == "end_date" && laneProp.values.nonEmpty)) {
           val date = DateTime.now().toString("d.M.YYYY")
-          moveToHistory(laneToExpire.id, None, expireHistoryLane = false, deleteFromLanes = false, username)
+          eventBus.publish("laneServiceActor:moveToHistory", MoveToHistoryMessage(laneToExpire.id, None, false, false, username))
+          //moveToHistory(laneToExpire.id, None, expireHistoryLane = false, deleteFromLanes = false, username)
           dao.updateEntryLane(laneToExpire.copy(attributes = laneToExpire.attributes :+
             LaneProperty("end_date", Seq(LanePropertyValue(date)))), username)
         }
-        moveToHistory(laneToExpire.id, None, expireHistoryLane = true, deleteFromLanes = true, username)
+        eventBus.publish("laneServiceActor:moveToHistory", MoveToHistoryMessage(laneToExpire.id, None, true, true, username))
+        //moveToHistory(laneToExpire.id, None, expireHistoryLane = true, deleteFromLanes = true, username)
       })
-    } else
-      Seq()
+    }
   }
 
   def moveToHistoryBatch(lanesToMoveToHistoryWithNewID: Seq[OldLaneWithNewId], username: String): Unit = {
@@ -997,19 +1006,21 @@ trait LaneOperations {
 
   def moveToHistory(oldId: Long, newId: Option[Long], expireHistoryLane: Boolean = false, deleteFromLanes: Boolean = false,
                     username: String): Long = {
-    val historyLaneId = historyDao.insertHistoryLane(oldId, newId, username)
+    withDynSession{
+      val historyLaneId = historyDao.insertHistoryLane(oldId, newId, username)
 
-    if (expireHistoryLane)
-      historyDao.expireHistoryLane(historyLaneId, username)
+      if (expireHistoryLane)
+        historyDao.expireHistoryLane(historyLaneId, username)
 
-    if (deleteFromLanes)
-      dao.deleteEntryLane(oldId)
+      if (deleteFromLanes)
+        dao.deleteEntryLane(oldId)
 
-    historyLaneId
+      historyLaneId
+    }
   }
 
   def processNewLanes(newLanes: Set[NewLane], linkIds: Set[String],
-                      sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]): Seq[Long] = {
+                      sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]) = {
     val ids = withDynTransaction {
       LogUtils.time(logger, s"TEST LOG Whole updating or saving operation") {
         val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
@@ -1032,7 +1043,7 @@ trait LaneOperations {
           createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
         }
 
-        createV ++ updateV ++ deleting ++ createMultiple
+        createV ++ updateV ++ createMultiple
       }
     }
     withDynTransaction {
@@ -1180,7 +1191,8 @@ trait LaneOperations {
         if (!newLanesWithinRange.isEmpty) {
           createExpiredPartsOfOldLane(newLanesWithinRange, oldLane, sideCode, linkIds, username)
           newLanesWithinRange.foreach { newLane =>
-            moveToHistory(oldLane.id, Some(newLane.id), true, false, username)
+            eventBus.publish("laneServiceActor:moveToHistory", (oldLane.id, Some(newLane.id), true, false, username))
+            //moveToHistory(oldLane.id, Some(newLane.id), true, false, username)
           }
           dao.deleteEntryLane(oldLane.id)
         }
