@@ -751,26 +751,22 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  private def fetchOverridedRoadLinkAttributes(idTableName: String, withPrivateRoadModification: Boolean = true): List[(String, Option[(String, String)])] = {
+  private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(String, Option[(String, String)])] = {
     val fetchResult =
       sql"""select rla.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
           from #$idTableName i
           join road_link_attributes rla on i.id = rla.link_id and rla.valid_to IS NULL"""
         .as[RoadLinkAttributeInfo].list
 
-    val baseResult = fetchResult.map(row => {
+    fetchResult.map(row => {
       val rla = (row.name, row.value) match {
         case (Some(name), Some(value)) => Option((name, value))
         case _ => None
       }
 
       row.linkId.get -> rla
-    })
-    if (withPrivateRoadModification) {
-      baseResult ++ getPrivateRoadLastModification(fetchResult)
-    } else {
-      baseResult
     }
+    ) ++ getPrivateRoadLastModification(fetchResult)
   }
 
   private def getPrivateRoadLastModification(fetchResult: Seq[RoadLinkAttributeInfo]): Seq[(String, Option[(String, String)])] = {
@@ -917,7 +913,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  private def fetchRoadLinkPropertyRows(linkIds: Set[String], withPrivateRoadModification: Boolean = true): RoadLinkPropertyRows = {
+  private def fetchRoadLinkPropertyRows(linkIds: Set[String]): RoadLinkPropertyRows = {
     def cleanMap(parameterMap: Map[String, Option[RoadLinkPropertyRow]]): Map[RoadLinkId, RoadLinkPropertyRow] = {
       parameterMap.filter(i => i._2.nonEmpty).mapValues(i => i.get)
     }
@@ -937,7 +933,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     MassQuery.withStringIds(linkIds) {
       idTableName =>
         val (td, fc, lt, ac) = splitMap(fetchOverrides(idTableName))
-        val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(idTableName, withPrivateRoadModification))
+        val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(idTableName))
         RoadLinkPropertyRows(td, fc, lt, ac, overridedRoadLinkAttributes)
     }
   }
@@ -1277,45 +1273,15 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def getRoadLinkValuesMass(linkIds: Set[String]): RoadLinkValueCollection = {
+  def getRoadLinkValuesMass(linkIds: Seq[String]):
+  RoadLinkValueCollection = {
     LogUtils.time(logger, s"TEST LOG getRoadLinkValuesMass for ${linkIds.size} links", startLogging = true) {
-      def propertyRowsToValueCollection(rows: RoadLinkPropertyRows): RoadLinkValueCollection = {
-
-        val functionalClassValues = rows.functionalClassRowsByLinkId.map {
-          case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
-        }.toSeq
-
-        val linkTypeValues = rows.linkTypeRowsByLinkId.map {
-          case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
-        }.toSeq
-
-        val trafficDirectionValues = rows.trafficDirectionRowsByLinkId.map {
-          case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
-        }.toSeq
-
-        val adminClassValues = rows.administrativeClassRowsByLinkId.map {
-          case (linkId, (_, value, _, _)) => RoadLinkValue(linkId, Some(value))
-        }.toSeq
-
-        val linkAttributeValues = rows.roadLinkAttributesByLinkId.map {
-          case (linkId, attributes) => RoadLinkAttribute(linkId, attributes.toMap)
-        }.toSeq
-
-        RoadLinkValueCollection(
-          functionalClassValues,
-          linkTypeValues,
-          trafficDirectionValues,
-          adminClassValues,
-          linkAttributeValues
-        )
-      }
-      val propertyRows = LogUtils.time(logger, s"TEST LOG fetchRoadLinkPropertyRows with ${linkIds.size} links", startLogging = true) {
-        fetchRoadLinkPropertyRows(linkIds, withPrivateRoadModification = false)
-      }
-      val valueCollection = LogUtils.time(logger, s"TEST LOG convert fetched RoadLinkPropertyRows to a RoadLinkValueCollection", startLogging = true) {
-        propertyRowsToValueCollection(propertyRows)
-      }
-      valueCollection
+      val functionalClassMap = FunctionalClassDao.getExistingValues(linkIds)
+      val linkTypeMap = LinkTypeDao.getExistingValues(linkIds)
+      val trafficDirectionMap = TrafficDirectionDao.getExistingValues(linkIds)
+      val adminClassMap = AdministrativeClassDao.getExistingValues(linkIds)
+      val linkAttributeMap = linkIds.map(linkId => RoadLinkAttribute(linkId, LinkAttributesDao.getExistingValues(linkId)))
+      RoadLinkValueCollection(functionalClassMap, linkTypeMap, trafficDirectionMap, adminClassMap, linkAttributeMap)
     }
   }
 
