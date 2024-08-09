@@ -435,7 +435,7 @@ class RoadLinkPropertyUpdater {
   def runProcess(changes: Seq[RoadLinkChange]): ChangeReport = {
     LogUtils.time(logger, s"TEST LOG RoadLinkPropertyUpdater runProcess with ${changes.size} changes", startLogging = true) {
       val (addChanges, removeChanges, otherChanges) = partitionChanges(changes)
-      val allLinkIds = getAllLinkIds(changes).toSet
+      val allLinkIds = getAllLinkIds(changes)
 
       val valueCollection = roadLinkService.getRoadLinkValuesMass(allLinkIds)
 
