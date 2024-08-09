@@ -9,11 +9,12 @@ import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, RoadAddressRange}
+import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, Parallel, RoadAddressRange}
 import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, RoadAddressException, Track, client}
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import scala.collection.parallel.ParSeq
 
 import scala.compat.Platform.EOL
 
@@ -85,13 +86,24 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     if (linkIds.nonEmpty) {
-      val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
-      ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
-        LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
-          vkmClient.fetchRoadAddressesByLinkIds(linkIds)
+      // VKM has a limit of 100 linear transformations per POST request
+      val linkIdChunks: Seq[Seq[String]] = linkIds.grouped(100).toSeq
+      val parallelChunks: ParSeq[Seq[String]] = linkIdChunks.par
+      val parallel = new Parallel()
+
+      parallel.operation(parallelChunks, linkIdChunks.size) { parChunk =>
+        parChunk.flatMap { chunk =>
+          val linksString2 = s"[${chunk.map(id => s""""$id"""").mkString(",")}]"
+          ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
+            LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
+              vkmClient.fetchRoadAddressesByLinkIds(chunk)
+            }
+          }
         }
-      }
-    } else Seq()
+      }.seq.toSeq
+    } else {
+      Seq.empty[RoadAddressForLink]
+    }
   }
   
   def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = {

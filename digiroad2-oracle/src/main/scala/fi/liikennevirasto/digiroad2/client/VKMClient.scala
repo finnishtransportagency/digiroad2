@@ -440,19 +440,24 @@ class VKMClient {
     (behind, front)
   }
 
-  private def mapRoadAddressForLinkFields(data: Feature): Some[RoadAddressForLink] = {
-    val roadNumber = validateAndConvertToInt(VkmRoad, data.properties)
-    val roadPartNumber = validateAndConvertToInt(VkmRoadPart, data.properties)
-    val trackCode = Track.apply(validateAndConvertToInt(VkmTrackCode, data.properties))
-    val startAddrM = validateAndConvertToInt(VkmDistance, data.properties)
-    val endAddrM = validateAndConvertToInt(VkmDistanceEnd, data.properties)
-    val linkId = data.properties(VkmLinkId).asInstanceOf[String]
-    val startMValue = validateAndConvertToDouble(VkmMValueStart, data.properties)
-    val endMValue = validateAndConvertToDouble(VkmMValueEnd, data.properties)
+  private def mapRoadAddressForLinkFields(data: Feature): Option[RoadAddressForLink] = {
+    try {
+      val roadNumber = validateAndConvertToInt(VkmRoad, data.properties)
+      val roadPartNumber = validateAndConvertToInt(VkmRoadPart, data.properties)
+      val trackCode = Track.apply(validateAndConvertToInt(VkmTrackCode, data.properties))
+      val startAddrM = validateAndConvertToInt(VkmDistance, data.properties)
+      val endAddrM = validateAndConvertToInt(VkmDistanceEnd, data.properties)
+      val linkId = data.properties(VkmLinkId).asInstanceOf[String]
+      val startMValue = validateAndConvertToDouble(VkmMValueStart, data.properties)
+      val endMValue = validateAndConvertToDouble(VkmMValueEnd, data.properties)
 
-    val sideCode = if(startAddrM <= endAddrM) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+      val sideCode = if(startAddrM <= endAddrM) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
 
-    Some(RoadAddressForLink(0, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, sideCode, Seq(), expired = false, None, None, None))
+      Some(RoadAddressForLink(0, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, sideCode, Seq(), expired = false, None, None, None))
+    } catch {
+      case _: RoadAddressException => None
+    }
+
   }
 
   private def mapMassQueryFields(data: Feature): Option[Map[String, RoadAddress]] = {
