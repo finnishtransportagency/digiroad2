@@ -445,13 +445,15 @@ class VKMClient {
       val roadNumber = validateAndConvertToInt(VkmRoad, data.properties)
       val roadPartNumber = validateAndConvertToInt(VkmRoadPart, data.properties)
       val trackCode = Track.apply(validateAndConvertToInt(VkmTrackCode, data.properties))
-      val startAddrM = validateAndConvertToInt(VkmDistance, data.properties)
-      val endAddrM = validateAndConvertToInt(VkmDistanceEnd, data.properties)
+      val addressDistanceStart = validateAndConvertToInt(VkmDistance, data.properties)
+      val addressDistanceEnd = validateAndConvertToInt(VkmDistanceEnd, data.properties)
       val linkId = data.properties(VkmLinkId).asInstanceOf[String]
       val startMValue = validateAndConvertToDouble(VkmMValueStart, data.properties)
       val endMValue = validateAndConvertToDouble(VkmMValueEnd, data.properties)
 
-      val sideCode = if(startAddrM <= endAddrM) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+      val sideCode = if(addressDistanceStart <= addressDistanceEnd) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+      val startAddrM = addressDistanceStart.min(addressDistanceEnd)
+      val endAddrM = addressDistanceStart.max(addressDistanceEnd)
 
       Some(RoadAddressForLink(0, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, sideCode, Seq(), expired = false, None, None, None))
     } catch {
