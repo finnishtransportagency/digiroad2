@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
+import akka.actor.{Actor, ActorSystem, Props}
+import akka.event.Logging
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
@@ -33,11 +35,41 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockLaneWorkListService = MockitoSugar.mock[LaneWorkListService]
   val mockAutoProcessedLanesWorkListService = MockitoSugar.mock[AutoProcessedLanesWorkListService]
 
-  //val testeventBus: DigiroadEventBus = new DigiroadEventBus()
+  class LaneServiceActorTest(laneService: LaneService) extends Actor {
+    val log = Logging(context.system, this)
 
-  lazy val testeventbus: DigiroadEventBus = {
-    Class.forName("").newInstance().asInstanceOf[DigiroadEventBus]
+    def receive: Receive = {
+      case msg =>
+        //log.info(s"Received message: $msg")
+        println(s"Received:  $msg")
+        msg match {
+          case x: laneService.MoveToHistoryMessage =>
+            laneService.moveToHistory(x.oldId, x.newId, x.expireHistoryLane, x.deleteFromLanes, x.username)
+          case _ =>
+            println("laneService: Received unknown message")
+        }
+    }
   }
+
+  object ServiceWithDao extends LaneService(mockRoadLinkService, testeventbus, mockRoadAddressService) {
+
+    override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def dao: LaneDao = laneDao
+    override def historyDao: LaneHistoryDao = laneHistoryDao
+    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override def eventBus: DigiroadEventBus = testeventbus
+    override def polygonTools: PolygonTools = mockPolygonTools
+    override def vkmClient: VKMClient = mockVKMClient
+  }
+
+  lazy val testeventbus: DigiroadEventBus = new DigiroadEventBus
+
+  val system: ActorSystem = ActorSystem("Digiroad2Test")
+
+  val laneToHistory = system.actorOf(Props(new LaneServiceActorTest(ServiceWithDao)), name = "laneToHistory")
+  testeventbus.subscribe(laneToHistory, "laneServiceActor:moveToHistory")
+
 
   val laneDao = new LaneDao()
   val laneHistoryDao = new LaneHistoryDao()
@@ -114,18 +146,6 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
 class LaneServiceSpec extends LaneTestSupporter {
-
-  object ServiceWithDao extends LaneService(mockRoadLinkService, testeventbus, mockRoadAddressService) {
-
-    override def withDynTransaction[T](f: => T): T = f
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: LaneDao = laneDao
-    override def historyDao: LaneHistoryDao = laneHistoryDao
-    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def eventBus: DigiroadEventBus = testeventbus
-    override def polygonTools: PolygonTools = mockPolygonTools
-    override def vkmClient: VKMClient = mockVKMClient
-  }
 
   val usernameTest = "testuser"
 
