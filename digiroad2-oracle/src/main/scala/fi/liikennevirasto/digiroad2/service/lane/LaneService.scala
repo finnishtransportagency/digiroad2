@@ -1006,22 +1006,22 @@ trait LaneOperations {
 
   def moveToHistory(oldId: Long, newId: Option[Long], expireHistoryLane: Boolean = false, deleteFromLanes: Boolean = false,
                     username: String): Long = {
-    withDynSession{
-      val historyLaneId = historyDao.insertHistoryLane(oldId, newId, username)
+      withDynSession {
+        val historyLaneId = historyDao.insertHistoryLane(oldId, newId, username)
 
-      if (expireHistoryLane)
-        historyDao.expireHistoryLane(historyLaneId, username)
+        if (expireHistoryLane)
+          historyDao.expireHistoryLane(historyLaneId, username)
 
-      if (deleteFromLanes)
-        dao.deleteEntryLane(oldId)
+        if (deleteFromLanes)
+          dao.deleteEntryLane(oldId)
 
-      historyLaneId
-    }
+        historyLaneId
+      }
   }
 
   def processNewLanes(newLanes: Set[NewLane], linkIds: Set[String],
                       sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]) = {
-    val ids = withDynTransaction {
+    val ids = {
       LogUtils.time(logger, s"TEST LOG Whole updating or saving operation") {
         val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
         val actionsLanes = LogUtils.time(logger, s"TEST LOG Separate NewLanes In Actions") {
