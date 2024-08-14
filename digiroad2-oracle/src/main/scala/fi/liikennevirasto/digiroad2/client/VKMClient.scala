@@ -214,7 +214,7 @@ class VKMClient {
 
   // TODO VKM does not provide all road links when transforming road address range to roadLinks, only start and end links
   //  Support for this is coming to VKM in early 2023, change implementation to use the feature when it's available.
-  def fetchStartAndEndLinkIdForAddrRange(roadAddressRange: RoadAddressRange): Seq[RoadAddressForLink] = {
+  def fetchStartAndEndLinkIdForAddrRange(roadAddressRange: RoadAddressRange): (String, String) = {
     val params = Map(
       VkmRoad -> Some(roadAddressRange.roadNumber),
       VkmRoadPart -> Some(roadAddressRange.startRoadPartNumber),
@@ -228,8 +228,7 @@ class VKMClient {
     )
 
     request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=2,6&" + urlParams(params)) match {
-      case Left(featureCollection) =>
-        featureCollection.features.flatMap(feature => mapRoadAddressForLinkFields(feature))
+      case Left(featureCollection) => mapStartAndEndLinkId(featureCollection.features.head)
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
@@ -438,6 +437,16 @@ class VKMClient {
     val behind = coord - stepVector
     val front = coord + stepVector
     (behind, front)
+  }
+
+  private def mapStartAndEndLinkId(data: Feature): (String, String) = {
+    try {
+      val startLinkId = data.properties(VkmLinkId).asInstanceOf[String]
+      val endLinkId = data.properties(VkmLinkIdEnd).asInstanceOf[String]
+      (startLinkId, endLinkId)
+    } catch {
+      case _: Exception => throw new RoadAddressException("Could not get start and end linkIds from VKM response")
+    }
   }
 
   private def mapRoadAddressForLinkFields(data: Feature): Option[RoadAddressForLink] = {

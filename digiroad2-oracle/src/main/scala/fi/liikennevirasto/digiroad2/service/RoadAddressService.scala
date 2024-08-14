@@ -59,13 +59,9 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
 
   def getRoadAddressesByRoadAddressRange(roadAddressRange: RoadAddressRange): Seq[RoadAddressForLink] = {
     val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
-    if (startAndEndLinkIdsForAllSegments.isEmpty) {
-      throw new RoadAddressException(s"Could not fetch start and end link id for RoadAddressRange: $roadAddressRange")
-    } else {
-      val startLinkId = startAndEndLinkIdsForAllSegments.head.linkId
-      val endLinkId = startAndEndLinkIdsForAllSegments.last.linkId
-      vkmClient.fetchLinkIdsBetweenTwoRoadLinks(startLinkId, endLinkId, roadAddressRange.roadNumber)
-    }
+    val startLinkId = startAndEndLinkIdsForAllSegments._1
+    val endLinkId = startAndEndLinkIdsForAllSegments._2
+    vkmClient.fetchLinkIdsBetweenTwoRoadLinks(startLinkId, endLinkId, roadAddressRange.roadNumber)
   }
 
   /**
