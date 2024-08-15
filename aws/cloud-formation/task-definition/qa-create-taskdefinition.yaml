@@ -107,8 +107,6 @@ Resources:
               Value: 'fi.liikennevirasto.digiroad2.DigiroadEventBus'
             - Name: kgv.endpoint
               Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/'
-            - Name: viiteRestApiEndPoint
-              Value: 'https://api.testivaylapilvi.fi/viite/api/viite/'
             - Name: authenticationTestMode
               Value: 'false'
             - Name: vkmUrl
@@ -117,8 +115,6 @@ Resources:
               Value: 'true'
             - Name: vallu.server.address
               Value: 'https://api.testivaylapilvi.fi/koontikartta/pysakit/xml/'
-            - Name: viite.importTimeStamp
-              Value: '1510876800000'
             - Name: http.proxySet
               Value: 'true'
             - Name: http.proxyHost
@@ -160,8 +156,6 @@ Resources:
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/bonecp.password'
-            - Name: viite.apikey
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/viite'
             - Name: vkm.apikey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/viitekehysmuunnin'
             - Name: rasterService.apikey

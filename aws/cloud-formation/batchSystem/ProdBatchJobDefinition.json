@@ -50,16 +50,8 @@
         "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/"
       },
       {
-        "name": "viiteRestApiEndPoint",
-        "value": "https://api.vaylapilvi.fi/viite/api/viite/"
-      },
-      {
         "name": "vkmUrl",
         "value": "https://api.vaylapilvi.fi"
-      },
-      {
-        "name": "viite.importTimeStamp",
-        "value": "1510876800000"
       },
       {
         "name": "http.proxySet",
@@ -132,10 +124,6 @@
       {
         "name": "kgv.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/kgv.apikey"
-      },
-      {
-        "name": "viite.apikey",
-        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/viite"
       },
       {
         "name": "vkm.apikey",
