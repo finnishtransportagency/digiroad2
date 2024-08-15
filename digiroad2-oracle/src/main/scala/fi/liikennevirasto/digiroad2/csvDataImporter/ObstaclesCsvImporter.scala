@@ -30,7 +30,7 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
       val position = getCoordinatesFromProperties(csvProperties)
       val obstacleType = getPropertyValue(csvProperties, "type").asInstanceOf[String].toInt
 
-      val nearestRoadLink = nearbyLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+      val nearestRoadLink = nearbyLinks.minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
 
       val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 

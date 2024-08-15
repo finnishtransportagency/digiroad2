@@ -2,7 +2,7 @@
 insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE, CREATED_DATE) values (600046,220,'dr2_test_data',235, current_timestamp-INTERVAL'2 MONTH');
 INSERT INTO LRM_POSITION (ID, LINK_ID, VVH_ID, START_MEASURE, END_MEASURE, MML_ID) VALUES (70000009, '52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1', 1611317, 103.000, 103.000, 388553074);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600046, 70000009);
-insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600046, (select id from enumerated_value where name_fi='Suljettu yhteys'), (select id from property where public_id='esterakennelma'));
+insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600046, (select id from enumerated_value where name_fi='Muu pysyvä esterakennelma'), (select id from property where public_id='esterakennelma'));
 UPDATE asset SET geometry = ST_GeomFromText('POINT(374467 6677347 0 0)',3067)
   WHERE id = 600046;
 
