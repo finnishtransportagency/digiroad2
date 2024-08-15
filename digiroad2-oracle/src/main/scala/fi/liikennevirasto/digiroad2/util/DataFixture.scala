@@ -10,7 +10,6 @@ import java.util.{Date, NoSuchElementException, Properties}
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit, RoadLinkProperties => RoadLinkPropertiesAsset, _}
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.{PostGISUserProvider, _}
@@ -49,10 +48,6 @@ object DataFixture {
 
   lazy val roadLinkClient: RoadLinkClient = {
     new RoadLinkClient()
-  }
-
-  lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
   lazy val roadLinkService: RoadLinkService = {
@@ -99,7 +94,7 @@ object DataFixture {
   }
 
   lazy val roadAddressService: RoadAddressService  = {
-    new RoadAddressService(viiteClient)
+    new RoadAddressService()
   }
 
   lazy val massTransitStopService: MassTransitStopService = {

@@ -4,7 +4,6 @@ package fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
 import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink}
@@ -49,7 +48,7 @@ case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, 
   }
 }
 
-class RoadAddressService(viiteClient: SearchViiteClient) {
+class RoadAddressService() {
   val vkmClient = new VKMClient
   val roadAddressTempDAO = new RoadAddressTempDAO
   val logger = LoggerFactory.getLogger(getClass)
@@ -124,12 +123,12 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink], logComment: String = ""): Seq[RoadLink] = {
     try {
       val linkIds = roadLinks.map(_.linkId)
-      val viiteRoadAddressesForLinks = getAllByLinkIds(linkIds)
-      val viiteAddressData = groupRoadAddress(viiteRoadAddressesForLinks).map(a => (a.linkId, a)).toMap
-      val linkIdsMissingAddress = linkIds.diff(viiteAddressData.keys.toSeq).toSet
+      val vkmRoadAddressesForLinks = getAllByLinkIds(linkIds)
+      val vkmAddressData = vkmRoadAddressesForLinks.map(a => (a.linkId, a)).toMap
+      val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
       val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
-      val addressData = viiteAddressData ++ tempAddressData
-      logger.info(s"Fetched ${viiteAddressData.values.size} road address of ${roadLinks.size} road links. ${logComment}")
+      val addressData = vkmAddressData ++ tempAddressData
+      logger.info(s"Fetched ${vkmAddressData.values.size} road address of ${roadLinks.size} road links. ${logComment}")
       logger.info(s"Fetched ${tempAddressData.values.size} temp road address of ${linkIdsMissingAddress.size} road links. ${logComment}")
       roadLinks.map(rl =>
         if (addressData.contains(rl.linkId))
@@ -139,11 +138,11 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
       )
     } catch {
       case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage} and stacktrace: \n ${hhce.getStackTrace.mkString("", EOL, EOL)}")
+        logger.error(s"VKM connection failing with message ${hhce.getMessage} and stacktrace: \n ${hhce.getStackTrace.mkString("", EOL, EOL)}")
         logger.info(s"Failed to retrieve road address information, return links without it. ${logComment}")
         roadLinks
-      case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage} and stacktrace: \n ${vce.getStackTrace.mkString("", EOL, EOL)}")
+      case rae: RoadAddressException =>
+        logger.error(s"VKM error with message ${rae.getMessage} and stacktrace: \n ${rae.getStackTrace.mkString("", EOL, EOL)}")
         logger.info(s"Failed to retrieve road address information, return links without it. ${logComment}")
         roadLinks
       case e: Exception =>
@@ -157,10 +156,10 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
   def massLimitationWithRoadAddress(massLimitationAsset: Seq[Seq[MassLimitationAsset]]): Seq[Seq[MassLimitationAsset]] = {
     try {
       val linkIds = massLimitationAsset.flatMap(_.map(_.linkId))
-      val viiteAddressData = groupRoadAddress(getAllByLinkIds(linkIds)).map(a => (a.linkId, a)).toMap
-      val linkIdsMissingAddress = linkIds.diff(viiteAddressData.keys.toSeq).toSet
+      val vkmAddressData = getAllByLinkIds(linkIds).map(a => (a.linkId, a)).toMap
+      val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
       val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
-      val addressData = viiteAddressData ++ tempAddressData
+      val addressData = vkmAddressData ++ tempAddressData
       massLimitationAsset.map(
         _.map(pwa =>
           if (addressData.contains(pwa.linkId))
@@ -170,10 +169,10 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
         ))
     } catch {
       case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        logger.error(s"VKM connection failing with message ${hhce.getMessage}")
         massLimitationAsset
-      case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage}")
+      case rae: RoadAddressException =>
+        logger.error(s"VKM error with message ${rae.getMessage}")
         massLimitationAsset
     }
   }
@@ -187,10 +186,10 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
   def linearAssetWithRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] = {
     try {
       val linkIds = pieceWiseLinearAssets.flatMap(_.map(_.linkId))
-      val viiteAddressData = groupRoadAddress(getAllByLinkIds(linkIds)).map(a => (a.linkId, a)).toMap
-      val linkIdsMissingAddress = linkIds.diff(viiteAddressData.keys.toSeq).toSet
+      val vkmAddressData = groupRoadAddress(getAllByLinkIds(linkIds)).map(a => (a.linkId, a)).toMap
+      val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
       val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
-      val addressData = viiteAddressData ++ tempAddressData
+      val addressData = vkmAddressData ++ tempAddressData
       pieceWiseLinearAssets.map(
         _.map(pwa =>
           if (addressData.contains(pwa.linkId))
@@ -200,10 +199,10 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
         ))
     } catch {
       case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        logger.error(s"VKM connection failing with message ${hhce.getMessage}")
         pieceWiseLinearAssets
-      case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage}")
+      case rae: RoadAddressException =>
+        logger.error(s"VKM error with message ${rae.getMessage}")
         pieceWiseLinearAssets
     }
   }
@@ -218,10 +217,10 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
   def laneWithRoadAddress(pieceWiseLanes: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
     try {
       val linkIds = pieceWiseLanes.map(_.linkId)
-      val viiteAddressData = groupRoadAddress(getAllByLinkIds(linkIds)).map(a => (a.linkId, a)).toMap
-      val linkIdsMissingAddress = linkIds.diff(viiteAddressData.keys.toSeq).toSet
+      val vkmAddressData = getAllByLinkIds(linkIds).map(a => (a.linkId, a)).toMap
+      val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
       val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
-      val addressData = viiteAddressData ++ tempAddressData
+      val addressData = vkmAddressData ++ tempAddressData
       pieceWiseLanes.map( pwl =>
           if (addressData.contains(pwl.linkId))
             pwl.copy(attributes = pwl.attributes ++ roadAddressAttributes(addressData(pwl.linkId)))
@@ -230,10 +229,10 @@ class RoadAddressService(viiteClient: SearchViiteClient) {
         )
     } catch {
       case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        logger.error(s"VKM connection failing with message ${hhce.getMessage}")
         pieceWiseLanes
-      case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage}")
+      case rae: RoadAddressException =>
+        logger.error(s"VKM error with message ${rae.getMessage}")
         pieceWiseLanes
     }
   }

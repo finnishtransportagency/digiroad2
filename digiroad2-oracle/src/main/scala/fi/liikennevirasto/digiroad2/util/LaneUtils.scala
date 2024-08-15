@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane._
@@ -29,8 +28,7 @@ object LaneUtils {
   lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus, roadAddressService)
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
   lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient() }
-  lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
-  lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService()
 
   lazy val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 

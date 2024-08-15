@@ -684,7 +684,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         roadLinkService.getRoadLinksByBoundsAndMunicipalities(boundingRectangle, municipalities,asyncMode = false)
       }
       val roadLinks = if (withRoadAddress) {
-        val roadLinksWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for links, link count: " + roadLinkSeq.size) {
+        val roadLinksWithRoadAddress = LogUtils.time(logger, "TEST LOG Get VKM road address for links, link count: " + roadLinkSeq.size) {
           roadAddressService.roadLinkWithRoadAddress(roadLinkSeq)
         }
         roadLinksWithRoadAddress
