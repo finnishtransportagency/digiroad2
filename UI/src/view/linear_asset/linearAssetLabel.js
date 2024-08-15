@@ -62,7 +62,7 @@
         };
     };
 
-    root.TRSpeedLimitAssetLabel = function () {
+    root.WinterSpeedLimitLabel = function () {
       LinearAssetLabel.call(this);
       var me = this;
 
@@ -92,19 +92,17 @@
         return value && value >= 20 && value <= 120;
       };
 
-      this.getImageConfiguration = function (value) {
+      this.getImageConfiguration = function (asset) {
 
         var imagesConfig = [
-          {range : [{min: 60, max: 70}, {min: 120, max: 121}] , image: 'images/speed-limits/blueCircle.svg', scale: 1.6 },
-          {range : [{min: 40, max: 50}, {min: 100, max: 120}]  , image: 'images/speed-limits/greenCircle.svg', scale: 1.6  },
-          {range : [{min: 20, max: 30}, {min: 70, max: 80}] , image: 'images/speed-limits/lightBlueCircle.svg', scale: 1.6  },
-          {range : [{min: 50, max: 60}, {min: 80, max: 90}] , image: 'images/speed-limits/redCircle.svg', scale: 1.6 },
-          {range : [{min: 30, max: 40}, {min: 90, max: 100}], image: 'images/speed-limits/pinkCircle.svg' , scale: 1.6 }
+          {value : 100 , image: 'images/speed-limits/100.svg', scale: 1.6 },
+          {value : 80  , image: 'images/speed-limits/80.svg', scale: 1.6  },
+          {value : 70 , image: 'images/speed-limits/70.svg', scale: 1.6  },
+          {value : 60 , image: 'images/speed-limits/60.svg', scale: 1.6 }
         ];
 
-
-        var config = imagesConfig.find ( function(config) {
-          return _.some(config.range, function(range) { return range.min <= value && range.max > value; });
+        var config = imagesConfig.find ( function(configuration) {
+          return configuration.value === asset.value;
         });
 
         if(config)
@@ -120,30 +118,6 @@
       };
 
     };
-
-  root.WinterSpeedLimitLabel = function(){
-    TRSpeedLimitAssetLabel.call(this);
-
-    this.getImageConfiguration = function (asset) {
-
-      var imagesConfig = [
-        {value : 100 , image: 'images/speed-limits/100.svg', scale: 1.6 },
-        {value : 80  , image: 'images/speed-limits/80.svg', scale: 1.6  },
-        {value : 70 , image: 'images/speed-limits/70.svg', scale: 1.6  },
-        {value : 60 , image: 'images/speed-limits/60.svg', scale: 1.6 }
-      ];
-
-      var config = imagesConfig.find ( function(configuration) {
-        return configuration.value === asset.value;
-      });
-
-      if(config)
-        return config;
-
-      return {image: 'images/warningLabel.png', scale: 1};
-    };
-  };
-
 
 
   root.LinearAssetLabelMultiValues = function(){

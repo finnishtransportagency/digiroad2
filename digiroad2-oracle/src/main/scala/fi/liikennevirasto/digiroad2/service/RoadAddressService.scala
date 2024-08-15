@@ -100,7 +100,7 @@ class RoadAddressService() {
       Seq.empty[RoadAddressForLink]
     }
   }
-  
+
   def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = {
     withDynTransaction {
       val tempAddresses = roadAddressTempDAO.getByLinkIds(linkIds)

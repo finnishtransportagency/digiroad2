@@ -4,7 +4,7 @@ import com.github.tototoshi.csv.CSVWriter
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, ConstructionType, RoadLinkProperties, UnknownAssetTypeId}
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType
 import fi.liikennevirasto.digiroad2.service.AwsService
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import fi.liikennevirasto.digiroad2.{FloatingReason, GeometryUtils, ILinearReference, Point}
 import org.joda.time.DateTime
 import org.json4s.jackson.Serialization
@@ -336,63 +336,65 @@ object ChangeReporter {
   }
 
   def generateCSV(changeReport: ChangeReport, withGeometry: Boolean = false): (String, Int) = {
-    val stringWriter = new StringWriter()
-    val csvWriter = new CSVWriter(stringWriter)
-    csvWriter.writeRow(Seq("sep=,"))
+    LogUtils.time(logger, s"TEST LOG ChangeReporter generateCSV for ${changeReport.assetType} with ${changeReport.changes.size} changes") {
+      val stringWriter = new StringWriter()
+      val csvWriter = new CSVWriter(stringWriter)
+      csvWriter.writeRow(Seq("sep=,"))
 
-    val (assetTypeId, changes) = (changeReport.assetType, changeReport.changes)
-    val linkIds = changes.map(_.linkId).toSet
-    val contentRows = AssetTypeInfo(assetTypeId) match {
-      case UnknownAssetTypeId => throw new IllegalArgumentException("Can not generate report for unknown asset type")
-      case RoadLinkProperties =>
-        val labels = Seq("linkId", "url", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
-          "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes","oldConstructionType","newConstructionType" )
-        csvWriter.writeRow(labels)
-        val groupedChanges = changes.groupBy(_.linkId)
-        linkIds.foreach { linkId =>
-          groupedChanges.get(linkId) match {
-            case Some(propertyChangesForLink) =>
-              val changeType = propertyChangesForLink.head.changeType
-              val csvRow = getCSVRowForRoadLinkPropertyChanges(linkId, changeType.value, propertyChangesForLink)
+      val (assetTypeId, changes) = (changeReport.assetType, changeReport.changes)
+      val linkIds = changes.map(_.linkId).toSet
+      val contentRows = AssetTypeInfo(assetTypeId) match {
+        case UnknownAssetTypeId => throw new IllegalArgumentException("Can not generate report for unknown asset type")
+        case RoadLinkProperties =>
+          val labels = Seq("linkId", "url", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
+            "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes", "oldConstructionType", "newConstructionType")
+          csvWriter.writeRow(labels)
+          val groupedChanges = changes.groupBy(_.linkId)
+          linkIds.foreach { linkId =>
+            groupedChanges.get(linkId) match {
+              case Some(propertyChangesForLink) =>
+                val changeType = propertyChangesForLink.head.changeType
+                val csvRow = getCSVRowForRoadLinkPropertyChanges(linkId, changeType.value, propertyChangesForLink)
+                csvWriter.writeRow(csvRow)
+              case _ => //do nothing
+            }
+          }
+          linkIds.size
+        case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "point" =>
+          val labels = Seq("asset_type_id", "change_type", "floating_reason", "roadlink_change", "before_constructionType", "before_asset_id",
+            "before_geometry", "before_value", "before_municipality_code", "before_validity_direction", "before_bearing", "before_link_id",
+            "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "after_constructionType", "after_asset_id",
+            "after_geometry", "after_value", "after_municipality_code", "after_validity_direction", "after_bearing", "after_link_id",
+            "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url")
+          val labelsWithoutGeometry = labels.slice(0, 6) ++ labels.slice(7, 18) ++ labels.slice(19, labels.size)
+          if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
+          val contentRowCount = changes.map { change =>
+            val csvRows = getCSVRowForPointAssetChanges(change, assetTypeId, withGeometry)
+            csvRows.foreach { csvRow =>
               csvWriter.writeRow(csvRow)
-            case _ => //do nothing
-          }
-        }
-        linkIds.size
-      case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "point" =>
-        val labels = Seq("asset_type_id", "change_type", "floating_reason", "roadlink_change", "before_constructionType","before_asset_id",
-          "before_geometry", "before_value", "before_municipality_code", "before_validity_direction", "before_bearing", "before_link_id",
-          "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url","after_constructionType", "after_asset_id",
-          "after_geometry", "after_value", "after_municipality_code", "after_validity_direction", "after_bearing", "after_link_id",
-          "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url")
-        val labelsWithoutGeometry = labels.slice(0, 6) ++ labels.slice(7, 18) ++ labels.slice(19, labels.size)
-        if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
-        val contentRowCount = changes.map { change =>
-          val csvRows = getCSVRowForPointAssetChanges(change, assetTypeId, withGeometry)
-          csvRows.foreach { csvRow =>
-            csvWriter.writeRow(csvRow)
-          }
-          csvRows.size
-        }.sum
-        contentRowCount
-      case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "linear" =>
-        val labels = Seq("asset_type_id", "change_type", "roadlink_change","before_constructionType", "before_asset_id",
-          "before_geometry", "before_value", "before_municipality_code", "before_side_code", "before_link_id",
-          "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url","after_constructionType", "after_asset_id",
-          "after_geometry", "after_value", "after_municipality_code", "after_side_code", "after_link_id",
-          "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url")
-        val labelsWithoutGeometry = labels.filterNot(_.contains("geometry"))
-        if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
-        val contentRowCount = changes.map { change =>
-          val csvRows = getCSVRowsForLinearAssetChange(change, assetTypeId, withGeometry)
-          csvRows.foreach { csvRow =>
-            csvWriter.writeRow(csvRow)
-          }
-          csvRows.size
-        }.sum
-        contentRowCount
+            }
+            csvRows.size
+          }.sum
+          contentRowCount
+        case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "linear" =>
+          val labels = Seq("asset_type_id", "change_type", "roadlink_change", "before_constructionType", "before_asset_id",
+            "before_geometry", "before_value", "before_municipality_code", "before_side_code", "before_link_id",
+            "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "after_constructionType", "after_asset_id",
+            "after_geometry", "after_value", "after_municipality_code", "after_side_code", "after_link_id",
+            "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url")
+          val labelsWithoutGeometry = labels.filterNot(_.contains("geometry"))
+          if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
+          val contentRowCount = changes.map { change =>
+            val csvRows = getCSVRowsForLinearAssetChange(change, assetTypeId, withGeometry)
+            csvRows.foreach { csvRow =>
+              csvWriter.writeRow(csvRow)
+            }
+            csvRows.size
+          }.sum
+          contentRowCount
+      }
+      (stringWriter.toString, contentRows)
     }
-    (stringWriter.toString, contentRows)
   }
 
   def saveReportToS3(assetName: String, changesProcessedUntil: DateTime, body: String, contentRowCount: Int,

@@ -10,6 +10,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
 case class RoadLinkValue(linkId: String, value: Option[Int])
+case class RoadLinkAttribute(linkId: String, attributes: Map[String, String])
 case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int, timeStamp:Option[String], mmlId: Option[Long])
 
 sealed trait RoadLinkOverrideDAO{
@@ -70,6 +71,27 @@ sealed trait RoadLinkOverrideDAO{
       insertLinkPropertyPS.executeBatch()
     } finally {
       insertLinkPropertyPS.close()
+    }
+  }
+
+  def insertValuesMass(linkValues: Seq[RoadLinkValue], username: Option[String], timeStamp: String) = {
+    if (linkValues.nonEmpty) {
+      val insertSQL =
+        s"""
+      insert into $table (id, link_id, $column, modified_date, modified_by)
+      select nextval('primary_key_seq'), ?, ?, to_timestamp(?, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), ?
+      where not exists (select * from $table where link_id = ?)
+      """.stripMargin
+      MassQuery.executeBatch(insertSQL) { preparedStatement =>
+        linkValues.foreach { case RoadLinkValue(linkId, Some(value)) =>
+          preparedStatement.setString(1, linkId)
+          preparedStatement.setInt(2, value)
+          preparedStatement.setString(3, timeStamp)
+          preparedStatement.setString(4, username.getOrElse(""))
+          preparedStatement.setString(5, linkId)
+          preparedStatement.addBatch()
+        }
+      }
     }
   }
 
@@ -417,6 +439,26 @@ object RoadLinkOverrideDAO{
               where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
+    def insertValuesMass(linkValues: Seq[RoadLinkValue], username: Option[String]) = {
+      if (linkValues.nonEmpty) {
+        val insertSQL =
+          s"""
+        insert into $table (id, link_id, $column, modified_by)
+        select nextval('primary_key_seq'), ?, ?, ?
+        where not exists (select * from $table where link_id = ?)
+        """.stripMargin
+        MassQuery.executeBatch(insertSQL) { preparedStatement =>
+          linkValues.foreach { case RoadLinkValue(linkId, Some(value)) =>
+            preparedStatement.setString(1, linkId)
+            preparedStatement.setInt(2, value)
+            preparedStatement.setString(3, username.getOrElse(""))
+            preparedStatement.setString(4, linkId)
+            preparedStatement.addBatch()
+          }
+        }
+      }
+    }
+
     override def expireValues(linkId: String, username: Option[String], changeTimeStamp: Option[Long] = None) = {
       sqlu"""update #$table
                  set valid_to = current_timestamp - INTERVAL'1 DAYS',
@@ -524,6 +566,31 @@ object RoadLinkOverrideDAO{
 
     override def insertValuesMass(entries: Seq[MassOperationEntry]): Unit = {
       throw new UnsupportedOperationException("Not Implemented")
+    }
+
+    def insertValuesMass(linkAttributes: Seq[RoadLinkAttribute], username: Option[String], timeStamp: String) = {
+      if (linkAttributes.nonEmpty) {
+        val insertSQL =
+          s"""
+          insert into $table (id, link_id, name, value, modified_date, modified_by)
+          select nextval('primary_key_seq'), ?, ?, ?, to_timestamp(?, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), ?
+          where not exists (select * from $table where link_id = ? and name = ?)
+          """.stripMargin
+        MassQuery.executeBatch(insertSQL) { preparedStatement =>
+          linkAttributes.foreach { case RoadLinkAttribute(linkId, attributes) =>
+            attributes.foreach { case (attributeName, attributeValue) =>
+              preparedStatement.setString(1, linkId)
+              preparedStatement.setString(2, attributeName)
+              preparedStatement.setString(3, attributeValue)
+              preparedStatement.setString(4, timeStamp)
+              preparedStatement.setString(5, username.getOrElse(""))
+              preparedStatement.setString(6, linkId)
+              preparedStatement.setString(7, attributeName)
+              preparedStatement.addBatch()
+            }
+          }
+        }
+      }
     }
 
     override def updateValuesMass(entries: Seq[MassOperationEntry]): Unit = {

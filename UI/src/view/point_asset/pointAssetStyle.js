@@ -14,6 +14,8 @@
       return [
           new StyleRule().where('propertyData').is(1).use({ icon: {  src: 'images/point-assets/point_blue.svg'} } ),
           new StyleRule().where('propertyData').is(2).use({ icon: { src: 'images/point-assets/point_green.svg'} } ),
+          new StyleRule().where('propertyData').is(3).use({ icon: { src: 'images/point-assets/point_yellow.svg'} } ),
+          new StyleRule().where('propertyData').is(99).use({ icon: { src: 'images/point-assets/point_grey.svg'} } ),
           new StyleRule().where('floating').is(true).use({ icon: {  src: 'images/point-assets/point_red.svg'} } ),
           new StyleRule().where('constructionType').is(4).use({ icon: { opacity: 0.3}})
       ];
