@@ -8,7 +8,6 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.asset.ServicePointsClass.{Unknown => _, _}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 sealed trait Status {
@@ -53,16 +52,8 @@ trait CsvDataImporterOperations {
   def roadLinkClient: RoadLinkClient
   def eventBus: DigiroadEventBus
 
-  lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
-  }
-
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(viiteClient)
-  }
-
-  lazy val roadAddressesService: RoadAddressService = {
-    new RoadAddressService(viiteClient)
+    new RoadAddressService()
   }
 
   type MalformedParameters = List[String]

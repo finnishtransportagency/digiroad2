@@ -38,12 +38,11 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   val pieceWiseLane = PieceWiseLane(111, linkId1, 2, false, Seq(Point(0.0, 0.0), Point(1.0, 1.0)), 0, 1, Set(Point(0.0, 0.0), Point(1.0, 1.0)),
     None, None, None, None, 0L, None, State, Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))),LaneProperty("lane_type", Seq(LanePropertyValue("1")))))
 
-  val roadAddress = RoadAddressForLink(0, 0, 0, Track(99), 0, 0, None, None, "0", 0, 0, SideCode(1), Seq(), false, None, None, None)
+  val roadAddress = RoadAddressForLink(0, 0, 0, Track(99), 0, 0, None, None, linkId1, 0, 0, SideCode(1), Seq(), false, None, None, None)
 
   when(mockRoadLinkService.getRoadLinksByMunicipalityUsingCache(any[Int])).thenReturn(Seq(roadLink1))
   when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1))
-  when(mockGeometryTransform.getLinkIdsInRoadAddressRange(any[RoadAddressRange])).thenReturn(Set(linkId1))
-  when(mockRoadAddressService.getAllByRoadNumber(any())).thenReturn(Seq(roadAddress))
+  when(mockRoadAddressService.getRoadAddressesByRoadAddressRange(any[RoadAddressRange])).thenReturn(Seq(roadAddress))
   when(mockRoadAddressService.laneWithRoadAddress(any())).thenReturn(Seq(pieceWiseLane))
 
   // Returns four geometrically connected road links
@@ -167,7 +166,7 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("lanes in road address range Api requires valid parameters"){
-    when(mockGeometryTransform.getLinkIdsInRoadAddressRange(any[RoadAddressRange])).thenReturn(Set.empty[String])
+    when(mockRoadAddressService.getRoadAddressesByRoadAddressRange(any[RoadAddressRange])).thenReturn(Seq.empty[RoadAddressForLink])
 
     get("/lanes_in_range") {
       status should equal(400)

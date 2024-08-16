@@ -11,7 +11,6 @@ trait Digiroad2Properties {
   val eventBus: String
   val kgvEndpoint:String
   val kgvApiKey:String
-  val viiteRestApiEndPoint: String
   val vkmUrl: String
   val vkmApiKey: String
   val valluApiKey: String
@@ -32,7 +31,6 @@ trait Digiroad2Properties {
   val bonecpPassword: String
   val revision: String
   val latestDeploy: String
-  val viiteApiKey: String
   val sesUsername: String
   val sesPassword: String
   val emailTo: String
@@ -61,11 +59,9 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
   val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
   val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
- 
-  val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
+
   val kgvEndpoint: String = scala.util.Properties.envOrElse("kgv.endpoint", null)
   val kgvApiKey: String = scala.util.Properties.envOrElse("kgv.apikey", null)
-  val viiteApiKey: String = scala.util.Properties.envOrElse("viite.apikey", null)
   val sesUsername: String = scala.util.Properties.envOrElse("ses.username", null)
   val sesPassword: String = scala.util.Properties.envOrElse("ses.password", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
@@ -145,7 +141,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val eventBus: String = envProps.getProperty("eventBus")
   override val kgvEndpoint: String = envProps.getProperty("kgv.endpoint", null)
   override val kgvApiKey: String = envOrProperties("kgv.apikey")
-  override val viiteRestApiEndPoint: String =  envOrProperties("viiteRestApiEndPoint")
   override val vkmUrl: String = envProps.getProperty("vkmUrl")
   override val vkmApiKey: String = envOrProperties("vkm.apikey")
   override val valluApiKey: String = envOrProperties("vallu.apikey")
@@ -166,7 +161,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val bonecpPassword: String = envOrProperties("bonecp.password")
   override val revision: String = envProps.getProperty("revision")
   override val latestDeploy: String = envProps.getProperty("latestDeploy")
-  override val viiteApiKey: String = envOrProperties("viite.apikey")
   override val sesUsername: String = envOrProperties("ses.username")
   override val sesPassword: String = envOrProperties("ses.password")
   override val emailTo: String = envProps.getProperty("email.to")
@@ -228,7 +222,6 @@ object Digiroad2Properties {
   lazy val eventBus: String = properties.eventBus
   lazy val kgvEndpoint: String = properties.kgvEndpoint
   lazy val kgvApiKey: String = properties.kgvApiKey
-  lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey
   lazy val valluApikey: String = properties.valluApiKey
@@ -249,7 +242,6 @@ object Digiroad2Properties {
   lazy val bonecpPassword: String = properties.bonecpPassword
   lazy val revision: String = properties.revision
   lazy val latestDeploy: String = properties.latestDeploy
-  lazy val viiteApiKey: String = properties.viiteApiKey
   lazy val sesUsername: String = properties.sesUsername
   lazy val sesPassword: String = properties.sesPassword
   lazy val emailTo: String = properties.emailTo
