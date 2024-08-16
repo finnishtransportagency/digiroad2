@@ -90,7 +90,7 @@ class RoadAddressService() {
         parChunk.flatMap { chunk =>
           val linksString2 = s"[${chunk.map(id => s""""$id"""").mkString(",")}]"
           ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
-            LogUtils.time(logger, "TEST LOG Retrieve road address by links") {
+            LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${chunk.size} linkIds") {
               vkmClient.fetchRoadAddressesByLinkIds(chunk)
             }
           }
