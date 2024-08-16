@@ -251,7 +251,6 @@ object Digiroad2Context {
 
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
     try {
-      logger.info("Send feedback scheduler started.")
       applicationFeedback.sendFeedbacks()
     } catch {
       case ex: Exception => logger.error(s"Exception at send feedback: ${ex.getMessage}")

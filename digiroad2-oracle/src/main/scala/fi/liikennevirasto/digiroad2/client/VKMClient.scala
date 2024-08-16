@@ -168,7 +168,6 @@ class VKMClient {
   def fetchRoadAddressesByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     val params = linkIds.map(linkId =>
       Map(
-        VkmQueryIdentifier -> "TestiTunniste",
         VkmLinkId -> linkId,
         VkmRangeSearch -> "true",
         VkmResponseValues -> s"$roadAddressFrameWorkValue,$linearLocationFrameWorkValue"
