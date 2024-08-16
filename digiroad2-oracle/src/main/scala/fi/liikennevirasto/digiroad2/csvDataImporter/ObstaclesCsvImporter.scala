@@ -20,7 +20,7 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
 
   lazy val obstaclesService: ObstacleService = new ObstacleService(roadLinkService)
 
-  private val allowedTypeValues: Seq[Int] = Seq(1, 2)
+  private val allowedTypeValues: Seq[Int] = Seq(1, 2, 3, 99)
 
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
     val notImportedObstacle = pointAssetAttributes.flatMap { obstacleAttribute =>
