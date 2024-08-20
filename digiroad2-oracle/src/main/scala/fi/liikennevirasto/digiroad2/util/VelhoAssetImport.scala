@@ -27,7 +27,8 @@ object VelhoAssetImport {
       
 
       assetName match {
-        case "lit_road" => velhoClient.importAssets(username, password, path)
+        case "lit_road" => velhoClient.importAssetsFromLatauspalvelu(username, password, path)
+        case "traffic_signs" => velhoClient.importAssetsFromHakupalvelu(username, password)
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
     }

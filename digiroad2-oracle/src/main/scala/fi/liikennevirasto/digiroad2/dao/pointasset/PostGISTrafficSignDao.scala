@@ -141,6 +141,11 @@ object PostGISTrafficSignDao {
                 where p.ASSET_TYPE_ID = 300 and p.PUBLIC_ID = 'trafficSigns_type' and ev.VALUE in (#${values.mkString(",")}) """.as[Long].list
   }
 
+  def fetchByExternalId(externalId: String): Seq[PersistedTrafficSign] = {
+    val filter = s"where a.external_id = '$externalId'"
+    fetchByFilter(query => query + filter)
+  }
+
   def fetchByLinkId(linkIds : Seq[String]): Seq[PersistedTrafficSign] = {
     val rows = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
@@ -275,8 +280,8 @@ object PostGISTrafficSignDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
-        values ($id, 300, $username, current_timestamp, $municipality, ${trafficSign.bearing});
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, external_id)
+        values ($id, 300, $username, current_timestamp, $municipality, ${trafficSign.bearing}, ${trafficSign.externalId});
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection});

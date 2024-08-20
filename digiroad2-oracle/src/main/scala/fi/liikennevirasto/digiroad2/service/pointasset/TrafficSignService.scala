@@ -16,7 +16,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 
-case class IncomingTrafficSign(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Option[Double] = None) extends IncomingPointAsset
+case class IncomingTrafficSign(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Option[Double] = None, externalId: Option[String] = None) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: String, validityDirection: Int, signType: Int, roadLink: RoadLink)
 case class TrafficSignInfoUpdate(newSign: TrafficSignInfo, oldSign: PersistedTrafficSign)
@@ -81,6 +81,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   def fetchByFilterWithExpiredByIds(ids: Set[Long]): Seq[PersistedTrafficSign] = PostGISTrafficSignDao.fetchByFilterWithExpiredByIds(ids)
 
   override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = PostGISTrafficSignDao.fetchByFilterWithExpiredLimited(queryFilter, token)
+
+  def fetchPointAssetsWithExternalId(externalId: String): Seq[PersistedTrafficSign] = PostGISTrafficSignDao.fetchByExternalId(externalId)
 
   override def setFloating(persistedAsset: PersistedTrafficSign, floating: Boolean): PersistedTrafficSign = {
     persistedAsset.copy(floating = floating)
