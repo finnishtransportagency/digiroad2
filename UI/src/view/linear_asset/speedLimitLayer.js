@@ -12,6 +12,7 @@ window.SpeedLimitLayer = function(params) {
   var isActiveTrafficSigns = false;
   var extraEventListener = _.extend({running: false}, eventbus);
   var authorizationPolicy = new LinearAssetAuthorizationPolicy();
+  var useExperimentalFetch = false;
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
@@ -60,7 +61,7 @@ window.SpeedLimitLayer = function(params) {
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
-    collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function() {
+    collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), useExperimentalFetch).then(function() {
       eventbus.trigger('layer:speedLimit:' + event);
     });
     if (isActive) {
@@ -320,6 +321,8 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'speedLimits:enableExperimentalFetch', enableExperimentalFetch);
+    eventListener.listenTo(eventbus, 'speedLimits:disableExperimentalFetch', disableExperimentalFetch);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
     eventListener.listenTo(eventbus, 'speedLimit:unselect speedLimit:massUpdateUnselected', handleSpeedLimitUnselected);
   };
@@ -352,6 +355,16 @@ window.SpeedLimitLayer = function(params) {
   var showSpeedLimitsComplementary = function() {
     collection.activeComplementary(true);
     trafficSignReadOnlyLayer.showTrafficSignsComplementary();
+    me.refreshView();
+  };
+
+  var enableExperimentalFetch = function() {
+    useExperimentalFetch = true;
+    me.refreshView();
+  };
+
+  var disableExperimentalFetch = function() {
+    useExperimentalFetch = false;
     me.refreshView();
   };
 
