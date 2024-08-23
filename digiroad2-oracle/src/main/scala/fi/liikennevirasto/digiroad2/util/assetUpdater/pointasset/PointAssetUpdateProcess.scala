@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
@@ -21,8 +20,7 @@ object PointAssetUpdateProcess {
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient()
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus)
 
-  lazy val viiteClient: SearchViiteClient = new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
-  lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService()
   lazy val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)

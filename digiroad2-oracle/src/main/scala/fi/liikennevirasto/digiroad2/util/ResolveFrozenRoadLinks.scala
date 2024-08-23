@@ -2,13 +2,11 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
-import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.Try
@@ -26,9 +24,7 @@ case class RoadLinkWithPoints(firstP: Point, lastP: Point, roadLink: RoadLink)
 object ResolvingFrozenRoadLinks extends ResolvingFrozenRoadLinks
 trait ResolvingFrozenRoadLinks {
 
-  lazy val viiteClient: SearchViiteClient = new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
-
-  lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService()
 
   lazy val vkmClient: VKMClient = new VKMClient()
 

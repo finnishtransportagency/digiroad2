@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService, RoadAddressForLink => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService, RoadAddressForLink}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadAddress, Track}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
@@ -92,13 +92,13 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
         , State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
         Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Yhteisahontie", "ROADNAME_SE" -> null, "ROADNAME_SM" -> null, "ROADNUMBER" -> "648", "ROADPARTNUMBER" -> "8")))
 
-    val viiteRoadAddress = Seq(ViiteRoadAddress(21675,77,7,Combined,4082,4461,None,None,
+    val viiteRoadAddress = Seq(RoadAddressForLink(21675,77,7,Combined,4082,4461,None,None,
       linkId1,0.0,378.889,AgainstDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(21707,77,8,Combined,469,562,None,None,
+      RoadAddressForLink(21707,77,8,Combined,469,562,None,None,
         linkId4,0.0,92.297,TowardsDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(21717,648,8,Combined,6396,6415,None,None,
+      RoadAddressForLink(21717,648,8,Combined,6396,6415,None,None,
         linkId6,0.0,19.207,TowardsDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(23366,16934,1,Combined,0,87,None,None,
+      RoadAddressForLink(23366,16934,1,Combined,0,87,None,None,
         linkId3,0.0,86.741,TowardsDigitizing,List(),false,None,None,None))
 
 
@@ -170,11 +170,11 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
         Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")))
 
     val viiteRoadAddress = Seq(
-      ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,
+      RoadAddressForLink(48229,16,29,Combined,4583,4690,None,None,
         linkId6,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,
+      RoadAddressForLink(81202,16,29,RightSide,4690,4741,None,None,
         linkId5,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(81202,16,29,RightSide,4758,4815,None,None,
+      RoadAddressForLink(81202,16,29,RightSide,4758,4815,None,None,
         linkId7,0.0,56.905,AgainstDigitizing,List(),false,None,None,None))
 
     when(mockRoadLinkService.getRoadLinksByMunicipality(312, false)).thenReturn(roadLinks)
@@ -243,11 +243,11 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     val roadLinks = Seq(road1, road2, road3, road4, road5)
 
     val address = Seq(
-      ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,
+      RoadAddressForLink(48229,16,29,Combined,4583,4690,None,None,
         linkId5,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,
+      RoadAddressForLink(81202,16,29,RightSide,4690,4741,None,None,
         linkId4,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(81200, 16, 29, LeftSide, 4740,4757,None,None,
+      RoadAddressForLink(81200, 16, 29, LeftSide, 4740,4757,None,None,
         linkId2,0.0,16.18,AgainstDigitizing,List(),false,None,None,None))
 
     when(mockRoadAddressService.getAllByLinkIds(any[Seq[String]])).thenReturn(address)
@@ -288,11 +288,11 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     val roadLinks = Seq(road1, road2, road3, road4, road5)
 
     val address = Seq(
-      ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,
+      RoadAddressForLink(48229,16,29,Combined,4583,4690,None,None,
         linkId5,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,
+      RoadAddressForLink(81202,16,29,RightSide,4690,4741,None,None,
         linkId4,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(81200, 16, 29, LeftSide, 4740,4757,None,None,
+      RoadAddressForLink(81200, 16, 29, LeftSide, 4740,4757,None,None,
         linkId1,0.0,16.18,AgainstDigitizing,List(),false,None,None,None))
 
 
