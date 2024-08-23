@@ -11,7 +11,7 @@ case class SpeedLimitRow(id: Long, linkId: String, sideCode: SideCode, value: Op
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
                                timeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource, publicId: String)
 
-case class SpeedLimitRowExperimental(id: Long, linkId: String, sideCode: SideCode, trafficDirection: TrafficDirection,
+case class SpeedLimitRowWithRoadInfo(id: Long, linkId: String, sideCode: SideCode, trafficDirection: TrafficDirection,
                                      value: Option[Int], geometry: Seq[Point], startMeasure: Double, endMeasure: Double, roadLinkLength: Double,
                                      modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String],
                                      createdDate: Option[DateTime], administrativeClass: AdministrativeClass, municipalityCode: Int,

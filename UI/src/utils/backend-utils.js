@@ -155,12 +155,9 @@
       });
     });
 
-    this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress, useExperimental) {
-      var baseURL;
-      if(useExperimental) baseURL = 'api/speedlimits_experimental?bbox=';
-      else baseURL = 'api/speedlimits?bbox=';
+    this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
       return validateBoundingBox(boundingBox,{
-        url: baseURL + boundingBox + '&withRoadAddress=' + withRoadAddress
+        url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       });
     });
 

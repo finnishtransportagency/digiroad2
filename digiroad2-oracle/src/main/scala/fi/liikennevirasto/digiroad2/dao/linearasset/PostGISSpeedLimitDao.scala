@@ -54,9 +54,9 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     }
   }
 
-  implicit val getSpeedLimitRowExperimental = new GetResult[SpeedLimitRowExperimental] {
+  implicit val getSpeedLimitRowWithRoadInfo = new GetResult[SpeedLimitRowWithRoadInfo] {
 
-    def apply(r: PositionedResult) : SpeedLimitRowExperimental = {
+    def apply(r: PositionedResult) : SpeedLimitRowWithRoadInfo = {
       val id = r.nextLong()
       val linkId = r.nextString()
       val sideCodeValue = r.nextIntOption()
@@ -82,7 +82,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val adminClass = AdministrativeClass.apply(adminClassValue)
 
 
-      SpeedLimitRowExperimental(id = id, linkId = linkId, sideCode = sideCode, trafficDirection = trafficDirection,
+      SpeedLimitRowWithRoadInfo(id = id, linkId = linkId, sideCode = sideCode, trafficDirection = trafficDirection,
         value = value, geometry = geometry, startMeasure = startMeasure, endMeasure = endMeasure, roadLinkLength = geometryLength, modifiedBy = modifiedBy,
         modifiedDate = modifiedDateTime, createdBy = createdBy, createdDate = createdDateTime, administrativeClass = adminClass,
         municipalityCode = municipality, constructionType = constructionType, linkSource = NormalLinkInterface, publicId = publicId)
@@ -98,7 +98,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     }
   }
 
-  def fetchByBBoxExperimental(bbox: BoundingRectangle): (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
+  def fetchByBBox(bbox: BoundingRectangle): (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
     val bboxFilter = PostGISDatabase.boundingBoxFilter(bbox, "shape")
 
     val query =
@@ -183,11 +183,11 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       FROM cte_kgv_roadlink cte_kgv;
     """
 
-    val speedLimitRows = query.as[SpeedLimitRowExperimental].list
-    groupSpeedLimitsResultExperimental(speedLimitRows)
+    val speedLimitRows = query.as[SpeedLimitRowWithRoadInfo].list
+    groupSpeedLimitsResultWithRoadInfo(speedLimitRows)
   }
 
-  def groupSpeedLimitsResultExperimental(speedLimitRows: Seq[SpeedLimitRowExperimental]) : (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
+  def groupSpeedLimitsResultWithRoadInfo(speedLimitRows: Seq[SpeedLimitRowWithRoadInfo]) : (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
     val (assetRows, roadLinkRows) = speedLimitRows.partition(_.id != 0)
     val emptyRoadLinkRows = roadLinkRows.filterNot(rlRow => assetRows.map(_.linkId).contains(rlRow.linkId))
     val groupedSpeedLimit = assetRows.groupBy(_.id)

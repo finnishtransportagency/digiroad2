@@ -59,9 +59,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitDao.getLinksWithLength(id)
   }
 
-  def getSpeedLimitsByBboxExperimental(bbox: BoundingRectangle): Seq[Seq[PieceWiseLinearAsset]] = {
+  def getSpeedLimitsByBbox(bbox: BoundingRectangle): Seq[Seq[PieceWiseLinearAsset]] = {
     val (speedLimits, emptyRoadLinks) = withDynTransaction {
-      speedLimitDao.fetchByBBoxExperimental(bbox)
+      speedLimitDao.fetchByBBox(bbox)
     }
     val unknownSpeedLimits = emptyRoadLinkToUnknownSpeedLimit(emptyRoadLinks)
     LinearAssetPartitioner.partition(speedLimits ++ unknownSpeedLimits)
