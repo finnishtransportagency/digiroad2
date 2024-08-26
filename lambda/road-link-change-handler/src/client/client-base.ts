@@ -3,7 +3,7 @@ import {SsmService} from "../service/ssm-service";
 import * as crypto from "crypto";
 
 export class ClientBase {
-    protected maxRetriesPerQuery = 3;
+    protected maxRetriesPerQuery = 10;
 
     async createInstance(baseUrl: string, apiKeyPath: string, contentType: string = "application/json"): Promise<AxiosInstance> {
         try {
