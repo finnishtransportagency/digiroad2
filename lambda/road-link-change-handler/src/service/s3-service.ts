@@ -55,7 +55,8 @@ export class S3Service {
         }
         const since = await this.getTimeOfLastFetchedChanges() ?? new Date("2022-05-10");
         since.setDate(since.getDate() + 1);
-        const until = new Date(since.getDate() + 1);
+        const until = new Date(since);
+        until.setDate(until.getDate() + 1);
         return [Utils.dateToDateString(since), Utils.dateToDateString(until)];
     }
 
