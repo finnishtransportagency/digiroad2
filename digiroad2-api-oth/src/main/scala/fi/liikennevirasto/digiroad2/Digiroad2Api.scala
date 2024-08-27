@@ -1378,27 +1378,32 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             speedLimitService.getSpeedLimitsByBbox(boundingRectangle))
         else
           speedLimitService.getSpeedLimitsByBbox(boundingRectangle)
-      speedLimits.map { speedLimitGroup => speedLimitGroup.map {
-        speedLimitAsset =>
+      speedLimits.map { linkPartition =>
+        linkPartition.map { link =>
           Map(
-            "id" -> (if (speedLimitAsset.id == 0) None else Some(speedLimitAsset.id)),
-            "linkId" -> speedLimitAsset.linkId,
-            "sideCode" -> speedLimitAsset.sideCode,
-            "trafficDirection" -> speedLimitAsset.trafficDirection,
-            "value" -> speedLimitService.getSpeedLimitValue(speedLimitAsset.value).map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
-            "points" -> speedLimitAsset.geometry,
-            "startMeasure" -> speedLimitAsset.startMeasure,
-            "endMeasure" -> speedLimitAsset.endMeasure,
-            "modifiedBy" -> speedLimitAsset.modifiedBy,
-            "modifiedAt" -> speedLimitAsset.modifiedDateTime,
-            "createdBy" -> speedLimitAsset.createdBy,
-            "createdAt" -> speedLimitAsset.createdDateTime,
-            "linkSource" -> speedLimitAsset.linkSource.value,
-            "administrativeClass" -> speedLimitAsset.administrativeClass,
-            "municipalityCode" -> extractIntValue(speedLimitAsset.attributes, "municipality"),
-            "constructionType" -> extractIntValue(speedLimitAsset.attributes, "constructionType")
+            "id" -> (if (link.id == 0) None else Some(link.id)),
+            "linkId" -> link.linkId,
+            "sideCode" -> link.sideCode,
+            "trafficDirection" -> link.trafficDirection,
+            "value" -> speedLimitService.getSpeedLimitValue(link.value).map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
+            "points" -> link.geometry,
+            "startMeasure" -> link.startMeasure,
+            "endMeasure" -> link.endMeasure,
+            "modifiedBy" -> link.modifiedBy,
+            "modifiedAt" -> link.modifiedDateTime,
+            "createdBy" -> link.createdBy,
+            "createdAt" -> link.createdDateTime,
+            "linkSource" -> link.linkSource.value,
+            "roadPartNumber" -> extractLongValue(link.attributes, "ROAD_PART_NUMBER"),
+            "roadNumber" -> extractLongValue(link.attributes, "ROAD_NUMBER"),
+            "track" -> extractIntValue(link.attributes, "TRACK"),
+            "startAddrMValue" -> extractLongValue(link.attributes, "START_ADDR"),
+            "endAddrMValue" -> extractLongValue(link.attributes, "END_ADDR"),
+            "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS"),
+            "municipalityCode" -> extractIntValue(link.attributes, "municipality"),
+            "constructionType" -> extractIntValue(link.attributes, "constructionType")
           )
-      }
+        }
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")

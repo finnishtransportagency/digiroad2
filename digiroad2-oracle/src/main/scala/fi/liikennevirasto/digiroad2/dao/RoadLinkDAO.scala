@@ -9,15 +9,12 @@ import fi.liikennevirasto.digiroad2.client.{FeatureClass, LinkIdAndExpiredDate, 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
-import net.postgis.jdbc.geometry.GeometryBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.postgresql.util.PGobject
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
 
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -134,7 +131,7 @@ class RoadLinkDAO {
       val mtkId = r.nextLong()
       val mtkHereFlip = r.nextInt()
       val municipality = r.nextInt()
-      val path = r.nextObjectOption().map(extractGeometry).get
+      val path = r.nextObjectOption().map(KgvUtil.extractGeometry).get
       val administrativeClass = r.nextInt()
       val directionType = r.nextIntOption()
       val mtkClass = r.nextInt()
@@ -440,21 +437,6 @@ class RoadLinkDAO {
 
   protected def extractModifiedDate(createdDate:Option[Long],lastEdited:Option[Long]): Option[DateTime] = {
     KgvUtil.extractModifiedAt(createdDate,lastEdited)
-  }
-
-  def extractGeometry(data: Object): List[List[Double]] = {
-    val geometry = data.asInstanceOf[PGobject]
-    if (geometry == null) Nil
-    else {
-      val geomValue = geometry.getValue
-      val geom = GeometryBuilder.geomFromString(geomValue)
-      val listOfPoint= ListBuffer[List[Double]]()
-      for (i <- 0 until geom.numPoints() ){
-        val point =geom.getPoint(i)
-        listOfPoint += List(point.x, point.y, point.z, point.m)
-      }
-      listOfPoint.toList
-    }
   }
 
   def deleteRoadLinksByIds(linkIdsToDelete: Set[String]) = {

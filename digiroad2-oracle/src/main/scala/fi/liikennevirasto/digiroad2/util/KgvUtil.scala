@@ -2,7 +2,11 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection
 import fi.liikennevirasto.digiroad2.client.FeatureClass
+import net.postgis.jdbc.geometry.GeometryBuilder
 import org.joda.time.DateTime
+import org.postgresql.util.PGobject
+
+import scala.collection.mutable.ListBuffer
 
 object KgvUtil {
 
@@ -32,6 +36,21 @@ object KgvUtil {
       case Some(1) => TrafficDirection.TowardsDigitizing
       case Some(2) => TrafficDirection.AgainstDigitizing
       case _ => TrafficDirection.UnknownDirection
+    }
+  }
+
+  def extractGeometry(data: Object): List[List[Double]] = {
+    val geometry = data.asInstanceOf[PGobject]
+    if (geometry == null) Nil
+    else {
+      val geomValue = geometry.getValue
+      val geom = GeometryBuilder.geomFromString(geomValue)
+      val listOfPoint = ListBuffer[List[Double]]()
+      for (i <- 0 until geom.numPoints()) {
+        val point = geom.getPoint(i)
+        listOfPoint += List(point.x, point.y, point.z, point.m)
+      }
+      listOfPoint.toList
     }
   }
 }

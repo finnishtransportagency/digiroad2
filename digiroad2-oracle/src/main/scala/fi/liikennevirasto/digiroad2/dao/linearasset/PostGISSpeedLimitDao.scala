@@ -10,7 +10,7 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, values}
 import fi.liikennevirasto.digiroad2.client.FeatureClass
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, RoadLinkDAO, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewSpeedLimitMassOperation}
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LinearAssetUtils}
@@ -22,8 +22,6 @@ case class UnknownLimit(linkId: String, municipality: String, administrativeClas
 case class NewSpeedLimitWithId(asset:NewSpeedLimitMassOperation, id:Long, positionId:Long)
 class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends DynamicLinearAssetDao {
   def MassQueryThreshold = 500
-
-  val roadLinkDAO = new RoadLinkDAO
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
@@ -63,7 +61,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val sideCodeValue = r.nextIntOption()
       val directionType = r.nextIntOption()
       val value = r.nextIntOption()
-      val path = r.nextObjectOption().map(roadLinkDAO.extractGeometry).get
+      val path = r.nextObjectOption().map(KgvUtil.extractGeometry).get
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
       val geometryLength = r.nextDouble()
