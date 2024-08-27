@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterf
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType}
 import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.LogUtils
+import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult}
@@ -86,7 +86,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
       }
 
       RoadLinkFetched(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
-        extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
+        KgvUtil.extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
         ConstructionType.apply(constructionType), ComplimentaryLinkInterface, length)
     }
   }

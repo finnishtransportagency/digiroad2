@@ -1372,7 +1372,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val speedLimits = speedLimitService.getSpeedLimitsByBbox(boundingRectangle)
+      val speedLimits =
+        if (params("withRoadAddress").toBoolean)
+          roadAddressService.linearAssetWithRoadAddress(
+            speedLimitService.getSpeedLimitsByBbox(boundingRectangle))
+        else
+          speedLimitService.getSpeedLimitsByBbox(boundingRectangle)
       speedLimits.map { speedLimitGroup => speedLimitGroup.map {
         speedLimitAsset =>
           Map(

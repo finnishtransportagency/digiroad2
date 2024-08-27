@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection
 import fi.liikennevirasto.digiroad2.client.FeatureClass
 import org.joda.time.DateTime
 
@@ -22,6 +23,15 @@ object KgvUtil {
       case 12131 => FeatureClass.CarRoad_IIIa
       case 12132 => FeatureClass.CarRoad_IIIb
       case _ => FeatureClass.AllOthers
+    }
+  }
+
+  def extractTrafficDirection(code: Option[Int]): TrafficDirection = {
+    code match {
+      case Some(0) => TrafficDirection.BothDirections
+      case Some(1) => TrafficDirection.TowardsDigitizing
+      case Some(2) => TrafficDirection.AgainstDigitizing
+      case _ => TrafficDirection.UnknownDirection
     }
   }
 }

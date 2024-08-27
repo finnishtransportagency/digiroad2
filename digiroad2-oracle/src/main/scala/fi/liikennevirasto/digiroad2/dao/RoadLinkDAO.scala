@@ -4,7 +4,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, LinkIdAndExpiredDate, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
@@ -195,7 +195,7 @@ class RoadLinkDAO {
       }
 
       RoadLinkFetched(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
-        extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
+        KgvUtil.extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
         ConstructionType.apply(constructionType), LinkGeomSource.NormalLinkInterface, length)
     }
   }
@@ -436,15 +436,6 @@ class RoadLinkDAO {
 
   protected def extractFeatureClass(code: Int): FeatureClass = {
     KgvUtil.extractFeatureClass(code)
-  }
-
-  def extractTrafficDirection(code: Option[Int]): TrafficDirection = {
-    code match {
-      case Some(0) => TrafficDirection.BothDirections
-      case Some(1) => TrafficDirection.TowardsDigitizing
-      case Some(2) => TrafficDirection.AgainstDigitizing
-      case _ => TrafficDirection.UnknownDirection
-    }
   }
 
   protected def extractModifiedDate(createdDate:Option[Long],lastEdited:Option[Long]): Option[DateTime] = {
