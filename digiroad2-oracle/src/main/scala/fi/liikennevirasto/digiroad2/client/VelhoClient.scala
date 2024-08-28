@@ -16,8 +16,9 @@ import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.apache.http.ssl.SSLContextBuilder
 import org.apache.http.util.EntityUtils
+import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
-import org.json4s.{DefaultFormats, JArray, JDouble, JValue}
+import org.json4s.{DefaultFormats, JArray, JDouble}
 
 import java.util.Base64
 import javax.net.ssl.{HostnameVerifier, SSLSession}
@@ -270,11 +271,17 @@ class VelhoClient {
         withDynTransaction(linearAssetService.createMultipleLinearAssets(massOperations))
       }
   }
+  case class VelhoAsset(oid: String, createdDate: DateTime, editedDateOpt: Option[DateTime], geometry: Seq[Double])
 
   private def savePointAsset(assets: String): Unit = {
-    val parsed = parse(assets)
-    val list = (parsed \ "osumat").extract[List[JValue]]
-    list.foreach { json =>
+
+    val specifiedDate = DateTime.now().minusMonths(100)
+    val lines = assets.split("\n").filter(_.nonEmpty)
+    val parsedAssets = lines.map { line =>
+      val json = parse(line)
+      val oid = (json \ "oid").extract[String]
+      val createdDate = DateTime.parse((json \ "luotu").extract[String])
+      val editedDateOpt = (json \ "muokattu").extractOpt[String].map(DateTime.parse)
       val geometryOpt = (json \ "keskilinjageometria" \ "coordinates").extractOpt[JArray]
 
       val geometry = geometryOpt match {
@@ -282,50 +289,63 @@ class VelhoClient {
           items.collect { case JDouble(num) => num }
         case _ => Seq.empty[Double]
       }
-      if (geometry.nonEmpty) {
-        val oid = (json \ "oid").extract[String]
-        println(oid)
-        val simpleProperties = Set(
-          SimplePointAssetProperty("location_specifier", List(PropertyValue("99", None))),
-          SimplePointAssetProperty("height", List()),
-          SimplePointAssetProperty("structure", List(PropertyValue("1", None))),
-          SimplePointAssetProperty("sign_material", List(PropertyValue("2", None))),
-          SimplePointAssetProperty("trafficSign_start_date", List()),
-          SimplePointAssetProperty("lane_type", List(PropertyValue("99", None))),
-          SimplePointAssetProperty("life_cycle", List(PropertyValue("3", None))),
-          SimplePointAssetProperty("urgency_of_repair", List(PropertyValue("99", None))),
-          SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("36", None))),
-          SimplePointAssetProperty("size", List(PropertyValue("2", None))),
-          SimplePointAssetProperty("coating_type", List(PropertyValue("99", None))),
-          SimplePointAssetProperty("suggest_box", List(PropertyValue("0", None))),
-          SimplePointAssetProperty("old_traffic_code", List(PropertyValue("0", None))),
-          SimplePointAssetProperty("type_of_damage", List(PropertyValue("99", None))),
-          SimplePointAssetProperty("trafficSigns_info", List()),
-          SimplePointAssetProperty("main_sign_text", List()),
-          SimplePointAssetProperty("trafficSign_end_date", List()),
-          SimplePointAssetProperty("terrain_coordinates_y", List()),
-          SimplePointAssetProperty("condition", List(PropertyValue("99", None))),
-          SimplePointAssetProperty("opposite_side_sign", List(PropertyValue("0", None))),
-          SimplePointAssetProperty("municipality_id", List()),
-          SimplePointAssetProperty("lane", List()),
-          SimplePointAssetProperty("terrain_coordinates_x", List()),
-          SimplePointAssetProperty("additional_panel", List()),
-          SimplePointAssetProperty("lifespan_left", List()),
-          SimplePointAssetProperty("trafficSigns_value", List())
-        )
+      VelhoAsset(
+        oid,
+        createdDate,
+        editedDateOpt,
+        geometry
+      )
+    }
+    val existingAssets = withDynTransaction(trafficSignService.fetchPointAssets(query => query + "where a.municipality_code in (931, 182, 249, 179) and a.created_by = 'velhoTest'"))
+    val (preserved, deleted) = existingAssets.partition(a => parsedAssets.map(_.oid).contains(a.externalId.get))
+    val newAssets = parsedAssets.filterNot(a => preserved.map(_.externalId.get).contains(a.oid))
+    val updatedAssets = preserved.filter { a =>
+      parsedAssets.exists(p => p.oid == a.externalId.get && p.editedDateOpt.exists(_.isAfter(specifiedDate)))
+    }
+    deleted.map(_.id).foreach(id => trafficSignService.expire(id, "velhoExpire"))
 
-        val roadLink = roadLinkService.getClosestRoadlink(User(1, "test", Configuration(roles = Set(Role.Operator))), Point(geometry.head, geometry(1)))
-        if (roadLink.nonEmpty) {
-          val incomingTrafficSign = IncomingTrafficSign(geometry.head, geometry(1), roadLink.get.linkId, simpleProperties, 2, None, None, Some(oid))
-          val oldTrafficSign = withDynTransaction(trafficSignService.fetchPointAssetsWithExternalId(oid))
-          if (oldTrafficSign.nonEmpty) {
-            withDynTransaction(trafficSignService.updateWithoutTransaction(oldTrafficSign.head.id, incomingTrafficSign, toRoadLink(roadLink.get), "velhoUpdate", None, None))
-          } else {
-            trafficSignService.create(incomingTrafficSign, "velhoTest", toRoadLink(roadLink.get))
-          }
-        }
+    val simpleProperties = Set(
+      SimplePointAssetProperty("location_specifier", List(PropertyValue("99", None))),
+      SimplePointAssetProperty("height", List()),
+      SimplePointAssetProperty("structure", List(PropertyValue("1", None))),
+      SimplePointAssetProperty("sign_material", List(PropertyValue("2", None))),
+      SimplePointAssetProperty("trafficSign_start_date", List()),
+      SimplePointAssetProperty("lane_type", List(PropertyValue("99", None))),
+      SimplePointAssetProperty("life_cycle", List(PropertyValue("3", None))),
+      SimplePointAssetProperty("urgency_of_repair", List(PropertyValue("99", None))),
+      SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("36", None))),
+      SimplePointAssetProperty("size", List(PropertyValue("2", None))),
+      SimplePointAssetProperty("coating_type", List(PropertyValue("99", None))),
+      SimplePointAssetProperty("suggest_box", List(PropertyValue("0", None))),
+      SimplePointAssetProperty("old_traffic_code", List(PropertyValue("0", None))),
+      SimplePointAssetProperty("type_of_damage", List(PropertyValue("99", None))),
+      SimplePointAssetProperty("trafficSigns_info", List()),
+      SimplePointAssetProperty("main_sign_text", List()),
+      SimplePointAssetProperty("trafficSign_end_date", List()),
+      SimplePointAssetProperty("terrain_coordinates_y", List()),
+      SimplePointAssetProperty("condition", List(PropertyValue("99", None))),
+      SimplePointAssetProperty("opposite_side_sign", List(PropertyValue("0", None))),
+      SimplePointAssetProperty("municipality_id", List()),
+      SimplePointAssetProperty("lane", List()),
+      SimplePointAssetProperty("terrain_coordinates_x", List()),
+      SimplePointAssetProperty("additional_panel", List()),
+      SimplePointAssetProperty("lifespan_left", List()),
+      SimplePointAssetProperty("trafficSigns_value", List())
+    )
+
+    newAssets.foreach { asset =>
+      val roadLink = roadLinkService.getClosestRoadlink(User(1, "test", Configuration(roles = Set(Role.Operator))), Point(asset.geometry.head, asset.geometry(1)))
+      if (roadLink.nonEmpty) {
+        val incomingTrafficSign = IncomingTrafficSign(asset.geometry.head, asset.geometry(1), roadLink.get.linkId, simpleProperties, 2, None, None, Some(asset.oid))
+        trafficSignService.create(incomingTrafficSign, "velhoTest", toRoadLink(roadLink.get))
       }
-  }
+    }
+
+    updatedAssets.foreach { asset =>
+      val roadLink = roadLinkService.getClosestRoadlink(User(1, "test", Configuration(roles = Set(Role.Operator))), Point(asset.lon, asset.lat))
+      val incomingTrafficSign = IncomingTrafficSign(asset.lon, asset.lat, asset.linkId, simpleProperties, 2, None, None, asset.externalId)
+        withDynTransaction(trafficSignService.updateWithoutTransaction(asset.id, incomingTrafficSign, toRoadLink(roadLink.get), "velhoUpdate", None, None))
+      }
   }
 
   def importAssetsFromLatauspalvelu(username: String, password: String, path: String): Unit = {
@@ -334,8 +354,9 @@ class VelhoClient {
     val token = fetchToken(tokenUrl, username, password)
     val paths = fetchPaths(apiUrl, token, path)
     val assets = fetchAssetsFromLatauspalvelu(apiUrl, token, paths)
-    saveAssets(assets)
+    savePointAsset(assets)
   }
+
 
   def importAssetsFromHakupalvelu(username: String, password: String): Unit = {
     val tokenUrl = ""
