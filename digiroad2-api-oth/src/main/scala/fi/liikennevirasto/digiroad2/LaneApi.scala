@@ -143,7 +143,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         case _: NumberFormatException => throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Invalid mValue parameter")
         case e: Exception =>
           logger.error(s"Exception thrown processing /lanes_on_point request. Type: ${e.getClass.getSimpleName}, message: ${e.getMessage}")
-          throw DigiroadApiError(HttpStatusCodeError.BAD_REQUEST,"Something went wrong")
+          throw DigiroadApiError(HttpStatusCodeError.INTERNAL_SERVER_ERROR,"Something went wrong")
       }
     }
   }
@@ -208,7 +208,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val lanesGroupedByAttributes = groupLanesByMeaningfulAttributes(lanesWithAccurateAddrMValues)
     val groupedAndConnectedLanes = lanesGroupedByAttributes.map(laneGroup => {
       val lanesWithContinuingLanes = laneGroup.map(lane => {
-        val identifier = LanePartitioner.getLaneRoadIdentifierByUsingViiteRoadNumber(lane, roadLinks(lane.linkId))
+        val identifier = LanePartitioner.getLaneRoadIdentifierByUsingRoadNumber(lane, roadLinks(lane.linkId))
         val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, identifier, laneGroup, roadLinks, sideCodesCorrected = true)
         LaneWithContinuingLanes(lane, continuingLanes)
       })
