@@ -44,13 +44,7 @@
         '</div>'
       ].join('');
 
-      var speedLimitExperimentalFetchCheckBox = [
-        '<div class="check-box-container">' +
-        '<input id="experimentalFetchCheckbox" type="checkbox" /> <lable>Käytä kokeellista hakua</lable>' +
-        '</div>'
-      ].join('');
-
-      return speedLimitHistoryCheckBox.concat(speedLimitComplementaryCheckBox).concat(speedLimitSignsCheckBox).concat(speedLimitExperimentalFetchCheckBox);
+      return speedLimitHistoryCheckBox.concat(speedLimitComplementaryCheckBox).concat(speedLimitSignsCheckBox);
 
     };
 
@@ -102,15 +96,6 @@
           eventbus.trigger('speedLimits:showSpeedLimitsHistory');
         } else {
           eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
-        }
-      });
-
-      $(me.expanded).find('#experimentalFetchCheckbox').on('change', function (event) {
-        var eventTarget = $(event.currentTarget);
-        if (eventTarget.prop('checked')) {
-          eventbus.trigger('speedLimits:enableExperimentalFetch');
-        } else {
-          eventbus.trigger('speedLimits:disableExperimentalFetch');
         }
       });
 

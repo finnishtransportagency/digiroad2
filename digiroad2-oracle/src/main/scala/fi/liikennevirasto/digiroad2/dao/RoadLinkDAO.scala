@@ -4,20 +4,17 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, LinkIdAndExpiredDate, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
-import net.postgis.jdbc.geometry.GeometryBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.postgresql.util.PGobject
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
 
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -134,7 +131,7 @@ class RoadLinkDAO {
       val mtkId = r.nextLong()
       val mtkHereFlip = r.nextInt()
       val municipality = r.nextInt()
-      val path = r.nextObjectOption().map(extractGeometry).get
+      val path = r.nextObjectOption().map(KgvUtil.extractGeometry).get
       val administrativeClass = r.nextInt()
       val directionType = r.nextIntOption()
       val mtkClass = r.nextInt()
@@ -195,7 +192,7 @@ class RoadLinkDAO {
       }
 
       RoadLinkFetched(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
-        extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
+        KgvUtil.extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
         ConstructionType.apply(constructionType), LinkGeomSource.NormalLinkInterface, length)
     }
   }
@@ -438,32 +435,8 @@ class RoadLinkDAO {
     KgvUtil.extractFeatureClass(code)
   }
 
-  def extractTrafficDirection(code: Option[Int]): TrafficDirection = {
-    code match {
-      case Some(0) => TrafficDirection.BothDirections
-      case Some(1) => TrafficDirection.TowardsDigitizing
-      case Some(2) => TrafficDirection.AgainstDigitizing
-      case _ => TrafficDirection.UnknownDirection
-    }
-  }
-
   protected def extractModifiedDate(createdDate:Option[Long],lastEdited:Option[Long]): Option[DateTime] = {
     KgvUtil.extractModifiedAt(createdDate,lastEdited)
-  }
-
-  def extractGeometry(data: Object): List[List[Double]] = {
-    val geometry = data.asInstanceOf[PGobject]
-    if (geometry == null) Nil
-    else {
-      val geomValue = geometry.getValue
-      val geom = GeometryBuilder.geomFromString(geomValue)
-      val listOfPoint= ListBuffer[List[Double]]()
-      for (i <- 0 until geom.numPoints() ){
-        val point =geom.getPoint(i)
-        listOfPoint += List(point.x, point.y, point.z, point.m)
-      }
-      listOfPoint.toList
-    }
   }
 
   def deleteRoadLinksByIds(linkIdsToDelete: Set[String]) = {

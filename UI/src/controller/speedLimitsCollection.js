@@ -49,8 +49,8 @@
           speedLimit.endMeasure.toFixed(2);
     };
 
-    this.fetch = function(boundingBox, center, useExperimentalFetch) {
-      return backend.getSpeedLimits(boundingBox, applicationModel.getWithRoadAddress(), useExperimentalFetch).then(function(speedLimitGroups) {
+    this.fetch = function(boundingBox, center) {
+      return backend.getSpeedLimits(boundingBox, applicationModel.getWithRoadAddress()).then(function(speedLimitGroups) {
         var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
           return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
         });

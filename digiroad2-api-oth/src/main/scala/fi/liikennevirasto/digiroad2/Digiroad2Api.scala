@@ -1355,47 +1355,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/speedlimits_experimental") {
-    params.get("bbox").map { bbox =>
-      val boundingRectangle = constructBoundingRectangle(bbox)
-      validateBoundingBox(boundingRectangle)
-      val speedLimits = speedLimitService.getSpeedLimitsByBboxExperimental(boundingRectangle)
-      speedLimits.map { speedLimitGroup => speedLimitGroup.map {
-        speedLimitAsset =>
-          Map(
-            "id" -> (if (speedLimitAsset.id == 0) None else Some(speedLimitAsset.id)),
-            "linkId" -> speedLimitAsset.linkId,
-            "sideCode" -> speedLimitAsset.sideCode,
-            "trafficDirection" -> speedLimitAsset.trafficDirection,
-            "value" -> speedLimitService.getSpeedLimitValue(speedLimitAsset.value).map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
-            "points" -> speedLimitAsset.geometry,
-            "startMeasure" -> speedLimitAsset.startMeasure,
-            "endMeasure" -> speedLimitAsset.endMeasure,
-            "modifiedBy" -> speedLimitAsset.modifiedBy,
-            "modifiedAt" -> speedLimitAsset.modifiedDateTime,
-            "createdBy" -> speedLimitAsset.createdBy,
-            "createdAt" -> speedLimitAsset.createdDateTime,
-            "linkSource" -> speedLimitAsset.linkSource.value,
-            "administrativeClass" -> speedLimitAsset.administrativeClass,
-            "municipalityCode" -> extractIntValue(speedLimitAsset.attributes, "municipality"),
-            "constructionType" -> extractIntValue(speedLimitAsset.attributes, "constructionType")
-          )
-      }
-      }
-    } getOrElse {
-      BadRequest("Missing mandatory 'bbox' parameter")
-    }
-  }
-
   get("/speedlimits") {
-    val municipalities: Set[Int] = Set()
-
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val speedLimits = if(params("withRoadAddress").toBoolean) roadAddressService.linearAssetWithRoadAddress(
-        speedLimitService.getByBoundingBox(SpeedLimitAsset.typeId, boundingRectangle, municipalities, roadLinkFilter = {roadLinkFilter: RoadLink => roadLinkFilter.isCarTrafficRoad}))
-      else speedLimitService.getByBoundingBox(SpeedLimitAsset.typeId, boundingRectangle, municipalities, roadLinkFilter = {roadLinkFilter: RoadLink => roadLinkFilter.isCarTrafficRoad})
+      val speedLimits =
+        if (params("withRoadAddress").toBoolean)
+          roadAddressService.linearAssetWithRoadAddress(
+            speedLimitService.getSpeedLimitsByBbox(boundingRectangle))
+        else
+          speedLimitService.getSpeedLimitsByBbox(boundingRectangle)
       speedLimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
@@ -1416,7 +1385,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "roadNumber" -> extractLongValue(link.attributes, "ROAD_NUMBER"),
             "track" -> extractIntValue(link.attributes, "TRACK"),
             "startAddrMValue" -> extractLongValue(link.attributes, "START_ADDR"),
-            "endAddrMValue" ->  extractLongValue(link.attributes, "END_ADDR"),
+            "endAddrMValue" -> extractLongValue(link.attributes, "END_ADDR"),
             "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS"),
             "municipalityCode" -> extractIntValue(link.attributes, "municipality"),
             "constructionType" -> extractIntValue(link.attributes, "constructionType")
@@ -1427,7 +1396,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
-
+  
   get("/speedlimits/history") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
