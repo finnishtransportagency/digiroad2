@@ -60,6 +60,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val linkId = r.nextString()
       val sideCodeValue = r.nextIntOption()
       val directionType = r.nextIntOption()
+      val trafficDirection = r.nextIntOption()
       val value = r.nextIntOption()
       val path = r.nextObjectOption().map(KgvUtil.extractGeometry).get
       val startMeasure = r.nextDouble()
@@ -76,14 +77,14 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val roadNameSe = r.nextString()
       val publicId = r.nextString()
 
-      val trafficDirection = KgvUtil.extractTrafficDirection(directionType)
+      val adjustedTrafficDirection = trafficDirection.map(TrafficDirection.apply).getOrElse(KgvUtil.extractTrafficDirection(directionType))
       val constructionType = ConstructionType.apply(constructionTypeValue)
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
       val sideCode = SideCode.apply(sideCodeValue.getOrElse(99))
       val adminClass = AdministrativeClass.apply(adminClassValue)
 
 
-      SpeedLimitRowWithRoadInfo(id = id, linkId = linkId, sideCode = sideCode, trafficDirection = trafficDirection,
+      SpeedLimitRowWithRoadInfo(id = id, linkId = linkId, sideCode = sideCode, trafficDirection = adjustedTrafficDirection,
         value = value, geometry = geometry, startMeasure = startMeasure, endMeasure = endMeasure, roadLinkLength = geometryLength, modifiedBy = modifiedBy,
         modifiedDate = modifiedDateTime, createdBy = createdBy, createdDate = createdDateTime, administrativeClass = adminClass,
         municipalityCode = municipality, constructionType = constructionType, linkSource = NormalLinkInterface, publicId = publicId, roadNameFi = roadNameFi, roadNameSe = roadNameSe)
@@ -125,6 +126,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         SELECT
           kgv.linkid,
           kgv.directiontype,
+          td.traffic_direction,
           kgv.shape,
           kgv.geometrylength,
           COALESCE(NULLIF(ac.administrative_class, kgv.adminclass), kgv.adminclass) AS adminclass,
@@ -136,6 +138,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         JOIN link_type lt ON kgv.linkid = lt.link_id
         JOIN functional_class fc ON kgv.linkid = fc.link_id
         LEFT JOIN administrative_class ac ON kgv.linkid = ac.link_id
+        LEFT JOIN traffic_direction td ON kgv.linkid = td.link_id
         WHERE #$bboxFilter
           AND kgv.expired_date IS NULL
           AND kgv.constructiontype NOT IN (#$constructionFilter)
@@ -154,6 +157,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         pos.link_id,
         pos.side_code,
         cte_kgv.directiontype,
+        cte_kgv.traffic_direction,
         e.value,
         COALESCE(
           ST_LineSubstring(
@@ -195,6 +199,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         cte_kgv.linkid,
         NULL AS side_code,
         cte_kgv.directiontype,
+        cte_kgv.traffic_direction,
         NULL AS value,
         cte_kgv.shape AS asset_geometry,
         NULL AS start_measure,
