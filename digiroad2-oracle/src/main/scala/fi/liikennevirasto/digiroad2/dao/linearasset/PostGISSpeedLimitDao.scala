@@ -127,7 +127,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           kgv.directiontype,
           kgv.shape,
           kgv.geometrylength,
-          kgv.adminclass,
+          COALESCE(NULLIF(ac.administrative_class, kgv.adminclass), kgv.adminclass) AS adminclass,
           kgv.municipalitycode,
           kgv.constructiontype,
           kgv.roadname_fi,
@@ -135,11 +135,17 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         FROM kgv_roadlink kgv
         JOIN link_type lt ON kgv.linkid = lt.link_id
         JOIN functional_class fc ON kgv.linkid = fc.link_id
+        LEFT JOIN administrative_class ac ON kgv.linkid = ac.link_id
         WHERE #$bboxFilter
           AND kgv.expired_date IS NULL
           AND kgv.constructiontype NOT IN (#$constructionFilter)
           AND kgv.mtkclass NOT IN (12318, 12312) -- Filter out HardShoulder and WinterRoad links
-          AND (kgv.adminclass != #${State.value} OR (kgv.adminclass = #${State.value} AND lt.link_type NOT IN (#$linkTypeFilter))) -- Filter out unallowed types on state roads
+          AND (COALESCE(NULLIF(ac.administrative_class, kgv.adminclass), kgv.adminclass) != #${State.value} -- Use overriden value from administrative_class
+              OR
+              (COALESCE(NULLIF(ac.administrative_class, kgv.adminclass), kgv.adminclass) = #${State.value}
+                AND lt.link_type NOT IN (#$linkTypeFilter) -- Filter out unallowed types on state roads
+              )
+          )
           AND fc.functional_class IN (#$functionalClassFilter) -- Filter by allowed FunctionalClass values
       )
 
