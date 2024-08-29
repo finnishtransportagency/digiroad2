@@ -72,7 +72,6 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val adminClassValue = r.nextInt()
       val municipality = r.nextInt()
       val constructionTypeValue = r.nextInt()
-      val roadNumber = r.nextString()
       val roadNameFi = r.nextString()
       val roadNameSe = r.nextString()
       val publicId = r.nextString()
@@ -140,9 +139,9 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           AND kgv.expired_date IS NULL
           AND kgv.constructiontype NOT IN (#$constructionFilter)
           AND kgv.mtkclass NOT IN (12318, 12312) -- Filter out HardShoulder and WinterRoad links
-          AND (kgv.adminclass != #${State.value} OR (kgv.adminclass = #${State.value} AND lt.link_type NOT IN (#$linkTypeFilter)) -- Filter out unallowed types on state roads
+          AND (kgv.adminclass != #${State.value} OR (kgv.adminclass = #${State.value} AND lt.link_type NOT IN (#$linkTypeFilter))) -- Filter out unallowed types on state roads
           AND fc.functional_class IN (#$functionalClassFilter) -- Filter by allowed FunctionalClass values
-      ))
+      )
 
       SELECT
         a.id,
