@@ -93,5 +93,7 @@
       RoadLinkProperties: { typeId: 460, geometryType: 'linear', label: 'RoadLinkProperties', layerName: 'roadlink', nameFI: 'Tielinkin ominaisuustiedot' }
     };
 
+    this.trafficSignsAllowedOnPedestrianCyclingLinks = [9, 14, 30, 31, 32, 61, 70, 71, 72, 85, 89, 98, 99, 111, 112, 118, 119, 163, 164, 187, 188, 189, 190, 235, 236, 280, 281, 282, 283, 284, 285, 298, 299, 300, 301, 302, 303, 362, 398];
+
   };
 })(this);
