@@ -4,7 +4,7 @@
     var me = this;
     this.trafficSignsAsset = [];
 
-    const enumerations = new Enumerations();
+    var enumerations = new Enumerations();
 
     var trafficSignsShowing = {
       generalWarningSigns: true,
@@ -24,7 +24,9 @@
 
     var trafficSignsTypeLinearGenerators = enumerations.trafficSignsTypeLinearGenerators;
 
-    var trafficSignsNoLongerAvailable = enumerations.trafficSignsNoLongerAvailable.map(num => num.toString());
+    var trafficSignsNoLongerAvailable = enumerations.trafficSignsNoLongerAvailable.map(function(num) {
+      return num.toString();
+    });
 
     this.isNoLongerAvailable = function (currentSignValue) {
       return _.includes(trafficSignsNoLongerAvailable, currentSignValue);
@@ -34,7 +36,9 @@
       return _.includes(trafficSignsTypeLinearGenerators, parseInt(getValue(current)));
     };
 
-    this.signTypesAllowedInPedestrianCyclingLinks = enumerations.trafficSignsAllowedOnPedestrianCyclingLinks.map(num => num.toString());
+    this.signTypesAllowedInPedestrianCyclingLinks = enumerations.trafficSignsAllowedOnPedestrianCyclingLinks.map(function(num) {
+      return num.toString();
+    });
 
     this.isAllowedSignInPedestrianCyclingLinks = function (signType) {
       return _.includes(this.signTypesAllowedInPedestrianCyclingLinks, signType);
