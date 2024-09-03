@@ -3,7 +3,7 @@
     PointAssetsCollection.call(this);
     var me = this;
 
-      const enumerations = new Enumerations();
+      var enumerations = new Enumerations();
 
       var trafficSignsShowing = {
       speedLimit: false,
@@ -22,7 +22,7 @@
       trafficSigns: false
     };
 
-    const trafficSignValuesReadOnly = enumerations.trafficSignValuesReadOnly;
+    var trafficSignValuesReadOnly = enumerations.trafficSignValuesReadOnly;
 
     this.getGroup = function(signTypes){
       return  _.groupBy(
