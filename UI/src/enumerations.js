@@ -116,6 +116,25 @@
 
     this.trafficSignsAllowedOnPedestrianCyclingLinks = [9, 14, 30, 31, 32, 61, 70, 71, 72, 85, 89, 98, 99, 111, 112, 118, 119, 163, 164, 187, 188, 189, 190, 235, 236, 280, 281, 282, 283, 284, 285, 298, 299, 300, 301, 302, 303, 362, 398];
 
+    this.trafficSignValuesReadOnly = {
+      speedLimit: { values : [1, 2, 3, 4, 5, 6]},
+      totalWeightLimit: {values : [32, 33, 34, 35]},
+      trailerTruckWeightLimit: {values : [32, 33, 34, 35]},
+      axleWeightLimit:{values : [32, 33, 34, 35]},
+      bogieWeightLimit: {values : [32, 33, 34, 35]},
+      heightLimit: {values : [31]},
+      lengthLimit: {values : [8]},
+      widthLimit: {values : [30]},
+      prohibition: {values: [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26]},
+      parkingProhibition: {values: [100, 101]},
+      hazardousMaterialTransportProhibition: {values : [20]},
+      manoeuvre: {values: [10, 11, 12]},
+      pedestrianCrossings: { values: [7] },
+      trafficSigns: {values: [45,46,139,140,141,142,143,144,47,48,49,50,145,51,138,146,147,52,53,54,55,56,57,58,59,60,61,62,148,149,150,151]}, //remove after batch to merge additional panels (1707) is completed. part of experimental feature
+      cyclingAndWalking: {values: this.trafficSignsAllowedOnPedestrianCyclingLinks},
+      roadWork: { values: [85] } //layername
+    };
+
     this.trafficSignsNoLongerAvailable = [143, 147, 162, 166, 167, 168, 247, 274, 287, 288, 357, 359];
 
     this.trafficSignsTypeLinearGenerators = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 85, 100, 101];
