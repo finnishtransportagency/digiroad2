@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
@@ -252,7 +251,6 @@ object Digiroad2Context {
 
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
     try {
-      logger.info("Send feedback scheduler started.")
       applicationFeedback.sendFeedbacks()
     } catch {
       case ex: Exception => logger.error(s"Exception at send feedback: ${ex.getMessage}")
@@ -366,11 +364,6 @@ object Digiroad2Context {
   lazy val roadLinkClient: RoadLinkClient = {
     new RoadLinkClient()
   }
-
-  lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, clientBuilder(
-      10000,10000))
-  }
   
   lazy val linearAssetDao: PostGISLinearAssetDao = {
     new PostGISLinearAssetDao()
@@ -381,7 +374,7 @@ object Digiroad2Context {
   }
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(viiteClient)
+    new RoadAddressService()
   }
 
   lazy val assetService: AssetService = {

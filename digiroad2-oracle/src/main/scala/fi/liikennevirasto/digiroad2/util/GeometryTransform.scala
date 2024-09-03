@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.{PointAssetForConversion, MassQueryParamsCoord, MassQueryResolve, RoadAddressBoundToAsset, VKMClient}
-import fi.liikennevirasto.digiroad2.client.viite.ViiteClientException
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
 import fi.liikennevirasto.digiroad2.{Point, RoadAddress, RoadAddressException, Track}
 import org.slf4j.{Logger, LoggerFactory}
@@ -53,30 +52,18 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def getLinkIdsInRoadAddressRange(roadAddressRange: RoadAddressRange): Set[String] = {
-    val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
-    if (startAndEndLinkIdsForAllSegments.isEmpty) {
-      throw new RoadAddressException(s"Could not fetch start and end link id for RoadAddressRange: $roadAddressRange")
-    } else {
-      startAndEndLinkIdsForAllSegments.flatMap(linkIds => {
-        val startLinkId = linkIds._1
-        val endLinkId = linkIds._2
-        vkmClient.fetchLinkIdsBetweenTwoRoadLinks(startLinkId, endLinkId, roadAddressRange.roadNumber)
-      })
-    }
-  }
   
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
     val roadAddress =
       try {
         roadAddressService.getByLrmPosition(linkId, mValue)
       } catch {
-        case vce: ViiteClientException =>
-          logger.error(s"Viite error with message ${vce.getMessage}")
+        case rae: RoadAddressException =>
+          logger.error(s"VKM error with message ${rae.getMessage}")
           None
       }
 
-    //If there is no roadAddress in VIITE or VIITE query fails try to find it in VKM
+    // If road address not found by linkId, try to use coordinates
     if(roadAddress.isEmpty && road.isDefined)
       return vkmClient.resolveAddressAndLocation(coord, heading, SideCode.apply(assetSideCode), road)
 
@@ -117,12 +104,12 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
   def resolveMultipleAddressAndLocations(assets: Seq[PointAssetForConversion]): Seq[RoadAddressBoundToAsset] = {
     val roadAddress = roadAddressService.getAllByLinkIds(assets.map(_.linkId))
-    val foundFromViite = assets.map(mapRoadAddressToAsset(roadAddress, _)).filter(_.isDefined).map(_.get)
-    val allReadyMapped = foundFromViite.map(_.asset)
+    val foundByLinkIds = assets.map(mapRoadAddressToAsset(roadAddress, _)).filter(_.isDefined).map(_.get)
+    val allReadyMapped = foundByLinkIds.map(_.asset)
     val stillMissing = assets.filterNot(a => allReadyMapped.contains(a.id))
     logger.info(s"still missing road address: ${stillMissing.size}")
-    val foundFromVKM = vkmClient.resolveAddressAndLocations(stillMissing.filter(_.road.isDefined).map(a => MassQueryResolve(a.id, a.coord, a.heading, SideCode.apply(a.sideCode.get), a.road)))
-    foundFromVKM ++ foundFromViite
+    val foundByCoords = vkmClient.resolveAddressAndLocations(stillMissing.filter(_.road.isDefined).map(a => MassQueryResolve(a.id, a.coord, a.heading, SideCode.apply(a.sideCode.get), a.road)))
+    foundByCoords ++ foundByLinkIds
   }
   private def mapRoadAddressToAsset(roadAddress: Seq[RoadAddressForLink], asset: PointAssetForConversion): Option[RoadAddressBoundToAsset] = {
     // copy pasted from Viite code base Search API get by LRM
