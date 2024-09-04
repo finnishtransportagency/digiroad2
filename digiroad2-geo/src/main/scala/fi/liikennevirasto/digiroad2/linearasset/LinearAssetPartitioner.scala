@@ -24,15 +24,13 @@ object LinearAssetPartitioner extends GraphPartitioner {
   def partition[T <: PieceWiseLinearAsset](links: Seq[T]): Seq[Seq[T]] = {
     val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
 
-    def extractRoadIdentifier(link: T): Option[Either[Int, String]] = {
-      Try(Left(link.attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
-        .orElse(Try(Right(getStringAttribute(link.attributes)("ROADNAME_FI"))))
-        .orElse(Try(Right(getStringAttribute(link.attributes)("ROADNAME_SE"))))
-        .toOption
-    }
+    def extractRoadIdentifier(link: PieceWiseLinearAsset): Option[Either[Int, String]] = {
+      val roadNumber = Try(Left(link.attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
+      val roadNameFi = Try(Right(link.attributes("ROADNAME_FI").asInstanceOf[String]))
+      val roadNameSe = Try(Right(link.attributes("ROADNAME_SE").asInstanceOf[String]))
 
-    def getStringAttribute(attributes: Map[String, Any])(key: String): String =
-      attributes.get(key).map(_.toString).getOrElse("")
+      (roadNumber.orElse(roadNameFi).orElse(roadNameSe)).toOption // If no identifier present, result to None with no grouping
+    }
 
     val linkGroups = twoWayLinks.groupBy { link =>
       (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0)
