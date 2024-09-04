@@ -128,7 +128,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.5",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "org.joda" % "joda-convert" % "2.0.1",
         "joda-time" % "joda-time" % "2.9.9",
@@ -171,7 +171,7 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
         "commons-io" % "commons-io" % "2.7",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
-        "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.5"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -204,7 +204,7 @@ object Digiroad2Build extends Build {
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.5",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
         "ch.qos.logback" % "logback-classic" % "1.3.11" % "runtime",
