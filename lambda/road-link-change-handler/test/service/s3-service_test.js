@@ -39,12 +39,12 @@ describe('S3 service', function() {
         const lastChanges = new Date("2022-10-13");
         sinon.stub(testService, 'getTimeOfLastFetchedChanges').returns(lastChanges);
         const [since,] = await testService.getChangeTimeframe({});
-        assert.equal(since, "14.10.2022");
+        assert.equal(since, "13.10.2022");
     });
 
     it('No dates provided in the event and no S3 change sets', async function() {
         sinon.stub(testService, 'getTimeOfLastFetchedChanges').returns(undefined);
         const [since,] = await testService.getChangeTimeframe({});
-        assert.equal(since, "11.5.2022");
+        assert.equal(since, "10.5.2022");
     });
 });
