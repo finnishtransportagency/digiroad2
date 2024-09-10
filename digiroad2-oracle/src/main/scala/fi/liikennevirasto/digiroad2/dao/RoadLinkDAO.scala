@@ -3,9 +3,10 @@ package fi.liikennevirasto.digiroad2.dao
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.locationtech.jts.geom.Polygon
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.client.{FeatureClass, LinkIdAndExpiredDate, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.{Geometry, Point}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, FunctionalClass, LinkGeomSource, LinkType, TrafficDirection, UnknownFunctionalClass, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.client.{EnrichedRoadLinkFetched, FeatureClass, LinkIdAndExpiredDate, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
@@ -17,6 +18,8 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import java.sql.{Array => SqlArray}
+import org.postgresql.util.PGobject
 
 class RoadLinkDAO {
   protected val geometryColumn: String = "shape"
@@ -338,6 +341,7 @@ class RoadLinkDAO {
   }
 
   protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
+    val constructionFilter = Seq(ConstructionType.Planned.value, ConstructionType.UnderConstruction.value).mkString(", ")
     LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
       sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
@@ -346,13 +350,192 @@ class RoadLinkDAO {
           from kgv_roadlink
           where #$filter
           and expired_date is null
-          and constructiontype in (${ConstructionType.InUse.value},
-                                                  ${ConstructionType.UnderConstruction.value},
-                                                  ${ConstructionType.Planned.value},
-                                                  ${ConstructionType.TemporarilyOutOfUse.value})
+          and constructiontype not in (#$constructionFilter)
           """.as[RoadLinkFetched].list
     }
   }
+
+  def fetchEnrichedByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]) = {
+    val links = getEnrichedRoadLinksWithFilter(bounds, municipalities)
+    links.map {link =>
+
+      RoadLink(link.linkId, link.geometry,
+        link.length,
+        link.administrativeClass,
+        link.functionalClass.value,
+        link.trafficDirection,
+        link.linkType,
+        None,
+        None, link.attributes)
+    }
+  }
+
+  protected def getEnrichedRoadLinksWithFilter(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[EnrichedRoadLinkFetched] = {
+    val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, "shape")
+    val municipalitiesFilter = if (municipalities.nonEmpty) s"AND municipalitycode IN (${municipalities.mkString(",")})" else ""
+    val constructionFilter = Seq(ConstructionType.Planned.value, ConstructionType.UnderConstruction.value).mkString(", ")
+    val featureClassFilter = FeatureClass.featureClassesToIgnore
+    val query =
+      sql"""
+          WITH cte_kgv_roadlink AS (
+          SELECT
+            linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype,
+            mtkclass, roadname_fi, roadname_se, roadnamesme, roadnamesmn, roadnamesms,
+            roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
+            verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
+            surfacetype, geometrylength
+          FROM kgv_roadlink kgv
+          WHERE
+            #$bboxFilter
+            #$municipalitiesFilter
+            AND kgv.expired_date IS NULL
+            AND kgv.constructiontype NOT IN (#$constructionFilter)
+            AND kgv.mtkclass NOT IN (12318, 12312) -- Filter out HardShoulder and WinterRoad links
+        )
+
+          SELECT
+           cte.linkid, cte.mtkid, cte.mtkhereflip, cte.municipalitycode, cte.shape,
+           COALESCE(ac.administrative_class, cte.adminclass) AS adminclass,
+           cte.directiontype,
+           td.traffic_direction,
+           cte.mtkClass,
+           fc.functional_class,
+           lt.link_type,
+           cte.roadname_fi, cte.roadname_se, cte.roadnamesme, cte.roadnamesmn, cte.roadnamesms, cte.roadnumber,
+           cte.roadpartnumber, cte.constructiontype, cte.verticallevel, cte.horizontalaccuracy, cte.verticalaccuracy,
+           cte.created_date, cte.last_edited_date, cte.from_left, cte.to_left, cte.from_right, cte.to_right,
+           cte.surfacetype, cte.geometrylength,
+           ARRAY_AGG(ROW(ral.name, ral.value)) FILTER (WHERE ral.name IS NOT NULL) AS attributes
+         FROM cte_kgv_roadlink cte
+         LEFT JOIN administrative_class ac ON cte.linkid = ac.link_id AND (ac.valid_to IS NULL OR ac.valid_to > current_timestamp)
+         LEFT JOIN link_type lt ON cte.linkid = lt.link_id
+         LEFT JOIN functional_class fc ON cte.linkid = fc.link_id
+         LEFT JOIN traffic_direction td ON cte.linkid = td.link_id
+         LEFT JOIN road_link_attributes ral ON cte.linkid = ral.link_id AND ral.valid_to IS NULL
+         GROUP BY
+           cte.linkid, cte.mtkid, cte.mtkhereflip, cte.municipalitycode, cte.shape,
+           COALESCE(ac.administrative_class, cte.adminclass),
+           cte.directiontype,
+           td.traffic_direction,
+           cte.mtkClass,
+           fc.functional_class,
+           lt.link_type,
+           cte.roadname_fi, cte.roadname_se, cte.roadnamesme, cte.roadnamesmn, cte.roadnamesms, cte.roadnumber, cte.roadpartnumber,
+           cte.constructiontype, cte.verticallevel, cte.horizontalaccuracy, cte.verticalaccuracy,
+           cte.created_date, cte.last_edited_date,
+           cte.from_left, cte.to_left, cte.from_right, cte.to_right,
+           cte.surfacetype, cte.geometrylength
+      """
+        query.as[EnrichedRoadLinkFetched].list
+  }
+
+  implicit val getEnrichedRoadLink = new GetResult[EnrichedRoadLinkFetched] {
+    def apply(r: PositionedResult): EnrichedRoadLinkFetched = {
+      val linkId = r.nextString()
+      val mtkId = r.nextLong()
+      val mtkHereFlip = r.nextInt()
+      val municipalityCode = r.nextInt()
+      val path = r.nextObjectOption().map(KgvUtil.extractGeometry).get
+      val administrativeClassValue = r.nextInt()
+      val directionType = r.nextIntOption()
+      val trafficDirection = r.nextIntOption()
+      val mtkClass = r.nextInt()
+      val functionalClassValue = r.nextIntOption()
+      val linkTypeValue = r.nextIntOption()
+      val roadNameFi = r.nextStringOption()
+      val roadNameSe = r.nextStringOption()
+      val roadNameSme = r.nextStringOption()
+      val roadNameSmn = r.nextStringOption()
+      val roadNameSms = r.nextStringOption()
+      val roadNumber = r.nextLongOption()
+      val roadPart = r.nextIntOption()
+      val constructionTypeValue = r.nextInt()
+      val verticalLevel = r.nextInt()
+      val horizontalAccuracy = r.nextBigDecimalOption()
+      val verticalAccuracy = r.nextBigDecimalOption()
+      val createdDate = r.nextTimestampOption().map(new DateTime(_))
+      val lastEditedDate = r.nextTimestampOption().map(new DateTime(_))
+      val fromLeft = r.nextLongOption()
+      val toLeft = r.nextLongOption()
+      val fromRight = r.nextLongOption()
+      val toRight = r.nextLongOption()
+      val surfaceType = r.nextInt()
+      val length  = r.nextDouble()
+      val attributesArray = r.nextObjectOption()
+
+      val attributesSeq: Seq[(Option[String], Option[String])] = attributesArray match {
+        case Some(sqlArray: SqlArray) =>
+          // Extract the array as an array of objects
+          val array = sqlArray.getArray.asInstanceOf[Array[AnyRef]]
+          // Handle each PGobject
+          array.map {
+            case pgObject: PGobject =>
+              val value = pgObject.getValue.stripPrefix("(").stripSuffix(")").split(",", -1)
+              (Option(value(0)).filter(_.nonEmpty), Option(value(1)).filter(_.nonEmpty))
+            case other =>
+              throw new IllegalArgumentException(s"Unhandled case: $other")
+          }.toSeq
+        case _ => Seq.empty
+      }
+
+      // Debugging: Print intermediate values
+      println(s"linkId: $linkId")
+      println(s"mtkId: $mtkId")
+      println(s"attributesArray: $attributesArray")
+
+      val geometry = path.map(point => Point(point(0), point(1), point(2)))
+      val administrativeClass = AdministrativeClass.apply(administrativeClassValue)
+      val constructionType = ConstructionType.apply(constructionTypeValue)
+      val functionalClass = functionalClassValue.map(FunctionalClass.apply).getOrElse(UnknownFunctionalClass)
+      val linkType = linkTypeValue.map(LinkType.apply).getOrElse(UnknownLinkType)
+      val adjustedTrafficDirection = trafficDirection.map(TrafficDirection.apply).getOrElse(KgvUtil.extractTrafficDirection(directionType))
+      val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
+      val geometryWKT = "LINESTRING ZM (" + path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ") + ")"
+      val featureClass = extractFeatureClass(mtkClass)
+      val modifiedAt = extractModifiedDate(createdDate.map(_.getMillis), lastEditedDate.map(_.getMillis))
+
+      // Debugging: Print attributes sequence
+      println(s"attributesSeq: $attributesSeq")
+
+      val attributes = attributesSeq.collect {
+        case (Some(name), Some(value)) => name -> value
+      }.toMap ++ Map(
+        "MTKID" -> mtkId,
+        "MTKCLASS" -> mtkClass,
+        "HORIZONTALACCURACY" -> horizontalAccuracy,
+        "VERTICALACCURACY" -> verticalAccuracy,
+        "VERTICALLEVEL" -> BigInt(verticalLevel),
+        "ROADNAME_FI" -> roadNameFi,
+        "ROADNAME_SE" -> roadNameSe,
+        "ROADNAMESME" -> roadNameSme,
+        "ROADNAMESMN" -> roadNameSmn,
+        "ROADNAMESMS" -> roadNameSms,
+        "ROADNUMBER" -> roadNumber,
+        "ROADPARTNUMBER" -> roadPart,
+        "FROM_LEFT" -> fromLeft,
+        "TO_LEFT" -> toLeft,
+        "FROM_RIGHT" -> fromRight,
+        "TO_RIGHT" -> toRight,
+        "MUNICIPALITYCODE" -> BigInt(municipalityCode),
+        "MTKHEREFLIP" -> mtkHereFlip,
+        "CREATED_DATE" -> createdDate.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
+        "LAST_EDITED_DATE" -> lastEditedDate.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
+        "SURFACETYPE" -> BigInt(surfaceType),
+        "points" -> geometryForApi,
+        "geometryWKT" -> geometryWKT
+      ).collect {
+        case (key, Some(value)) => key -> value
+        case (key, value) if value != None => key -> value
+      }
+
+      EnrichedRoadLinkFetched(linkId = linkId, municipalityCode = municipalityCode, geometry = geometry,
+        administrativeClass = administrativeClass, trafficDirection = adjustedTrafficDirection, linkType = linkType,
+        functionalClass = functionalClass, featureClass = featureClass, modifiedAt = modifiedAt,
+        attributes = attributes, constructionType = constructionType, LinkGeomSource.NormalLinkInterface, length = length
+      )
+    }
+  }
+
 
   protected def deleteLinksWithFilter(filter: String): Unit = {
     LogUtils.time(logger, "TEST LOG Delete road links"){
