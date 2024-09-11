@@ -408,12 +408,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     */
   def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true): (Seq[RoadLink]) = {
     
-    val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
+    /*val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
     withDynTransaction {
       LogUtils.time(logger, "TEST LOG enrichFetchedRoadLinksFrom from boundingBox request, link count: " + links.size)(
         enrichFetchedRoadLinks(links)
       )
-    }
+    }*/
 
     withDbConnection {roadLinkDAO.fetchEnrichedByMunicipalitiesAndBounds(bounds, municipalities)}
   }
