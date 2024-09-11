@@ -663,12 +663,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getRoadLinksFromDB(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadLinksFromDB(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false, withNewVersion:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     LogUtils.time(logger,"TEST LOG Total time getRoadLinksFromDB with boundingBox"){
       val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
       validateBoundingBox(boundingRectangle)
       val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks with boundingBox"){
-        roadLinkService.getRoadLinksByBoundsAndMunicipalities(boundingRectangle, municipalities,asyncMode = false)
+        roadLinkService.getRoadLinksByBoundsAndMunicipalities(boundingRectangle, municipalities,asyncMode = false,withNewVersion)
       }
       val roadLinks = if (withRoadAddress) {
         val roadLinksWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for links, link count: " + roadLinkSeq.size) {
@@ -792,8 +792,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
+    val roadAddress = Try(params("withRoadAddress").toBoolean).getOrElse(false)
+    val newVersion = Try(params("newVersion").toBoolean).getOrElse(false)
     params.get("bbox")
-      .map(getRoadLinksFromDB(Set(),withLaneInfo = laneInfo))
+      .map(getRoadLinksFromDB(Set(),withRoadAddress = roadAddress, withLaneInfo = laneInfo, withNewVersion = true))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 

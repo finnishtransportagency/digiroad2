@@ -294,8 +294,10 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @param municipalities
     * @return Road links
     */
-  def getRoadLinksByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true) : Seq[RoadLink] =
-    getRoadLinks(bounds, municipalities,asyncMode)
+  def getRoadLinksByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true, withNewVersion: Boolean = false) : Seq[RoadLink] =
+    LogUtils.time(logger, "TEST LOG getRoadLinks") {
+      getRoadLinks(bounds, municipalities,asyncMode,withNewVersion)
+    }
 
   /**
     * This method returns "real" road links and "complementary" road links by bounding box and municipalities.
@@ -406,16 +408,19 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @param municipalities
     * @return Road links and change data
     */
-  def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true): (Seq[RoadLink]) = {
+  def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true, withNewVersion: Boolean = false): (Seq[RoadLink]) = {
     
-    /*val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
+    if (withNewVersion) {
+      withDbConnection {roadLinkDAO.fetchEnrichedByMunicipalitiesAndBounds(bounds, municipalities)}
+    }
+    else {val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
     withDynTransaction {
       LogUtils.time(logger, "TEST LOG enrichFetchedRoadLinksFrom from boundingBox request, link count: " + links.size)(
         enrichFetchedRoadLinks(links)
       )
-    }*/
+    }}
 
-    withDbConnection {roadLinkDAO.fetchEnrichedByMunicipalitiesAndBounds(bounds, municipalities)}
+
   }
 
 /*  def getRoadLinksAndChangesWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {

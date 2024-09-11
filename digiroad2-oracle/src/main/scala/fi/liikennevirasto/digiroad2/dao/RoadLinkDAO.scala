@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.postgresql.util.PGobject
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
@@ -19,7 +20,6 @@ import slick.jdbc.StaticQuery.interpolation
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.sql.{Array => SqlArray}
-import org.postgresql.util.PGobject
 
 class RoadLinkDAO {
   protected val geometryColumn: String = "shape"
@@ -441,6 +441,19 @@ class RoadLinkDAO {
 
   implicit val getEnrichedRoadLink = new GetResult[EnrichedRoadLinkFetched] {
     def apply(r: PositionedResult): EnrichedRoadLinkFetched = {
+      def getOptionalTimestamp(r: PositionedResult): Option[DateTime] =
+        r.nextTimestampOption().map(new DateTime(_))
+
+      def extractModifications(r: PositionedResult): Seq[(Option[DateTime], Option[String])] = {
+        Seq(
+          (getOptionalTimestamp(r), r.nextStringOption()),
+          (getOptionalTimestamp(r), r.nextStringOption()),
+          (getOptionalTimestamp(r), r.nextStringOption()),
+          (getOptionalTimestamp(r), r.nextStringOption()),
+          (getOptionalTimestamp(r), r.nextStringOption())
+        )
+      }
+
       val linkId = r.nextString()
       val mtkId = r.nextLong()
       val mtkHereFlip = r.nextInt()
@@ -463,83 +476,21 @@ class RoadLinkDAO {
       val verticalLevel = r.nextInt()
       val horizontalAccuracy = r.nextBigDecimalOption()
       val verticalAccuracy = r.nextBigDecimalOption()
-      val createdDate = r.nextTimestampOption().map(new DateTime(_))
-      val lastEditedDate = r.nextTimestampOption().map(new DateTime(_))
+      val createdDate = getOptionalTimestamp(r)
+      val lastEditedDate = getOptionalTimestamp(r)
       val fromLeft = r.nextLongOption()
       val toLeft = r.nextLongOption()
       val fromRight = r.nextLongOption()
       val toRight = r.nextLongOption()
       val surfaceType = r.nextInt()
-      val length  = r.nextDouble()
+      val length = r.nextDouble()
 
-      val acCreatedDate = r.nextTimestampOption().map(new DateTime(_)) //administrative_class table has no modified_by column
-      val acCreatedBy = r.nextStringOption() // administrative_class table uses created_by column to determine modifications user
-      val ltModifiedDate = r.nextTimestampOption().map(new DateTime(_))
-      val ltModifiedBy = r.nextStringOption()
-      val fcModifiedDate = r.nextTimestampOption().map(new DateTime(_))
-      val fcModifiedBy = r.nextStringOption()
-      val tdModifiedDate = r.nextTimestampOption().map(new DateTime(_))
-      val tdModifiedBy = r.nextStringOption()
-      val raModifiedDate = r.nextTimestampOption().map(new DateTime(_))
-      val raModifiedBy = r.nextStringOption()
-
-      val attributesArray = r.nextObjectOption()
-      val attributesSeq: Seq[(Option[String], Option[String], Option[String], Option[String])] = attributesArray match {
-        case Some(sqlArray: SqlArray) =>
-          sqlArray.getArray.asInstanceOf[Array[AnyRef]].collect {
-            case pgObject: PGobject =>
-              val Array(name, value, modifiedDate, modifiedBy) = pgObject.getValue.stripPrefix("(").stripSuffix(")").split(",", -1)
-              (Option(name).filter(_.nonEmpty), Option(value).filter(_.nonEmpty), Option(modifiedDate).filter(_.nonEmpty), Option(modifiedBy).filter(_.nonEmpty))
-          }.toSeq
-        case _ => Seq.empty
-      }
-
-      val modifications = Seq(
-        (lastEditedDate, Some("")),
-        (acCreatedDate, acCreatedBy),
-        (ltModifiedDate, ltModifiedBy),
-        (fcModifiedDate, fcModifiedBy),
-        (tdModifiedDate, tdModifiedBy),
-        (raModifiedDate, raModifiedBy)
-      )
-
-      val validModifications = modifications.collect { case (Some(date), Some(by)) => (date, by) }
-
-      val latestModification = if (validModifications.nonEmpty) {
-        Some(validModifications.maxBy { case (date, _) => date.getMillis })
-      } else {
-        None
-      }
-      val (latestModifiedDate, latestModifiedBy) = latestModification match {
-        case Some((date, by)) => (BigInt(date.getMillis), by)
-        case None => (BigInt(0), "")
-      }
-
+      val modifications = extractModifications(r)
+      val (latestModifiedDate, latestModifiedBy) = KgvUtil.getLatestModification(modifications)
+      val (geometryForApi, geometryWKT) = KgvUtil.processGeometry(path)
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
-      val administrativeClass = AdministrativeClass.apply(administrativeClassValue)
-      val constructionType = ConstructionType.apply(constructionTypeValue)
-      val functionalClass = functionalClassValue.map(FunctionalClass.apply).getOrElse(UnknownFunctionalClass)
-      val linkType = linkTypeValue.map(LinkType.apply).getOrElse(UnknownLinkType)
-      val adjustedTrafficDirection = trafficDirection.map(TrafficDirection.apply).getOrElse(KgvUtil.extractTrafficDirection(directionType))
-      val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
-      val geometryWKT = s"LINESTRING ZM (${path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ")})"
-      val featureClass = extractFeatureClass(mtkClass)
-      val modifiedAt = extractModifiedDate(createdDate.map(_.getMillis), lastEditedDate.map(_.getMillis))
 
-      val attributes = attributesSeq.flatMap {
-        case (Some(name), Some(value), Some(modifiedDate), Some(modifiedBy)) =>
-          val mainAttribute = Map(name -> value)
-          val additionalAttributes = name match {
-            case "PRIVATE_ROAD_ASSOCIATION" | "ADDITIONAL_INFO" =>
-              Map(
-                "PRIVATE_ROAD_LAST_MOD_DATE" -> modifiedDate,
-                "PRIVATE_ROAD_LAST_MOD_USER" -> modifiedBy
-              )
-            case _ => Map.empty[String, String]
-          }
-          mainAttribute ++ additionalAttributes
-        case _ => Map.empty[String, String]
-      }.toMap ++ Map(
+      val attributes = extractAttributes(r) ++ Map(
         "MTKID" -> mtkId,
         "MTKCLASS" -> mtkClass,
         "HORIZONTALACCURACY" -> horizontalAccuracy,
@@ -569,14 +520,48 @@ class RoadLinkDAO {
         case (key, value) if value != None => key -> value
       }
 
-      EnrichedRoadLinkFetched(linkId = linkId, municipalityCode = municipalityCode, geometry = geometry,
-        administrativeClass = administrativeClass, trafficDirection = adjustedTrafficDirection, linkType = linkType,
-        functionalClass = functionalClass, featureClass = featureClass, modifiedAt = modifiedAt,
-        attributes = attributes, constructionType = constructionType, LinkGeomSource.NormalLinkInterface, length = length
+      EnrichedRoadLinkFetched(
+        linkId = linkId,
+        municipalityCode = municipalityCode,
+        geometry = geometry,
+        administrativeClass = AdministrativeClass.apply(administrativeClassValue),
+        trafficDirection = trafficDirection.map(TrafficDirection.apply).getOrElse(KgvUtil.extractTrafficDirection(directionType)),
+        linkType = linkTypeValue.map(LinkType.apply).getOrElse(UnknownLinkType),
+        functionalClass = functionalClassValue.map(FunctionalClass.apply).getOrElse(UnknownFunctionalClass),
+        featureClass = extractFeatureClass(mtkClass),
+        modifiedAt = extractModifiedDate(createdDate.map(_.getMillis), lastEditedDate.map(_.getMillis)),
+        attributes = attributes,
+        constructionType = ConstructionType.apply(constructionTypeValue),
+        LinkGeomSource.NormalLinkInterface,
+        length = length
       )
     }
   }
 
+  def extractAttributes(r: PositionedResult): Map[String, Any] = {
+    val attributesArray = r.nextObjectOption()
+    val attributesSeq: Seq[(Option[String], Option[String], Option[String], Option[String])] = attributesArray match {
+      case Some(sqlArray: SqlArray) =>
+        sqlArray.getArray.asInstanceOf[Array[AnyRef]].collect {
+          case pgObject: PGobject =>
+            val Array(name, value, modifiedDate, modifiedBy) = pgObject.getValue.stripPrefix("(").stripSuffix(")").split(",", -1)
+            (Option(name).filter(_.nonEmpty), Option(value).filter(_.nonEmpty), Option(modifiedDate).filter(_.nonEmpty), Option(modifiedBy).filter(_.nonEmpty))
+        }.toSeq
+      case _ => Seq.empty
+    }
+
+    attributesSeq.flatMap {
+      case (Some(name), Some(value), Some(modifiedDate), Some(modifiedBy)) =>
+        val mainAttribute = Map(name -> value)
+        val additionalAttributes = name match {
+          case "PRIVATE_ROAD_ASSOCIATION" | "ADDITIONAL_INFO" =>
+            Map("PRIVATE_ROAD_LAST_MOD_DATE" -> modifiedDate, "PRIVATE_ROAD_LAST_MOD_USER" -> modifiedBy)
+          case _ => Map.empty[String, String]
+        }
+        mainAttribute ++ additionalAttributes
+      case _ => Map.empty[String, String]
+    }.toMap
+  }
 
   protected def deleteLinksWithFilter(filter: String): Unit = {
     LogUtils.time(logger, "TEST LOG Delete road links"){

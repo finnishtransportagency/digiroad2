@@ -53,4 +53,20 @@ object KgvUtil {
       listOfPoint.toList
     }
   }
+
+  def processGeometry(path: List[List[Double]]): (Seq[Map[String, Double]], String) = {
+    val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
+    val geometryWKT = s"LINESTRING ZM (${path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ")})"
+    (geometryForApi, geometryWKT)
+  }
+
+  def getLatestModification(modifications: Seq[(Option[DateTime], Option[String])]): (BigInt, String) = {
+    val validModifications = modifications.collect { case (Some(date), Some(by)) => (date, by) }
+    validModifications match {
+      case Nil => (BigInt(0), "")
+      case mods =>
+        val (date, by) = mods.maxBy { case (date, _) => date.getMillis }
+        (BigInt(date.getMillis), by)
+    }
+  }
 }
