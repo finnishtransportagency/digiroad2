@@ -37,7 +37,7 @@ case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
 case class PointWithIdentifier(identifier: String, point: Point)
 
 object VKMClient { // singleton client
- lazy val client: CloseableHttpClient = ClientUtils.clientBuilder(5000,5000)
+ lazy val client: CloseableHttpClient = ClientUtils.clientBuilder()
 }
 
 class VKMClient {
