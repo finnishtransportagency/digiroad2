@@ -258,10 +258,6 @@ object Digiroad2Context {
     }
   }
 
-  system.scheduler.schedule(FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(10, TimeUnit.SECONDS)) {
-    ClientUtils.logConnectionPoolStats()
-  }
-
   val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
   eventbus.subscribe(vallu, "asset:expired") // vallu message for expired/deleted bus stop

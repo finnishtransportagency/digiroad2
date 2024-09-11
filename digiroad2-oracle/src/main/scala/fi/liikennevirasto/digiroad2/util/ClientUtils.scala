@@ -1,17 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import org.apache.http.impl.NoConnectionReuseStrategy
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
-import org.slf4j.{Logger, LoggerFactory}
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager
+import org.slf4j.Logger
 
 import scala.annotation.tailrec
 
 object ClientUtils {
-
-  val connectionManager = new PoolingHttpClientConnectionManager()
-  connectionManager.setMaxTotal(1000)
-  connectionManager.setDefaultMaxPerRoute(1000)
 
   @tailrec
   def retry[T](retries: Int, logger: Logger,exponentToLoop: Int =1, firstRun : Boolean= true, commentForFailing : String = "")(fn: => T): T = {
@@ -36,12 +33,11 @@ object ClientUtils {
     }
   }
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
-
-  def clientBuilder(timeout: Int = 60 * 1000): CloseableHttpClient = {
+  def clientBuilder(timeout: Int = 2 * 1000): CloseableHttpClient = {
 
     HttpClientBuilder.create()
-      .setConnectionManager(connectionManager)
+      .setConnectionManager(new BasicHttpClientConnectionManager()) // Use a basic connection manager (no pooling)
+      .setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE) // Disable connection reuse (no persistent connections)
       .setDefaultRequestConfig(
         RequestConfig.custom()
           .setCookieSpec(CookieSpecs.STANDARD)
@@ -50,13 +46,5 @@ object ClientUtils {
           .build()
       )
       .build()
-  }
-
-  def logConnectionPoolStats(): Unit = {
-    val totalStats = connectionManager.getTotalStats
-    logger.info(s"Max connections: ${totalStats.getMax}")
-    logger.info(s"Available connections: ${totalStats.getAvailable}")
-    logger.info(s"Leased (active) connections: ${totalStats.getLeased}")
-    logger.info(s"Pending connections: ${totalStats.getPending}")
   }
 }
