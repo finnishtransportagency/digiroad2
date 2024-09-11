@@ -18,7 +18,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{SpeedLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform}
+import fi.liikennevirasto.digiroad2.util.{ClientUtils, Digiroad2Properties, GeometryTransform}
 import fi.liikennevirasto.digiroad2.vallu.{ValluSender, ValluStoreStopChangeMessage}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
@@ -255,6 +255,10 @@ object Digiroad2Context {
     } catch {
       case ex: Exception => logger.error(s"Exception at send feedback: ${ex.getMessage}")
     }
+  }
+
+  system.scheduler.schedule(FiniteDuration(10, TimeUnit.SECONDS), FiniteDuration(10, TimeUnit.SECONDS)) {
+    ClientUtils.logConnectionPoolStats()
   }
 
   val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")
