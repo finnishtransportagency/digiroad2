@@ -36,9 +36,6 @@ case class RoadAddressBoundToAsset(asset: Long, address: RoadAddress, side: Road
 case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
 case class PointWithIdentifier(identifier: String, point: Point)
 
-object VKMClient { // singleton client
- lazy val client: CloseableHttpClient = ClientUtils.clientBuilder()
-}
 
 class VKMClient {
   case class VKMError(content: Map[String, Any], url: String)
@@ -94,7 +91,7 @@ class VKMClient {
     request.addHeader("X-API-Key", Digiroad2Properties.vkmApiKey)
     request.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"))
 
-    val client = VKMClient.client
+    val client = ClientUtils.clientBuilder()
 
     val response = client.execute(request)
     try {
@@ -120,7 +117,7 @@ class VKMClient {
   private def requestBase(url: String): Either[FeatureCollection, VKMError] = {
     val request = new HttpGet(url)
     request.addHeader("X-API-Key", Digiroad2Properties.vkmApiKey)
-    val client = VKMClient.client
+    val client = ClientUtils.clientBuilder()
     val response = client.execute(request)
     try {
       if (response.getStatusLine.getStatusCode >= 400) {
