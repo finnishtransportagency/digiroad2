@@ -36,9 +36,6 @@ case class RoadAddressBoundToAsset(asset: Long, address: RoadAddress, side: Road
 case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
 case class PointWithIdentifier(identifier: String, point: Point)
 
-object VKMClient { // singleton client
- lazy val client: CloseableHttpClient = ClientUtils.clientBuilder()
-}
 
 class VKMClient {
   case class VKMError(content: Map[String, Any], url: String)
@@ -94,7 +91,7 @@ class VKMClient {
     request.addHeader("X-API-Key", Digiroad2Properties.vkmApiKey)
     request.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"))
 
-    val client = VKMClient.client
+    val client = ClientUtils.clientBuilder()
 
     val response = client.execute(request)
     try {
@@ -120,7 +117,7 @@ class VKMClient {
   private def requestBase(url: String): Either[FeatureCollection, VKMError] = {
     val request = new HttpGet(url)
     request.addHeader("X-API-Key", Digiroad2Properties.vkmApiKey)
-    val client = VKMClient.client
+    val client = ClientUtils.clientBuilder()
     val response = client.execute(request)
     try {
       if (response.getStatusLine.getStatusCode >= 400) {
@@ -308,46 +305,6 @@ class VKMClient {
     coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )
   }
 
-  def addressToCoordsMassQuery(addresses: Seq[AddrWithIdentifier]): Seq[PointWithIdentifier] = {
-    val params = addresses.map(roadAddress => {
-      Map(
-        VkmQueryIdentifier -> roadAddress.identifier,
-        VkmRoad -> roadAddress.roadAddress.road,
-        VkmRoadPart -> roadAddress.roadAddress.roadPart,
-        VkmTrackCodes -> roadAddress.roadAddress.track.value,
-        VkmDistance -> roadAddress.roadAddress.addrM
-      )
-    })
-    val jsonValue = Serialization.write(params)
-    val url = vkmBaseUrl + "muunna/"
-    val response = postRequest(url, jsonValue)
-
-    val result = response match {
-      case Left(address) => mapCoordinatesWithIdentifier(address)
-      case Right(error) => throw new RoadAddressException(error.toString)
-    }
-    result
-  }
-
-  def addressToCoords(roadAddress: RoadAddress) : Seq[Point] = {
-    val params = Map(
-      VkmRoad -> roadAddress.road,
-      VkmRoadPart -> roadAddress.roadPart,
-      VkmTrackCodes -> roadAddress.track.value,
-      VkmDistance -> roadAddress.addrM
-    )
-
-   request(vkmBaseUrl + "muunna?" + urlParamsReverse(params)) match  {
-      case Left(addressData) =>
-        if (addressData.features.nonEmpty)
-          mapCoordinates(addressData)
-        else
-          throw new RoadAddressException("empty response")
-
-      case Right(error) =>
-        throw new RoadAddressException(error.toString)
-    }
-  }
 
   /**
     * Resolve side code as well as road address
