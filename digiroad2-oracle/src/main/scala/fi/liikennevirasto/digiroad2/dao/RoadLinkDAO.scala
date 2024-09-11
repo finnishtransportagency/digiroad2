@@ -365,8 +365,8 @@ class RoadLinkDAO {
         link.functionalClass.value,
         link.trafficDirection,
         link.linkType,
-        None,
-        None, link.attributes)
+        Some(link.attributes.getOrElse("LATEST_EDITED_DATE", "").toString),
+        Some(link.attributes.getOrElse("MODIFIED_BY", "").toString), link.attributes)
     }
   }
 
@@ -374,58 +374,68 @@ class RoadLinkDAO {
     val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, "shape")
     val municipalitiesFilter = if (municipalities.nonEmpty) s"AND municipalitycode IN (${municipalities.mkString(",")})" else ""
     val constructionFilter = Seq(ConstructionType.Planned.value, ConstructionType.UnderConstruction.value).mkString(", ")
-    val featureClassFilter = FeatureClass.featureClassesToIgnore
     val query =
       sql"""
-          WITH cte_kgv_roadlink AS (
-          SELECT
-            linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype,
-            mtkclass, roadname_fi, roadname_se, roadnamesme, roadnamesmn, roadnamesms,
-            roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
-            verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
-            surfacetype, geometrylength
-          FROM kgv_roadlink kgv
-          WHERE
-            #$bboxFilter
-            #$municipalitiesFilter
-            AND kgv.expired_date IS NULL
-            AND kgv.constructiontype NOT IN (#$constructionFilter)
-            AND kgv.mtkclass NOT IN (12318, 12312) -- Filter out HardShoulder and WinterRoad links
-        )
+    WITH cte_kgv_roadlink AS (
+      SELECT
+        linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype,
+        mtkclass, roadname_fi, roadname_se, roadnamesme, roadnamesmn, roadnamesms,
+        roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
+        verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
+        surfacetype, geometrylength
+      FROM kgv_roadlink kgv
+      WHERE
+        #$bboxFilter
+        #$municipalitiesFilter
+        AND kgv.expired_date IS NULL
+        AND kgv.constructiontype NOT IN (#$constructionFilter)
+        AND kgv.mtkclass NOT IN (12318, 12312) -- HardShoulder and WinterRoad
+    ),
 
-          SELECT
-           cte.linkid, cte.mtkid, cte.mtkhereflip, cte.municipalitycode, cte.shape,
-           COALESCE(ac.administrative_class, cte.adminclass) AS adminclass,
-           cte.directiontype,
-           td.traffic_direction,
-           cte.mtkClass,
-           fc.functional_class,
-           lt.link_type,
-           cte.roadname_fi, cte.roadname_se, cte.roadnamesme, cte.roadnamesmn, cte.roadnamesms, cte.roadnumber,
-           cte.roadpartnumber, cte.constructiontype, cte.verticallevel, cte.horizontalaccuracy, cte.verticalaccuracy,
-           cte.created_date, cte.last_edited_date, cte.from_left, cte.to_left, cte.from_right, cte.to_right,
-           cte.surfacetype, cte.geometrylength,
-           ARRAY_AGG(ROW(ral.name, ral.value)) FILTER (WHERE ral.name IS NOT NULL) AS attributes
-         FROM cte_kgv_roadlink cte
-         LEFT JOIN administrative_class ac ON cte.linkid = ac.link_id AND (ac.valid_to IS NULL OR ac.valid_to > current_timestamp)
-         LEFT JOIN link_type lt ON cte.linkid = lt.link_id
-         LEFT JOIN functional_class fc ON cte.linkid = fc.link_id
-         LEFT JOIN traffic_direction td ON cte.linkid = td.link_id
-         LEFT JOIN road_link_attributes ral ON cte.linkid = ral.link_id AND ral.valid_to IS NULL
-         GROUP BY
-           cte.linkid, cte.mtkid, cte.mtkhereflip, cte.municipalitycode, cte.shape,
-           COALESCE(ac.administrative_class, cte.adminclass),
-           cte.directiontype,
-           td.traffic_direction,
-           cte.mtkClass,
-           fc.functional_class,
-           lt.link_type,
-           cte.roadname_fi, cte.roadname_se, cte.roadnamesme, cte.roadnamesmn, cte.roadnamesms, cte.roadnumber, cte.roadpartnumber,
-           cte.constructiontype, cte.verticallevel, cte.horizontalaccuracy, cte.verticalaccuracy,
-           cte.created_date, cte.last_edited_date,
-           cte.from_left, cte.to_left, cte.from_right, cte.to_right,
-           cte.surfacetype, cte.geometrylength
-      """
+    cte_combined AS (
+      SELECT
+        cte.linkid, cte.mtkid, cte.mtkhereflip, cte.municipalitycode, cte.shape,
+        COALESCE(ac.administrative_class, cte.adminclass) AS adminclass,
+        cte.directiontype, td.traffic_direction, cte.mtkClass, fc.functional_class, lt.link_type,
+        cte.roadname_fi, cte.roadname_se, cte.roadnamesme, cte.roadnamesmn, cte.roadnamesms,
+        cte.roadnumber, cte.roadpartnumber, cte.constructiontype, cte.verticallevel,
+        cte.horizontalaccuracy, cte.verticalaccuracy, cte.created_date, cte.last_edited_date,
+        cte.from_left, cte.to_left, cte.from_right, cte.to_right, cte.surfacetype, cte.geometrylength,
+        ac.created_date AS ac_created_date, ac.created_by AS ac_created_by,
+        lt.modified_date AS lt_modified_date, lt.modified_by AS lt_modified_by,
+        fc.modified_date AS fc_modified_date, fc.modified_by AS fc_modified_by,
+        td.modified_date AS td_modified_date, td.modified_by AS td_modified_by
+      FROM cte_kgv_roadlink cte
+      LEFT JOIN administrative_class ac
+        ON cte.linkid = ac.link_id AND (ac.valid_to IS NULL OR ac.valid_to > current_timestamp)
+      LEFT JOIN link_type lt
+        ON cte.linkid = lt.link_id
+      LEFT JOIN functional_class fc
+        ON cte.linkid = fc.link_id
+      LEFT JOIN traffic_direction td
+        ON cte.linkid = td.link_id
+    )
+
+    SELECT
+      cte_combined.*,
+      rla.modified_date AS rla_modified_date, rla.modified_by AS rla_modified_by,
+      ARRAY_AGG(ROW(rla.name, rla.value, COALESCE(rla.modified_date, rla.created_date), COALESCE(rla.modified_by, rla.created_by)))
+        FILTER (WHERE rla.name IS NOT NULL) AS attributes
+    FROM cte_combined
+    LEFT JOIN road_link_attributes rla
+      ON cte_combined.linkid = rla.link_id AND rla.valid_to IS NULL
+    GROUP BY
+      cte_combined.linkid, cte_combined.mtkid, cte_combined.mtkhereflip, cte_combined.municipalitycode, cte_combined.shape,
+      cte_combined.adminclass, cte_combined.directiontype, cte_combined.traffic_direction, cte_combined.mtkClass,
+      cte_combined.functional_class, cte_combined.link_type, cte_combined.roadname_fi, cte_combined.roadname_se,
+      cte_combined.roadnamesme, cte_combined.roadnamesmn, cte_combined.roadnamesms, cte_combined.roadnumber,
+      cte_combined.roadpartnumber, cte_combined.constructiontype, cte_combined.verticallevel,
+      cte_combined.horizontalaccuracy, cte_combined.verticalaccuracy, cte_combined.created_date,
+      cte_combined.last_edited_date, cte_combined.from_left, cte_combined.to_left,
+      cte_combined.from_right, cte_combined.to_right, cte_combined.surfacetype, cte_combined.geometrylength,
+      ac_created_date, ac_created_by, lt_modified_date, lt_modified_by, fc_modified_date, fc_modified_by,
+      td_modified_date, td_modified_by, rla_modified_date, rla_modified_by
+  """
         query.as[EnrichedRoadLinkFetched].list
   }
 
@@ -461,27 +471,49 @@ class RoadLinkDAO {
       val toRight = r.nextLongOption()
       val surfaceType = r.nextInt()
       val length  = r.nextDouble()
-      val attributesArray = r.nextObjectOption()
 
-      val attributesSeq: Seq[(Option[String], Option[String])] = attributesArray match {
+      val acCreatedDate = r.nextTimestampOption().map(new DateTime(_)) //administrative_class table has no modified_by column
+      val acCreatedBy = r.nextStringOption() // administrative_class table uses created_by column to determine modifications user
+      val ltModifiedDate = r.nextTimestampOption().map(new DateTime(_))
+      val ltModifiedBy = r.nextStringOption()
+      val fcModifiedDate = r.nextTimestampOption().map(new DateTime(_))
+      val fcModifiedBy = r.nextStringOption()
+      val tdModifiedDate = r.nextTimestampOption().map(new DateTime(_))
+      val tdModifiedBy = r.nextStringOption()
+      val raModifiedDate = r.nextTimestampOption().map(new DateTime(_))
+      val raModifiedBy = r.nextStringOption()
+
+      val attributesArray = r.nextObjectOption()
+      val attributesSeq: Seq[(Option[String], Option[String], Option[String], Option[String])] = attributesArray match {
         case Some(sqlArray: SqlArray) =>
-          // Extract the array as an array of objects
-          val array = sqlArray.getArray.asInstanceOf[Array[AnyRef]]
-          // Handle each PGobject
-          array.map {
+          sqlArray.getArray.asInstanceOf[Array[AnyRef]].collect {
             case pgObject: PGobject =>
-              val value = pgObject.getValue.stripPrefix("(").stripSuffix(")").split(",", -1)
-              (Option(value(0)).filter(_.nonEmpty), Option(value(1)).filter(_.nonEmpty))
-            case other =>
-              throw new IllegalArgumentException(s"Unhandled case: $other")
+              val Array(name, value, modifiedDate, modifiedBy) = pgObject.getValue.stripPrefix("(").stripSuffix(")").split(",", -1)
+              (Option(name).filter(_.nonEmpty), Option(value).filter(_.nonEmpty), Option(modifiedDate).filter(_.nonEmpty), Option(modifiedBy).filter(_.nonEmpty))
           }.toSeq
         case _ => Seq.empty
       }
 
-      // Debugging: Print intermediate values
-      println(s"linkId: $linkId")
-      println(s"mtkId: $mtkId")
-      println(s"attributesArray: $attributesArray")
+      val modifications = Seq(
+        (lastEditedDate, Some("")),
+        (acCreatedDate, acCreatedBy),
+        (ltModifiedDate, ltModifiedBy),
+        (fcModifiedDate, fcModifiedBy),
+        (tdModifiedDate, tdModifiedBy),
+        (raModifiedDate, raModifiedBy)
+      )
+
+      val validModifications = modifications.collect { case (Some(date), Some(by)) => (date, by) }
+
+      val latestModification = if (validModifications.nonEmpty) {
+        Some(validModifications.maxBy { case (date, _) => date.getMillis })
+      } else {
+        None
+      }
+      val (latestModifiedDate, latestModifiedBy) = latestModification match {
+        case Some((date, by)) => (BigInt(date.getMillis), by)
+        case None => (BigInt(0), "")
+      }
 
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
       val administrativeClass = AdministrativeClass.apply(administrativeClassValue)
@@ -490,15 +522,23 @@ class RoadLinkDAO {
       val linkType = linkTypeValue.map(LinkType.apply).getOrElse(UnknownLinkType)
       val adjustedTrafficDirection = trafficDirection.map(TrafficDirection.apply).getOrElse(KgvUtil.extractTrafficDirection(directionType))
       val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
-      val geometryWKT = "LINESTRING ZM (" + path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ") + ")"
+      val geometryWKT = s"LINESTRING ZM (${path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ")})"
       val featureClass = extractFeatureClass(mtkClass)
       val modifiedAt = extractModifiedDate(createdDate.map(_.getMillis), lastEditedDate.map(_.getMillis))
 
-      // Debugging: Print attributes sequence
-      println(s"attributesSeq: $attributesSeq")
-
-      val attributes = attributesSeq.collect {
-        case (Some(name), Some(value)) => name -> value
+      val attributes = attributesSeq.flatMap {
+        case (Some(name), Some(value), Some(modifiedDate), Some(modifiedBy)) =>
+          val mainAttribute = Map(name -> value)
+          val additionalAttributes = name match {
+            case "PRIVATE_ROAD_ASSOCIATION" | "ADDITIONAL_INFO" =>
+              Map(
+                "PRIVATE_ROAD_LAST_MOD_DATE" -> modifiedDate,
+                "PRIVATE_ROAD_LAST_MOD_USER" -> modifiedBy
+              )
+            case _ => Map.empty[String, String]
+          }
+          mainAttribute ++ additionalAttributes
+        case _ => Map.empty[String, String]
       }.toMap ++ Map(
         "MTKID" -> mtkId,
         "MTKCLASS" -> mtkClass,
@@ -518,8 +558,9 @@ class RoadLinkDAO {
         "TO_RIGHT" -> toRight,
         "MUNICIPALITYCODE" -> BigInt(municipalityCode),
         "MTKHEREFLIP" -> mtkHereFlip,
-        "CREATED_DATE" -> createdDate.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
-        "LAST_EDITED_DATE" -> lastEditedDate.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
+        "CREATED_DATE" -> createdDate.map(d => BigInt(d.getMillis)),
+        "LAST_EDITED_DATE" -> Some(latestModifiedDate),
+        "MODIFIED_BY" -> Some(latestModifiedBy),
         "SURFACETYPE" -> BigInt(surfaceType),
         "points" -> geometryForApi,
         "geometryWKT" -> geometryWKT

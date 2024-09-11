@@ -414,6 +414,8 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
         enrichFetchedRoadLinks(links)
       )
     }
+
+    withDbConnection {roadLinkDAO.fetchEnrichedByMunicipalitiesAndBounds(bounds, municipalities)}
   }
 
 /*  def getRoadLinksAndChangesWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
