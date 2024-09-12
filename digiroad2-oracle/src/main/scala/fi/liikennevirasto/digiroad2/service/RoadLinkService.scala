@@ -294,9 +294,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @param municipalities
     * @return Road links
     */
-  def getRoadLinksByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true, withNewVersion: Boolean = false) : Seq[RoadLink] =
+  def getRoadLinksByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true) : Seq[RoadLink] =
     LogUtils.time(logger, "TEST LOG getRoadLinks") {
-      getRoadLinks(bounds, municipalities,asyncMode,withNewVersion)
+      getRoadLinks(bounds, municipalities,asyncMode)
     }
 
   /**
@@ -408,19 +408,21 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @param municipalities
     * @return Road links and change data
     */
-  def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true, withNewVersion: Boolean = false): (Seq[RoadLink]) = {
-    
-    if (withNewVersion) {
-      withDbConnection {roadLinkDAO.fetchEnrichedByMunicipalitiesAndBounds(bounds, municipalities)}
+  def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true): (Seq[RoadLink]) = {
+    def fetchedToRoadLink(links: Seq[EnrichedRoadLinkFetched]): Seq[RoadLink] = {
+      links.map { link =>
+        RoadLink(link.linkId, link.geometry,
+          link.length,
+          link.administrativeClass,
+          link.functionalClass.value,
+          link.trafficDirection,
+          link.linkType,
+          link.modifiedAt.map(DateTimePropertyFormat.print),
+          Some(link.attributes.getOrElse("MODIFIED_BY", "").toString), link.attributes)
+      }
     }
-    else {val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
-    withDynTransaction {
-      LogUtils.time(logger, "TEST LOG enrichFetchedRoadLinksFrom from boundingBox request, link count: " + links.size)(
-        enrichFetchedRoadLinks(links)
-      )
-    }}
-
-
+    val enrichedFetched = withDbConnection {roadLinkDAO.fetchEnrichedByMunicipalitiesAndBounds(bounds, municipalities)}
+    fetchedToRoadLink(enrichedFetched)
   }
 
 /*  def getRoadLinksAndChangesWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {

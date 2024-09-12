@@ -668,7 +668,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
       validateBoundingBox(boundingRectangle)
       val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks with boundingBox"){
-        roadLinkService.getRoadLinksByBoundsAndMunicipalities(boundingRectangle, municipalities,asyncMode = false,withNewVersion)
+        roadLinkService.getRoadLinksByBoundsAndMunicipalities(boundingRectangle, municipalities,asyncMode = false)
       }
       val roadLinks = if (withRoadAddress) {
         val roadLinksWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for links, link count: " + roadLinkSeq.size) {
