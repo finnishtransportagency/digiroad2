@@ -85,14 +85,12 @@ class RoadAddressService() {
       val linkIdChunks: Seq[Seq[String]] = linkIds.grouped(100).toSeq
       val parallelChunks: ParSeq[Seq[String]] = linkIdChunks.par
       val parallel = new Parallel()
-
-      parallel.operation(parallelChunks, linkIdChunks.size) { parChunk =>
+      val parallelismLevel = Math.min(linkIdChunks.size, 10)
+      logger.info(s"Start fetching road address for total of ${linkIds.size} link ids in ${linkIdChunks.size} chunks. Parallelism level: $parallelismLevel")
+      parallel.operation(parallelChunks, parallelismLevel) { parChunk =>
         parChunk.flatMap { chunk =>
-          val linksString2 = s"[${chunk.map(id => s""""$id"""").mkString(",")}]"
-          ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
-            LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${chunk.size} linkIds") {
-              vkmClient.fetchRoadAddressesByLinkIds(chunk)
-            }
+          LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${chunk.size} linkIds") {
+            vkmClient.fetchRoadAddressesByLinkIds(chunk)
           }
         }
       }.seq.toSeq
