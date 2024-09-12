@@ -20,6 +20,7 @@ import slick.jdbc.StaticQuery.interpolation
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.sql.{Array => SqlArray}
+import org.joda.time.format.DateTimeFormat
 
 class RoadLinkDAO {
   protected val geometryColumn: String = "shape"
@@ -418,7 +419,6 @@ class RoadLinkDAO {
 
     SELECT
       cte_combined.*,
-      rla.modified_date AS rla_modified_date, rla.modified_by AS rla_modified_by,
       ARRAY_AGG(ROW(rla.name, rla.value, COALESCE(rla.modified_date, rla.created_date), COALESCE(rla.modified_by, rla.created_by)))
         FILTER (WHERE rla.name IS NOT NULL) AS attributes
     FROM cte_combined
@@ -434,7 +434,7 @@ class RoadLinkDAO {
       cte_combined.last_edited_date, cte_combined.from_left, cte_combined.to_left,
       cte_combined.from_right, cte_combined.to_right, cte_combined.surfacetype, cte_combined.geometrylength,
       ac_created_date, ac_created_by, lt_modified_date, lt_modified_by, fc_modified_date, fc_modified_by,
-      td_modified_date, td_modified_by, rla_modified_date, rla_modified_by
+      td_modified_date, td_modified_by
   """
         query.as[EnrichedRoadLinkFetched].list
   }
@@ -446,7 +446,6 @@ class RoadLinkDAO {
 
       def extractModifications(r: PositionedResult): Seq[(Option[DateTime], Option[String])] = {
         Seq(
-          (getOptionalTimestamp(r), r.nextStringOption()),
           (getOptionalTimestamp(r), r.nextStringOption()),
           (getOptionalTimestamp(r), r.nextStringOption()),
           (getOptionalTimestamp(r), r.nextStringOption()),
