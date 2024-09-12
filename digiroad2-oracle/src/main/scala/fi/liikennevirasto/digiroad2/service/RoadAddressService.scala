@@ -86,7 +86,7 @@ class RoadAddressService() {
       val parallelChunks: ParSeq[Seq[String]] = linkIdChunks.par
       val parallel = new Parallel()
       val parallelismLevel = Math.min(linkIdChunks.size, 10)
-      logger.info(s"Start fetching road address for total of ${linkIds.size} link ids. Parallelism level: $parallelismLevel")
+      logger.info(s"Start fetching road address for total of ${linkIds.size} link ids in ${linkIdChunks.size} chunks. Parallelism level: $parallelismLevel")
       parallel.operation(parallelChunks, parallelismLevel) { parChunk =>
         parChunk.flatMap { chunk =>
           LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${chunk.size} linkIds") {
