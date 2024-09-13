@@ -409,7 +409,7 @@ class RoadLinkDAO {
     SELECT
       cte_combined.*,
       ARRAY_AGG(ROW(rla.name, rla.value, COALESCE(rla.modified_date, rla.created_date), COALESCE(rla.modified_by, rla.created_by)))
-        FILTER (WHERE rla.name IS NOT NULL) AS attributes
+        FILTER (WHERE rla.name IS NOT NULL) AS private_road_info
     FROM cte_combined
     LEFT JOIN road_link_attributes rla
       ON cte_combined.linkid = rla.link_id AND rla.valid_to IS NULL
@@ -479,7 +479,7 @@ class RoadLinkDAO {
       val (geometryForApi, geometryWKT) = PostGISDatabase.processGeometry(path)
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
 
-      val attributes = extractAttributes(r) ++ Map(
+      val attributes = extractPrivateRoadInfo(r) ++ Map(
         "MTKID" -> mtkId,
         "MTKCLASS" -> mtkClass,
         "HORIZONTALACCURACY" -> horizontalAccuracy,
@@ -527,9 +527,9 @@ class RoadLinkDAO {
     }
   }
 
-  def extractAttributes(r: PositionedResult): Map[String, Any] = {
-    val attributesArray = r.nextObjectOption()
-    val attributesSeq: Seq[(Option[String], Option[String], Option[String], Option[String])] = attributesArray match {
+  def extractPrivateRoadInfo(r: PositionedResult): Map[String, Any] = {
+    val privateRoadInfoArray = r.nextObjectOption()
+    val privateRoadInfoSeq: Seq[(Option[String], Option[String], Option[String], Option[String])] = privateRoadInfoArray match {
       case Some(sqlArray: SqlArray) =>
         sqlArray.getArray.asInstanceOf[Array[AnyRef]].collect {
           case pgObject: PGobject =>
@@ -539,15 +539,15 @@ class RoadLinkDAO {
       case _ => Seq.empty
     }
 
-    attributesSeq.flatMap {
+    privateRoadInfoSeq.flatMap {
       case (Some(name), Some(value), Some(modifiedDate), Some(modifiedBy)) =>
         val mainAttribute = Map(name -> value)
-        val additionalAttributes = name match {
+        val additionalAttribute = name match {
           case "PRIVATE_ROAD_ASSOCIATION" | "ADDITIONAL_INFO" =>
             Map("PRIVATE_ROAD_LAST_MOD_DATE" -> modifiedDate, "PRIVATE_ROAD_LAST_MOD_USER" -> modifiedBy)
           case _ => Map.empty[String, String]
         }
-        mainAttribute ++ additionalAttributes
+        mainAttribute ++ additionalAttribute
       case _ => Map.empty[String, String]
     }.toMap
   }
