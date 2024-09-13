@@ -663,7 +663,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getRoadLinksFromDB(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false, withNewVersion:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadLinksFromDB(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     LogUtils.time(logger,"TEST LOG Total time getRoadLinksFromDB with boundingBox"){
       val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
       validateBoundingBox(boundingRectangle)
@@ -792,10 +792,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
-    val roadAddress = Try(params("withRoadAddress").toBoolean).getOrElse(false)
-    val newVersion = Try(params("newVersion").toBoolean).getOrElse(false)
     params.get("bbox")
-      .map(getRoadLinksFromDB(Set(),withRoadAddress = roadAddress, withLaneInfo = laneInfo, withNewVersion = true))
+      .map(getRoadLinksFromDB(Set(),withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
