@@ -2,11 +2,8 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection
 import fi.liikennevirasto.digiroad2.client.FeatureClass
-import net.postgis.jdbc.geometry.GeometryBuilder
 import org.joda.time.DateTime
-import org.postgresql.util.PGobject
 
-import scala.collection.mutable.ListBuffer
 
 object KgvUtil {
 
@@ -39,18 +36,13 @@ object KgvUtil {
     }
   }
 
-  def extractGeometry(data: Object): List[List[Double]] = {
-    val geometry = data.asInstanceOf[PGobject]
-    if (geometry == null) Nil
-    else {
-      val geomValue = geometry.getValue
-      val geom = GeometryBuilder.geomFromString(geomValue)
-      val listOfPoint = ListBuffer[List[Double]]()
-      for (i <- 0 until geom.numPoints()) {
-        val point = geom.getPoint(i)
-        listOfPoint += List(point.x, point.y, point.z, point.m)
-      }
-      listOfPoint.toList
+  def getLatestModification(modifications: Seq[(Option[DateTime], Option[String])]): (BigInt, String) = {
+    val validModifications = modifications.collect { case (Some(date), Some(by)) => (date, by) }
+    validModifications match {
+      case Nil => (BigInt(0), "")
+      case mods =>
+        val (date, by) = mods.maxBy { case (date, _) => date.getMillis }
+        (BigInt(date.getMillis), by)
     }
   }
 }

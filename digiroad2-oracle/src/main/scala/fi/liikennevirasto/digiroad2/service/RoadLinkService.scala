@@ -295,7 +295,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @return Road links
     */
   def getRoadLinksByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true) : Seq[RoadLink] =
-    getRoadLinks(bounds, municipalities,asyncMode)
+    LogUtils.time(logger, "TEST LOG getRoadLinks") {
+      getRoadLinks(bounds, municipalities,asyncMode)
+    }
 
   /**
     * This method returns "real" road links and "complementary" road links by bounding box and municipalities.
@@ -407,13 +409,20 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @return Road links and change data
     */
   def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true): (Seq[RoadLink]) = {
-    
-    val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
-    withDynTransaction {
-      LogUtils.time(logger, "TEST LOG enrichFetchedRoadLinksFrom from boundingBox request, link count: " + links.size)(
-        enrichFetchedRoadLinks(links)
-      )
+    def fetchedToRoadLink(links: Seq[EnrichedRoadLinkFetched]): Seq[RoadLink] = {
+      links.map { link =>
+        RoadLink(link.linkId, link.geometry,
+          link.length,
+          link.administrativeClass,
+          link.functionalClass.value,
+          link.trafficDirection,
+          link.linkType,
+          link.modifiedAt.map(DateTimePropertyFormat.print),
+          Some(link.attributes.getOrElse("MODIFIED_BY", "").toString), link.attributes)
+      }
     }
+    val enrichedFetched = withDbConnection {roadLinkDAO.fetchEnrichedByMunicipalitiesAndBounds(bounds, municipalities)}
+    fetchedToRoadLink(enrichedFetched)
   }
 
 /*  def getRoadLinksAndChangesWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {

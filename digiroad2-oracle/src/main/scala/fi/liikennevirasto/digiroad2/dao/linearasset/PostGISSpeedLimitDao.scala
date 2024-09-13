@@ -62,7 +62,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val directionType = r.nextIntOption()
       val trafficDirection = r.nextIntOption()
       val value = r.nextIntOption()
-      val path = r.nextObjectOption().map(KgvUtil.extractGeometry).get
+      val path = r.nextObjectOption().map(PostGISDatabase.extractGeometry).get
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
       val geometryLength = r.nextDouble()
