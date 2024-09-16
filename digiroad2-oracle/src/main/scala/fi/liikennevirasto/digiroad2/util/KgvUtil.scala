@@ -35,14 +35,4 @@ object KgvUtil {
       case _ => TrafficDirection.UnknownDirection
     }
   }
-
-  def getLatestModification(modifications: Seq[(Option[DateTime], Option[String])]): (BigInt, String) = {
-    val validModifications = modifications.collect { case (Some(date), Some(by)) => (date, by) }
-    validModifications match {
-      case Nil => (BigInt(0), "")
-      case mods =>
-        val (date, by) = mods.maxBy { case (date, _) => date.getMillis }
-        (BigInt(date.getMillis), by)
-    }
-  }
 }
