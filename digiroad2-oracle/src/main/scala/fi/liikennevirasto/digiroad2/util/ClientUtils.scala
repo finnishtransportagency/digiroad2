@@ -1,7 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import org.apache.http.impl.NoConnectionReuseStrategy
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager
 import org.slf4j.Logger
 
 import scala.annotation.tailrec
@@ -31,12 +33,11 @@ object ClientUtils {
     }
   }
 
-  def clientBuilder(
-                     maxConnTotal: Int = 1000,
-                     maxConnPerRoute: Int = 1000,
-                     timeout: Int = 60 * 1000
-                   ): CloseableHttpClient = {
+  def clientBuilder(timeout: Int = 2 * 1000): CloseableHttpClient = {
+
     HttpClientBuilder.create()
+      .setConnectionManager(new BasicHttpClientConnectionManager()) // Use a basic connection manager (no pooling)
+      .setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE) // Disable connection reuse (no persistent connections)
       .setDefaultRequestConfig(
         RequestConfig.custom()
           .setCookieSpec(CookieSpecs.STANDARD)
@@ -44,8 +45,6 @@ object ClientUtils {
           .setConnectTimeout(timeout)
           .build()
       )
-      .setMaxConnTotal(maxConnTotal)
-      .setMaxConnPerRoute(maxConnPerRoute)
       .build()
   }
 }
