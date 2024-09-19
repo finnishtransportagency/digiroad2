@@ -418,7 +418,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
           link.trafficDirection,
           link.linkType,
           link.modifiedAt.map(DateTimePropertyFormat.print),
-          Some(link.attributes.getOrElse("MODIFIED_BY", "").toString), link.attributes)
+          Some(link.attributes.getOrElse("MODIFIED_BY", "").toString),
+          link.attributes,
+          link.constructionType,
+          link.linkSource
+          )
       }
     }
     val enrichedFetched = withDbConnection {roadLinkDAO.fetchEnrichedByMunicipalitiesAndBounds(bounds, municipalities)}
