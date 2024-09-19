@@ -2,11 +2,12 @@ package fi.liikennevirasto.digiroad2.dao
 
 import java.nio.charset.StandardCharsets
 import java.util.Base64
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, PersistedLinearAsset}
-import fi.liikennevirasto.digiroad2.postgis.MassQuery
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicLinearAssetRowWithRoadInfo, DynamicValue, NumericValue, PersistedLinearAsset, PieceWiseLinearAsset}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.slf4j.{Logger, LoggerFactory}
@@ -15,7 +16,8 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
-import fi.liikennevirasto.digiroad2.util.LogUtils
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
 
 
 case class DynamicAssetRow(id: Long, linkId: String, sideCode: Int, value: DynamicPropertyRow,
@@ -32,7 +34,7 @@ class DynamicLinearAssetDao {
     val filter = filterFloating + filterExpired
     val assets = LogUtils.time(logger, s"Fetch dynamic linear assets with MassQuery on ${linkIds.size} links, assetType: $assetTypeId") {
       MassQuery.withStringIds(linkIds.toSet) { idTableName =>
-        sql"""
+        val query = sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
                when tp.value_fi is not null then tp.value_fi
@@ -55,8 +57,9 @@ class DynamicLinearAssetDao {
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
           left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          where a.asset_type_id = $assetTypeId
-          #$filter""".as[DynamicAssetRow](getDynamicAssetRow).list
+          where a.asset_type_id = #$assetTypeId
+          #$filter"""
+          query.as[DynamicAssetRow](getDynamicAssetRow).list
       }
     }
     LogUtils.time(logger, s"Forming ${assets.size} asset rows to PersitedLinearAssets") {
@@ -498,6 +501,220 @@ class DynamicLinearAssetDao {
             PersistedLinearAsset(id, linkId, sideCode, Some(DynamicValue(DynamicAssetValue(value))), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
       }.toSet
     }.toList
+  }
+
+  /***
+   * TODO: kaikki joinit ei tarpeellisia kaikilla tietolajeilla, niistäkin voisi tehdä ehdollisia typeId:hen nähden
+   * @param typeId
+   * @param bbox
+   * @return
+   */
+  def fetchByBBox(typeId: Int, bbox: BoundingRectangle): Seq[PieceWiseLinearAsset] = {
+    val bboxFilter = PostGISDatabase.boundingBoxFilter(bbox, "shape")
+    val constructionFilter = PostGISDatabase.constructionFilter
+    val linkTypeFilter = PostGISDatabase.linkTypeFilter
+    val functionalClassFilter = PostGISDatabase.functionalClassFilter
+    val additionalOperations = getAdditionalOperationsByTypeId(typeId)
+    val query =
+      sql"""
+      WITH cte_kgv_roadlink AS (
+        SELECT
+          kgv.linkid,
+          kgv.directiontype,
+          td.traffic_direction,
+          kgv.shape,
+          kgv.geometrylength,
+          COALESCE(NULLIF(ac.administrative_class, kgv.adminclass), kgv.adminclass) AS adminclass,
+          kgv.municipalitycode,
+          kgv.constructiontype,
+          kgv.roadname_fi,
+          kgv.roadname_se
+        FROM kgv_roadlink kgv
+        JOIN link_type lt ON kgv.linkid = lt.link_id
+        JOIN functional_class fc ON kgv.linkid = fc.link_id
+        LEFT JOIN administrative_class ac ON kgv.linkid = ac.link_id
+        LEFT JOIN traffic_direction td ON kgv.linkid = td.link_id
+        WHERE #$bboxFilter
+          AND kgv.expired_date IS NULL
+          AND kgv.constructiontype NOT IN (#$constructionFilter)
+          AND kgv.mtkclass NOT IN (12318, 12312) -- Filter out HardShoulder and WinterRoad links
+          AND lt.link_type NOT IN (#$linkTypeFilter) -- Filter out unallowed types such as ferries
+          AND fc.functional_class IN (#$functionalClassFilter) -- Filter by allowed FunctionalClass values
+      )
+
+      select a.id,
+            pos.link_id,
+            pos.side_code,
+            cte_kgv.directiontype,
+            cte_kgv.traffic_direction,
+            case
+                when tp.value_fi is not null then tp.value_fi
+                when np.value is not null then cast(np.value as text)
+                when e.value is not null then cast(e.value as text)
+                when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
+                else null
+            end as value,
+            COALESCE(
+                ST_LineSubstring(
+                  cte_kgv.shape,
+                  (pos.start_measure / cte_kgv.geometrylength),
+                  (pos.end_measure / cte_kgv.geometrylength)
+                ),
+                cte_kgv.shape
+              ) AS asset_geometry,
+            pos.start_measure,
+            pos.end_measure,
+            cte_kgv.geometrylength,
+            a.modified_by,
+            a.modified_date,
+            a.created_by,
+            a.created_date,
+            cte_kgv.adminclass,
+            cte_kgv.municipalitycode,
+            cte_kgv.constructiontype,
+            cte_kgv.roadname_fi,
+            cte_kgv.roadname_se,
+            p.public_id,
+            p.property_type,
+            p.required,
+            case
+                when a.valid_to <= current_timestamp then 1
+                else 0
+            end as expired,
+            a.asset_type_id,
+            pos.adjusted_timestamp,
+            pos.modified_date,
+            pos.link_source,
+            a.verified_by,
+            a.verified_date,
+            a.information_source
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            JOIN cte_kgv_roadlink cte_kgv ON pos.link_id = cte_kgv.linkid
+            join property p on p.asset_type_id = a.asset_type_id
+            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
+            left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
+            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
+            left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
+            left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
+            left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+            where a.asset_type_id = #$typeId
+              and a.floating = '0'
+              and (a.valid_to > current_timestamp or a.valid_to is null)
+            #$additionalOperations
+    """
+
+    val linearAssetRows = query.as[DynamicLinearAssetRowWithRoadInfo].list
+    groupLinearAssetResultWithRoadInfo(typeId, linearAssetRows)
+  }
+
+  /***
+   * Palauttaa kullekin typeId:lle queryn lopussa suoritettavat (mahdolliset) ylimääräiset operaatiot sql-stringinä
+   * @param id
+   * @return
+   */
+  def getAdditionalOperationsByTypeId(typeId: Int): String = {
+    typeId match {
+      case 20 => //TODO: mieluummin enum kuin Int
+        """
+        UNION ALL
+
+        SELECT
+          NULL AS id,
+          cte_kgv.linkid,
+          NULL AS side_code,
+          cte_kgv.directiontype,
+          cte_kgv.traffic_direction,
+          NULL AS value,
+          cte_kgv.shape AS asset_geometry,
+          NULL AS start_measure,
+          NULL AS end_measure,
+          cte_kgv.geometrylength,
+          NULL AS modified_by,
+          NULL AS modified_date,
+          NULL AS created_by,
+          NULL AS created_date,
+          cte_kgv.adminclass,
+          cte_kgv.municipalitycode,
+          cte_kgv.constructiontype,
+          cte_kgv.roadname_fi,
+          cte_kgv.roadname_se,
+          NULL AS public_id
+          FROM cte_kgv_roadlink cte_kgv;
+          """
+      case _ => ";"
+    }
+  }
+
+  def groupLinearAssetResultWithRoadInfo(typeId: Int, linearAssetRows: Seq[DynamicLinearAssetRowWithRoadInfo]): Seq[PieceWiseLinearAsset] = {
+    //TODO: tarkista typeId ja määritä prosessi sen perusteella. Ainakin SpeedLimit (20) vaatii erillisen operaatioketjun tuntemattomien generoinnille
+    val groupedSpeedLimit = linearAssetRows.groupBy(_.id)
+    val linearAssets = groupedSpeedLimit.keys.map { assetId =>
+      val rows = groupedSpeedLimit(assetId)
+      val asset = rows.head
+      val suggestBoxValue =
+        rows.find(_.publicId == "suggest_box") match {
+          case Some(suggested) => suggested.value
+          case _ => 0
+        }
+
+      val speedLimitValue = (suggestBoxValue, rows.find(_.publicId == "width").head.value.map(_.asInstanceOf[Int])) match {
+        case (Some(isSuggested), Some(value)) => Some(NumericValue(value))
+        case (None, Some(value)) => Some(NumericValue(value))
+        case _ => None
+      }
+
+      val attributes = Map("municipality" -> asset.municipalityCode, "constructionType" -> asset.constructionType.value, "ROADNAME_FI" -> asset.roadNameFi, "ROADNAME_SE" -> asset.roadNameSe)
+
+      PieceWiseLinearAsset(id = assetId, linkId = asset.linkId, sideCode = asset.sideCode, value = speedLimitValue, geometry = asset.geometry, expired = false,
+        startMeasure = asset.startMeasure, endMeasure = asset.endMeasure, endpoints = Set(asset.geometry.head, asset.geometry.last),
+        modifiedBy = asset.modifiedBy, modifiedDateTime = asset.modifiedDate, createdBy = asset.createdBy,
+        createdDateTime = asset.createdDate, typeId = SpeedLimitAsset.typeId, trafficDirection = asset.trafficDirection, timeStamp = 0L, geomModifiedDate = None, linkSource = asset.linkSource,
+        administrativeClass = asset.administrativeClass, attributes = attributes, verifiedBy = None, verifiedDate = None, informationSource = None)
+    }.toSeq
+    linearAssets
+  }
+
+  /***
+   * TODO: täydennä puuttuvat queryn sarakkeet ja attribuuttien määrittelyt
+   */
+  implicit val getLinearAssetRowWithRoadInfo = new GetResult[DynamicLinearAssetRowWithRoadInfo] {
+
+    def apply(r: PositionedResult): DynamicLinearAssetRowWithRoadInfo = {
+      val id = r.nextLong()
+      val linkId = r.nextString()
+      val sideCodeValue = r.nextIntOption()
+      val directionType = r.nextIntOption()
+      val trafficDirection = r.nextIntOption()
+      val value = r.nextIntOption()
+      val path = r.nextObjectOption().map(PostGISDatabase.extractGeometry).get
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val geometryLength = r.nextDouble()
+      val modifiedBy = r.nextStringOption()
+      val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val createdBy = r.nextStringOption()
+      val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val adminClassValue = r.nextInt()
+      val municipality = r.nextInt()
+      val constructionTypeValue = r.nextInt()
+      val roadNameFi = r.nextString()
+      val roadNameSe = r.nextString()
+      val publicId = r.nextString()
+
+      val adjustedTrafficDirection = trafficDirection.map(TrafficDirection.apply).getOrElse(KgvUtil.extractTrafficDirection(directionType))
+      val constructionType = ConstructionType.apply(constructionTypeValue)
+      val geometry = path.map(point => Point(point(0), point(1), point(2)))
+      val sideCode = SideCode.apply(sideCodeValue.getOrElse(99))
+      val adminClass = AdministrativeClass.apply(adminClassValue)
+
+
+      DynamicLinearAssetRowWithRoadInfo(id = id, linkId = linkId, sideCode = sideCode, trafficDirection = adjustedTrafficDirection,
+        value = value, geometry = geometry, startMeasure = startMeasure, endMeasure = endMeasure, roadLinkLength = geometryLength, modifiedBy = modifiedBy,
+        modifiedDate = modifiedDateTime, createdBy = createdBy, createdDate = createdDateTime, administrativeClass = adminClass,
+        municipalityCode = municipality, constructionType = constructionType, linkSource = NormalLinkInterface, publicId = publicId, roadNameFi = roadNameFi, roadNameSe = roadNameSe)
+    }
   }
 }
 

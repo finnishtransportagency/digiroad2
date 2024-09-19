@@ -210,3 +210,8 @@ case class InaccurateLinearAsset(assetId: Option[Long], municipality: String, ad
 
 case class LightLinearAsset(geometry: Seq[Point], value: Int, expired: Boolean, typeId: Int, sideCode: Int)
 
+case class DynamicLinearAssetRowWithRoadInfo(id: Long, linkId: String, sideCode: SideCode, trafficDirection: TrafficDirection,
+                                     value: Option[Int], geometry: Seq[Point], startMeasure: Double, endMeasure: Double, roadLinkLength: Double,
+                                     modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String],
+                                     createdDate: Option[DateTime], administrativeClass: AdministrativeClass, municipalityCode: Int,
+                                     constructionType: ConstructionType, linkSource: LinkGeomSource, publicId: String, roadNameFi: String, roadNameSe: String)

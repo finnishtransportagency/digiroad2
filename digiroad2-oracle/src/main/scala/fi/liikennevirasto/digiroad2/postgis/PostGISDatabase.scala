@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.postgis
 import java.sql.Date
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{AnotherPrivateRoad, BoundingRectangle, CableFerry, ConstructionType, CycleOrPedestrianPath, FunctionalClass1, FunctionalClass2, FunctionalClass3, FunctionalClass4, FunctionalClass5, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad}
 import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -11,6 +11,7 @@ import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.postgresql.util.PGobject
 import net.postgis.jdbc.geometry.GeometryBuilder
+
 import scala.collection.mutable.ListBuffer
 
 object PostGISDatabase {
@@ -129,4 +130,25 @@ object PostGISDatabase {
     val geometryWKT = s"LINESTRING ZM (${path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ")})"
     (geometryForApi, geometryWKT)
   }
+
+  val constructionFilter = Seq(
+    ConstructionType.Planned.value,
+    ConstructionType.UnderConstruction.value).mkString(", ")
+  val linkTypeFilter = Seq(
+    RestArea.value,
+    CycleOrPedestrianPath.value,
+    PedestrianZone.value,
+    ServiceOrEmergencyRoad.value,
+    TractorRoad.value,
+    ServiceAccess.value,
+    SpecialTransportWithoutGate.value,
+    SpecialTransportWithGate.value,
+    CableFerry.value).mkString(", ")
+  val functionalClassFilter = Seq(
+    FunctionalClass1.value,
+    FunctionalClass2.value,
+    FunctionalClass3.value,
+    FunctionalClass4.value,
+    FunctionalClass5.value,
+    AnotherPrivateRoad.value).mkString(", ")
 }

@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
+import fi.liikennevirasto.digiroad2.util.DataFixture.dynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.getAssetUpdater
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
@@ -112,10 +113,13 @@ trait LinearAssetOperations {
     */
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set(), showSpeedLimitsHistory: Boolean = false,
                        roadLinkFilter: RoadLink => Boolean = _ => true): Seq[Seq[PieceWiseLinearAsset]] = {
-    val roadLinks = roadLinkService.getRoadLinksByBoundsAndMunicipalities(bounds, municipalities)
+    /*val roadLinks = roadLinkService.getRoadLinksByBoundsAndMunicipalities(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, showHistory = showSpeedLimitsHistory, roadLinkFilter = roadLinkFilter)
-    val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
-    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)*/
+    val assetsWithAttributes = withDynTransaction {
+      dynamicLinearAssetDao.fetchByBBox(typeId, bounds)
+    }
+    LinearAssetPartitioner.partition(assetsWithAttributes)
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
