@@ -1,12 +1,17 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.FloatingReason.NoRoadLinkFound
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.{FloatingReason, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Remove, Split}
+import fi.liikennevirasto.digiroad2.util.LinkIdGenerator
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Deletion, Divided, Floating, Replaced}
+import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
+
+import scala.util.Random
 
 class ChangeReporterSpec extends FunSuite with Matchers{
 
@@ -309,5 +314,93 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     header(25) should be("after_roadlink_url\r")
     //row1(25) should be("after_roadlink_url")
 
+  }
+
+  // run locally to test the performance of csv generation
+  ignore("performance test on road link properties") {
+    val random = new Random()
+
+    val changes: Seq[ReportedChange] = (for {
+      _ <- 1 to 1000000
+      linkId = LinkIdGenerator.generateRandom()
+    } yield {
+      Seq(
+        TrafficDirectionChange(linkId, Replaced, random.nextInt(10), Some(random.nextInt(10))),
+        AdministrativeClassChange(linkId, Replaced, random.nextInt(10), Some(random.nextInt(10))),
+        FunctionalClassChange(linkId, Replaced, Some(random.nextInt(10)), Some(random.nextInt(10))),
+        LinkTypeChange(linkId, Replaced, None, Some(random.nextInt(10))),
+        RoadLinkAttributeChange(linkId, Replaced, Map("ADDITIONAL_INFO" -> "1", "PRIVATE_ROAD_ASSOCIATION" -> "test association"),
+          Map("ADDITIONAL_INFO" -> "1", "PRIVATE_ROAD_ASSOCIATION" -> "test association")),
+        ConstructionTypeChange(linkId, Replaced, Some(InUse), Some(InUse))
+      )
+    }).flatten
+
+    val changeReport = ChangeReport(RoadLinkProperties.typeId, changes)
+
+    val startTime = System.nanoTime()
+    val (csv, contentRows) = ChangeReporter.generateCSV(changeReport)
+    ChangeReporter.saveReportToLocalFile(RoadLinkProperties.label, DateTime.now(), csv, contentRows)
+    val endTime = System.nanoTime()
+
+    println(s"CSV generation took ${(endTime - startTime) / 1e9} seconds")
+  }
+
+  // run locally to test the performance of csv generation
+  ignore("performance test on point assets") {
+    val random = new Random()
+
+    val changes: Seq[ChangedAsset] = (for {
+      i <- 1 to 1000000
+      linkId = LinkIdGenerator.generateRandom()
+    } yield {
+      ChangedAsset(linkId, i, Floating, Remove,
+        Some(Asset(i, s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
+          Some(49), Some(List(Point(random.nextDouble() * 1000000, random.nextDouble() * 1000000))),
+          Some(LinearReferenceForReport(linkId, random.nextDouble() * 100, None, None, None, Some(2), 0.0)), lifecycleChange,
+          true, None
+        )),
+        List(Asset(i, s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
+          Some(49), None, None, lifecycleChange, true, Some(NoRoadLinkFound)
+        ))
+      )
+    })
+
+    val changeReport = ChangeReport(PedestrianCrossings.typeId, changes)
+    val startTime = System.nanoTime()
+    val (csv, contentRows) = ChangeReporter.generateCSV(changeReport)
+    ChangeReporter.saveReportToLocalFile(PedestrianCrossings.label, DateTime.now(), csv, contentRows, true)
+    val endTime = System.nanoTime()
+
+    println(s"CSV generation took ${(endTime - startTime) / 1e9} seconds")
+  }
+
+  // run locally to test the performance of csv generation
+  ignore("performance test on linear assets") {
+
+    val changes: Seq[ChangedAsset] = (for {
+      _ <- 1 to 500000
+      oldLinkId = LinkIdGenerator.generateRandom()
+      newLinkId1 = LinkIdGenerator.generateRandom()
+      newLinkId2 = LinkIdGenerator.generateRandom()
+    } yield {
+      val values = s"""{"publicId":"lane_type","values":["1"],"publicId":"start_date","values":["1.1.1970"],"publicId":"lane_code","values":["1"]}"""
+      val beforeLinearRef = LinearReferenceForReport(oldLinkId, 0.0, Some(432.253), Some(2), None, None, 432.253)
+      val after1LinearRef = LinearReferenceForReport(newLinkId1, 0.0, Some(156.867), Some(2), None, None, 156.867)
+      val after2LinearRef = LinearReferenceForReport(newLinkId2, 0.0, Some(275.368), Some(2), None, None, 275.368)
+
+      val beforeAsset = Asset(123, values, Some(49), None, Some(beforeLinearRef), lifecycleChange, false, None)
+      val afterAsset1 = Asset(124, values, Some(49), None, Some(after1LinearRef), lifecycleChange, false, None)
+      val afterAsset2 = Asset(125, values, Some(49), None, Some(after2LinearRef), lifecycleChange, false, None)
+
+      ChangedAsset(oldLinkId, 123, Divided, Split, Some(beforeAsset), List(afterAsset1, afterAsset2))
+    })
+
+    val changeReport = ChangeReport(Lanes.typeId, changes)
+
+    val startTime = System.nanoTime()
+    val (csv, contentRows) = ChangeReporter.generateCSV(changeReport, true)
+    ChangeReporter.saveReportToLocalFile(Lanes.label, DateTime.now(), csv, contentRows)
+    val endTime = System.nanoTime()
+    println(s"CSV generation took ${(endTime - startTime) / 1e9} seconds")
   }
 }
