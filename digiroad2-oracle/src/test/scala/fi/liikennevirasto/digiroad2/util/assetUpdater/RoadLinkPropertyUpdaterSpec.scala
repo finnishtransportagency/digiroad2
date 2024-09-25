@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLin
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClass, FunctionalClass, LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SurfaceType}
-import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService, RoadLinkValueCollection}
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, Point}
 import org.scalatest.mockito.MockitoSugar
@@ -15,7 +15,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 import scala.io.Source
 
-class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
+class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers {
 
   class TestRoadLinkPropertyUpdater extends RoadLinkPropertyUpdater {
     override def incompleteLinkIsInUse(incompleteLink: IncompleteLink, roadLinkData: Seq[RoadLink]): Boolean = true
@@ -33,11 +33,11 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
   test("on a version change, overridden values and private road attributes are transferred to a new link") {
     val oldLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:1"
     val newLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:2"
-    val replaceChange = RoadLinkChange(Replace,Some(RoadLinkInfo(oldLinkId,186.08235918,
-      List(Point(361966.115,6682342.526,52.256), Point(361938.529,6682516.719,54.601)),12131,State,Some(49),BothDirections)),
-      List(RoadLinkInfo(newLinkId,186.08235918,List(Point(361966.115,6682342.526,52.256),
-        Point(361938.529,6682516.719,54.601)),12131,State,Some(49),BothDirections)),List(ReplaceInfo(Option(oldLinkId),Option(newLinkId),Option(0.0),
-        Option(186.0823591774),Option(0.0),Option(186.0823591774),false)))
+    val replaceChange = RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId, 186.08235918,
+      List(Point(361966.115,6682342.526,52.256), Point(361938.529,6682516.719,54.601)), 12131, State, Some(49), BothDirections)),
+      List(RoadLinkInfo(newLinkId, 186.08235918, List(Point(361966.115,6682342.526,52.256), Point(361938.529,6682516.719,54.601)), 12131, State, Some(49), BothDirections)), List(ReplaceInfo(Option(oldLinkId),Option(newLinkId),Option(0.0),
+        Option(186.0823591774),Option(0.0), Option(186.0823591774), false)))
+
     runWithRollback {
       RoadLinkOverrideDAO.insert(TrafficDirection, oldLinkId, Some("test"), AgainstDigitizing.value)
       RoadLinkOverrideDAO.get(TrafficDirection, oldLinkId).get should be(AgainstDigitizing.value)
@@ -47,7 +47,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       LinkAttributesDao.insertAttributeValueByChanges(oldLinkId, "test", "ADDITIONAL_INFO", "1", LinearAssetUtils.createTimeStamp())
       LinkAttributesDao.getExistingValues(oldLinkId).size should be(2)
 
-      val reportedChanges = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(replaceChange)).changes
       val trafficDirectionChange = reportedChanges.find(c => c.isInstanceOf[TrafficDirectionChange]).get.asInstanceOf[TrafficDirectionChange]
       trafficDirectionChange.oldValue should be(AgainstDigitizing.value)
       trafficDirectionChange.newValue should be(Some(AgainstDigitizing.value))
@@ -69,39 +69,39 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
   test("overridden values are not transferred if they are the same as ordinary road link values") {
     val oldLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:1"
     val newLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:2"
-    val replaceChange = RoadLinkChange(Replace,Some(RoadLinkInfo(oldLinkId,186.08235918,
-      List(Point(361966.115,6682342.526,52.256), Point(361938.529,6682516.719,54.601)),12131,State,Some(49),BothDirections)),
-      List(RoadLinkInfo(newLinkId,186.08235918,List(Point(361966.115,6682342.526,52.256),
-        Point(361938.529,6682516.719,54.601)),12131,State,Some(49),BothDirections)),List(ReplaceInfo(Option(oldLinkId),Option(newLinkId),Option(0.0),
-        Option(186.0823591774),Option(0.0),Option(186.0823591774),false)))
+    val replaceChange = RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId, 186.08235918,
+      List(Point(361966.115,6682342.526,52.256), Point(361938.529,6682516.719,54.601)), 12131, State, Some(49), BothDirections)),
+      List(RoadLinkInfo(newLinkId, 186.08235918, List(Point(361966.115,6682342.526,52.256), Point(361938.529,6682516.719,54.601)), 12131, State, Some(49), BothDirections)), List(ReplaceInfo(Option(oldLinkId), Option(newLinkId), Option(0.0),
+        Option(186.0823591774), Option(0.0), Option(186.0823591774), false)))
+
     runWithRollback {
       RoadLinkOverrideDAO.insert(TrafficDirection, oldLinkId, Some("test"), BothDirections.value)
       RoadLinkOverrideDAO.get(TrafficDirection, oldLinkId).get should be(BothDirections.value)
       RoadLinkOverrideDAO.insert(AdministrativeClass, oldLinkId, Some("test"), State.value)
       RoadLinkOverrideDAO.get(AdministrativeClass, oldLinkId).get should be(State.value)
 
-      val reportedChanges = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(replaceChange)).changes
       reportedChanges.isEmpty should be(true)
 
       RoadLinkOverrideDAO.get(TrafficDirection, newLinkId) should be(None)
       RoadLinkOverrideDAO.get(AdministrativeClass, newLinkId) should be(None)
+      }
     }
-  }
 
   test("on a geometry change, overridden values are not transferred") {
     val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
     val newLinkId = "6eec9a4a-bcac-4afb-afc8-f4e6d40ec571:1"
-    val replaceChange = RoadLinkChange(Replace,Some(RoadLinkInfo(oldLinkId,45.317,List(Point(370276.441,6670348.945,7.94),
-      Point(370234.985,6670367.114,9.638)),12131,Municipality,Some(49),BothDirections)),List(RoadLinkInfo(newLinkId,35.212,
-      List(Point(370276.441,6670348.945,7.94), Point(370243.874,6670361.794,9.145)),12131,Municipality,Some(49),BothDirections)),
-      List(ReplaceInfo(Option(oldLinkId),Option(newLinkId),Option(0.0),Option(45.317),Option(0.0),Option(35.212),false)))
+    val replaceChange = RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId, 45.317, List(Point(370276.441, 6670348.945, 7.94),
+      Point(370234.985, 6670367.114, 9.638)), 12131, Municipality, Some(49), BothDirections)), List(RoadLinkInfo(newLinkId, 35.212,
+      List(Point(370276.441, 6670348.945, 7.94), Point(370243.874, 6670361.794, 9.145)), 12131, Municipality, Some(49), BothDirections)),
+      List(ReplaceInfo(Option(oldLinkId), Option(newLinkId), Option(0.0), Option(45.317), Option(0.0), Option(35.212), false)))
     runWithRollback {
       RoadLinkOverrideDAO.insert(TrafficDirection, oldLinkId, Some("test"), AgainstDigitizing.value)
       RoadLinkOverrideDAO.get(TrafficDirection, oldLinkId).get should be(AgainstDigitizing.value)
       RoadLinkOverrideDAO.insert(AdministrativeClass, oldLinkId, Some("test"), State.value)
       RoadLinkOverrideDAO.get(AdministrativeClass, oldLinkId).get should be(State.value)
 
-      val reportedChanges = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(replaceChange)).changes
       reportedChanges.isEmpty should be(true)
 
       RoadLinkOverrideDAO.get(TrafficDirection, newLinkId) should be(None)
@@ -115,19 +115,18 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     val newLinkId2 = "d59dd3a9-a94d-4f26-b311-6b9b8361c717:1"
     val newLinkId3 = "e92c98c9-5a62-4995-a9c0-e40ae0b65747:1"
     val newLinkIds = Seq(newLinkId1, newLinkId2, newLinkId3)
-    val singleCarriageWayChange = RoadLinkChange(Split,Some(RoadLinkInfo(oldLinkId,121.67349003,List(Point(370507.036,6678446.659,15.777),
-      Point(370624.618,6678469.114,14.312)),12131,State,Some(49),TowardsDigitizing)),List(RoadLinkInfo(newLinkId1,17.30470614,
-      List(Point(370524.238,6678444.954,15.134), Point(370507.036,6678446.659,15.777)),12131,State,Some(49),AgainstDigitizing),
-      RoadLinkInfo(newLinkId2,86.94114036,List(Point(370541.665,6678445.318,14.602), Point(370624.618,6678469.114,14.312)),
-        12131,State,Some(49),TowardsDigitizing), RoadLinkInfo(newLinkId3,17.43162599,List(Point(370524.238,6678444.954,15.134),
-        Point(370541.665,6678445.318,14.602)),12131,State,Some(49),TowardsDigitizing)),List(ReplaceInfo(Option(oldLinkId),Option(newLinkId1),Option(0.0),Option(17.305),Option(0.0),Option(17.305),false),
-      ReplaceInfo(Option(oldLinkId),Option(newLinkId2),Option(34.733),Option(121.673),Option(0.0),Option(86.941),false), ReplaceInfo(Option(oldLinkId),Option(newLinkId3),Option(17.305),Option(34.733),Option(0.0),Option(17.432),false)))
+    val singleCarriageWayChange = RoadLinkChange(Split, Some(RoadLinkInfo(oldLinkId, 121.67349003, List(Point(370507.036, 6678446.659, 15.777), Point(370624.618, 6678469.114, 14.312)), 12131, State, Some(49), TowardsDigitizing)),
+      List(RoadLinkInfo(newLinkId1, 17.30470614, List(Point(370524.238, 6678444.954, 15.134), Point(370507.036, 6678446.659, 15.777)), 12131, State, Some(49), AgainstDigitizing),
+        RoadLinkInfo(newLinkId2, 86.94114036, List(Point(370541.665, 6678445.318, 14.602), Point(370624.618, 6678469.114, 14.312)), 12131, State, Some(49), TowardsDigitizing),
+        RoadLinkInfo(newLinkId3, 17.43162599, List(Point(370524.238, 6678444.954, 15.134), Point(370541.665, 6678445.318, 14.602)), 12131, State, Some(49), TowardsDigitizing)),
+      List(ReplaceInfo(Option(oldLinkId), Option(newLinkId1), Option(0.0), Option(17.305), Option(0.0), Option(17.305), false), ReplaceInfo(Option(oldLinkId), Option(newLinkId2), Option(34.733), Option(121.673), Option(0.0), Option(86.941), false), ReplaceInfo(Option(oldLinkId), Option(newLinkId3), Option(17.305), Option(34.733), Option(0.0), Option(17.432), false)))
+
     runWithRollback {
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId, Some("test"), 7)
       RoadLinkOverrideDAO.get(FunctionalClass, oldLinkId).get should be(7)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId, Some("test"), TractorRoad.value)
       RoadLinkOverrideDAO.get(LinkType, oldLinkId).get should be(TractorRoad.value)
-      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(singleCarriageWayChange)).changes
       val functionalClassChange = reportedChanges.find(c => c.isInstanceOf[FunctionalClassChange]).get.asInstanceOf[FunctionalClassChange]
       functionalClassChange.oldValue should be(Some(7))
       functionalClassChange.newValue should be(Some(7))
@@ -136,7 +135,6 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       linkTypeChange.oldValue should be(Some(TractorRoad.value))
       linkTypeChange.newValue should be(Some(TractorRoad.value))
       linkTypeChange.source should be("oldLink")
-
       newLinkIds.foreach { newLinkId =>
         RoadLinkOverrideDAO.get(FunctionalClass, newLinkId).get should be(7)
         RoadLinkOverrideDAO.get(LinkType, newLinkId).get should be(TractorRoad.value)
@@ -148,7 +146,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
   test("with no old link values, functional class and link type are generated for a new link with a suitable mtkClass") {
     runWithRollback {
       val cycleOrPedestrianPathAddChanges = changes.filter(c => c.changeType == Add && c.newLinks.forall(_.roadClass == 12314))
-      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(cycleOrPedestrianPathAddChanges)
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(cycleOrPedestrianPathAddChanges).changes
       val functionalClassChanges = reportedChanges.filter(c => c.isInstanceOf[FunctionalClassChange]).map(c => c.asInstanceOf[FunctionalClassChange])
       functionalClassChanges.map(_.oldValue).toSet should be(Set(None))
       functionalClassChanges.map(_.newValue).toSet should be(Set(Some(8)))
@@ -172,17 +170,17 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     val newLinkId2 = "d59dd3a9-a94d-4f26-b311-6b9b8361c717:1"
     val newLinkId3 = "e92c98c9-5a62-4995-a9c0-e40ae0b65747:1"
     val newLinkIds = Seq(newLinkId1, newLinkId2, newLinkId3)
-    val singleCarriageWayChange = RoadLinkChange(Split,Some(RoadLinkInfo(oldLinkId,121.67349003,List(Point(370507.036,6678446.659,15.777),
-      Point(370624.618,6678469.114,14.312)),12131,State,Some(49),TowardsDigitizing)),List(RoadLinkInfo(newLinkId1,17.30470614,
-      List(Point(370524.238,6678444.954,15.134), Point(370507.036,6678446.659,15.777)),12131,State,Some(49),AgainstDigitizing),
-      RoadLinkInfo(newLinkId2,86.94114036,List(Point(370541.665,6678445.318,14.602), Point(370624.618,6678469.114,14.312)),
-        12131,State,Some(49),TowardsDigitizing), RoadLinkInfo(newLinkId3,17.43162599,List(Point(370524.238,6678444.954,15.134),
-        Point(370541.665,6678445.318,14.602)),12131,State,Some(49),TowardsDigitizing)),List(ReplaceInfo(Option(oldLinkId),Option(newLinkId1),Option(0.0),Option(17.305),Option(0.0),Option(17.305),false),
-      ReplaceInfo(Option(oldLinkId),Option(newLinkId2),Option(34.733),Option(121.673),Option(0.0),Option(86.941),false), ReplaceInfo(Option(oldLinkId),Option(newLinkId3),Option(17.305),Option(34.733),Option(0.0),Option(17.432),false)))
+    val singleCarriageWayChange = RoadLinkChange(Split, Some(RoadLinkInfo(oldLinkId, 121.67349003, List(Point(370507.036, 6678446.659, 15.777),
+      Point(370624.618, 6678469.114, 14.312)), 12131, State, Some(49), TowardsDigitizing)), List(RoadLinkInfo(newLinkId1, 17.30470614,
+      List(Point(370524.238, 6678444.954, 15.134), Point(370507.036, 6678446.659, 15.777)), 12131, State, Some(49), AgainstDigitizing),
+      RoadLinkInfo(newLinkId2, 86.94114036, List(Point(370541.665, 6678445.318, 14.602), Point(370624.618, 6678469.114, 14.312)),
+        12131, State, Some(49), TowardsDigitizing), RoadLinkInfo(newLinkId3, 17.43162599, List(Point(370524.238, 6678444.954, 15.134),
+        Point(370541.665, 6678445.318, 14.602)), 12131, State, Some(49), TowardsDigitizing)), List(ReplaceInfo(Option(oldLinkId), Option(newLinkId1), Option(0.0), Option(17.305), Option(0.0), Option(17.305), false),
+      ReplaceInfo(Option(oldLinkId), Option(newLinkId2), Option(34.733), Option(121.673), Option(0.0), Option(86.941), false), ReplaceInfo(Option(oldLinkId), Option(newLinkId3), Option(17.305), Option(34.733), Option(0.0), Option(17.432), false)))
     runWithRollback {
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId, Some("test"), 7)
       RoadLinkOverrideDAO.get(FunctionalClass, oldLinkId).get should be(7)
-      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(singleCarriageWayChange)).changes
       val functionalClassChange = reportedChanges.find(c => c.isInstanceOf[FunctionalClassChange]).get.asInstanceOf[FunctionalClassChange]
       functionalClassChange.oldValue should be(Some(7))
       functionalClassChange.newValue should be(Some(7))
@@ -205,17 +203,17 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     val newLinkId2 = "d59dd3a9-a94d-4f26-b311-6b9b8361c717:1"
     val newLinkId3 = "e92c98c9-5a62-4995-a9c0-e40ae0b65747:1"
     val newLinkIds = Seq(newLinkId1, newLinkId2, newLinkId3)
-    val singleCarriageWayChange = RoadLinkChange(Split,Some(RoadLinkInfo(oldLinkId,121.67349003,List(Point(370507.036,6678446.659,15.777),
-      Point(370624.618,6678469.114,14.312)),12131,State,Some(49),TowardsDigitizing)),List(RoadLinkInfo(newLinkId1,17.30470614,
-      List(Point(370524.238,6678444.954,15.134), Point(370507.036,6678446.659,15.777)),12131,State,Some(49),AgainstDigitizing),
-      RoadLinkInfo(newLinkId2,86.94114036,List(Point(370541.665,6678445.318,14.602), Point(370624.618,6678469.114,14.312)),
-        12131,State,Some(49),TowardsDigitizing), RoadLinkInfo(newLinkId3,17.43162599,List(Point(370524.238,6678444.954,15.134),
-        Point(370541.665,6678445.318,14.602)),12131,State,Some(49),TowardsDigitizing)),List(ReplaceInfo(Option(oldLinkId),Option(newLinkId1),Option(0.0),Option(17.305),Option(0.0),Option(17.305),false),
-      ReplaceInfo(Option(oldLinkId),Option(newLinkId2),Option(34.733),Option(121.673),Option(0.0),Option(86.941),false), ReplaceInfo(Option(oldLinkId),Option(newLinkId3),Option(17.305),Option(34.733),Option(0.0),Option(17.432),false)))
+    val singleCarriageWayChange = RoadLinkChange(Split, Some(RoadLinkInfo(oldLinkId, 121.67349003, List(Point(370507.036, 6678446.659, 15.777),
+      Point(370624.618, 6678469.114, 14.312)), 12131, State, Some(49), TowardsDigitizing)), List(RoadLinkInfo(newLinkId1, 17.30470614,
+      List(Point(370524.238, 6678444.954, 15.134), Point(370507.036, 6678446.659, 15.777)), 12131, State, Some(49), AgainstDigitizing),
+      RoadLinkInfo(newLinkId2, 86.94114036, List(Point(370541.665, 6678445.318, 14.602), Point(370624.618, 6678469.114, 14.312)),
+        12131, State, Some(49), TowardsDigitizing), RoadLinkInfo(newLinkId3, 17.43162599, List(Point(370524.238, 6678444.954, 15.134),
+        Point(370541.665, 6678445.318, 14.602)), 12131, State, Some(49), TowardsDigitizing)), List(ReplaceInfo(Option(oldLinkId), Option(newLinkId1), Option(0.0), Option(17.305), Option(0.0), Option(17.305), false),
+      ReplaceInfo(Option(oldLinkId), Option(newLinkId2), Option(34.733), Option(121.673), Option(0.0), Option(86.941), false), ReplaceInfo(Option(oldLinkId), Option(newLinkId3), Option(17.305), Option(34.733), Option(0.0), Option(17.432), false)))
     runWithRollback {
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId, Some("test"), TractorRoad.value)
       RoadLinkOverrideDAO.get(LinkType, oldLinkId).get should be(TractorRoad.value)
-      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(singleCarriageWayChange)).changes
       val functionalClassChange = reportedChanges.find(c => c.isInstanceOf[FunctionalClassChange]).get.asInstanceOf[FunctionalClassChange]
       functionalClassChange.oldValue should be(None)
       functionalClassChange.newValue should be(Some(4))
@@ -237,22 +235,23 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     val newLinkId1 = "1cb02550-5ce4-4c0a-8bee-c7f5e1f314d1:1"
     val newLinkId2 = "76637626-e794-4088-a9cf-20dd2ba92b6a:1"
     val newLinkId3 = "7c6fc2d3-f79f-4e03-a349-80103714a442:1"
-    val changeWithoutSuitableMtkClass = RoadLinkChange(Split,Some(RoadLinkInfo(oldLinkId, 429.63910641,
-      List(Point(367588.33,6673322.58,10.635), Point(367451.076,6673729.704,17.119)),12121,Municipality,Some(49),BothDirections)),
-      List(RoadLinkInfo(newLinkId1,267.44044079,List(Point(367536.298,6673476.206,12.767), Point(367451.076,6673729.704,17.119)),
-        12121,Municipality,Some(49),BothDirections), RoadLinkInfo(newLinkId2,145.91224664,List(Point(367588.33,6673322.58,10.635),
-        Point(367541.489,6673460.769,12.506)),12121,Municipality,Some(49),BothDirections), RoadLinkInfo(newLinkId3,16.28641919,
-        List(Point(367541.489,6673460.769,12.506), Point(367536.298,6673476.206,12.767)),12121,Municipality,Some(49),BothDirections)),
-      List(ReplaceInfo(Option(oldLinkId),Option(newLinkId1),Option(162.199),Option(429.639),Option(0.0),Option(267.44),false), ReplaceInfo(Option(oldLinkId),Option(newLinkId2),Option(0.0),Option(145.912),Option(0.0),Option(145.912),false),
-        ReplaceInfo(Option(oldLinkId),Option(newLinkId3),Option(145.912),Option(162.199),Option(0.0),Option(16.286),false)))
+    val changeWithoutSuitableMtkClass = RoadLinkChange(Split, Some(RoadLinkInfo(oldLinkId, 429.63910641,
+      List(Point(367588.33, 6673322.58, 10.635), Point(367451.076, 6673729.704, 17.119)), 12121, Municipality, Some(49), BothDirections)),
+      List(RoadLinkInfo(newLinkId1, 267.44044079, List(Point(367536.298, 6673476.206, 12.767), Point(367451.076, 6673729.704, 17.119)),
+        12121, Municipality, Some(49), BothDirections), RoadLinkInfo(newLinkId2, 145.91224664, List(Point(367588.33, 6673322.58, 10.635),
+        Point(367541.489, 6673460.769, 12.506)), 12121, Municipality, Some(49), BothDirections), RoadLinkInfo(newLinkId3, 16.28641919,
+        List(Point(367541.489, 6673460.769, 12.506), Point(367536.298, 6673476.206, 12.767)), 12121, Municipality, Some(49), BothDirections)),
+      List(ReplaceInfo(Option(oldLinkId), Option(newLinkId1), Option(162.199), Option(429.639), Option(0.0), Option(267.44), false), ReplaceInfo(Option(oldLinkId), Option(newLinkId2), Option(0.0), Option(145.912), Option(0.0), Option(145.912), false),
+        ReplaceInfo(Option(oldLinkId), Option(newLinkId3), Option(145.912), Option(162.199), Option(0.0), Option(16.286), false)))
     runWithRollback {
-      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(changeWithoutSuitableMtkClass))
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(Seq(changeWithoutSuitableMtkClass)).changes
       reportedChanges.isEmpty should be(true)
       val incompleteLinksMap = roadLinkService.getIncompleteLinks(None, false)
       val incompleteLinks = incompleteLinksMap.get("Espoo").get("Municipality").toSet
       incompleteLinks should be(changeWithoutSuitableMtkClass.newLinks.map(_.linkId).toSet)
     }
   }
+
 
   test("on a merge, new value should be inserted and reported only once") {
     val oldLinkId1 = "d6a67594-6069-4295-a4d3-8495b7f76ef0:1"
@@ -270,27 +269,26 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       LinkAttributesDao.insertAttributeValueByChanges(oldLinkId2, "test", "PRIVATE_ROAD_ASSOCIATION", "test association", LinearAssetUtils.createTimeStamp())
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId1, Some("test"), 7)
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId2, Some("test"), 7)
-      val overriddenAndPrivates = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(mergeChanges)
-      val functionalClassesAndLinkTypes = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(mergeChanges)
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(mergeChanges).changes
       LinkAttributesDao.getExistingValues(newLinkId).get("PRIVATE_ROAD_ASSOCIATION").get should be("test association")
       FunctionalClassDao.getExistingValue(newLinkId) should be(Some(7))
-      overriddenAndPrivates.filter(_.isInstanceOf[RoadLinkAttributeChange]).size should be(1)
-      functionalClassesAndLinkTypes.filter(_.isInstanceOf[FunctionalClassChange]).size should be(1)
-      functionalClassesAndLinkTypes.filter(_.isInstanceOf[LinkTypeChange]).size should be(0)
+      reportedChanges.filter(_.isInstanceOf[RoadLinkAttributeChange]).size should be(1)
+      reportedChanges.filter(_.isInstanceOf[FunctionalClassChange]).size should be(1)
+      reportedChanges.filter(_.isInstanceOf[LinkTypeChange]).size should be(0)
     }
   }
 
   test("when digitization is changed, overridden traffic direction is turned around") {
     val oldLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:1"
     val newLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:2"
-    val replaceChange = RoadLinkChange(Replace,Some(RoadLinkInfo(oldLinkId,186.08235918,
-      List(Point(361966.115,6682342.526,52.256), Point(361938.529,6682516.719,54.601)),12131,State,Some(49),BothDirections)),
-      List(RoadLinkInfo(newLinkId,186.08235918,List(Point(361966.115,6682342.526,52.256),
-        Point(361938.529,6682516.719,54.601)),12131,State,Some(49),BothDirections)),List(ReplaceInfo(Option(oldLinkId),Option(newLinkId),Option(0.0),
-        Option(186.0823591774),Option(0.0),Option(186.0823591774),true)))
+    val replaceChange = RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId, 186.08235918,
+      List(Point(361966.115, 6682342.526, 52.256), Point(361938.529, 6682516.719, 54.601)), 12131, State, Some(49), BothDirections)),
+      List(RoadLinkInfo(newLinkId, 186.08235918, List(Point(361966.115, 6682342.526, 52.256),
+        Point(361938.529, 6682516.719, 54.601)), 12131, State, Some(49), BothDirections)), List(ReplaceInfo(Option(oldLinkId), Option(newLinkId), Option(0.0),
+        Option(186.0823591774), Option(0.0), Option(186.0823591774), true)))
     runWithRollback {
       RoadLinkOverrideDAO.insert(TrafficDirection, oldLinkId, Some("test"), TowardsDigitizing.value)
-      val overriddenValues = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
+      val overriddenValues = roadLinkPropertyUpdater.runProcess(Seq(replaceChange)).changes
       RoadLinkOverrideDAO.get(TrafficDirection, newLinkId) should be(Some(AgainstDigitizing.value))
       val trChange = overriddenValues.head.asInstanceOf[TrafficDirectionChange]
       trChange.linkId should be(newLinkId)
@@ -316,10 +314,9 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
         List(ReplaceInfo(Option(oldLinkId2), Option(newLinkId), Option(0.0), Option(178.997), Option(555.312), Option(734.309), false)))
     )
     runWithRollback {
-      val transferredProperties = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(mergeChanges)
-      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(mergeChanges)
-      transferredProperties.size should be(0)
-      createdProperties.size should be(0)
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(mergeChanges).changes
+      reportedChanges.size should be(0)
+      reportedChanges.size should be(0)
       roadLinkService.getIncompleteLinks(None, false).size should be(1)
     }
   }
@@ -345,13 +342,12 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId2, Some("test"), 7)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId1, Some("test"), 1)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId2, Some("test"), 1)
-      val transferredProperties = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(mergeChanges)
-      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(mergeChanges)
-      transferredProperties.size should be(0)
-      createdProperties.size should be(2)
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(mergeChanges).changes
+      reportedChanges.filterNot(_.isInstanceOf[ConstructionTypeChange]).size should be(2)
       roadLinkService.getIncompleteLinks(None, false).size should be(0)
     }
   }
+
 
   test("Given a merge after a split; When old links are not missing information; Then no incomplete link should be generated") {
     val oldLinkId1 = "73565cbb-3009-4ba7-a779-44f93f09b516:1"
@@ -378,10 +374,8 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId2, Some("test"), 7)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId1, Some("test"), 1)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId2, Some("test"), 1)
-      val transferredProperties = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(relevantChanges)
-      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(relevantChanges)
-      transferredProperties.size should be(0)
-      createdProperties.size should be(4)
+      val reportedChanges = roadLinkPropertyUpdater.runProcess(relevantChanges).changes
+      reportedChanges.filterNot(_.isInstanceOf[ConstructionTypeChange]).size should be(4)
       roadLinkService.getIncompleteLinks(None, false).size should be(0)
     }
   }
@@ -395,7 +389,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
         List(ReplaceInfo(None, Option(newLinkId), None, None, Option(0.0), Option(20.311), false)))
     )
     runWithRollback {
-      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(relevantChanges)
+      val createdProperties = roadLinkPropertyUpdater.runProcess(relevantChanges).changes
       createdProperties.size should be(0)
       val incompleteLinks = roadLinkService.getIncompleteLinks(None, false)
       incompleteLinks.size should be(1)
@@ -413,7 +407,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     runWithRollback {
       RoadLinkOverrideDAO.insert(FunctionalClass, newLinkId, Some("test"), 7)
       RoadLinkOverrideDAO.insert(LinkType, newLinkId, Some("test"), 1)
-      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(relevantChanges)
+      val createdProperties = roadLinkPropertyUpdater.runProcess(relevantChanges).changes
       createdProperties.size should be(0)
       val incompleteLinks = roadLinkService.getIncompleteLinks(None, false)
       incompleteLinks.size should be(0)
@@ -429,7 +423,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     val relevantChanges = Seq(
       RoadLinkChange(
         Split, Some(RoadLinkInfo(oldLinkId1, 137.767,
-        List(Point(477310.959, 7343262.118, 179.727), Point(477258.906, 7343389.476, 178.035)), 12132, Private, Some(698), UnknownDirection)),
+          List(Point(477310.959, 7343262.118, 179.727), Point(477258.906, 7343389.476, 178.035)), 12132, Private, Some(698), UnknownDirection)),
         List(RoadLinkInfo(newLinkId1, 196.95, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
           12132, Private, Some(698), UnknownDirection),
           RoadLinkInfo(newLinkId2, 82.995, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
@@ -438,7 +432,7 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
           ReplaceInfo(Option(oldLinkId1), Option(newLinkId2), Option(0.0), Option(555.312), Option(0.0), Option(555.312), false))),
       RoadLinkChange(
         Split, Some(RoadLinkInfo(oldLinkId2, 483.503,
-        List(Point(378461.027, 6674230.896, 1.993), Point(378521.11, 6674258.813, 6.9)), 12132, State, Some(698), UnknownDirection)),
+          List(Point(378461.027, 6674230.896, 1.993), Point(378521.11, 6674258.813, 6.9)), 12132, State, Some(698), UnknownDirection)),
         List(RoadLinkInfo(newLinkId1, 196.95, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
           12132, State, Some(698), UnknownDirection),
           RoadLinkInfo(newLinkId3, 341.261, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
@@ -451,8 +445,8 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId2, Some("test"), 7)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId1, Some("test"), 1)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId2, Some("test"), 1)
-      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(relevantChanges)
-      createdProperties.size should be(6)
+      val createdProperties = roadLinkPropertyUpdater.runProcess(relevantChanges).changes
+      createdProperties.filterNot(_.isInstanceOf[ConstructionTypeChange]).size should be(6)
       val incompleteLinks = roadLinkService.getIncompleteLinks(None, false)
       incompleteLinks.size should be(0)
     }
@@ -501,14 +495,14 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
   test("no link type or functional class should be transferred or generated when road class changes to hard shoulder") {
     val oldLinkId = "c51f721d-5c0b-4cd2-b6a5-6a0df207a8fe:1"
     val newLinkId = "ed66eaf4-c0b7-4356-86fb-10cf0624bf8a:1"
-    val change = RoadLinkChange(Replace,Some(RoadLinkInfo(oldLinkId,119.687,
-      List(Point(339271.771,6971427.195,153.038), Point(339265.3400000001,6971546.706,152.451)),12316,Unknown,Some(5),BothDirections, SurfaceType.None)),
-      List(RoadLinkInfo(newLinkId,119.687,List(Point(339271.771,6971427.195,153.038), Point(339265.3400000001,6971546.706,152.451)),
-        12318,Unknown,Some(5),BothDirections,SurfaceType.None)),List(ReplaceInfo(Some(oldLinkId), Some(newLinkId),Some(0.0),Some(119.687),Some(0.0),Some(119.687),false)))
+    val change = RoadLinkChange(Replace, Some(RoadLinkInfo(oldLinkId, 119.687,
+      List(Point(339271.771, 6971427.195, 153.038), Point(339265.3400000001, 6971546.706, 152.451)), 12316, Unknown, Some(5), BothDirections, SurfaceType.None)),
+      List(RoadLinkInfo(newLinkId, 119.687, List(Point(339271.771, 6971427.195, 153.038), Point(339265.3400000001, 6971546.706, 152.451)),
+        12318, Unknown, Some(5), BothDirections, SurfaceType.None)), List(ReplaceInfo(Some(oldLinkId), Some(newLinkId), Some(0.0), Some(119.687), Some(0.0), Some(119.687), false)))
     runWithRollback {
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId, Some("test"), 7)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId, Some("test"), 12)
-      val createdProperties = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(change))
+      val createdProperties = roadLinkPropertyUpdater.runProcess(Seq(change)).changes
       createdProperties.size should be(0)
     }
   }
