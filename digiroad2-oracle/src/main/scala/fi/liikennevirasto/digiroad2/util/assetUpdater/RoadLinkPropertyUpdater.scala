@@ -35,6 +35,17 @@ class RoadLinkPropertyUpdater {
     }
   }
 
+  private def functionalClassChangeBetweenTractorRoadAndDrivePath(changeType: RoadLinkChangeType, functionalClassForOldLink: Option[Int], oldLink: RoadLinkInfo, newLink: RoadLinkInfo): Option[FunctionalClassChange] = {
+    (KgvUtil.extractFeatureClass(oldLink.roadClass), KgvUtil.extractFeatureClass(newLink.roadClass)) match {
+      case (FeatureClass.TractorRoad, FeatureClass.DrivePath) =>
+        Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), functionalClassForOldLink, Some(AnotherPrivateRoad.value), "tractorRoadToDrivePath", Some(oldLink.linkId)))
+      case (FeatureClass.DrivePath, FeatureClass.TractorRoad) =>
+        Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), functionalClassForOldLink, Some(PrimitiveRoad.value), "drivePathToTractorRoad", Some(oldLink.linkId)))
+      case _ =>
+        None
+    }
+  }
+
   /**
    * Transfers the functional class from an old link to a new link.
    *
@@ -46,13 +57,19 @@ class RoadLinkPropertyUpdater {
    * @return An Option containing the FunctionalClassChange, or None if the transfer was not possible.
    */
   private def transferFunctionalClass(changeType: RoadLinkChangeType, oldLink: RoadLinkInfo, newLink: RoadLinkInfo, existingFunctionalClasses: Map[String, Option[Int]]): Option[FunctionalClassChange] = {
-      existingFunctionalClasses.get(oldLink.linkId).flatten match {
-        case Some(functionalClass) =>
-          Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), Some(functionalClass), Some(functionalClass), "oldLink", Some(oldLink.linkId)))
-        case _ =>
-          logger.info(s"TEST LOG No functional class found from ${existingFunctionalClasses.size} existing functional classes")
-          None
-      }
+    val functionalClassForOldLink = existingFunctionalClasses.get(oldLink.linkId).flatten
+    functionalClassChangeBetweenTractorRoadAndDrivePath(changeType, functionalClassForOldLink, oldLink, newLink) match {
+      case Some(functionalClassChange) =>
+        Some(functionalClassChange)
+      case _ =>
+        functionalClassForOldLink match {
+          case Some(functionalClass) =>
+            Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), Some(functionalClass), Some(functionalClass), "oldLink", Some(oldLink.linkId)))
+          case _ =>
+            logger.info(s"TEST LOG No functional class found from ${existingFunctionalClasses.size} existing functional classes")
+            None
+        }
+    }
   }
 
   private def generateFunctionalClass(changeType: RoadLinkChangeType, newLink: RoadLinkInfo): Option[FunctionalClassChange] = {
@@ -77,6 +94,18 @@ class RoadLinkPropertyUpdater {
     }
   }
 
+  private def linkTypeChangeBetweenTractorRoadAndDrivePath(changeType: RoadLinkChangeType, linkTypeForOldLink: Option[Int], oldLink: RoadLinkInfo, newLink: RoadLinkInfo): Option[LinkTypeChange] = {
+    (KgvUtil.extractFeatureClass(oldLink.roadClass), KgvUtil.extractFeatureClass(newLink.roadClass)) match {
+      case (FeatureClass.TractorRoad, FeatureClass.DrivePath) =>
+        Some(LinkTypeChange(newLink.linkId, roadLinkChangeToChangeType(changeType), linkTypeForOldLink, Some(SingleCarriageway.value), "tractorRoadToDrivePath", Some(oldLink.linkId)))
+      case (FeatureClass.DrivePath, FeatureClass.TractorRoad) =>
+        Some(LinkTypeChange(newLink.linkId, roadLinkChangeToChangeType(changeType), linkTypeForOldLink, Some(TractorRoad.value), "drivePathToTractorRoad", Some(oldLink.linkId)))
+      case _ =>
+        None
+    }
+  }
+
+
   /**
    * Transfers the link type from an old link to a new link.
    *
@@ -88,11 +117,17 @@ class RoadLinkPropertyUpdater {
    * @return An Option containing the LinkTypeChange, or None if the transfer was not possible.
    */
   private def transferLinkType(changeType: RoadLinkChangeType, oldLink: RoadLinkInfo, newLink: RoadLinkInfo, existingLinkTypes: Map[String, Option[Int]]): Option[LinkTypeChange] = {
-    existingLinkTypes.get(oldLink.linkId).flatten match {
-      case Some(linkType) =>
-        Some(LinkTypeChange(newLink.linkId, roadLinkChangeToChangeType(changeType), Some(linkType), Some(linkType), "oldLink", Some(oldLink.linkId)))
+    val linkTypeForOldLink = existingLinkTypes.get(oldLink.linkId).flatten
+    linkTypeChangeBetweenTractorRoadAndDrivePath(changeType, linkTypeForOldLink, oldLink, newLink) match {
+      case Some(linkTypeChange) =>
+        Some(linkTypeChange)
       case _ =>
-        None
+        linkTypeForOldLink match {
+          case Some(linkType) =>
+            Some(LinkTypeChange(newLink.linkId, roadLinkChangeToChangeType(changeType), Some(linkType), Some(linkType), "oldLink", Some(oldLink.linkId)))
+          case _ =>
+            None
+        }
     }
   }
 
