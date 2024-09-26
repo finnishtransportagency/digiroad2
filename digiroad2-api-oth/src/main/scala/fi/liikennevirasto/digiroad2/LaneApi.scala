@@ -208,7 +208,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val lanesGroupedByAttributes = groupLanesByMeaningfulAttributes(lanesWithAccurateAddrMValues)
     val groupedAndConnectedLanes = lanesGroupedByAttributes.map(laneGroup => {
       val lanesWithContinuingLanes = laneGroup.map(lane => {
-        val identifier = LanePartitioner.getLaneRoadIdentifierByUsingViiteRoadNumber(lane, roadLinks(lane.linkId))
+        val identifier = LanePartitioner.getLaneRoadIdentifierByUsingRoadNumber(lane, roadLinks(lane.linkId))
         val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, identifier, laneGroup, roadLinks, sideCodesCorrected = true)
         LaneWithContinuingLanes(lane, continuingLanes)
       })

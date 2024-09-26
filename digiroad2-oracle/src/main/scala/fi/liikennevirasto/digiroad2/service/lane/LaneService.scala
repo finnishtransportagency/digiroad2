@@ -81,7 +81,7 @@ trait LaneOperations {
     val linearAssets = getLanesByRoadLinks(filteredRoadLinks)
 
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
-    val lanesWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets))
+    val lanesWithRoadAddress = LogUtils.time(logger, "TEST LOG Get VKM road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets))
     val lanesWithAddressAndLinkType = lanesWithRoadAddress.map { lane =>
       val (linkType, constructionType) = filteredRoadLinks.find(_.linkId == lane.linkId).headOption match {
 
@@ -152,7 +152,7 @@ trait LaneOperations {
     val lanesOnPoint = lanesOnLink.filter(lane => {
       lane.startMeasure <= mValue && lane.endMeasure >= mValue
     })
-    val lanesWithPossibleRoadAddressInfo = LogUtils.time(logger, "Get Viite road address for lanes"){
+    val lanesWithPossibleRoadAddressInfo = LogUtils.time(logger, "Get VKM road address for lanes"){
       roadAddressService.laneWithRoadAddress(lanesOnPoint)
     }
 
@@ -509,7 +509,7 @@ trait LaneOperations {
     val lanesWithRoadLinks = roadLinks.map(roadLink => (lanes.filter(_.linkId == roadLink.linkId), roadLink))
     val pwLanes = lanesWithRoadLinks.flatMap(pair => laneFiller.toLPieceWiseLane(pair._1, pair._2))
 
-    val lanesWithRoadAddressInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(pwLanes))
+    val lanesWithRoadAddressInfo = LogUtils.time(logger, "TEST LOG Get VKM road address for lanes")(roadAddressService.laneWithRoadAddress(pwLanes))
     lanesWithRoadAddressInfo
   }
 
@@ -591,7 +591,7 @@ trait LaneOperations {
   }
 
   def getLanesInRoadAddressRange(roadAddressRange: RoadAddressRange): (Seq[PieceWiseLane], Map[String, RoadLink]) = {
-    val linkIds = geometryTransform.getLinkIdsInRoadAddressRange(roadAddressRange)
+    val linkIds = roadAddressService.getRoadAddressesByRoadAddressRange(roadAddressRange).map(_.linkId).toSet
 
     val roadLinksInRange = roadLinkService.getRoadLinksByLinkIds(linkIds)
     val roadLinksFiltered = roadLinksInRange.filter(_.functionalClass != WalkingAndCyclingPath.value)

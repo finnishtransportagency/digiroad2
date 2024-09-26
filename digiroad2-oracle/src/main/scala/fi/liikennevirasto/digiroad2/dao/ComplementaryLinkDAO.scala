@@ -36,7 +36,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
     def apply(r: PositionedResult): RoadLinkFetched = {
       val linkId = r.nextString()
       val municipality = r.nextInt()
-      val path = r.nextObjectOption().map(KgvUtil.extractGeometry).get
+      val path = r.nextObjectOption().map(PostGISDatabase.extractGeometry).get
       val administrativeClass = r.nextInt()
       val directionType = r.nextIntOption()
       val mtkClass = r.nextInt()
