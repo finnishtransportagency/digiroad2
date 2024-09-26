@@ -15,3 +15,18 @@ SET id = CASE
     WHEN name_fi = 'Varsinais-Suomi' THEN 2
     ELSE id
 END;
+
+UPDATE municipality
+SET ely_nro = CASE
+    WHEN ely_nro = 0 THEN 16
+    WHEN ely_nro = 1 THEN 15
+    WHEN ely_nro = 2 THEN 13
+    WHEN ely_nro = 3 THEN 11
+    WHEN ely_nro = 4 THEN 10
+    WHEN ely_nro = 5 THEN 8
+    WHEN ely_nro = 6 THEN 5
+    WHEN ely_nro = 7 THEN 6
+    WHEN ely_nro = 8 THEN 1
+    WHEN ely_nro = 9 THEN 2
+    ELSE ely_nro
+END;
