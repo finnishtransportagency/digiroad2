@@ -74,6 +74,8 @@ object ExpiredRoadLinkHandlingProcess {
     logger.info(s"Expired road links count: ${expiredRoadLinksWithExpireDates.size}")
     val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
     val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
+    val assetIdsAlreadyOnWorkList = assetsOnExpiredLinksService.getAllWorkListAssets(newTransaction = false).map(_.id)
+    val assetsOnExpiredLinksNotOnWorkList = assetsOnExpiredLinks.filterNot(asset => assetIdsAlreadyOnWorkList.contains(asset.id))
     val emptyExpiredLinks = expiredRoadLinks.filter(rl => {
       val linkIdsWithExistingAssets = assetsOnExpiredLinks.map(_.linkId)
       !linkIdsWithExistingAssets.contains(rl.linkId)
@@ -88,9 +90,9 @@ object ExpiredRoadLinkHandlingProcess {
       }
     }
     
-    if (assetsOnExpiredLinks.nonEmpty) {
-      LogUtils.time(logger, s"Insert ${assetsOnExpiredLinks.size} assets to worklist") {
-        assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
+    if (assetsOnExpiredLinksNotOnWorkList.nonEmpty) {
+      LogUtils.time(logger, s"Insert ${assetsOnExpiredLinksNotOnWorkList.size} assets to worklist") {
+        assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinksNotOnWorkList)
       }
     }
   }
