@@ -1,16 +1,17 @@
 package fi.liikennevirasto.digiroad2.postgis
 
 import java.sql.Date
-import java.util.Properties
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
-import slick.jdbc.StaticQuery.interpolation
 import Database.dynamicSession
 import org.locationtech.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import org.postgresql.util.PGobject
+import net.postgis.jdbc.geometry.GeometryBuilder
+import scala.collection.mutable.ListBuffer
 
 object PostGISDatabase {
   lazy val ds: DataSource = initDataSource
@@ -106,5 +107,26 @@ object PostGISDatabase {
     val lineString = s"'LINESTRING(${geom.mkString(",")})'"
 
     s"$geometryColumn && ST_MakePolygon(ST_GeomFromText($lineString, 3067))"
+  }
+
+  def extractGeometry(data: Object): List[List[Double]] = {
+    val geometry = data.asInstanceOf[PGobject]
+    if (geometry == null) Nil
+    else {
+      val geomValue = geometry.getValue
+      val geom = GeometryBuilder.geomFromString(geomValue)
+      val listOfPoint = ListBuffer[List[Double]]()
+      for (i <- 0 until geom.numPoints()) {
+        val point = geom.getPoint(i)
+        listOfPoint += List(point.x, point.y, point.z, point.m)
+      }
+      listOfPoint.toList
+    }
+  }
+
+  def processGeometry(path: List[List[Double]]): (Seq[Map[String, Double]], String) = {
+    val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
+    val geometryWKT = s"LINESTRING ZM (${path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ")})"
+    (geometryForApi, geometryWKT)
   }
 }
