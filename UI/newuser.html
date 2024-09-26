@@ -18,16 +18,16 @@
         var municipalities;
         var roleName = [];
         var areas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-        var elys = [ {name: "Ahvenanmaa", id: 0},
-                     {name: "Lappi", id: 1},
-                     {name: "Pohjois-Pohjanmaa", id: 2},
-                     {name: "Etelä-Pohjanmaa", id: 3},
-                     {name: "Keski-Suomi", id: 4},
-                     {name: "Pohjois-Savo", id: 5},
-                     {name: "Pirkanmaa", id: 6},
-                     {name: "Varsinais-Suomi", id: 7},
-                     {name: "Kaakkois-Suomi", id: 8},
-                     {name: "Uusimaa", id: 9}];
+        var elys = [ {name: "Ahvenanmaa", id: 16},
+                     {name: "Lappi", id: 15},
+                     {name: "Pohjois-Pohjanmaa", id: 13},
+                     {name: "Etelä-Pohjanmaa", id: 11},
+                     {name: "Keski-Suomi", id: 10},
+                     {name: "Pohjois-Savo", id: 8},
+                     {name: "Pirkanmaa", id: 5},
+                     {name: "Varsinais-Suomi", id: 2},
+                     {name: "Kaakkois-Suomi", id: 6},
+                     {name: "Uusimaa", id: 1}];
 
         var userSpecs =[{ role: "municipality", enabledCheckbox: [ municipalityCheckbox ], disabledCheckbox: [ laneMaintainerCheckbox,operatorCheckbox, elysCheckbox, areasCheckbox]   },
             { role: "ely", enabledCheckbox: [ elysCheckbox, areasCheckbox ], disabledCheckbox: [laneMaintainerCheckbox,operatorCheckbox,  municipalityCheckbox]  },
