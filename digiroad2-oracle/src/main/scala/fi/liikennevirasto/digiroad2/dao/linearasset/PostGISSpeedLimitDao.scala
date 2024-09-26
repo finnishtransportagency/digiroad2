@@ -102,7 +102,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
 
   def fetchByBBox(bbox: BoundingRectangle): (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
     val bboxFilter = PostGISDatabase.boundingBoxFilter(bbox, "shape")
-    val constructionFilter = Seq(ConstructionType.Planned.value, ConstructionType.UnderConstruction.value).mkString(", ")
+    val constructionFilter = Seq(ConstructionType.Planned.value, ConstructionType.ExpiringSoon.value, ConstructionType.UnderConstruction.value).mkString(", ")
     val linkTypeFilter = Seq(
       RestArea.value,
       CycleOrPedestrianPath.value,
