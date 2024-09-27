@@ -53,7 +53,7 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
         municipality766_749; ; 4, 5, 6, 49, 235; Name from batch
         municipality49; ; 1, 2, 3, 49; Replaced name from batch
         newuser; ; 2, 3, 6; Another name from batch
-        testEly; 0; ;
+        testEly; 16; ;
       """
     try {
       putJsonWithUserAuth("/userconfig/municipalitiesbatch", batchString, Map("Content-type" -> "text/plain")) {
