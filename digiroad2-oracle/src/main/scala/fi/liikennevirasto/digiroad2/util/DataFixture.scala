@@ -178,24 +178,6 @@ object DataFixture {
 
   lazy val damagedByThawRepeater: DamagedByThawRepeater = new DamagedByThawRepeater()
 
-  def importMunicipalityCodes() {
-    println("\nCommencing municipality code import at time: ")
-    println(DateTime.now())
-    new MunicipalityCodeImporter().importMunicipalityCodes()
-    println("Municipality code import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def updateMunicipalities() {
-    println("\nCommencing municipality update at time: ")
-    println(DateTime.now())
-    new MunicipalityCodeImporter().updateMunicipalityCodes()
-    println("Municipality update complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
   def importRoadLinkData() = {
     println("\nCommencing functional classes import from conversion DB\n")
     RoadLinkDataImporter.importFromConversionDB()
@@ -1884,9 +1866,8 @@ object DataFixture {
 
   def setUpTest() {
     migrateAll()
-    importMunicipalityCodes()
-    updateMunicipalities()
     SqlScriptRunner.runScripts(List(
+      "insert_municipalities.sql",
       "insert_test_fixture.sql",
       "insert_users.sql",
       "kauniainen_production_speed_limits.sql",
@@ -1993,10 +1974,6 @@ object DataFixture {
         updatePavedRoadInformationSource()
       case Some("update_traffic_direction_on_roundabouts") =>
         updateTrafficDirectionRoundabouts()
-      case Some("import_municipality_codes") =>
-        importMunicipalityCodes()
-      case Some("update_municipalities") =>
-        updateMunicipalities()
       case Some("create_manoeuvres_using_traffic_signs") =>
         createManoeuvresUsingTrafficSigns()
       case Some("update_trafficSign_properties") =>
