@@ -19,17 +19,20 @@ object ValidateSamuutus {
   private lazy val s3Bucket: String = Digiroad2Properties.samuutusReportsBucketName
   def validate(typeId: Int, changeSet: RoadLinkChangeSet): Unit = {
     val newLinks = changeSet.changes.flatMap(_.newLinks.map(_.linkId)).toSet
-    val result = SamuutusValidator.validate(typeId, newLinks,newTransaction = false)
-    val passSet = result.map(_.pass).toSet
-   if (Digiroad2Properties.failSamuutusOnFailedValidation) {
-     if (passSet.contains(false)) {
-       reportInvalidAssets(typeId, result)
-       throw SamuutusFailed(s"Validation error happened, see report in bucket ${s3Bucket}")
-     } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
-   }else {
-     if (passSet.contains(false)) reportInvalidAssets(typeId, result)
-     Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
-   }
+    //Skip if no new links to validate assets on
+    if(newLinks.nonEmpty) {
+      val result = SamuutusValidator.validate(typeId, newLinks,newTransaction = false)
+      val passSet = result.map(_.pass).toSet
+      if (Digiroad2Properties.failSamuutusOnFailedValidation) {
+        if (passSet.contains(false)) {
+          reportInvalidAssets(typeId, result)
+          throw SamuutusFailed(s"Validation error happened, see report in bucket ${s3Bucket}")
+        } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+      }else {
+        if (passSet.contains(false)) reportInvalidAssets(typeId, result)
+        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+      }
+    } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
   }
 
   private def reportInvalidAssets(typeId: Int, result: Seq[ValidationResult]): Unit = {
