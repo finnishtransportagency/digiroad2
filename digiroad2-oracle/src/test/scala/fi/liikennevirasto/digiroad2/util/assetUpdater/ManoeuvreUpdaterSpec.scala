@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISMaintenanceDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, ManoeuvreService, NewManoeuvre}
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -16,6 +17,7 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty[String])).thenReturn(Seq())
 
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val maintenanceDao = new PostGISMaintenanceDao()
@@ -130,8 +132,10 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
         RoadLink(linkId7, List(Point(10.0, 0.0), Point(9.0, 0.0)), 9.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None)
       )
 
-      val newManoeuvres1 = NewManoeuvre(Set.empty[ValidityPeriod],
-        Seq(), None, linkIds = roadLink2.map(_.linkId), trafficSignId = None, isSuggested = false
+      val validityPeriodWeekDay = ValidityPeriod(8,16,ValidityPeriodDayOfWeek.apply(1))
+      val validityPeriodSunday = ValidityPeriod(9,12,ValidityPeriodDayOfWeek.apply(3))
+      val newManoeuvres1 = NewManoeuvre(Set(validityPeriodWeekDay, validityPeriodSunday),
+        Seq(1,2,3), Some("Lisätietoa kääntymisrajoituksesta"), linkIds = roadLink2.map(_.linkId), trafficSignId = None, isSuggested = false
       )
 
       val id = Service.createManoeuvre("test",newManoeuvres1,roadLink2,newTransaction = false)
@@ -146,10 +150,11 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
       assetsAfter.find(p => p.id == id).get.id should be(id)
 
       changed.size should be(1)
-      changed.head.manoeuvreId should be(id)
+      changed.head.id should be(id)
 
-      Service.getManoeuvreSamuutusWorkList(false).size should be(1)
-      Service.getManoeuvreSamuutusWorkList(false).head.assetId should be(id)
+      val workListItems = Service.getManoeuvreSamuutusWorkList(false)
+      workListItems.size should be(1)
+      workListItems.head.assetId should be(id)
     }
   }
 }

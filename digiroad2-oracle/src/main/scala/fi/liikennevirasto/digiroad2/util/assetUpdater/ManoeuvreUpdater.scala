@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreUpdateLinks
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedManoeuvre, ManoeuvreService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{Manoeuvre, ManoeuvreService}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -60,7 +60,7 @@ class ManoeuvreUpdater() {
   }
   
   case class VersionUpgrade(oldId:String, newId:String)
-  def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]):Seq[ChangedManoeuvre] = {
+  def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]):Seq[Manoeuvre] = {
     
     val (versionUpgrade, other) = separateVersionUpgradeAndOther(changesAll)
     val versionUpgradeIds = versionUpgrade.groupBy(_.oldLink.get.linkId).keySet
@@ -73,17 +73,13 @@ class ManoeuvreUpdater() {
       service.updateManoeuvreLinkVersions(pairs.map(a=>ManoeuvreUpdateLinks(a.oldId,a.newId)),newTransaction = false)
     }
     
-   val rows =  service.getByRoadLinkIdsNoValidation(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, false)
-     .map(a=> {
-      val (elementA,elementB) = (a.elements.map(_.sourceLinkId),a.elements.map(_.destLinkId))
-      ChangedManoeuvre(manoeuvreId = a.id,linkIds=(elementA++elementB).filter(_!=null).toSet)
-    })
+   val manoeuvresOnChangedLinks =  service.getByRoadLinkIdsNoValidation(other.map(_.oldLink.map(_.linkId)).filter(_.isDefined).map(_.get).toSet, newTransaction = false)
 
     logger.info(s"Number of manoeuvre ${forLogging.size} which has been updated automatically to new version.")
     logger.info(s"Assets: ${forLogging.map(_.id).mkString(",")}")
-    logger.info(s"Number of manoeuvre ${rows.size} which need manual adjustments.")
+    logger.info(s"Number of manoeuvre ${manoeuvresOnChangedLinks.size} which need manual adjustments.")
     LogUtils.time(logger, s"Inserting into worklist took: ") {
-      service.insertSamuutusChange(rows,false)
+      service.insertSamuutusChange(manoeuvresOnChangedLinks,newTransaction = false)
     }
    
   }
