@@ -15,7 +15,7 @@ WHERE enumerated_value_id IN (SELECT id FROM hard_and_soft_asphalt_id);
 DELETE FROM enumerated_value ev
 WHERE ev.id IN (SELECT id FROM hard_and_soft_asphalt_id);
 
-DROP TABLE IF EXISTS temp_asphalt_ids;
+DROP TABLE IF EXISTS hard_and_soft_asphalt_id;
 
 -- Sitomaton kulutuskerros
 
@@ -32,7 +32,9 @@ SET enumerated_value_id = (
 WHERE enumerated_value_id IN (SELECT id FROM gravel_surface_and_gravel_wear_layer_id);
 
 DELETE FROM enumerated_value ev
-WHERE ev.id IN (SELECT id FROM gravel_surface_and_gravel_wear_layer_id)
+WHERE ev.id IN (SELECT id FROM gravel_surface_and_gravel_wear_layer_id);
+
+DROP TABLE IF EXISTS gravel_surface_and_gravel_wear_layer_id;
 
 -- Muut päällysteluokat
 
@@ -50,3 +52,5 @@ WHERE enumerated_value_id IN (SELECT id FROM concrete_and_other_coatings_id);
 
 DELETE FROM enumerated_value ev
 WHERE ev.id IN (SELECT id FROM concrete_and_other_coatings_id);
+
+DROP TABLE IF EXISTS concrete_and_other_coatings_id;
