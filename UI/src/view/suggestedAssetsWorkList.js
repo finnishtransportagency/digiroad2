@@ -3,7 +3,7 @@
     WorkListView.call(this);
     var me = this;
     this.hrefDir = "#work-list/suggestedAssets";
-    this.title = 'Suggested Assets';
+    this.title = 'Vihjetiedot';
     var backend;
     var assetConfig = new AssetTypeConfiguration();
 
