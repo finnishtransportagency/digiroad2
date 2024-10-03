@@ -1,4 +1,4 @@
 INSERT INTO enumerated_value (id,property_id,value,name_fi,name_sv,image_id,created_date,created_by,modified_date,modified_by)  
-VALUES (nextval('primary_key_seq'), (select id from property where public_id = 'paallysteluokka'),1,E'Asfaltti',E' ',NULL,current_timestamp,E'db_migration_v1_43',NULL,NULL),
-(nextval('primary_key_seq'), (select id from property where public_id = 'paallysteluokka'),3,E'Sitomaton kulutuskerros',E' ',NULL,current_timestamp,E'db_migration_v1_43',NULL,NULL),
-(nextval('primary_key_seq'), (select id from property where public_id = 'paallysteluokka'),4,E'Muut päällysteluokat',E' ',NULL,current_timestamp,E'db_migration_v1_43',NULL,NULL);
+VALUES (nextval('primary_key_seq'), (select id from property where public_id = 'paallysteluokka'),1,E'Asfaltti',E' ',NULL,current_timestamp,E'db_migration_v1_46',NULL,NULL),
+(nextval('primary_key_seq'), (select id from property where public_id = 'paallysteluokka'),3,E'Sitomaton kulutuskerros',E' ',NULL,current_timestamp,E'db_migration_v1_46',NULL,NULL),
+(nextval('primary_key_seq'), (select id from property where public_id = 'paallysteluokka'),4,E'Muut päällysteluokat',E' ',NULL,current_timestamp,E'db_migration_v1_46',NULL,NULL);
