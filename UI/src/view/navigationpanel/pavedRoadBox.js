@@ -13,13 +13,10 @@
 
     this.labeling = function () {
       var pavementClassValues = [
-        [1, 'Betoni'],
+        [1, 'Asfaltti'],
         [2, 'Kivi '],
-        [10, 'Kovat asfalttibetonit'],
-        [20, 'Pehmeät asfalttibetonit'],
-        [30, 'Soratien pintaus'],
-        [40, 'Sorakulutuskerros '],
-        [50, 'Muut pinnoitteet'],
+        [3, 'Sitomaton kulutuskerros'],
+        [4, 'Muut päällysteluokat'],
         [99, 'Päällystetty, tyyppi tuntematon']
       ];
 

@@ -3,7 +3,9 @@
 CREATE TEMPORARY TABLE hard_and_soft_asphalt_id AS 
 SELECT ev.id 
 FROM enumerated_value ev 
-WHERE ev.name_fi IN ('Kovat asfalttibetonit', 'Pehmeät asfalttibetonit');
+JOIN property p ON ev.property_id = p.id
+AND public_id = 'paallysteluokka' AND 
+ev.name_fi IN ('Kovat asfalttibetonit', 'Pehmeät asfalttibetonit');
 
 UPDATE single_choice_value  
 SET enumerated_value_id = (	
@@ -22,7 +24,9 @@ DROP TABLE IF EXISTS hard_and_soft_asphalt_id;
 CREATE TEMPORARY TABLE gravel_surface_and_gravel_wear_layer_id AS 
 SELECT ev.id 
 FROM enumerated_value ev 
-WHERE ev.name_fi IN ('Soratien pintaus', 'Sorakulutuskerros');
+JOIN property p ON ev.property_id = p.id
+AND public_id = 'paallysteluokka' AND 
+ev.name_fi IN ('Soratien pintaus', 'Sorakulutuskerros');
 
 UPDATE single_choice_value  
 SET enumerated_value_id = (
@@ -41,7 +45,9 @@ DROP TABLE IF EXISTS gravel_surface_and_gravel_wear_layer_id;
 CREATE TEMPORARY TABLE concrete_and_other_coatings_id AS 
 SELECT ev.id 
 FROM enumerated_value ev 
-WHERE ev.name_fi IN ('Betoni', 'Muut pinnoitteet');
+JOIN property p ON ev.property_id = p.id
+AND public_id = 'paallysteluokka' AND 
+ev.name_fi IN ('Betoni', 'Muut pinnoitteet');
 
 UPDATE single_choice_value  
 SET enumerated_value_id = (
