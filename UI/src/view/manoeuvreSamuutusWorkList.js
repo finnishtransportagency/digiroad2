@@ -20,13 +20,23 @@
 
         this.workListItemTable = function (layerName, showDeleteCheckboxes, workListItems) {
             var tableContentRows = function (item) {
-                    return $('<tr/>').append($('<th/>').append(changeRow(item)));
+                return $('<tr/>').append($('<th/>').append(changeRow(item)));
             };
 
             var changeRow = function (item) {
-                var idRow =     "<p>" + "Rajoituksen id: " + item.assetId + "</p>";
-                var linksRow =  "<p>" + "Linkit: "  + item.links +          "</p>";
-                return $('<dd class="manoeuvreWorkListTextSize"/>').html(idRow+linksRow);
+                var idRow = "<p>" + "Rajoituksen id: " + item.assetId + "</p>";
+                var linksRow = "<p>" + "Linkit: " + item.links + "</p>";
+                var validityPeriodsRow = "<p><b>Validity Periods:</b></p>";
+                item.validityPeriods.forEach(function(period) {
+                    validityPeriodsRow += "<p>Days: " + period.days.value +
+                        ", Time: " + period.startHour + ":" + period.startMinute + " - " +
+                        period.endHour + ":" + period.endMinute + "</p>";
+                });
+                var exceptionTypesRow = "<p><b>Exception Types:</b> " + item.exceptionTypes.join(", ") + "</p>";
+                var additionalInfoRow = "<p><b>Additional Info:</b> " + item.additionalInfo + "</p>";
+                var createdDateRow = "<p><b>Created Date:</b> " + item.createdDate + "</p>";
+
+                return $('<dd class="manoeuvreWorkListTextSize"/>').html(idRow + linksRow + validityPeriodsRow + exceptionTypesRow + additionalInfoRow + createdDateRow);
             };
 
             var addTable = function (items) {
@@ -38,5 +48,6 @@
 
             return $('<div/>').append(addTable(workListItems));
         };
+
     };
 })(this);

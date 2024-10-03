@@ -1498,7 +1498,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/manoeuvreSamuutusWorkList") {
     val user = userProvider.getCurrentUser()
     val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
-    workListItems.map(a=> Map("assetId" -> a.assetId, "links" -> a.linkIds)).toList
+    workListItems.map(a=> {
+      val validityPeriodsJson = a.validityPeriods.map(_.toJson)
+      Map("assetId" -> a.assetId,
+        "links" -> a.linkIds,
+        "exceptionTypes" -> a.exceptionTypes,
+        "validityPeriods" -> validityPeriodsJson,
+        "additionalInfo" -> a.additionalInfo,
+        "createdDate" -> a.createdDate)
+    }).toList
   }
 
   delete("/laneWorkList") {
