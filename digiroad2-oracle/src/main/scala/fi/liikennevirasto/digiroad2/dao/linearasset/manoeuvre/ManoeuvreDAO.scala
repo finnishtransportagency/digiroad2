@@ -418,4 +418,8 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
   def fetchManoeuvreWorklistItems(): List[ManoeuvreWorkListItem] = {
     sql"""select assetId, linkIds, exception_types, validity_periods, additional_info, created_date from manouvre_samuutus_work_list """.as[ManoeuvreWorkListItem].list
   }
+
+  def deleteManoeuvreWorkListItems(assetIDsToDelete: Set[Long]) = {
+    sqlu"""DELETE FROM manouvre_samuutus_work_list WHERE assetId IN (#${assetIDsToDelete.mkString(",")})""".execute
+  }
 }

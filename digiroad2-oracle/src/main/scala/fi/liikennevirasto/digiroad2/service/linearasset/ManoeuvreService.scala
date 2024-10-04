@@ -490,5 +490,11 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     if (newTransaction) { withDynTransaction {dao.fetchManoeuvreWorklistItems()}
     }else dao.fetchManoeuvreWorklistItems()
   }
+
+  def deleteManoeuvreSamuutusWorkListItems(assetIdsToDelete: Set[Long],newTransaction: Boolean = true): Set[Long] = {
+    if (newTransaction) { withDynTransaction {dao.deleteManoeuvreWorkListItems(assetIdsToDelete)}
+    }else dao.deleteManoeuvreWorkListItems(assetIdsToDelete)
+    assetIdsToDelete
+  }
   
 }
