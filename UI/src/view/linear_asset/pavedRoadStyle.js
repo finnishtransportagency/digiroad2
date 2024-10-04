@@ -24,13 +24,10 @@
 
     var pavedRoadStyleRules = [
       new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(1).use({stroke: {color: '#c559ff'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(2).use({stroke: {color: '#ff55dd'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(10).use({stroke: {color: '#ff0000'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(20).use({stroke: {color: '#0011bb'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(30).use({stroke: {color: '#11bb00'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(40).use({stroke: {color: '#ffe82d'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(50).use({stroke: {color: '#a52a2a'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(1).use({stroke: {color: '#ff0000'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(2).use({stroke: {color: '#0011bb'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(3).use({stroke: {color: '#ffe82d'}}),
+      new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(4).use({stroke: {color: '#ff55dd'}}),
       new StyleRule().where(function(asset){if(valueExists(asset, "paallysteluokka")){return findValue(asset, "paallysteluokka"); }}).is(99).use({stroke: {color: '#000000'}})
     ];
 
