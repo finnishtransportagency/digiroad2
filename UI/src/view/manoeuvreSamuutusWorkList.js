@@ -24,26 +24,27 @@
                 return items.map(function (item) {
                     return $('<tr/>')
                         .append(checkbox(item.assetId))
-                        .append($('<th/>')
-                        .append(changeRow(item)));
+                        .append($('<td/>').html(changeRow(item)));
                 });
             };
 
-
             var changeRow = function (item) {
-                var idRow = "<p>" + "Rajoituksen id: " + item.assetId + "</p>";
-                var linksRow = "<p>" + "Linkit: " + item.links + "</p>";
-                var validityPeriodsRow = "<p><b>Validity Periods:</b></p>";
-                item.validityPeriods.forEach(function(period) {
-                    validityPeriodsRow += "<p>Days: " + period.days.value +
-                        ", Time: " + period.startHour + ":" + period.startMinute + " - " +
-                        period.endHour + ":" + period.endMinute + "</p>";
-                });
-                var exceptionTypesRow = "<p><b>Exception Types:</b> " + item.exceptionTypes.join(", ") + "</p>";
-                var additionalInfoRow = "<p><b>Additional Info:</b> " + item.additionalInfo + "</p>";
-                var createdDateRow = "<p><b>Created Date:</b> " + item.createdDate + "</p>";
+                var idRow = "<p><strong>Kääntymiserajoituksen ID:</strong> " + item.assetId + "</p>";
+                var linksRow = "<p><strong>Tielinkit:</strong> " + item.links + "</p>";
+                var validityPeriodsRow = "<p><strong>Voimassaoloajat:</strong></p><ul>";
 
-                return $('<dd class="manoeuvreWorkListTextSize"/>').html(idRow + linksRow + validityPeriodsRow + exceptionTypesRow + additionalInfoRow + createdDateRow);
+                item.validityPeriods.forEach(function (period) {
+                    validityPeriodsRow += "<li>Days: " + period.days.value + ", Time: " +
+                        period.startHour + ":" + period.startMinute + " - " +
+                        period.endHour + ":" + period.endMinute + "</li>";
+                });
+
+                validityPeriodsRow += "</ul>";
+                var exceptionTypesRow = "<p><strong>Rajoitus ei koske seuraavia tyyppejä:</strong> " + item.exceptionTypes.join(", ") + "</p>";
+                var additionalInfoRow = "<p><strong>Muu tarkenne:</strong> " + item.additionalInfo + "</p>";
+                var createdDateRow = "<p><strong>Työlistakohteen luontipäivänmäärä:</strong> " + item.createdDate + "</p>";
+
+                return $('<div/>').html(idRow + linksRow + validityPeriodsRow + exceptionTypesRow + additionalInfoRow + createdDateRow);
             };
 
             var checkbox = function (itemId) {
