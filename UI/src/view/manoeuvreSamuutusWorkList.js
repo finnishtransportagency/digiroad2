@@ -4,6 +4,7 @@
         WorkListView.call(this);
         var me = this;
         var backend;
+        var enumerations = new Enumerations();
         this.initialize = function (mapBackend) {
             backend = mapBackend;
             me.bindEvents();
@@ -29,18 +30,28 @@
             };
 
             var changeRow = function (item) {
+                var exceptionTypesEnumerations = item.exceptionTypes.map(function (typeId) {
+                    var exception = enumerations.manoeuvreExceptions.find(function (exception) {
+                        return exception.typeId === typeId;
+                    });
+                    return exception ? exception.title : "Unknown Type";
+                });
+
                 var idRow = "<p><strong>Kääntymisrajoituksen ID:</strong> " + item.assetId + "</p>";
                 var linksRow = "<p><strong>Tielinkit:</strong> " + item.links + "</p>";
                 var validityPeriodsRow = "<p><strong>Voimassaoloajat:</strong></p><ul>";
 
                 item.validityPeriods.forEach(function (period) {
-                    validityPeriodsRow += "<li>Viikonpäivät: " + period.days.value + ", Time: " +
+                    var dayEnumeration = enumerations.manoeuvreValidityPeriodDays.find(function (day) {
+                        return day.value === period.days.value;
+                    });
+                    validityPeriodsRow += "<li>Viikonpäivät: " + dayEnumeration.title + ", Kellonaika: " +
                         period.startHour + ":" + period.startMinute + " - " +
                         period.endHour + ":" + period.endMinute + "</li>";
                 });
 
                 validityPeriodsRow += "</ul>";
-                var exceptionTypesRow = "<p><strong>Rajoitus ei koske seuraavia tyyppejä:</strong> " + item.exceptionTypes.join(", ") + "</p>";
+                var exceptionTypesRow = "<p><strong>Rajoitus ei koske seuraavia tyyppejä:</strong> " + exceptionTypesEnumerations.join(", ") + "</p>";
                 var additionalInfoRow = "<p><strong>Muu tarkenne:</strong> " + item.additionalInfo + "</p>";
                 var createdDateRow = "<p><strong>Työlistakohteen luontipäivänmäärä:</strong> " + item.createdDate + "</p>";
 

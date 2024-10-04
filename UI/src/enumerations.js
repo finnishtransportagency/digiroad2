@@ -139,5 +139,29 @@
 
     this.trafficSignsTypeLinearGenerators = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 85, 100, 101];
 
+    this.manoeuvreExceptions = [
+        {typeId: 21, title: 'Huoltoajo'},
+        {typeId: 22, title: 'Tontille ajo'},
+        {typeId: 10, title: 'Mopo'},
+        {typeId: 9, title: 'Moottoripyörä'},
+        {typeId: 27, title: 'Moottorikelkka'},
+        {typeId: 5, title: 'Linja-auto'},
+        {typeId: 8, title: 'Taksi'},
+        {typeId: 7, title: 'Henkilöauto'},
+        {typeId: 6, title: 'Pakettiauto'},
+        {typeId: 4, title: 'Kuorma-auto'},
+        {typeId: 15, title: 'Matkailuajoneuvo'},
+        {typeId: 19, title: 'Sotilasajoneuvo'},
+        {typeId: 13, title: 'Ajoneuvoyhdistelmä'},
+        {typeId: 14, title: 'Traktori tai maatalousajoneuvo'}
+      ];
+
+    this.manoeuvreValidityPeriodDays = [
+      {value: 1, title: 'Su'},
+      {value: 2, title: 'Ma-Pe'},
+      {value: 3, title: 'La'},
+      {value: 99, title: 'Tuntematon'}
+    ];
+
   };
 })(this);
