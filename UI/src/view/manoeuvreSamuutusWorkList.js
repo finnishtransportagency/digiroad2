@@ -34,7 +34,7 @@
                 var validityPeriodsRow = "<p><strong>Voimassaoloajat:</strong></p><ul>";
 
                 item.validityPeriods.forEach(function (period) {
-                    validityPeriodsRow += "<li>Days: " + period.days.value + ", Time: " +
+                    validityPeriodsRow += "<li>Viikonpäivät: " + period.days.value + ", Time: " +
                         period.startHour + ":" + period.startMinute + " - " +
                         period.endHour + ":" + period.endMinute + "</li>";
                 });
