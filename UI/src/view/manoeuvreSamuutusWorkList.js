@@ -29,7 +29,7 @@
             };
 
             var changeRow = function (item) {
-                var idRow = "<p><strong>Kääntymiserajoituksen ID:</strong> " + item.assetId + "</p>";
+                var idRow = "<p><strong>Kääntymisrajoituksen ID:</strong> " + item.assetId + "</p>";
                 var linksRow = "<p><strong>Tielinkit:</strong> " + item.links + "</p>";
                 var validityPeriodsRow = "<p><strong>Voimassaoloajat:</strong></p><ul>";
 
