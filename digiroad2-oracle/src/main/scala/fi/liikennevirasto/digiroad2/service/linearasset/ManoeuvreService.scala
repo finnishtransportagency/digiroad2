@@ -479,19 +479,19 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     countExistings(sourceId, destLinkId, elementType) == 0
   }
 
-  def insertSamuutusChange(rows: Seq[Manoeuvre],newTransaction: Boolean = true): Seq[Manoeuvre]= {
+  def insertManoeuvresToWorkList(rows: Seq[Manoeuvre], newTransaction: Boolean = true): Seq[Manoeuvre]= {
     if (newTransaction) { withDynTransaction {  dao.insertManoeuvreToWorkList(rows)}
     } else dao.insertManoeuvreToWorkList(rows)
     rows
   }
 
 
-  def getManoeuvreSamuutusWorkList(newTransaction: Boolean = true): Seq[ManoeuvreWorkListItem] = {
+  def getManoeuvreWorkList(newTransaction: Boolean = true): Seq[ManoeuvreWorkListItem] = {
     if (newTransaction) { withDynTransaction {dao.fetchManoeuvreWorklistItems()}
     }else dao.fetchManoeuvreWorklistItems()
   }
 
-  def deleteManoeuvreSamuutusWorkListItems(assetIdsToDelete: Set[Long],newTransaction: Boolean = true): Set[Long] = {
+  def deleteManoeuvreWorkListItems(assetIdsToDelete: Set[Long], newTransaction: Boolean = true): Set[Long] = {
     if (newTransaction) { withDynTransaction {dao.deleteManoeuvreWorkListItems(assetIdsToDelete)}
     }else dao.deleteManoeuvreWorkListItems(assetIdsToDelete)
     assetIdsToDelete

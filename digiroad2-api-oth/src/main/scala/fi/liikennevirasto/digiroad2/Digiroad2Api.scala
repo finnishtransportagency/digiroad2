@@ -1497,7 +1497,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/manoeuvreSamuutusWorkList") {
     val user = userProvider.getCurrentUser()
-    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
+    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreWorkList() else Seq()
     Seq(workListItems.map(a=> {
       val validityPeriodsJson = a.validityPeriods.map(_.toJson)
       Map("assetId" -> a.assetId,
@@ -1518,7 +1518,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     itemIdsToDelete match {
       case Some(ids) =>
-        manoeuvreService.deleteManoeuvreSamuutusWorkListItems(ids)
+        manoeuvreService.deleteManoeuvreWorkListItems(ids)
       case None => halt(BadRequest("No asset ids to delete provided"))
     }
   }

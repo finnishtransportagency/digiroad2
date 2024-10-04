@@ -79,7 +79,7 @@ class ManoeuvreUpdater() {
     logger.info(s"Assets: ${forLogging.map(_.id).mkString(",")}")
     logger.info(s"Number of manoeuvre ${manoeuvresOnChangedLinks.size} which need manual adjustments.")
     LogUtils.time(logger, s"Inserting into worklist took: ") {
-      service.insertSamuutusChange(manoeuvresOnChangedLinks,newTransaction = false)
+      service.insertManoeuvresToWorkList(manoeuvresOnChangedLinks,newTransaction = false)
     }
    
   }

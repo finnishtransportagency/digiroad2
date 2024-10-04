@@ -152,7 +152,7 @@ class ManoeuvreUpdaterSpec extends FunSuite with Matchers with  UpdaterUtilsSuit
       changed.size should be(1)
       changed.head.id should be(id)
 
-      val workListItems = Service.getManoeuvreSamuutusWorkList(false)
+      val workListItems = Service.getManoeuvreWorkList(false)
       workListItems.size should be(1)
       workListItems.head.assetId should be(id)
     }
