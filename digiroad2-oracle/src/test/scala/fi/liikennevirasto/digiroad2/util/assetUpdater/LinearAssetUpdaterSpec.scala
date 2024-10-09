@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.{AssetsOnExpiredLinksDAO, DynamicLinearAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.MValueCalculator
@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport._
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, ExpiredRoadLinkHandlingProcess, LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
@@ -1890,6 +1890,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     }
   }
 
+  //Pitäisi toimia
   test("Split. Given a Road Link that is split into 2 new Links; when 1 new Link is deleted; then the Linear Asset on the deleted Link should be expired.") {
     val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
     val newLinkID = "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1"
@@ -1911,6 +1912,83 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsAfter.size should be(1)
       assetsAfter.head.linkId should be(oldLinkID)
       assetsAfter.head.expired should be(true)
+    }
+  }
+
+  val expiredAssetsDAO = new AssetsOnExpiredLinksDAO
+
+  // Katkeaa lopusta
+  test("Split. Given a Road Link that is split into 2 new Links where there is no equivalence at the end; when the end of the link is expired; then the Linear Asset on the deleted Link should be expired.") {
+    val oldLinkID = "086404cc-ffaa-46e5-a0c5-b428a846261c:1"
+    val newLinkID = "da1ce256-2f8a-43f9-9008-5bf058c1bcd7:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 79.405), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+
+      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+      assetsBefore.head.endMeasure should be(79.405)
+
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+
+      val assetsOnOldLink = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(oldLinkID), false)
+      val assetsOnNewLink = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLinkID), false)
+      val assetAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val expiredLink = service.fetchExistingAssetsByLinksIds(SpeedLimitAsset.typeId, Seq(oldRoadLink), Seq(oldLinkID), false)
+      val expiredAssets = expiredAssetsDAO.fetchWorkListAssets()
+
+      println(assetsOnOldLink)
+      println(assetsOnNewLink)
+      println(assetAfter)
+      println(expiredLink)
+      println(expiredAssets)
+
+      assetsOnNewLink.size should be(1)
+
+    }
+  }
+
+  //Katkeaa alusta, muista construction type
+  test("Split. Given a Road Link that is split into 2 new Links where there is no equivalence at the beginning; when the beginning of the link is expired; then the Linear Asset on the expired Link should be expired.") {
+    val oldLinkID = "cc2bc598-8527-4600-861f-4c70eaacae61:1"
+    val newLinkID = "46b888db-6fcd-4e8c-afbd-6532023a1759:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(0.0, 339.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+
+      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+
+      val assetsOnOldLink = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(oldLinkID), false)
+      val assetsOnNewLink = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLinkID), false)
+      val assetAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val expiredLink = service.fetchExistingAssetsByLinksIds(SpeedLimitAsset.typeId, Seq(oldRoadLink), Seq(oldLinkID), false)
+
+      // Alla olevalla yritetään ajaa lakkautuneiden assettien hakuprosessi ja sitten hakea kannasta assets_on_expired_road_links taulun sisältö, mutta tämä ei toimi näin
+      ExpiredRoadLinkHandlingProcess.process(false)
+      val expiredAssets = expiredAssetsDAO.fetchWorkListAssets()
+
+      println(expiredLink)
+      println(expiredAssets)
+      println(assetsOnOldLink)
+      println(assetsOnNewLink)
+      println(assetAfter)
+
+      assetsOnNewLink.size should be(1)
     }
   }
 

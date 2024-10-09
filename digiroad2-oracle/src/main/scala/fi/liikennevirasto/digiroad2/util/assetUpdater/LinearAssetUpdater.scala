@@ -564,6 +564,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info("Starting to save changeSets")
     logChangeSetSizes(changedSet)
     LogUtils.time(logger, s"Saving changeSets took: ") {
+      println("Tallennetaan: " + changedSet)
       updateChangeSet(changedSet)
     }
     logger.info("Starting to save generated")
@@ -818,7 +819,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     def checkForExpire(splits: Seq[OperationStepSplit]): Boolean = {
       val newLinkIds = splits.map(_.newLinkId)
       val someRoadLinksFound = onlyNeededNewRoadLinks.map(_.linkId).exists(newLinkIds.contains)
-      newLinkIds.forall(_ == "") || !someRoadLinksFound
+      val checkForExpire = newLinkIds.forall(_ == "") || !someRoadLinksFound // TODO: Tässä tarkastetaan onko KAIKKI newLinkIDt tyhjiä, asetetaan lakkautettavaksi (Pitäisikö yhden tyhjän uuden linkin riittää)
+      println("check for expire: " + checkForExpire)
+      checkForExpire
     }
 
     val relevantAssets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
@@ -905,7 +908,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private def projectByUsingReplaceInfo(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset) = {
     val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
-    val newId = info.newLinkId.getOrElse("")
+    val newId = info.newLinkId.getOrElse("") // if (info.newLinkId.nonEmpty) info.newLinkId.getOrElse("") else info.oldLinkId.getOrElse("")//TODO: Voisi ratkaista expiroitaviin assetteihin lajiteltavien assettin ongelman. Hae oldId jos newId:Tä ei löydy (varmista myös M-arvojen perusteella)
     val maybeLink = change.newLinks.find(_.linkId == newId)
     val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
     val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = newId),
