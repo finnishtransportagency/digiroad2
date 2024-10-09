@@ -1842,6 +1842,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/manoeuvreOnExpiredRoadLink") {
+    params.get("assetId").map { assetId =>
+      val manoeuvreId = assetId.toLong
+      val manoeuvre = manoeuvreService.find(manoeuvreId)
+      manoeuvre
+    } getOrElse {
+      BadRequest("Could not fetch manoeuvre")
+    }
+  }
+
   post("/manoeuvres") {
     val user = userProvider.getCurrentUser()
     val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[NewManoeuvre]](halt(BadRequest("Malformed 'manoeuvres' parameter")))

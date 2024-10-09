@@ -63,6 +63,12 @@
       });
     });
 
+    this.getManoeuvresOnExpiredLinks = createCallbackRequestor(function(assetId) {
+      return validateBoundingBox(assetId,{
+        url: 'api/manoeuvreOnExpiredRoadLink?assetId=' + assetId
+      });
+    });
+
     this.updateManoeuvreDetails = function(details, success, failure) {
       $.ajax({
         contentType: "application/json",

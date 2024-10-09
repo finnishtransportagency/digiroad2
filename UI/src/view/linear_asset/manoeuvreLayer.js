@@ -74,6 +74,10 @@
         trafficSignReadOnlyLayer.refreshView();
     };
 
+    var refreshWorkListView = function (assetId, draw) {
+      manoeuvresCollection.fetchManoeuvresOnExpiredLinks(assetId, draw);
+    };
+
     /**
      * Overrides the layer.js removeLayerFeatures method
      */
@@ -579,6 +583,7 @@
     return {
       show: show,
       hide: hideLayer,
+      refreshWorkListView: refreshWorkListView,
       minZoomForContent: me.minZoomForContent
     };
   };

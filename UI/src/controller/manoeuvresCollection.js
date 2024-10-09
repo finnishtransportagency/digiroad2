@@ -32,6 +32,15 @@
       verificationCollection.fetch(extent, center, manoeuvreAssetTypeId, true);
     };
 
+    var fetchManoeuvresOnExpiredLinks = function (assetId, callback) {
+      backend.getManoeuvresOnExpiredLinks(assetId, function (ms) {
+        manoeuvres = ms;
+        manoeuvres = formatManoeuvres(manoeuvres);
+        callback();
+        eventbus.trigger('manoeuvresOnExpiredLinks:fetched');
+      });
+    };
+
     /**
      * Returns all road links with manoeuvres attached to their source road link. Used by ManoeuvresCollection.get and ManoeuvreLayer.
      *
@@ -711,7 +720,8 @@
       getManoeuvreData : getManoeuvreData,
       getDestinationRoadLinksBySource : getDestinationRoadLinksBySource,
       getIntermediateRoadLinksBySource : getIntermediateRoadLinksBySource,
-      getAddedManoeuvre: getAddedManoeuvre
+      getAddedManoeuvre: getAddedManoeuvre,
+      fetchManoeuvresOnExpiredLinks: fetchManoeuvresOnExpiredLinks
     };
   };
 })(this);

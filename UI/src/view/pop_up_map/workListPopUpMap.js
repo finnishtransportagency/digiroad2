@@ -17,12 +17,11 @@
 
 
             //TODO Use layers later for drawing selected manouver
-            var layers = {
-                road: roadLayer,
-                manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }),  new LinearSuggestionLabel() )
-            };
+            var manoeuvreLayer = new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }),  new LinearSuggestionLabel() );
 
             new PopUpMapView(map);
+            manoeuvreLayer.refreshWorkListView(item.assetId);
+            manoeuvreLayer.show(map);
 
             applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
             backend.getUserRoles();
