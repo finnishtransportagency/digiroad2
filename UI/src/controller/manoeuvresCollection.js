@@ -33,11 +33,28 @@
     };
 
     var fetchManoeuvresOnExpiredLinks = function (assetId, callback) {
-      backend.getManoeuvresOnExpiredLinks(assetId, function (ms) {
-        manoeuvres = ms;
-        manoeuvres = formatManoeuvres(manoeuvres);
-        callback();
-        eventbus.trigger('manoeuvresOnExpiredLinks:fetched');
+      backend.getManoeuvresOnExpiredLinks(assetId, function (err, data) {
+        if (err) {
+          console.error('Error fetching data:', err);
+          callback(err); // Call the callback with the error
+        } else {
+          console.log('Fetched data:', data);
+          var manoeuvres = formatManoeuvres(data); // Move this inside the callback
+          var linkIds = manoeuvres.flatMap(function (manoeuvre) {
+            return manoeuvre.linkIds;
+          });
+
+          roadCollection.fetchExpiredRoadLinksByLinkIds(linkIds, function (err, roadLinks) {
+            if (err) {
+              console.error('Error fetching road links:', err);
+              callback(err);  // Call the callback with the error
+            } else {
+              var piecewiseManoeuvres = combineRoadLinksWithManoeuvres(roadLinks, manoeuvres);
+              eventbus.trigger('manoeuvresOnExpiredLinks:fetched', {lon: result.lon, lat: result.lat}); // result.lon and result.lat need to be defined somewhere
+              callback(null, piecewiseManoeuvres); // Call the callback with the results
+            }
+          });
+        }
       });
     };
 

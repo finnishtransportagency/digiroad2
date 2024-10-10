@@ -9,6 +9,11 @@
             eventbus.trigger('map:initialized', map);
         }, this);
 
+        eventbus.on('manoeuvresOnExpiredLinks:fetched', function (lon, lat) {
+            map.getView().setCenter([lon, lat]);
+            map.getView().setZoom(8);
+        }, this);
+
         eventbus.on('coordinates:selected', function(position) {
             if (geometrycalculator.isInBounds(map.getProperties().extent, position.lon, position.lat)) {
                 map.getView().setCenter([position.lon, position.lat]);

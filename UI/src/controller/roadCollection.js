@@ -120,6 +120,19 @@
       },laneInfo);
     };
 
+    this.fetchExpiredRoadLinksByLinkIds = function (linkIds, callback) {
+      var linkIdsString = linkIds.join(',');
+      backend.getRoadLinkHistoryByLinkId(linkIdsString, function (err, data) {
+        if (err) {
+          console.error('Error fetching data:', err);
+          callback(err); // Call the callback with the error
+        } else {
+          console.log('Fetched data:', data);
+          callback(null, data); // Call the callback with the data
+        }
+      });
+    };
+
     this.fetchHistory = function (boundingBox,laneInfo) {
       backend.getHistoryRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinksHistory(), function(roadLink) {

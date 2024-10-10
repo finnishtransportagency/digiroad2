@@ -74,7 +74,7 @@
         trafficSignReadOnlyLayer.refreshView();
     };
 
-    var refreshWorkListView = function (assetId, draw) {
+    var refreshWorkListView = function (assetId) {
       manoeuvresCollection.fetchManoeuvresOnExpiredLinks(assetId, draw);
     };
 

@@ -63,11 +63,27 @@
       });
     });
 
-    this.getManoeuvresOnExpiredLinks = createCallbackRequestor(function(assetId) {
-      return validateBoundingBox(assetId,{
-        url: 'api/manoeuvreOnExpiredRoadLink?assetId=' + assetId
-      });
-    });
+
+    this.getManoeuvresOnExpiredLinks = _.throttle(function(assetId, callback) {
+      $.getJSON('api/manoeuvreOnExpiredRoadLink?assetId=' + assetId)
+          .done(function(data) {
+            callback(null, data);  // Return data via callback
+          })
+          .fail(function(error) {
+            callback(error);       // Handle error via callback
+          });
+    }, 1000);
+
+
+    this.getRoadLinkHistoryByLinkId = _.throttle(function(linkIds, callback) {
+      $.getJSON('api/roadlinks/history/' + linkIds)
+          .done(function(data) {
+            callback(null, data); // Return data via callback
+          })
+          .fail(function(error) {
+            callback(error); // Handle error via callback
+          });
+    }, 1000);
 
     this.updateManoeuvreDetails = function(details, success, failure) {
       $.ajax({
