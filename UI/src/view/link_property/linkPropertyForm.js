@@ -1,7 +1,6 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty, feedbackCollection) {
     var layer;
-    var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var authorizationPolicy = new LinkPropertyAuthorizationPolicy();
     var enumerations = new Enumerations();
     new FeedbackDataTool(feedbackCollection, 'linkProperty', authorizationPolicy);
@@ -75,6 +74,11 @@
         },
         container: '.container'
       };
+    };
+
+    var getLocalizedFunctionalClass = function(functionalClass) {
+      var localizedFunctionalClass = _.find(enumerations.functionalClasses, function(x) { return x.value === functionalClass; });
+      return localizedFunctionalClass && localizedFunctionalClass.value;
     };
 
     var getLocalizedAdministrativeClass = function(administrativeClass) {
@@ -331,7 +335,7 @@
         roadNameSms : linkProperty.roadNameSms || '',
         roadNumber : linkProperty.roadNumber || '',
         roadPartNumber : linkProperty.roadPartNumber || '',
-        localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
+        localizedFunctionalClass : getLocalizedFunctionalClass(linkProperty.functionalClass)|| 'Tuntematon',
         localizedAdministrativeClass : getLocalizedAdministrativeClass(linkProperty.administrativeClass)|| 'Tuntematon',
         localizedAdditionalInfoIds: getAdditionalInfo(parseInt(linkProperty.additionalInfo)) || '',
         localizedTrafficDirection : getLocalizedTrafficDirection(linkProperty.trafficDirection) || 'Tuntematon',
@@ -371,9 +375,9 @@
           return '<option value="' + trafficDirection.stringValue + '"' + selected + '>' + trafficDirection.text + '</option>';
         }).join('');
 
-        var functionalClassOptionTags = _.map(functionalClasses, function(value) {
-          var selected = value === linkProperty.functionalClass ? " selected" : "";
-          return '<option value="' + value + '"' + selected + '>' + value + '</option>';
+        var functionalClassOptionTags = _.map(enumerations.functionalClasses, function(functionalClass) {
+          var selected = functionalClass.value === linkProperty.functionalClass ? " selected" : "";
+          return '<option value="' + functionalClass.value + '"' + selected + '>' + functionalClass.value + '</option>';
         }).join('');
 
         var linkTypesOptionTags = _.map(enumerations.linkTypes, function(linkType) {

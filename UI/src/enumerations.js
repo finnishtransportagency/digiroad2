@@ -22,6 +22,18 @@
       Unknown: {value: 99, text: 'Tuntematon'}
     };
 
+    this.functionalClasses = {
+      1: {value: 1, text: 'Luokka 1'},
+      2: {value: 2, text: 'Luokka 2'},
+      3: {value: 3, text: 'Luokka 3'},
+      4: {value: 4, text: 'Luokka 4'},
+      5: {value: 5, text: 'Luokka 5'},
+      6: {value: 6, text: 'Luokka 6: Muu yksityistie'},
+      7: {value: 7, text: 'Luokka 7: Ajopolku'},
+      8: {value: 8, text: 'Luokka 8: Kävelyn ja pyöräilyn väylä'},
+      9: {value: 9, text: 'Luokka 9'}
+    };
+
     this.twoWayLaneLinkTypes = [
       this.linkTypes.SpecialTransportWithoutGate,
       this.linkTypes.SpecialTransportWithGate,
