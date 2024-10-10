@@ -122,16 +122,27 @@
 
     this.fetchExpiredRoadLinksByLinkIds = function (linkIds, callback) {
       var linkIdsString = linkIds.join(',');
-      backend.getRoadLinkHistoryByLinkId(linkIdsString, function (err, data) {
+
+      backend.getRoadLinkHistoryByLinkId(linkIdsString, function (err, fetchedRoadLinks) {
         if (err) {
           console.error('Error fetching data:', err);
           callback(err); // Call the callback with the error
         } else {
-          console.log('Fetched data:', data);
-          callback(null, data); // Call the callback with the data
+          console.log('Fetched data:', fetchedRoadLinks);
+
+          var fetchedRoadLinkModels = fetchedRoadLinks.map(function(roadLinkGroup) {
+            return roadLinkGroup.map(function(roadLink) {
+              return new RoadLinkModel(roadLink);
+            });
+          });
+
+          me.roadLinkGroups = fetchedRoadLinkModels;
+          eventbus.trigger('expiredRoadLinks:fetched');
+          callback(null, me.roadLinkGroups);
         }
       });
     };
+
 
     this.fetchHistory = function (boundingBox,laneInfo) {
       backend.getHistoryRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {

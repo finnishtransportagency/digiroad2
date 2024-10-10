@@ -49,10 +49,9 @@
               console.error('Error fetching road links:', err);
               callback(err);  // Call the callback with the error
             } else {
-              var piecewiseManoeuvres = combineRoadLinksWithManoeuvres(roadLinks, manoeuvres);
-              var pos = roadLinks[0][0].points[0];
+              var pos = roadLinks[0][0].getData().points[0];
               eventbus.trigger('manoeuvresOnExpiredLinks:fetched', pos); // result.lon and result.lat need to be defined somewhere
-              callback(null, piecewiseManoeuvres); // Call the callback with the results
+              callback(); // Call the callback with the results
             }
           });
         }

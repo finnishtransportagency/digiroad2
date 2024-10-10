@@ -23,7 +23,6 @@
             manoeuvreLayer.refreshWorkListView(item.assetId);
             manoeuvreLayer.show(map);
 
-            applicationModel.moveMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
             backend.getUserRoles();
             return map;
         };
