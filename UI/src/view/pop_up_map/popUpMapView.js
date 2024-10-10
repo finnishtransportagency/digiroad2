@@ -9,9 +9,9 @@
             eventbus.trigger('map:initialized', map);
         }, this);
 
-        eventbus.on('manoeuvresOnExpiredLinks:fetched', function (lon, lat) {
-            map.getView().setCenter([lon, lat]);
-            map.getView().setZoom(8);
+        eventbus.on('manoeuvresOnExpiredLinks:fetched', function (pos) {
+            map.getView().setCenter([pos.x, pos.y]);
+            map.getView().setZoom(12);
         }, this);
 
         eventbus.on('coordinates:selected', function(position) {

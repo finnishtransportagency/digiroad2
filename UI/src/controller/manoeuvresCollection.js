@@ -50,7 +50,8 @@
               callback(err);  // Call the callback with the error
             } else {
               var piecewiseManoeuvres = combineRoadLinksWithManoeuvres(roadLinks, manoeuvres);
-              eventbus.trigger('manoeuvresOnExpiredLinks:fetched', {lon: result.lon, lat: result.lat}); // result.lon and result.lat need to be defined somewhere
+              var pos = roadLinks[0][0].points[0];
+              eventbus.trigger('manoeuvresOnExpiredLinks:fetched', pos); // result.lon and result.lat need to be defined somewhere
               callback(null, piecewiseManoeuvres); // Call the callback with the results
             }
           });
