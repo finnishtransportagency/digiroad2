@@ -9,7 +9,8 @@
       new StyleRule().where('functionalClass').is(5).use({ stroke : { color: '#01b'}, fill : { color: '#01b'}, icon: { src: 'images/link-properties/arrow-drop-blue.svg'} }),
       new StyleRule().where('functionalClass').is(6).use({ stroke : { color: '#01b'}, fill : { color: '#01b'}, icon: { src: 'images/link-properties/arrow-drop-blue.svg'} }),
       new StyleRule().where('functionalClass').is(7).use({ stroke : { color: '#888'}, fill : { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg'} }),
-      new StyleRule().where('functionalClass').is(8).use({ stroke : { color: '#888'}, fill : { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg'} })
+      new StyleRule().where('functionalClass').is(8).use({ stroke : { color: '#888'}, fill : { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg'} }),
+      new StyleRule().where('functionalClass').is(9).use({ stroke : { color: '#1b0'},  fill : { color: '#1b0'}, icon: { src: 'images/link-properties/arrow-drop-green.svg' } }),
     ];
 
     var unknownFunctionalClassDefaultRules = [
