@@ -37,11 +37,14 @@ window.MunicipalitySituationPopup = function (models) {
     this.createCriticalAssetsVerificationInfoForm = function (verificationsInfo) {
         var sortAssets = function (values) {
             var assetOrdering = [
-                'Nopeusrajoitus',
-                'Joukkoliikenteen pysäkki',
-                'Kääntymisrajoitus',
                 'Ajoneuvokohtaiset rajoitukset',
-                'Suurin sallittu massa'
+                'Esterakennelma',
+                'Kääntymisrajoitus',
+                'Liikennemerkit',
+                'Nopeusrajoitus',
+                'Suurin sallittu korkeus',
+                'Suurin sallittu massa',
+                'VAK-rajoitus'
             ];
 
             return _.sortBy(values, function(property) {
@@ -50,7 +53,7 @@ window.MunicipalitySituationPopup = function (models) {
         };
 
         var verificationTableHeaderRow = function () {
-            return '<thead><th id="name">TIETOLAJI</th> <th id="date">TARKISTETTU</th> <th id="verifier">K-TUNNUS</th></thead>';
+            return '<thead><th id="name">TIETOLAJI</th> <th id="date">TARKISTETTU</th> <th id="verifier">TUNNUS</th></thead>';
         };
 
         var verificationTableContentRows = function (values) {
@@ -80,7 +83,7 @@ window.MunicipalitySituationPopup = function (models) {
 
     this.createLatestsAssetModificationsInfoForm = function (modificationsInfo) {
         var latestModificationTableHeaderRow = function () {
-            return '<thead><th id="verifier">K-TUNNUS</th> <th id="date">PVM</th> <th id="name">TIETOLAJI</th></thead>';
+            return '<thead><th id="verifier">TUNNUS</th> <th id="date">PVM</th> <th id="name">TIETOLAJI</th></thead>';
         };
 
         var latestModificationTableContentRows = function (values) {

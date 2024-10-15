@@ -116,10 +116,10 @@ class VerificationServiceSpec extends FunSuite with Matchers {
            values ($id+3, 235, 190, current_timestamp, 'testuser')""".execute
 
       val verificationInfo = ServiceWithDao.getCriticalAssetTypesByMunicipality(235)
-      verificationInfo should have size 5
-      verificationInfo.filter(info => Set(10,20,30,190,380).contains(info.assetTypeCode)) should have size 5
-      verificationInfo.filter(_.municipalityCode == 235) should have size 5
-      verificationInfo.filter(_.verifiedBy.contains("testuser")) should have size 4
+      verificationInfo should have size 8
+      verificationInfo.filter(info => Set(10,20,30,190,380).contains(info.assetTypeCode)) should have size 4
+      verificationInfo.filter(_.municipalityCode == 235) should have size 8
+      verificationInfo.filter(_.verifiedBy.contains("testuser")) should have size 3
     }
   }
 
