@@ -839,28 +839,58 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   @tailrec
   private def slicer(assets: Seq[PersistedLinearAsset], fitIntoRoadLinkPrevious: Seq[PersistedLinearAsset], change: RoadLinkChange): Seq[PersistedLinearAsset] = {
+
     def slice(change: RoadLinkChange, asset: PersistedLinearAsset): Seq[PersistedLinearAsset] = {
+
+      def sliceFromBeginning(change: RoadLinkChange, asset: PersistedLinearAsset, selectInfo: ReplaceInfo): Seq[PersistedLinearAsset] = {
+        val assetRemainingOnLink = asset.copy(startMeasure = selectInfo.oldToMValue.getOrElse(0.0), endMeasure = change.oldLink.head.linkLength) // Voimaan jäävä assetin osa alkaa splitatun linkin ensimmäisen osan loppupisteestä ja päättyy alkuperäisen linkin loppupisteeseen.
+        val oldId = if (asset.id != 0) asset.id else asset.oldId
+        val assetRemovedFromLink = asset.copy(id = 0, startMeasure = selectInfo.oldFromMValue.getOrElse(0.0), endMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId) // Splitin jälkeen assetin osa, joka jää lakkautuvalle linkin osalle alkaa splitatun linkin ensimmäisen osan alkupisteestä (samalla alkuperäisen linkin alkupiste) ja päättyy splitatun linkin ensimmäisen osan loppupisteeseen.
+        val shortedLength = assetRemainingOnLink.endMeasure - assetRemainingOnLink.startMeasure
+        val newPartLength = assetRemovedFromLink.endMeasure - assetRemovedFromLink.startMeasure
+
+        val shortedFilter = if (shortedLength > 0) Option(assetRemainingOnLink) else None
+
+        val newPartFilter = if (newPartLength > 0) Option(assetRemovedFromLink) else None
+
+        logger.debug(s"asset old part start ${assetRemainingOnLink.startMeasure}, asset end ${assetRemainingOnLink.endMeasure}")
+        logger.debug(s"asset new part start ${assetRemovedFromLink.startMeasure}, asset end ${assetRemovedFromLink.endMeasure}")
+
+        (shortedFilter, newPartFilter) match {
+          case (None, None) => Seq()
+          case (Some(shortedSome), None) => Seq(shortedSome)
+          case (None, Some(newParSome)) => Seq(newParSome)
+          case (Some(shortedSome), Some(newPartSome)) => Seq(shortedSome, newPartSome)
+        }
+      }
+
+      def sliceFromEnd(change: RoadLinkChange, asset: PersistedLinearAsset, selectInfo: ReplaceInfo): Seq[PersistedLinearAsset] = {
+        val assetRemainingOnLink = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
+        val oldId = if (asset.id != 0) asset.id else asset.oldId
+        val assetRemovedFromLink = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId)
+        val shortedLength = assetRemainingOnLink.endMeasure - assetRemainingOnLink.startMeasure
+        val newPartLength = assetRemovedFromLink.endMeasure - assetRemovedFromLink.startMeasure
+
+        val shortedFilter = if (shortedLength > 0) Option(assetRemainingOnLink) else None
+
+        val newPartFilter = if (newPartLength > 0) Option(assetRemovedFromLink) else None
+
+        logger.debug(s"asset old part start ${assetRemainingOnLink.startMeasure}, asset end ${assetRemainingOnLink.endMeasure}")
+        logger.debug(s"asset new part start ${assetRemovedFromLink.startMeasure}, asset end ${assetRemovedFromLink.endMeasure}")
+
+        (shortedFilter, newPartFilter) match {
+          case (None, None) => Seq()
+          case (Some(shortedSome), None) => Seq(shortedSome)
+          case (None, Some(newParSome)) => Seq(newParSome)
+          case (Some(shortedSome), Some(newPartSome)) => Seq(shortedSome, newPartSome)
+        }
+      }
+
       val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
-
-      val shorted = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
-      val oldId = if(asset.id != 0) asset.id else asset.oldId
-      val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId)
-
-      val shortedLength = shorted.endMeasure - shorted.startMeasure
-      val newPartLength = newPart.endMeasure - newPart.startMeasure
-
-      val shortedFilter = if (shortedLength > 0) Option(shorted) else None
-
-      val newPartFilter = if (newPartLength > 0) Option(newPart) else None
-
-      logger.debug(s"asset old part start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
-      logger.debug(s"asset new part start ${newPart.startMeasure}, asset end ${newPart.endMeasure}")
-
-      (shortedFilter, newPartFilter) match {
-        case (None, None) => Seq()
-        case (Some(shortedSome), None) => Seq(shortedSome)
-        case (None, Some(newParSome)) => Seq(newParSome)
-        case (Some(shortedSome), Some(newPartSome)) => Seq(shortedSome, newPartSome)
+      if (selectInfo.oldFromMValue == Some(0.0) && selectInfo.newFromMValue == None) {
+        sliceFromBeginning(change, asset, selectInfo)
+      } else {
+        sliceFromEnd(change, asset, selectInfo)
       }
     }
 

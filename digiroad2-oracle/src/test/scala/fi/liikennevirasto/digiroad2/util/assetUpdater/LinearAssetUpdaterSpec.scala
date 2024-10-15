@@ -1949,7 +1949,11 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       println(expiredLink)
       println(expiredAssets)
 
+      assetsOnNewLink.head.endMeasure should be(newRoadLink.length)
       assetsOnNewLink.size should be(1)
+      assetsOnNewLink.head.id should be(id)
+      assetsOnOldLink.size should be(0)
+      assetAfter.head.linkId should be(newLinkID)
 
     }
   }
@@ -1970,6 +1974,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
+      newRoadLink.length should be (336.364)
 
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
 
@@ -1978,17 +1983,18 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val assetAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
       val expiredLink = service.fetchExistingAssetsByLinksIds(SpeedLimitAsset.typeId, Seq(oldRoadLink), Seq(oldLinkID), false)
 
-      // Alla olevalla yritetään ajaa lakkautuneiden assettien hakuprosessi ja sitten hakea kannasta assets_on_expired_road_links taulun sisältö, mutta tämä ei toimi näin
-      ExpiredRoadLinkHandlingProcess.process(false)
-      val expiredAssets = expiredAssetsDAO.fetchWorkListAssets()
+      println("assets on expired link: " + expiredLink)
+      println("AssetsOnOldLink: " + assetsOnOldLink)
+      println("AssetsOnNewLink: " + assetsOnNewLink)
+      println("AssetsAfter: " + assetAfter)
 
-      println(expiredLink)
-      println(expiredAssets)
-      println(assetsOnOldLink)
-      println(assetsOnNewLink)
-      println(assetAfter)
 
+      assetsOnNewLink.head.endMeasure should be(newRoadLink.length)
       assetsOnNewLink.size should be(1)
+      assetsOnNewLink.head.id should be(id)
+      assetsOnOldLink.size should be(0)
+      assetAfter.head.linkId should be(newLinkID)
+
     }
   }
 
