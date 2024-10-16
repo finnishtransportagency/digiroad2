@@ -564,7 +564,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info("Starting to save changeSets")
     logChangeSetSizes(changedSet)
     LogUtils.time(logger, s"Saving changeSets took: ") {
-      println("Tallennetaan: " + changedSet)
       updateChangeSet(changedSet)
     }
     logger.info("Starting to save generated")
@@ -819,9 +818,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     def checkForExpire(splits: Seq[OperationStepSplit]): Boolean = {
       val newLinkIds = splits.map(_.newLinkId)
       val someRoadLinksFound = onlyNeededNewRoadLinks.map(_.linkId).exists(newLinkIds.contains)
-      val checkForExpire = newLinkIds.forall(_ == "") || !someRoadLinksFound // TODO: Tässä tarkastetaan onko KAIKKI newLinkIDt tyhjiä, asetetaan lakkautettavaksi (Pitäisikö yhden tyhjän uuden linkin riittää)
-      println("check for expire: " + checkForExpire)
-      checkForExpire
+      newLinkIds.forall(_ == "") || !someRoadLinksFound
     }
 
     val relevantAssets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
