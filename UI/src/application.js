@@ -3,8 +3,8 @@
     var assetTypeLayerName = 'massTransitStop';
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
-    var roadCollection = new RoadCollection(backend);
-    var verificationCollection = new AssetsVerificationCollection(backend);
+    window.roadCollection = new RoadCollection(backend);
+    window.verificationCollection = new AssetsVerificationCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend, verificationCollection);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
@@ -13,7 +13,7 @@
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection, verificationCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
-    var assetConfiguration = new AssetTypeConfiguration();
+    window.assetConfiguration = new AssetTypeConfiguration();
     var enabledExperimentalAssets = [];
     var enabledLinearAssetSpecs = assetConfiguration.linearAssetsConfig.concat(enabledExperimentalAssets);
     var authorizationPolicy = new AuthorizationPolicy();
@@ -22,7 +22,7 @@
     var feedbackCollection = new FeedbackModel(backend, assetConfiguration);
     new FeedbackApplicationTool(authorizationPolicy, feedbackCollection);
 
-    var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
+    window.linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec);
       var selectedLinearAsset = _.isUndefined(spec.selected) ? SelectedLinearAssetFactory.construct(backend, collection, spec) : new spec.selected(backend, collection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.isSeparable);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
@@ -33,7 +33,7 @@
       });
     });
 
-    var pointAssets = _.map(assetConfiguration.pointAssetsConfig, function(spec) {
+    window.pointAssets = _.map(assetConfiguration.pointAssetsConfig, function(spec) {
       var rCollection = spec.roadCollection ? new spec.roadCollection(backend) :  roadCollection;
       var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName,  rCollection);
@@ -47,7 +47,7 @@
     });
 
     var selectedMassTransitStopModel = SelectedMassTransitStop.initialize(backend, roadCollection);
-    var models = {
+    window.models = {
       roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit,
