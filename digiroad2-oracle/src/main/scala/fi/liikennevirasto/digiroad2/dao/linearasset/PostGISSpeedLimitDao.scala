@@ -246,7 +246,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     }.toSeq
 
     val emptyRoadLinks = emptyRoadLinkRows.map(rl => {
-      RoadLinkForUnknownGeneration(rl.linkId, rl.roadLinkLength, rl.geometry, rl.trafficDirection, rl.administrativeClass, rl.linkSource)
+      RoadLinkForUnknownGeneration(rl.linkId, rl.municipalityCode, rl.constructionType, rl.roadLinkLength, rl.geometry, rl.trafficDirection, rl.administrativeClass, rl.linkSource)
     })
     (speedLimitAssets, emptyRoadLinks)
   }
