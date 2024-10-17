@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Elastic Container Repository template for Digiroad road link change handler production environment
+
+Parameters:
+  DevAdminAccountArn:
+    Description: ARN of dev admin account
+    Type: String
+  CodeBuildServiceRoleArn:
+    Description: ARN of dev account codebuild service role that pushes images to ECR.
+    Type: String
+
+Resources:
+  ECRDigiroad:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    Properties:
+      RepositoryName: digiroad2-road-link-change-lambda
+      ImageScanningConfiguration:
+        ScanOnPush: TRUE
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowCrossAccountPush
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Ref DevAdminAccountArn
+                - !Ref CodeBuildServiceRoleArn
+            Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:CompleteLayerUpload
+              - ecr:InitiateLayerUpload
+              - ecr:PutImage
+              - ecr:UploadLayerPart
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Retain 10 latest images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 10
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
+      Tags:
+        - Key: Name
+          Value: !Sub digiroad2-road-link-change-lambda-prod-ecr-repo

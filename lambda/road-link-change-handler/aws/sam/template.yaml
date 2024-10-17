@@ -7,17 +7,25 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Description: Lambda for fetching road link changes, saving them and generating change sets
-      MemorySize: 128
-      Timeout: 30
+      MemorySize: 10240
+      Timeout: 900
       PackageType: Image
       ImageConfig:
         Command:
           - index.handler
       Environment:
         Variables:
-          CHANGES_SINCE: ""
-          CHANGES_UNTIL: ""
           CHANGE_BUCKET: ""
+          VKM_API_URL: ""
+          VKM_API_KEY: ""
+          KGV_API_URL: ""
+          KGV_API_KEY: ""
+          PG_HOST: ""
+          PG_PORT: ""
+          PG_DATABASE: ""
+          PG_USER: ""
+          PG_PW: ""
+          BATCH_SIZE: ""
     Metadata:
       DockerTag: nodejs18.x-v1
       DockerContext: ../../

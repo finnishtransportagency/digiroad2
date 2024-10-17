@@ -5,7 +5,7 @@
   },
   {
     "ParameterKey": "Environment",
-    "ParameterValue": "dev"
+    "ParameterValue": "prod"
   },
   {
     "ParameterKey": "OrganizationPrefix",
@@ -13,7 +13,7 @@
   },
   {
     "ParameterKey": "ECRRepository",
-    "ParameterValue": "dev-digiroad2-road-link-change-lambda"
+    "ParameterValue": "digiroad2-road-link-change-lambda"
   },
   {
     "ParameterKey": "ECRImageTag",
@@ -21,23 +21,23 @@
   },
   {
     "ParameterKey": "NetworkStackName",
-    "ParameterValue": "Digiroad-OTH-kehitys"
+    "ParameterValue": "Digiroad-prod"
   },
   {
     "ParameterKey": "BatchJobRoleArn",
-    "ParameterValue": "arn:aws:iam::475079312496:role/DEV-digiroad2-JobRole"
+    "ParameterValue": "arn:aws:iam::920408837790:role/PROD-digiroad2-JobRole"
   },
   {
     "ParameterKey": "VkmApi",
-    "ParameterValue": "https://paikkatietodev.testivaylapilvi.fi/viitekehysmuunnin/"
+    "ParameterValue": "https://api.vaylapilvi.fi/viitekehysmuunnin/"
   },
   {
     "ParameterKey": "VkmApiKeySSM",
-    "ParameterValue": "/apikey/dev.vkm.apikey"
+    "ParameterValue": "/prod/apikey/viitekehysmuunnin"
   },
   {
     "ParameterKey": "KgvApi",
-    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/keskilinjavarasto/ogc/features/collections/"
+    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/"
   },
   {
     "ParameterKey": "KgvApiKeySSM",
@@ -45,7 +45,7 @@
   },
   {
     "ParameterKey": "PgHost",
-    "ParameterValue": "ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com"
+    "ParameterValue": "rdspg13prod.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com"
   },
   {
     "ParameterKey": "PgPort",
@@ -53,10 +53,10 @@
   },
   {
     "ParameterKey": "PgDatabase",
-    "ParameterValue": "digiroad2"
+    "ParameterValue": "digiroad"
   },
   {
     "ParameterKey": "PgUser",
-    "ParameterValue": "digiroad2dbuser"
+    "ParameterValue": "digiroad"
   }
 ]
