@@ -296,7 +296,7 @@ sealed trait PavementClass {
 }
 case class ConversionIntoPavementClassException(msg:String) extends Exception(msg) 
 object PavementClass {
-  val values = Set(Asphalt, Cobblestone, UnboundWearLayer, OtherPavementClasses, Unknown)
+  val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt, GravelSurface, GravelWearLayer, OtherCoatings, Unknown)
 
   def apply(value: Int): PavementClass = {
     values.find(_.value == value).getOrElse(Unknown)
@@ -336,10 +336,13 @@ object PavementClass {
     }
   }
 
-  case object Asphalt extends PavementClass { def value = 1; def typeDescription = "Asphalt";}
+  case object CementConcrete extends PavementClass { def value = 1; def typeDescription = "Cement Concrete";}
   case object Cobblestone extends PavementClass { def value = 2; def typeDescription = "Cobblestone";}
-  case object UnboundWearLayer extends PavementClass { def value = 3; def typeDescription = "Unbound Wear Layer";}
-  case object OtherPavementClasses extends PavementClass { def value = 4; def typeDescription = "Other Pavement Classes";}
+  case object HardAsphalt extends PavementClass { def value = 10; def typeDescription = "Hard Asphalt";}
+  case object SoftAsphalt extends PavementClass { def value = 20; def typeDescription = "Soft Asphalt";}
+  case object GravelSurface extends PavementClass { def value = 30; def typeDescription = "Gravel Surface";}
+  case object GravelWearLayer extends PavementClass { def value = 40; def typeDescription = "Gravel Wear Layer";}
+  case object OtherCoatings extends PavementClass { def value = 50; def typeDescription = "Other Coatings";}
   case object Unknown extends PavementClass { def value = 99;  def typeDescription = "Unknown";}
 }
 
