@@ -401,7 +401,7 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
     val insert= "insert into manouvre_samuutus_work_list (assetId, linkIds, exception_types, validity_periods, additional_info, created_date) values ((?), (?), (?), (?), (?), current_timestamp) ON CONFLICT (assetId) do nothing "
     MassQuery.executeBatch(insert) { p =>
       manoeuvresToInsert.foreach(manoeuvre => {
-        val linkIds = manoeuvre.elements.flatMap(elem => Seq(elem.sourceLinkId, elem.destLinkId)).toSet
+        val linkIds = manoeuvre.elements.flatMap(elem => Seq(elem.sourceLinkId, elem.destLinkId)).filterNot(_ == null).toSet
         val exceptionTypesArray = p.getConnection.createArrayOf("INTEGER", manoeuvre.exceptions.map(_.asInstanceOf[AnyRef]).toArray)
         val validityPeriodsStrings = manoeuvre.validityPeriods.map(period => s"${period.days.value}-${period.startHour}-${period.endHour}-${period.startMinute}-${period.endMinute}")
         val validityPeriodsArray = p.getConnection.createArrayOf("TEXT", validityPeriodsStrings.toArray.map(_.asInstanceOf[AnyRef]))
