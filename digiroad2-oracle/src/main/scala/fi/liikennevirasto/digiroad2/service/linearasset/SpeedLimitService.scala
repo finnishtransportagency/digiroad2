@@ -60,11 +60,15 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def getSpeedLimitsByBbox(bbox: BoundingRectangle): Seq[Seq[PieceWiseLinearAsset]] = {
-    val (speedLimits, emptyRoadLinks) = withDynTransaction {
+    val (speedLimits, allRoadLinks) = withDynTransaction {
       speedLimitDao.fetchByBBox(bbox)
     }
-    val unknownSpeedLimits = emptyRoadLinkToUnknownSpeedLimit(emptyRoadLinks)
-    LinearAssetPartitioner.partition(speedLimits ++ unknownSpeedLimits)
+
+    val roadLinksFT = allRoadLinks.map(rl => RoadLinkForFillTopology(rl.linkId, rl.length, rl.trafficDirection,
+      rl.administrativeClass, rl.linkSource, UnknownLinkType, rl.constructionType, rl.geometry, rl.municipalityCode))
+    val speedLimitsWithUnknowns = assetFiller.generateUnknowns(roadLinksFT, speedLimits.groupBy(_.linkId), SpeedLimitAsset.typeId)._1
+
+    LinearAssetPartitioner.partition(speedLimitsWithUnknowns)
   }
 
   def emptyRoadLinkToUnknownSpeedLimit(emptyRoadLinks: Seq[RoadLinkForUnknownGeneration]): Seq[PieceWiseLinearAsset] = {
