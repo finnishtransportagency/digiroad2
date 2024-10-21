@@ -839,37 +839,24 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     def slice(change: RoadLinkChange, asset: PersistedLinearAsset): Seq[PersistedLinearAsset] = {
 
-      def sliceFromBeginning(change: RoadLinkChange, asset: PersistedLinearAsset, selectInfo: ReplaceInfo): Seq[PersistedLinearAsset] = {
-        val assetRemainingOnLink = asset.copy(startMeasure = selectInfo.oldToMValue.getOrElse(0.0), endMeasure = change.oldLink.head.linkLength) // Voimaan jäävä assetin osa alkaa splitatun linkin ensimmäisen osan loppupisteestä ja päättyy alkuperäisen linkin loppupisteeseen.
-        val oldId = if (asset.id != 0) asset.id else asset.oldId
-        val assetRemovedFromLink = asset.copy(id = 0, startMeasure = selectInfo.oldFromMValue.getOrElse(0.0), endMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId) // Splitin jälkeen assetin osa, joka jää lakkautuvalle linkin osalle alkaa splitatun linkin ensimmäisen osan alkupisteestä (samalla alkuperäisen linkin alkupiste) ja päättyy splitatun linkin ensimmäisen osan loppupisteeseen.
-        val shortedLength = assetRemainingOnLink.endMeasure - assetRemainingOnLink.startMeasure
-        val newPartLength = assetRemovedFromLink.endMeasure - assetRemovedFromLink.startMeasure
-
-        val shortedFilter = if (shortedLength > 0) Option(assetRemainingOnLink) else None
-
-        val newPartFilter = if (newPartLength > 0) Option(assetRemovedFromLink) else None
-
-        logger.debug(s"asset old part start ${assetRemainingOnLink.startMeasure}, asset end ${assetRemainingOnLink.endMeasure}")
-        logger.debug(s"asset new part start ${assetRemovedFromLink.startMeasure}, asset end ${assetRemovedFromLink.endMeasure}")
-
-        (shortedFilter, newPartFilter) match {
-          case (None, None) => Seq()
-          case (Some(shortedSome), None) => Seq(shortedSome)
-          case (None, Some(newParSome)) => Seq(newParSome)
-          case (Some(shortedSome), Some(newPartSome)) => Seq(shortedSome, newPartSome)
+      def sliceAsset(change: RoadLinkChange, asset: PersistedLinearAsset, selectInfo: ReplaceInfo, fromBeginning: Boolean): Seq[PersistedLinearAsset] = {
+        val assetRemainingOnLink = if (fromBeginning) {
+          asset.copy(startMeasure = selectInfo.oldToMValue.getOrElse(0.0), endMeasure = change.oldLink.head.linkLength)
+        } else {
+          asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
         }
-      }
 
-      def sliceFromEnd(change: RoadLinkChange, asset: PersistedLinearAsset, selectInfo: ReplaceInfo): Seq[PersistedLinearAsset] = {
-        val assetRemainingOnLink = asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
         val oldId = if (asset.id != 0) asset.id else asset.oldId
-        val assetRemovedFromLink = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId)
+        val assetRemovedFromLink = if (fromBeginning) {
+          asset.copy(id = 0, startMeasure = selectInfo.oldFromMValue.getOrElse(0.0), endMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId)
+        } else {
+          asset.copy(id = 0, startMeasure = selectInfo.oldToMValue.getOrElse(0.0), oldId = oldId)
+        }
+
         val shortedLength = assetRemainingOnLink.endMeasure - assetRemainingOnLink.startMeasure
         val newPartLength = assetRemovedFromLink.endMeasure - assetRemovedFromLink.startMeasure
 
         val shortedFilter = if (shortedLength > 0) Option(assetRemainingOnLink) else None
-
         val newPartFilter = if (newPartLength > 0) Option(assetRemovedFromLink) else None
 
         logger.debug(s"asset old part start ${assetRemainingOnLink.startMeasure}, asset end ${assetRemainingOnLink.endMeasure}")
@@ -878,16 +865,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         (shortedFilter, newPartFilter) match {
           case (None, None) => Seq()
           case (Some(shortedSome), None) => Seq(shortedSome)
-          case (None, Some(newParSome)) => Seq(newParSome)
+          case (None, Some(newPartSome)) => Seq(newPartSome)
           case (Some(shortedSome), Some(newPartSome)) => Seq(shortedSome, newPartSome)
         }
       }
 
       val selectInfo = sortAndFind(change, asset, fallInWhenSlicing).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
-      if (selectInfo.oldFromMValue == Some(0.0) && selectInfo.newFromMValue == None) {
-        sliceFromBeginning(change, asset, selectInfo)
+      if (selectInfo.oldFromMValue == Some(0.0) && selectInfo.newFromMValue.isEmpty) {
+        sliceAsset(change, asset, selectInfo, fromBeginning = true)
       } else {
-        sliceFromEnd(change, asset, selectInfo)
+        sliceAsset(change, asset, selectInfo, fromBeginning = false)
       }
     }
 
@@ -935,7 +922,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private def projectByUsingReplaceInfo(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset) = {
     val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
-    val newId = info.newLinkId.getOrElse("") // if (info.newLinkId.nonEmpty) info.newLinkId.getOrElse("") else info.oldLinkId.getOrElse("")//TODO: Voisi ratkaista expiroitaviin assetteihin lajiteltavien assettin ongelman. Hae oldId jos newId:Tä ei löydy (varmista myös M-arvojen perusteella)
+    val newId = info.newLinkId.getOrElse("")
     val maybeLink = change.newLinks.find(_.linkId == newId)
     val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
     val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = newId),
