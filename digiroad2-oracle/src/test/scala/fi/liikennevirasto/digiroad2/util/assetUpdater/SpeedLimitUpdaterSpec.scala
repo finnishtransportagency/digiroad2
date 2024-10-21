@@ -419,4 +419,34 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       unknownsAfter.head.linkId should be(newCarRoad)
     }
   }
+
+  test("Split. Given a Road Link that is split into 2 new Links where there is no equivalence in the beginning; when the beginning of the link is expired; then the Linear Asset (SpeedLimit) on the expired Link should be moved to new link and no expired asset should have been created or expired and the length should be changed according to the new link.") {
+    val oldLinkID = "cc2bc598-8527-4600-861f-4c70eaacae61:1"
+    val newLinkID = "46b888db-6fcd-4e8c-afbd-6532023a1759:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty, false)).thenReturn(Seq.empty[RoadLink])
+
+      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, 339.277), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface)
+
+      val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+
+      val assetsOnOldLink = speedLimitService.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(oldLinkID), false)
+      val assetsOnNewLink = speedLimitService.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLinkID), false)
+
+      assetsOnOldLink.size should be(0)
+
+      assetsOnNewLink.size should be(1)
+      assetsOnNewLink.head.endMeasure should be(newRoadLink.length)
+    }
+  }
 }
