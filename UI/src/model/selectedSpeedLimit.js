@@ -93,7 +93,7 @@
       eventbus.trigger('speedLimit:saving');
       var payloadContents = function() {
         if (self.isUnknown()) {
-          return { newLimits: _.map(selection, function(s) { return _.pick(s, 'linkId', 'startMeasure', 'endMeasure'); }) };
+          return { newLimits: _.map(selection, function(s) { return _.pick(s, 'linkId', 'startMeasure', 'endMeasure', 'sideCode'); }) };
         } else {
           return { ids: _.map(selection, 'id') };
         }
