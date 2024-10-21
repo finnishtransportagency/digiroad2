@@ -1899,15 +1899,15 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
-      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(70.0, 75.0), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(50.0, 75.0), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id = service.createWithoutTransaction(PavedRoad.typeId, oldLinkID, NumericValue(1), SideCode.BothDirections.value, Measures(70.0, 75.0), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkID, NumericValue(1), SideCode.BothDirections.value, Measures(50.0, 75.0), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsBefore = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      TestLinearAssetUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
       assetsAfter.size should be(1)
       assetsAfter.head.linkId should be(oldLinkID)
       assetsAfter.head.expired should be(true)
@@ -1923,18 +1923,18 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
-      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 79.405), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id = service.createWithoutTransaction(PavedRoad.typeId, oldLinkID, NumericValue(0), SideCode.BothDirections.value, Measures(0.0, 79.405), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
 
-      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsBefore = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      TestLinearAssetUpdater.updateByRoadLinks(PavedRoad.typeId, changes)
 
-      val assetsOnOldLink = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(oldLinkID), false)
-      val assetsOnNewLink = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLinkID), false)
-      val assetAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsOnOldLink = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(oldLinkID), false)
+      val assetsOnNewLink = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkID), false)
+      val assetAfter = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id), false)
 
       assetsOnNewLink.head.endMeasure should be(newRoadLink.length)
       assetsOnNewLink.size should be(1)
@@ -1953,17 +1953,17 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
-      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(0.0, 339.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkID, NumericValue(1), SideCode.BothDirections.value, Measures(0.0, 339.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, changes)
 
-      val assetsOnOldLink = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(oldLinkID), false)
-      val assetsOnNewLink = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLinkID), false)
-      val assetAfter = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      val assetsOnOldLink = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(oldLinkID), false)
+      val assetsOnNewLink = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(newLinkID), false)
+      val assetAfter = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id), false)
 
       assetsOnNewLink.head.endMeasure should be(newRoadLink.length)
       assetsOnNewLink.size should be(1)
