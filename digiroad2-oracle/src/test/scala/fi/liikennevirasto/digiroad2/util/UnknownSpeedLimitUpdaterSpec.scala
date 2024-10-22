@@ -56,7 +56,14 @@ class UnknownSpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val roadExpiringSoon = RoadLink(linkIds(7), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)), constructionType = ExpiringSoon)
     val tractorRoad = RoadLink(linkIds(8), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkIds(0))).thenReturn(Some(RoadLinkFetched(linkIds(0), municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)))
+    val roadLinkFetched = RoadLinkFetched(linkIds(0), municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)
+    val roadLink = RoadLink(linkId = roadLinkFetched.linkId, geometry = roadLinkFetched.geometry, length = roadLinkFetched.length,
+      administrativeClass = roadLinkFetched.administrativeClass, functionalClass = FunctionalClass3.value,
+      trafficDirection = roadLinkFetched.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+      modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched.constructionType, linkSource = roadLinkFetched.linkSource)
+
+    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkIds(0))).thenReturn(Some(roadLinkFetched))
+    when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
     when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(linkIds.toSet)).thenReturn(Seq(carRoad1, carRoad2, walkingAndCycling, specialTransPort, privateRoad, plannedRoad, roadExpiringSoon, tractorRoad))
     when(mockRoadLinkDAO.fetchExpiredByLinkIds(linkIds.toSet)).thenReturn(Seq(expiredRoad))
 
@@ -76,15 +83,36 @@ class UnknownSpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
     val municipalityCode = 235
 
-    val roadLink1 = RoadLinkFetched(linkId1, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
-    val roadLink2 = RoadLinkFetched(linkId2, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
-    val roadLink3 = RoadLinkFetched(linkId3, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinkFetched1 = RoadLinkFetched(linkId1, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinkFetched2 = RoadLinkFetched(linkId2, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinkFetched3 = RoadLinkFetched(linkId3, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
 
-    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1)).thenReturn(Some(roadLink1))
-    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId2)).thenReturn(Some(roadLink2))
-    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId3)).thenReturn(Some(roadLink3))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId2))).thenReturn(Seq(toRoadLink(roadLink2)))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId1, linkId3))).thenReturn(Seq(toRoadLink(roadLink1), toRoadLink(roadLink3)))
+    val roadLink1 = RoadLink(linkId = roadLinkFetched1.linkId, geometry = roadLinkFetched1.geometry, length = roadLinkFetched1.length,
+      administrativeClass = roadLinkFetched1.administrativeClass, functionalClass = FunctionalClass3.value,
+      trafficDirection = roadLinkFetched1.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+      modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched1.constructionType, linkSource = roadLinkFetched1.linkSource)
+
+    val roadLink2 = RoadLink(linkId = roadLinkFetched2.linkId, geometry = roadLinkFetched2.geometry, length = roadLinkFetched2.length,
+      administrativeClass = roadLinkFetched2.administrativeClass, functionalClass = FunctionalClass3.value,
+      trafficDirection = roadLinkFetched2.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+      modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched2.constructionType, linkSource = roadLinkFetched2.linkSource)
+
+
+    val roadLink3 = RoadLink(linkId = roadLinkFetched3.linkId, geometry = roadLinkFetched3.geometry, length = roadLinkFetched3.length,
+      administrativeClass = roadLinkFetched3.administrativeClass, functionalClass = FunctionalClass3.value,
+      trafficDirection = roadLinkFetched3.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+      modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched3.constructionType, linkSource = roadLinkFetched3.linkSource)
+
+
+    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1)).thenReturn(Some(roadLinkFetched1))
+    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId2)).thenReturn(Some(roadLinkFetched2))
+    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId3)).thenReturn(Some(roadLinkFetched3))
+    when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched1))).thenReturn(Seq(roadLink1))
+    when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched2))).thenReturn(Seq(roadLink2))
+    when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched3))).thenReturn(Seq(roadLink3))
+
+    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId2))).thenReturn(Seq(toRoadLink(roadLinkFetched2)))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId1, linkId3))).thenReturn(Seq(toRoadLink(roadLinkFetched1), toRoadLink(roadLinkFetched3)))
 
     runWithRollback {
       testUnknownSpeedLimitUpdater.dao.persistUnknownSpeedLimits(Seq(UnknownSpeedLimit(linkId1, 49, State), UnknownSpeedLimit(linkId2, municipalityCode, State), UnknownSpeedLimit(linkId3, 49, Municipality)))
@@ -121,8 +149,16 @@ class UnknownSpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val roadExpiringSoon = RoadLink(linkIds(6), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 1, BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)), constructionType = ExpiringSoon)
     val tractorRoad = RoadLink(linkIds(7), Seq(Point(0.0, 0.0), Point(8.0, 0.0)), 8.0, State, 8, BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkIds(0))).thenReturn(Some(RoadLinkFetched(linkIds(0), municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)))
+    val roadLinkFetched = RoadLinkFetched(linkIds(0), municipalityCode, Seq(Point(0.0, 0.0), Point(8.0, 0.0)), State, TrafficDirection.BothDirections, FeatureClass.CarRoad_IIIa)
+    val roadLink = RoadLink(linkId = roadLinkFetched.linkId, geometry = roadLinkFetched.geometry, length = roadLinkFetched.length,
+      administrativeClass = roadLinkFetched.administrativeClass, functionalClass = FunctionalClass3.value,
+      trafficDirection = roadLinkFetched.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+      modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched.constructionType, linkSource = roadLinkFetched.linkSource)
+
+
+    when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkIds(0))).thenReturn(Some(roadLinkFetched))
     when(mockRoadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipalityCode)).thenReturn(Seq(carRoad1, carRoad2, walkingAndCycling, specialTransPort, privateRoad, plannedRoad, roadExpiringSoon, tractorRoad))
+    when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
 
     runWithRollback {
       testUnknownSpeedLimitUpdater.speedLimitService.createWithoutTransaction(Seq(NewLimit(linkIds(0), 0.0, 8.0)), SpeedLimitValue(100), "test", SideCode.BothDirections)

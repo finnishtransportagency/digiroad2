@@ -88,9 +88,16 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
   test("speed limit creation fails if speed limit is already defined on link segment") {
     runWithRollback {
       val linkId = LinkIdGenerator.generateRandom()
-      val roadLink = RoadLinkFetched(linkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
-      val dao = daoWithRoadLinks(List(roadLink))
+      val roadLinkFetched = RoadLinkFetched(linkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = RoadLink(linkId = roadLinkFetched.linkId, geometry = roadLinkFetched.geometry, length = roadLinkFetched.length,
+        administrativeClass = roadLinkFetched.administrativeClass, functionalClass = FunctionalClass3.value,
+        trafficDirection = roadLinkFetched.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+        modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched.constructionType, linkSource = roadLinkFetched.linkSource)
+
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLinkFetched))
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
+
+      val dao = daoWithRoadLinks(List(roadLinkFetched))
       val id = simulateQuery {
         dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       }
@@ -105,9 +112,16 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
   test("speed limit creation succeeds when speed limit is already defined on segment iff speed limits have opposing sidecodes") {
     runWithRollback {
       val linkId = LinkIdGenerator.generateRandom()
-      val roadLink = RoadLinkFetched(linkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
-      val dao = daoWithRoadLinks(List(roadLink))
+      val roadLinkFetched = RoadLinkFetched(linkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = RoadLink(linkId = roadLinkFetched.linkId, geometry = roadLinkFetched.geometry, length = roadLinkFetched.length,
+        administrativeClass = roadLinkFetched.administrativeClass, functionalClass = FunctionalClass3.value,
+        trafficDirection = roadLinkFetched.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+        modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched.constructionType, linkSource = roadLinkFetched.linkSource)
+
+
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLinkFetched))
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
+      val dao = daoWithRoadLinks(List(roadLinkFetched))
       val id = simulateQuery {
         dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.TowardsDigitizing, SpeedLimitValue(40), 0, (_, _) => ())
       }
