@@ -602,9 +602,9 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     */
   def createSpeedLimit(creator: String, linkId: String, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue,
                        timeStamp: Long, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
-    val roadLink = roadLinkService.fetchRoadlinkAndComplementary(linkId)
-    municipalityValidation(roadLink.get.municipalityCode, roadLink.get.administrativeClass)
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadLink.get.linkSource)
+    val roadLink = roadLinkService.enrichFetchedRoadLinks(Seq(roadLinkService.fetchRoadlinkAndComplementary(linkId).get)).head
+    municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadLink.linkSource)
   }
 
   /**
