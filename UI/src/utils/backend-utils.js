@@ -1121,6 +1121,18 @@
       });
     };
 
+    this.deleteManoeuvresWorkListItems = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/manoeuvreSamuutusWorkList",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.deleteRoadLinkReplacementWorkListItems = function (data, success, failure) {
       $.ajax({
         contentType: "application/json",

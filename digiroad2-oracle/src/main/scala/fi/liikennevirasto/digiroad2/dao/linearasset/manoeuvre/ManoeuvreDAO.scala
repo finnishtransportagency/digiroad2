@@ -9,7 +9,8 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import java.sql.{Array => SqlArray}
 
 import java.sql.PreparedStatement
 /**
@@ -21,6 +22,30 @@ case class PersistedManoeuvreRow(id: Long, linkId: String, destLinkId: String, e
 sealed case class ManoeuvreUpdateLinks (oldLinkId:String,newLinkId:String)
 
 class ManoeuvreDao() extends PostGISLinearAssetDao{
+
+  implicit val getItemResult: GetResult[ManoeuvreWorkListItem] = new GetResult[ManoeuvreWorkListItem] {
+    def apply(result: PositionedResult): ManoeuvreWorkListItem = {
+      val assetId = result.nextLong()
+      val linkIds = result.nextString()
+      val exceptionTypes = sqlArrayToSeq[Int](result.nextObject().asInstanceOf[SqlArray])
+      val validityPeriodsValues = sqlArrayToSeq[String](result.nextObject().asInstanceOf[SqlArray])
+      val additionalInfo = result.nextString()
+      val createdDate = result.nextTimestamp()
+
+      val validityPeriods = validityPeriodsValues.map(vpv => {
+        val Array(dayValue, startHourValue, endHourValue, startMinuteValue, endMinuteValue) = vpv.split('-').map(_.toInt)
+        ValidityPeriod(startHourValue, endHourValue, ValidityPeriodDayOfWeek.apply(dayValue), startMinuteValue, endMinuteValue)
+      })
+
+      ManoeuvreWorkListItem(assetId, linkIds, exceptionTypes, validityPeriods, additionalInfo, new DateTime(createdDate))
+    }
+  }
+
+  private def sqlArrayToSeq[T](array: SqlArray): Seq[T] = {
+    Option(array)
+      .map(_.getArray.asInstanceOf[Array[Any]].toSeq.asInstanceOf[Seq[T]])
+      .getOrElse(Seq.empty[T])
+  }
 
   def find(id: Long): Option[Manoeuvre] = {
     val manoeuvresById = Map(id -> fetchManoeuvreById(id))
@@ -372,20 +397,29 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
       """.as[Long].first
   }
   
-  def insertSamuutusChange(row:Seq[ChangedManoeuvre]): Unit ={
-    val insert= "insert into manouvre_samuutus_work_list (assetId,linkIds) values ((?),(?)) ON CONFLICT (assetId) do nothing "
-    MassQuery.executeBatch(insert){p=>
-      row.foreach(a=>{
-        p.setLong(1,a.manoeuvreId)
-        p.setString(2,a.linkIds.map(t=>s"'$t'").mkString(","))
+  def insertManoeuvreToWorkList(manoeuvresToInsert:Seq[Manoeuvre]): Unit ={
+    val insert= "insert into manouvre_samuutus_work_list (assetId, linkIds, exception_types, validity_periods, additional_info, created_date) values ((?), (?), (?), (?), (?), current_timestamp) ON CONFLICT (assetId) do nothing "
+    MassQuery.executeBatch(insert) { p =>
+      manoeuvresToInsert.foreach(manoeuvre => {
+        val linkIds = manoeuvre.elements.flatMap(elem => Seq(elem.sourceLinkId, elem.destLinkId)).filterNot(_ == null).toSet
+        val exceptionTypesArray = p.getConnection.createArrayOf("INTEGER", manoeuvre.exceptions.map(_.asInstanceOf[AnyRef]).toArray)
+        val validityPeriodsStrings = manoeuvre.validityPeriods.map(period => s"${period.days.value}-${period.startHour}-${period.endHour}-${period.startMinute}-${period.endMinute}")
+        val validityPeriodsArray = p.getConnection.createArrayOf("TEXT", validityPeriodsStrings.toArray.map(_.asInstanceOf[AnyRef]))
+        p.setLong(1, manoeuvre.id)
+        p.setString(2, linkIds.map(t=>s"'$t'").mkString(","))
+        p.setArray(3, exceptionTypesArray)
+        p.setArray(4, validityPeriodsArray)
+        p.setString(5, manoeuvre.additionalInfo)
         p.addBatch()
       })
     }
   }
   
-  def getSamuutusChange(): List[SamuuutusWorkListItem] = {
-    sql"""select assetId,linkIds from manouvre_samuutus_work_list """.as[(Long, String)].list.map(
-      a=>SamuuutusWorkListItem(a._1,a._2)
-    )
+  def fetchManoeuvreWorklistItems(): List[ManoeuvreWorkListItem] = {
+    sql"""select assetId, linkIds, exception_types, validity_periods, additional_info, created_date from manouvre_samuutus_work_list """.as[ManoeuvreWorkListItem].list
+  }
+
+  def deleteManoeuvreWorkListItems(assetIDsToDelete: Set[Long]) = {
+    sqlu"""DELETE FROM manouvre_samuutus_work_list WHERE assetId IN (#${assetIDsToDelete.mkString(",")})""".execute
   }
 }

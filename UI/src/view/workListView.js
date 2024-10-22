@@ -167,7 +167,7 @@
         lanes: {Title: 'Kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', ShowDeleteCheckboxes: true},
         autoProcessedLanes: {Title: 'Automaattisesti käsiteltyjen kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', ShowDeleteCheckboxes: true},
         assetsOnExpiredLinks: {Title: 'Kohteet päättyneillä tielinkeillä', SourceLayer: 'linkProperty', ShowDeleteCheckboxes: true},
-        manoeuvreSamuutusWorkList: {Title: 'Kääntymisrajoituksien samuutuksen tarkistuslista', SourceLayer: 'manoeuvre'},
+        manoeuvreSamuutusWorkList: {Title: 'Kääntymisrajoituksien samuutuksen tarkistuslista', SourceLayer: 'manoeuvre', ShowDeleteCheckboxes: true},
         roadLinkReplacement: {Title: 'Mahdollisesti ilman korvaavuutta päätetyt tielinkit', SourceLayer: 'linkProperty', ShowDeleteCheckboxes: true},
       };
 
