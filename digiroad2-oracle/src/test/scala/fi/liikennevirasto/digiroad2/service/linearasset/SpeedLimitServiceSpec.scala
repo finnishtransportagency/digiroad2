@@ -92,9 +92,16 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("create new speed limit") {
     runWithRollback {
-      val roadLink = RoadLinkFetched(linkId1, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1)).thenReturn(Some(roadLink))
-      when(mockRoadLinkService.fetchRoadlinksAndComplementaries(Set(linkId1))).thenReturn(Seq(roadLink))
+      val roadLinkFetched = RoadLinkFetched(linkId1, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+
+      val roadLink = RoadLink(linkId = roadLinkFetched.linkId, geometry = roadLinkFetched.geometry, length = roadLinkFetched.length,
+        administrativeClass = roadLinkFetched.administrativeClass, functionalClass = FunctionalClass3.value,
+        trafficDirection = roadLinkFetched.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+        modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched.constructionType, linkSource = roadLinkFetched.linkSource)
+
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1)).thenReturn(Some(roadLinkFetched))
+      when(mockRoadLinkService.fetchRoadlinksAndComplementaries(Set(linkId1))).thenReturn(Seq(roadLinkFetched))
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
 
       val id = provider.create(Seq(NewLimit(linkId1, 0.0, 150.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
 

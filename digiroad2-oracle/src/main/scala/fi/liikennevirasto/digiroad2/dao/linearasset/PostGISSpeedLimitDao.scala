@@ -219,7 +219,6 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
 
   def groupSpeedLimitsResultWithRoadInfo(speedLimitRows: Seq[SpeedLimitRowWithRoadInfo]) : (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
     val (assetRows, roadLinkRows) = speedLimitRows.partition(_.id != 0)
-    val emptyRoadLinkRows = roadLinkRows.filterNot(rlRow => assetRows.map(_.linkId).contains(rlRow.linkId))
     val groupedSpeedLimit = assetRows.groupBy(_.id)
     val speedLimitAssets = groupedSpeedLimit.keys.map { assetId =>
       val rows = groupedSpeedLimit(assetId)
@@ -245,10 +244,10 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         administrativeClass = asset.administrativeClass, attributes = attributes, verifiedBy = None, verifiedDate = None, informationSource = None)
     }.toSeq
 
-    val emptyRoadLinks = emptyRoadLinkRows.map(rl => {
+    val roadLinks = roadLinkRows.map(rl => {
       RoadLinkForUnknownGeneration(rl.linkId, rl.municipalityCode, rl.constructionType, rl.roadLinkLength, rl.geometry, rl.trafficDirection, rl.administrativeClass, rl.linkSource)
     })
-    (speedLimitAssets, emptyRoadLinks)
+    (speedLimitAssets, roadLinks)
   }
 
   private def fetchByLinkIds(linkIds: Seq[String], queryFilter: String) : Seq[PersistedLinearAsset] = {
@@ -603,9 +602,9 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     */
   def createSpeedLimit(creator: String, linkId: String, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue,
                        timeStamp: Long, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
-    val roadLink = roadLinkService.fetchRoadlinkAndComplementary(linkId)
-    municipalityValidation(roadLink.get.municipalityCode, roadLink.get.administrativeClass)
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadLink.get.linkSource)
+    val roadLink = roadLinkService.enrichFetchedRoadLinks(Seq(roadLinkService.fetchRoadlinkAndComplementary(linkId).get)).head
+    municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadLink.linkSource)
   }
 
   /**
