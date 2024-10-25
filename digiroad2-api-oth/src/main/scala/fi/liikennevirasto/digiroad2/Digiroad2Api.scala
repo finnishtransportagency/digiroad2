@@ -1386,7 +1386,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "track" -> extractIntValue(link.attributes, "TRACK"),
             "startAddrMValue" -> extractLongValue(link.attributes, "START_ADDR"),
             "endAddrMValue" -> extractLongValue(link.attributes, "END_ADDR"),
-            "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS"),
+            "administrativeClass" -> link.administrativeClass.value,
             "municipalityCode" -> extractIntValue(link.attributes, "municipality"),
             "constructionType" -> extractIntValue(link.attributes, "constructionType")
           )
@@ -1497,8 +1497,30 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/manoeuvreSamuutusWorkList") {
     val user = userProvider.getCurrentUser()
-    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreSamuutusWorkList() else Seq()
-    workListItems.map(a=> Map("assetId" -> a.assetId, "links" -> a.links)).toList
+    val workListItems = if (user.isOperator()) manoeuvreService.getManoeuvreWorkList() else Seq()
+    Seq(workListItems.map(a=> {
+      val validityPeriodsJson = a.validityPeriods.map(_.toJson)
+      Map("assetId" -> a.assetId,
+        "links" -> a.linkIds,
+        "exceptionTypes" -> a.exceptionTypes,
+        "validityPeriods" -> validityPeriodsJson,
+        "additionalInfo" -> a.additionalInfo,
+        "createdDate" -> a.createdDate)
+    }).toList)
+  }
+
+  delete("/manoeuvreSamuutusWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isOperator()
+    val itemIdsToDelete = userHasRights match{
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(Forbidden("User not authorized to delete items from manoeuvre work list"))
+    }
+    itemIdsToDelete match {
+      case Some(ids) =>
+        manoeuvreService.deleteManoeuvreWorkListItems(ids)
+      case None => halt(BadRequest("No asset ids to delete provided"))
+    }
   }
 
   delete("/laneWorkList") {

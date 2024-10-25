@@ -22,6 +22,18 @@
       Unknown: {value: 99, text: 'Tuntematon'}
     };
 
+    this.functionalClasses = {
+      1: {value: 1, text: 'Luokka 1'},
+      2: {value: 2, text: 'Luokka 2'},
+      3: {value: 3, text: 'Luokka 3'},
+      4: {value: 4, text: 'Luokka 4'},
+      5: {value: 5, text: 'Luokka 5'},
+      6: {value: 6, text: 'Luokka 6: Muu yksityistie'},
+      7: {value: 7, text: 'Luokka 7: Ajopolku'},
+      8: {value: 8, text: 'Luokka 8: Kävelyn ja pyöräilyn väylä'},
+      9: {value: 9, text: 'Luokka 9'}
+    };
+
     this.twoWayLaneLinkTypes = [
       this.linkTypes.SpecialTransportWithoutGate,
       this.linkTypes.SpecialTransportWithGate,
@@ -138,6 +150,30 @@
     this.trafficSignsNoLongerAvailable = [143, 147, 162, 166, 167, 168, 247, 274, 287, 288, 357, 359];
 
     this.trafficSignsTypeLinearGenerators = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 85, 100, 101];
+
+    this.manoeuvreExceptions = [
+        {typeId: 21, title: 'Huoltoajo'},
+        {typeId: 22, title: 'Tontille ajo'},
+        {typeId: 10, title: 'Mopo'},
+        {typeId: 9, title: 'Moottoripyörä'},
+        {typeId: 27, title: 'Moottorikelkka'},
+        {typeId: 5, title: 'Linja-auto'},
+        {typeId: 8, title: 'Taksi'},
+        {typeId: 7, title: 'Henkilöauto'},
+        {typeId: 6, title: 'Pakettiauto'},
+        {typeId: 4, title: 'Kuorma-auto'},
+        {typeId: 15, title: 'Matkailuajoneuvo'},
+        {typeId: 19, title: 'Sotilasajoneuvo'},
+        {typeId: 13, title: 'Ajoneuvoyhdistelmä'},
+        {typeId: 14, title: 'Traktori tai maatalousajoneuvo'}
+      ];
+
+    this.manoeuvreValidityPeriodDays = [
+      {value: 1, title: 'Su'},
+      {value: 2, title: 'Ma-Pe'},
+      {value: 3, title: 'La'},
+      {value: 99, title: 'Tuntematon'}
+    ];
 
   };
 })(this);

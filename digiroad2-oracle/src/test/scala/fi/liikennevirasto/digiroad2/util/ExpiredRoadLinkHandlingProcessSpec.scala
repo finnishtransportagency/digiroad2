@@ -77,6 +77,7 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
   test("Persist links with assets, insert assets on work list"){
     runWithRollback {
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(expiredLinkId)).thenReturn(Some(testRoadLinkFetched))
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(testRoadLinkFetched))).thenReturn(Seq(testRoadLink))
 
       val createdSpeedLimitId = speedLimitService.create(Seq(NewLimit(expiredLinkId, 0.0, 131.683)), SpeedLimitValue(30), "test", (_, _) => Unit).head
       val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()

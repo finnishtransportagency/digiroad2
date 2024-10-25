@@ -45,10 +45,7 @@ object ElementTypes {
 }
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
-
-
-case class ChangedManoeuvre (manoeuvreId:Long,linkIds:Set[String])
-case class SamuuutusWorkListItem(assetId:Long,links:String)
+case class ManoeuvreWorkListItem(assetId:Long, linkIds:String, exceptionTypes: Seq[Int], validityPeriods: Seq[ValidityPeriod], additionalInfo: String, createdDate: DateTime)
 class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
   def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -58,7 +55,7 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   def assetDao: PostGISAssetDao = new PostGISAssetDao
 
   def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-  
+
   def dao: ManoeuvreDao = new ManoeuvreDao()
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -204,10 +201,10 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def fetchExistingAssetsByLinksIdsString(linksIds: Set[String], newTransaction: Boolean = true): Seq[PersistedManoeuvreRow] = {
-    val existingAssets = if (newTransaction) 
+    val existingAssets = if (newTransaction)
       withDynTransaction {
         dao.fetchManoeuvresByLinkIdsNoGrouping(linksIds.toSeq)
-      } 
+      }
     else dao.fetchManoeuvresByLinkIdsNoGrouping(linksIds.toSeq)
     existingAssets
   }
@@ -233,15 +230,15 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
        }
       }
     }
-    if (newTransaction) withDynTransaction {getManoeuvres.filter(_.isDefined).map(_.get)} 
+    if (newTransaction) withDynTransaction {getManoeuvres.filter(_.isDefined).map(_.get)}
     else getManoeuvres.filter(_.isDefined).map(_.get)
   }
-  
+
   def updateManoeuvreLinkVersions(updates:Seq[ManoeuvreUpdateLinks], newTransaction: Boolean = true): Unit = {
     if (newTransaction) withDynTransaction {dao.updateManoeuvreLinkIds(updates)}
     else dao.updateManoeuvreLinkIds(updates)
   }
-  
+
   private def getByRoadLinks(roadLinks: Seq[RoadLink], getDaoManoeuvres: Seq[String] => Seq[Manoeuvre]): Seq[Manoeuvre] = {
     val manoeuvres =
       withDynTransaction {
@@ -324,7 +321,7 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink],newTransaction:Boolean=true) : Long = {
-    if (newTransaction) withDynTransaction {createWithoutTransaction(userName, manoeuvre, roadlinks)} 
+    if (newTransaction) withDynTransaction {createWithoutTransaction(userName, manoeuvre, roadlinks)}
     else createWithoutTransaction(userName, manoeuvre, roadlinks)
   }
 
@@ -394,7 +391,7 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         }
     }
   }
-  
+
   private def createManoeuvreFromTrafficSign(trafficSignInfo: TrafficSignInfo ): Seq[Long] = {
     logger.info("creating manoeuvre from traffic sign")
     val tsLinkId = trafficSignInfo.linkId
@@ -435,11 +432,11 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     } catch {
       case mce: ManoeuvreCreationException =>
          throw mce
-      case eipe: InvalidParameterException => 
+      case eipe: InvalidParameterException =>
          throw eipe
     }
   }
-  
+
   def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction) {
       withDynTransaction {
@@ -482,16 +479,22 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     countExistings(sourceId, destLinkId, elementType) == 0
   }
 
-  def insertSamuutusChange(rows: Seq[ChangedManoeuvre],newTransaction: Boolean = true): Seq[ChangedManoeuvre]= {
-    if (newTransaction) { withDynTransaction {  dao.insertSamuutusChange(rows)}
-    } else dao.insertSamuutusChange(rows)
+  def insertManoeuvresToWorkList(rows: Seq[Manoeuvre], newTransaction: Boolean = true): Seq[Manoeuvre]= {
+    if (newTransaction) { withDynTransaction {  dao.insertManoeuvreToWorkList(rows)}
+    } else dao.insertManoeuvreToWorkList(rows)
     rows
   }
-  
-  
-  def getManoeuvreSamuutusWorkList(newTransaction: Boolean = true): Seq[SamuuutusWorkListItem] = {
-    if (newTransaction) { withDynTransaction {dao.getSamuutusChange()}
-    }else dao.getSamuutusChange()
+
+
+  def getManoeuvreWorkList(newTransaction: Boolean = true): Seq[ManoeuvreWorkListItem] = {
+    if (newTransaction) { withDynTransaction {dao.fetchManoeuvreWorklistItems()}
+    }else dao.fetchManoeuvreWorklistItems()
+  }
+
+  def deleteManoeuvreWorkListItems(assetIdsToDelete: Set[Long], newTransaction: Boolean = true): Set[Long] = {
+    if (newTransaction) { withDynTransaction {dao.deleteManoeuvreWorkListItems(assetIdsToDelete)}
+    }else dao.deleteManoeuvreWorkListItems(assetIdsToDelete)
+    assetIdsToDelete
   }
   
 }

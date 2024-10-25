@@ -224,8 +224,14 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
-      val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(oldLinkID)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(fetchedRoadLinks.head))
+      val roadLinkFetched = roadLinkDAO.fetchExpiredRoadLink(oldLinkID).head
+      val roadLink = RoadLink(linkId = roadLinkFetched.linkId, geometry = roadLinkFetched.geometry, length = roadLinkFetched.length,
+        administrativeClass = roadLinkFetched.administrativeClass, functionalClass = FunctionalClass3.value,
+        trafficDirection = roadLinkFetched.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+        modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched.constructionType, linkSource = roadLinkFetched.linkSource)
+
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(roadLinkFetched))
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
@@ -259,8 +265,15 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
-      val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(oldLinkID)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(fetchedRoadLinks.head))
+      val roadLinkFetched = roadLinkDAO.fetchExpiredRoadLink(oldLinkID).head
+      val roadLink = RoadLink(linkId = roadLinkFetched.linkId, geometry = roadLinkFetched.geometry, length = roadLinkFetched.length,
+        administrativeClass = roadLinkFetched.administrativeClass, functionalClass = FunctionalClass3.value,
+        trafficDirection = roadLinkFetched.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+        modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched.constructionType,
+        linkSource = roadLinkFetched.linkSource)
+
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(roadLinkFetched))
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty, false)).thenReturn(Seq.empty[RoadLink])
@@ -295,10 +308,25 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID2).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
-      val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(oldLinkID)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(fetchedRoadLinks.head))
-      val fetchedRoadLinks2 = roadLinkDAO.fetchExpiredRoadLink(oldLinkID2)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID2)).thenReturn(Some(fetchedRoadLinks2.head))
+      val roadLinkFetched = roadLinkDAO.fetchExpiredRoadLink(oldLinkID).head
+      val roadLink = RoadLink(linkId = roadLinkFetched.linkId, geometry = roadLinkFetched.geometry, length = roadLinkFetched.length,
+        administrativeClass = roadLinkFetched.administrativeClass, functionalClass = FunctionalClass3.value,
+        trafficDirection = roadLinkFetched.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+        modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched.constructionType,
+        linkSource = roadLinkFetched.linkSource)
+
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID)).thenReturn(Some(roadLinkFetched))
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
+
+      val roadLinkFetched2 = roadLinkDAO.fetchExpiredRoadLink(oldLinkID2).head
+      val roadLink2 = RoadLink(linkId = roadLinkFetched2.linkId, geometry = roadLinkFetched2.geometry, length = roadLinkFetched2.length,
+        administrativeClass = roadLinkFetched2.administrativeClass, functionalClass = FunctionalClass3.value,
+        trafficDirection = roadLinkFetched2.trafficDirection, linkType = SingleCarriageway, modifiedAt = None,
+        modifiedBy = None, attributes = Map("MUNICIPALITYCODE" -> BigInt(99)), constructionType = roadLinkFetched2.constructionType,
+        linkSource = roadLinkFetched2.linkSource)
+
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkID2)).thenReturn(Some(roadLinkFetched2))
+      when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched2))).thenReturn(Seq(roadLink2))
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty, false)).thenReturn(Seq.empty[RoadLink])

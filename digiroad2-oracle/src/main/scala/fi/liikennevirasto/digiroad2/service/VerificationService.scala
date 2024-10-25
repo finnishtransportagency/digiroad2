@@ -94,11 +94,14 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   def getCriticalAssetTypesByMunicipality(municipalityCode: Int): List[VerificationInfo] = {
     val criticalAssetTypes =
       Seq(
-        MassTransitStopAsset.typeId,
-        SpeedLimitAsset.typeId,
-        TotalWeightLimit.typeId,
         Prohibition.typeId,
-        Manoeuvres.typeId
+        Obstacles.typeId,
+        Manoeuvres.typeId,
+        TrafficSigns.typeId,
+        SpeedLimitAsset.typeId,
+        HeightLimit.typeId,
+        TotalWeightLimit.typeId,
+        HazmatTransportProhibition.typeId
       )
 
     getCriticalAssetVerification(municipalityCode, criticalAssetTypes).toList

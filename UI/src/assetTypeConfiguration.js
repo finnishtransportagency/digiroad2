@@ -500,13 +500,10 @@
                 label: 'Paallysteluokka', type: 'single_choice', publicId: "paallysteluokka", defaultValue: "99", weight: 1,
                 values: [
                   {id: 99, label: 'Päällystetty, tyyppi tuntematon'},
-                  {id: 1, label: 'Betoni'},
+                  {id: 1, label: 'Asfaltti'},
                   {id: 2, label: 'Kivi'},
-                  {id: 10, label: 'Kovat asfalttibetonit'},
-                  {id: 20, label: 'Pehmeät asfalttibetonit'},
-                  {id: 30, label: 'Soratien pintaus'},
-                  {id: 40, label: 'Sorakulutuskerros'},
-                  {id: 50, label: 'Muut pinnoitteet'}
+                  {id: 3, label: 'Sitomaton kulutuskerros'},
+                  {id: 4, label: 'Muut päällysteluokat'}
                 ]
               },
               {label: "vihjetieto", type: 'checkbox', defaultValue: "0", publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
