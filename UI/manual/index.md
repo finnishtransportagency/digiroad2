@@ -1605,7 +1605,7 @@ Liittym&auml;numeron voi valita napauttamalla kartalta sen geometriaa. Kerran na
 
 Ominaisuustietoikkunassa on kohteen ID, liittym&auml;numeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
 
-![Katselu.](k176_2.PNG)
+![Katselu.](k176_2.png)
 
 _Liittym&auml;numeron tietojen katselu._
 
