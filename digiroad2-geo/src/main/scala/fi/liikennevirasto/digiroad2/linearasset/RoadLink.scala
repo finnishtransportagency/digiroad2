@@ -68,7 +68,7 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
   }
 
   def isCarRoadOrCyclePedestrianPath : Boolean = {
-    val allowedFunctionalClasses = Set(1, 2, 3, 4, 5, 6)
+    val allowedFunctionalClasses = Set(1, 2, 3, 4, 5, 6, 9)
     val disallowedLinkTypes = Set(UnknownLinkType.value, PedestrianZone.value, CableFerry.value)
 
     allowedFunctionalClasses.contains(functionalClass % 10) && !disallowedLinkTypes.contains(linkType.value)
