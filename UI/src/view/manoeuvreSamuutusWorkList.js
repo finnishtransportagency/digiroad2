@@ -25,7 +25,8 @@
                 return items.map(function (item) {
                     return $('<tr/>')
                         .append(checkbox(item.assetId))
-                        .append($('<td/>').html(changeRow(item)));
+                        .append($('<td/>').html(changeRow(item)))
+                        .append($('<td/>').append(openMapButton(item)));
                 });
             };
 
@@ -62,6 +63,15 @@
                 return $('<td class="manoeuvreWorkListCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
             };
 
+            var openMapButton = function (item) {
+                return $('<button/>')
+                    .addClass('delete btn btn-municipality')
+                    .text('Avaa kartalla')
+                    .click(function () {
+                        new WorkListPopUpMap(backend, item);
+                    });
+            };
+
             var deleteBtn = function () {
                 return $('<button disabled/>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
                     new GenericConfirmPopup("Haluatko varmasti poistaa valitut kääntymisrajoitukset työlistasta?", {
@@ -90,7 +100,6 @@
                         }
                     });
                 });
-
             };
 
             var addTable = function (manoeuvreWorkListItems) {
@@ -104,6 +113,7 @@
                 .append(deleteBtn())
                 .append(addTable(workListItems));
         };
+
 
     };
 })(this);
