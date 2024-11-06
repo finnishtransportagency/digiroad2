@@ -178,31 +178,35 @@ Asioita tallentaessa ja joskus uusia alueita ladatessa karttaikkunaan ilmestyy *
 
 # 3. Tietolajien kuntasivu ja tietolajin merkitseminen tarkistetuksi
 
-Digiroad-käyttöliittymän yläpalkista pääsee Tietolajien kuntasivulle (1), jossa kuntakäyttäjä voi merkitä tietolajeja tarkistetuiksi, tarkistaa yksityisteiden ilmoitusten tilanteen sekä tarkistaa vihjetietoja.
+Kuntakäyttäjän kirjautuessa Digiroadiin, näkymään aukeaa Tietolajien päivitystilanne -ikkuna (1). Ikkunassa on listattu kunnan viimeisimmät päivitykset sekä lista tärkeimmistä tietolajeista ja niiden tarkistustilanteesta. Ikkunasta pääsee siirtymään suoraan tietolajien kuntasivulle Siirry tietolajien kuntasivulle -painikkeesta (2). Tietolajien kuntasivulla kuntakäyttäjä voi merkitä tietolajeja tarkistetuiksi, tarkistaa yksityisteiden ilmoitusten tilanteen sekä tarkistaa vihjetietoja. Sininen pallura Siirry tietolajien kuntasivulle -painikkeessa tarkoittaa, että kunnassa on läpikäymättömiä vihjeitä. Vaihtoehtoisesti ikkunan voi sulkea Sulje-painikkeesta. Tietolajien päivitystilanne -ikkuna aukeaa vain kerran päivässä kuntakäyttäjän kirjautuessa ensimmäistä kertaa Digiroadiin. Digiroad-käyttöliittymän yläpalkista pääsee myös siirtymään suoraan Tietolajien kuntasivulle (3).
 
-![Tietolajien kuntasivun hakeminen.](kuntasivu1.png)
+![Tietolajien päivitystilanne -ikkuna.](kuntasivu5.PNG)
+
+_Tietolajien päivitystilanne -ikkuna_
+
+![Tietolajien kuntasivun hakeminen.](kuntasivu1_2.PNG)
 
 _Tietolajien kuntasivun hakeminen._
 
 ## 3.1. Tietolajien kuntasivu
 
-Tietolajien kuntasivulla on listattuna Digiroadin tietolajit (2). Lisäksi sivulla on listattuna pistemäisten tietolajien kohdalla kohteiden määrä kunnassa ja viivamaisten tietolajien kohdalla tieto siitä, löytyykö kohteita kunnasta. Tietolajien kuntasivulla voidaan myös tarkastella, milloin tietolajeja on viimeksi päivitetty (3). Vihjetietosarakkeessa on nähtävillä, jos jollekin tietolajille on annettu vihjetietoja (4). Vihjetietojen listaukseen pääse napauttamalla numeroa vihjetietosarakkeessa kunkin tietolajin kohdalla. Kunnan yksityisteiden ilmoitusten tilannetta pääsee tarkastelemaan Yksityistiet-painiketta napauttamalla (5). 
+Tietolajien kuntasivulla on listattuna Digiroadin tietolajit (4). Lisäksi sivulla on listattuna pistemäisten tietolajien kohdalla kohteiden määrä kunnassa ja viivamaisten tietolajien kohdalla tieto siitä, löytyykö kohteita kunnasta. Tietolajien kuntasivulla voidaan myös tarkastella, milloin tietolajeja on viimeksi päivitetty (5). Vihjeet-sarakkeessa nähdään, jos jollekin tietolajille on annettu vihjetietoja (6). Vihjetietojen listaukseen pääse napauttamalla numeroa vihjeet-sarakkeessa kunkin tietolajin kohdalla. Kunnan yksityisteiden ilmoitusten tilannetta pääsee tarkastelemaan Yksityistiet-painiketta napauttamalla (6).
 
-![Tietolajien kuntasivu.](kuntasivu2.png)
+![Tietolajien kuntasivu.](kuntasivu2_2.PNG)
 
 _Tietolajien kuntasivu._
 
 ## 3.2. Tietolajin merkitseminen tarkistetuksi
 
-Tarkistettu sarakkeessa nähdään, milloin jokin tietolaji on tarkistettu edellisen kerran. Kun tietolaji on tarkistettu ja esimerkiksi vihjetiedot käyty läpi, voidaan tietolaji merkitä tarkistetuksi valitsemalla tietolaji (7) ja tämän jälkeen napauttamalla Merkitse tarkistetuksi -painiketta (8). Tämän jälkeen valituille tietolajeille päivittyvät tarkistuspäivämäärä ja tietolajin tarkistaja.
+Tarkistettu sarakkeessa nähdään, milloin jokin tietolaji on tarkistettu edellisen kerran (8). Kun tietolaji on tarkistettu ja esimerkiksi vihjeet käyty läpi, voidaan tietolaji merkitä tarkistetuksi valitsemalla tietolaji (9) ja tämän jälkeen napauttamalla Merkitse tarkistetuksi -painiketta (10). Tämän jälkeen valituille tietolajeille päivittyvät tarkistuspäivämäärä ja tietolajin tarkistaja.
 
-![Tietolajin merkitseminen tarkastetuksi.](kuntasivu3.png)
+![Tietolajin merkitseminen tarkastetuksi.](kuntasivu3_2.PNG)
 
 _Tietolajin merkitseminen tarkastetuksi._
 
-Tarkistettu tietolaji näkyy myös Digiroad-sovelluksessa. Kun käyttäjä on merkinnyt tietolajin tarkistetuksi, käyttöliittymä näyttää OK-merkin tietolajin jatkeena käyttöliittymässä (9).
+Tarkistettu tietolaji näkyy myös Digiroad-sovelluksessa. Kun käyttäjä on merkinnyt tietolajin tarkistetuksi, käyttöliittymä näyttää OK-merkin tietolajin jatkeena käyttöliittymässä (11).
 
-![Tarkistetun tietolajin näkyminen käyttöliittymässä.](kuntasivu4.png)
+![Tarkistetun tietolajin näkyminen käyttöliittymässä.](kuntasivu4_2.PNG)
 
 _Tarkistetun tietolajin näkyminen käyttöliittymässä._
 
@@ -218,7 +222,7 @@ _Tietolajien kuntasivun hakeminen._
 
 Tietolajien kuntasivulla vihjetiedot näkyvät vihjetietosarakkeessa numerona sen tietolajin kohdalla, jolla on vihjetietoa (2). Vihjetietojen listaukseen pääsee napauttamalla numeroa. Vihjetiedot-listauksessa näkyvät kunnalle asetetut vihjetiedot. Vihjetiedon luokse pääsee napauttamalla vihjetietoa listauksessa (3). 
 
-![Vihjetiedon näkyminen kuntasivunäkymässä.](vihjetieto2.png)
+![Vihjetiedon näkyminen kuntasivunäkymässä.](vihjetieto2_2.PNG)
 
 _Vihjetiedon näkyminen kuntasivunäkymässä._
 
@@ -299,6 +303,7 @@ Toiminnallisen luokan selitteet ovat:
 * Luokka 6: Muu yksityistie
 * Luokka 7: Ajopolku
 * Luokka 8: Kävelyn ja pyöräilyn väylä
+* Luokka 9: Huoltoaukko tai erikoiskuljetusyhteys
 
 ![Tielinkit visualisoitu toiminnallisen luokan mukaan](Manuaali10.PNG)
 
@@ -326,7 +331,7 @@ Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden tielinkin, sen voi tehd&aum
 
 Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi ovat muokattavissa (3). Ketjuvalinta korjaa kaikkien ketjuun valittuna olevien tielinkkien tiedot.
 
-![Tielinkin ominaisuustietojen muokkaus.](Manuaali14.PNG)
+![Tielinkin ominaisuustietojen muokkaus.](Manuaali14_2.PNG)
 
 _Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (napautettu kerran)._
 
@@ -357,7 +362,7 @@ Kartalle voi valita tietolajivalikosta (1) Kaistan mallinnustyökalu -valinnan. 
 * Tielinkillä 5 lisäkaistaa
 * Tielinkillä 6 lisäkaistaa tai enemmän
 
-Jos tielle ei ole kaistatietoa saatavilla, se visualisoituu harmaalla värillä. Lisäksi liikennöintisuuntaa osoittavat nuolet visualisoituvat yksituuntaisten tielinkkien kaistoille.
+Jos tielle ei ole kaistatietoa saatavilla, se visualisoituu harmaalla värillä. Lisäksi liikennöintisuuntaa osoittavat nuolet visualisoituvat yksisuuntaisten tielinkkien kaistoille.
 
 ![Kaistan mallinnustyökalu -valinta.](km1.png)
 
@@ -367,12 +372,12 @@ _Kaistan mallinnustyökalu -valinta._
 
 Kaistan mallinnustyökalun kohteita voidaan valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko kaistajoukko, eli kaikki geometriat, joilla on samat kaistatiedot tietolajissa, sama tieosanumero sekä tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;. Valitut tielinkit korostuvat karttaikkunassa ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai kaistajoukon ominaisuustietoikkuna (3). Ominaisuustietoikkunan yläosassa on visualisoitu tielinkillä olevien kaistojen numerot ja niiden sijainnit suhteessa toisiinsa. Valittu kaista on korostettuna keltaisella värillä (4). Lisäksi tietolajipaneelin selitteessä (5) eritelty kaistavaihtoehdot toisistaan. Kaistavalintaa voi muuttaa napauttamalla ominaisuustietoikkunassa lisäkaistan kuvaketta (6) , jolloin karttaikkunaan visualisoituu lisäkaista pääkaistan rinnalle (7). Ominaisuustietoikkunassa on nähtävissä myös valinnan tieosoitetiedot sekä kaistan tiedot. Lisäksi ominaisuustietoikkunassa näkyy, milloin tiedot on lisätty järjestelmään sekä milloin niitä on muokattu viimeksi. 
 
-![Kaistan mallinnustyökalu -katselutila.](km2.png)
-![Kaistan mallinnustyökalu -katselutila 2.](km3.png)
+![Kaistan mallinnustyökalu -katselutila.](km2_2.PNG)
+![Kaistan mallinnustyökalu -katselutila 2.](km3_2.PNG)
 
 _Kaistan mallinnustyökalu -katselutila._
 
-Kaistojen numerot (8) visualisoituvat karttaikkunassa, kun valitaan yksittäisen tielinkin mittainen kaista tai kaistajoukko. Karttaikkunaan voi tietolajipaneelin työkalupalkin valintaruutujen kautta myös valita näkyviin kävelyn ja pyöräilyn väylät (9).
+Kaistojen numerot (8) visualisoituvat karttaikkunassa, kun valitaan yksittäisen tielinkin mittainen kaista tai kaistajoukko.
 
 Kaistanumerointi muodostuu seuraavasti:
 
@@ -386,7 +391,7 @@ Kaistanumerointi muodostuu seuraavasti:
 * 8 = neljäs lisäkaista pääkaistan vasemmalla puolella
 * 9 = neljäs lisäkaista pääkaistan oikealla puolella
 
-![Kaistanumerot.](km4.png)
+![Kaistanumerot.](km4_2.PNG)
 
 _Kaistan mallinnustyökalu -katselutila ja lisävalinnat._
 
@@ -466,7 +471,7 @@ _Pääkaistan paikan vaihtaminen._
 
 ## 6.3 Kaistatietojen tarkastelu tieosoiteinfo-työkalulla
 
-Kaistatietoja voi tarkastella kaistan mallinnustyökalu myös tieosoiteinfo-työkalulla. Työkalu (21) valitaan alapalkin valintaruudusta valituksi, minkä jälkeen tielinkkien päällä voi leijutella hiirtä, jolloin näkyviin ilmestyy tieosoitetiedot ja kaistatiedot (22).
+Kaistatietoja voi tarkastella kaistan mallinnustyökalun lisäksi myös tieosoiteinfo-työkalulla. Työkalu (21) valitaan alapalkin valintaruudusta valituksi, minkä jälkeen tielinkkien päällä voi leijutella hiirtä, jolloin näkyviin ilmestyy tieosoitetiedot ja kaistatiedot (22).
 
 ![Tieosoiteinfo.](km8.png)
 
@@ -797,7 +802,7 @@ Pysäköintikieltotiedon voi poistaa valitsemalla valaistun kohteen ja oikean la
 
 ### Pysäköintikiellon muokkaus monivalintatyökalulla
 
-Usealle linkille voi lisätä tai poistaa pysäköintikiellon kerralla valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (10), jolloin ctrl-näppäimen irti päästämällä avautuu valaistuksen muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (11) tai monikulmiotyökalua (12). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen avautuu ikkuna, jossa pysäköintikieltotietoa voi muokata ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Usealle linkille voi lisätä tai poistaa pysäköintikiellon kerralla valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (10), jolloin ctrl-näppäimen irti päästämällä avautuu pysäköintikiellon muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (11) tai monikulmiotyökalua (12). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen avautuu ikkuna, jossa pysäköintikieltotietoa voi muokata ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
 ![Pysäköintikiellon monivalinta](pk5.png)
 
@@ -996,7 +1001,7 @@ Muokattava tielinkki valitaan napauttamalla sen geometriaa (5). Kerran napauttam
 
 Tietoja muokataan ominaisuustietoikkunassa olevien valintojen avulla (6), joissa voi muokata tietoa siitä onko väylä käpy tietolajiin kuuluva vai ei (eli jalankulun ja pyöräilyn väylä). Lisäksi käpy-väylätyyppiä voi muuttaa tarvittaessa.
 
-Tielinkit, joilla ei ole Käpy tietolajiin kuuluvia on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi käpy tietolajin kohde lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Sen jälkeen ominaisuustietoikkunassa valitaan radionapista väylä käpy tietolajiin kuuluvaksi sekä mahdollinen väylätyypin tarkennus.
+Tielinkit, jotka eivät ole Käpy tietolajiin kuuluvia on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi käpy tietolajin kohde lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Sen jälkeen ominaisuustietoikkunassa valitaan radionapista väylä käpy tietolajiin kuuluvaksi sekä mahdollinen väylätyypin tarkennus.
 
 ![Muokkaus.](kt3.png)
 
@@ -1004,7 +1009,7 @@ _Käpy tietolajin muokkaus._
 
 ### Käpy tietolajin kohteen poistaminen
 
-Käpy-kohteilta voi poistaa valitsemalla kartalta kohteen, ja painamalla ominaisuustietoikkunan radionapista "ei käpy tietolaji" (7). Muutokset tallentuu tallenna-painikkeesta ja peruuntuvat peruuta-painikkeesta (8).
+Käpy-kohteita voi poistaa valitsemalla kartalta kohteen, ja painamalla ominaisuustietoikkunan radionapista "ei käpy tietolaji" (7). Muutokset tallentuvat tallenna-painikkeesta ja peruuntuvat peruuta-painikkeesta (8).
 
 ![Poisto.](kt4.png)
 
@@ -1141,7 +1146,7 @@ _Suurin sallittu -kohteen lis&auml;&auml;minen._
 "Päällyste" on viivamainen kohde, joka voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Päällyste-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu p&auml;&auml;llyste, se piirtyy kartalle (2). P&auml;&auml;llyst&auml;m&auml;tt&ouml;m&auml;ksi merkatut tielinkit ovat harmaita (3). P&auml;&auml;llystyksen mahdollisina arvoina on useita päällysteisiin viittaavia päällysteluokkia.
 P&auml;&auml;llystetiedon l&auml;hde tielinkille on Maanmittauslaitoksen maastotietokanta.
 
-![Paallyste](päällyste1.png)
+![Paallyste](päällyste1_2.PNG)
 
 _Päällystenäkymä._
 
@@ -1149,7 +1154,7 @@ _Päällystenäkymä._
 
 Kun kohdetta napauttaa kartalta, se korostuu (4). ja ominaisuustietoikkunaan tulee n&auml;kyviin sen tiedot (5). Kerran napauttamalla tulee valituksi koko p&auml;&auml;llysteketju, eli kaikki linkit, joilla on sama p&auml;&auml;llystetieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;. P&auml;&auml;llystyksell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; p&auml;&auml;llystyksen arvo kyll&auml;/ei. Taulussa on myös tieto päällysteluokasta, jossa on useita mahdollisia vaihtoehtoja, sekä tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
 
-![Paallyste katselu](päällyste2.png)
+![Paallyste katselu](päällyste2_2.PNG)
 
 _P&auml;&auml;llystetiedon katselu._
 
@@ -1166,7 +1171,7 @@ P&auml;&auml;llysteen arvoa voi muokata kolmella tavalla:
 
 Uusi p&auml;&auml;llystetieto lis&auml;t&auml;&auml;n valitsemalla kartalta geometria ja valitsemalla oikean laidan ominaisuustietoikkunassa "P&auml;&auml;llyste" sekä päällysteluokka (6). Uusi p&auml;&auml;llystystieto n&auml;kyy kartalla päällysteluokalle ominaisella värillä.
 
-![Paallyste lisays](päällyste3.png)
+![Paallyste lisays](päällyste3_2.PNG)
 
 _P&auml;&auml;llystetiedon lis&auml;ys._
 
@@ -1174,7 +1179,7 @@ _P&auml;&auml;llystetiedon lis&auml;ys._
 
 P&auml;&auml;llystetiedon voi poistaa valitsemalla p&auml;&auml;llystetyn kohteen ja oikean laidan ominaisuustietoikkunasta kohdan "Ei p&auml;&auml;llystett&auml;" (7). Kun p&auml;&auml;llystetieto on poistettu, kohde muuttuu kartalla harmaaksi.
 
-![Paallyste poisto](päällyste4.png)
+![Paallyste poisto](päällyste4_2.PNG)
 
 _P&auml;&auml;llystetiedon poistaminen._
 
@@ -1182,7 +1187,7 @@ _P&auml;&auml;llystetiedon poistaminen._
 
 Usealle linkille voi lis&auml;t&auml; tai poistaa p&auml;&auml;llystetiedon kerralla painamalla valintatyökalua (8) sekä pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa valitsemalla useita tielinkkejä hiiren vasemmalla näppäimellä. Lisäksi on mahdollista käyttää laatikko- (9) ja monikulmiovalintatyökaluja (10). Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita kuvio leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan p&auml;&auml;llysteen arvo sekä päällysteluokka ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
-![Paallyste monivalinta](päällyste5.png)
+![Paallyste monivalinta](päällyste5_2.PNG)
 
 _P&auml;&auml;llysteen monivalinta._
 
@@ -1192,7 +1197,7 @@ Tarvittaessa p&auml;&auml;llysteen voi katkaista leikkausty&ouml;kalulla (11). L
 
 Huom! P&auml;&auml;llysteen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
 
-![Paallyste katko](päällyste6.png)
+![Paallyste katko](päällyste6_2.PNG)
 
 _P&auml;&auml;llystegeometrian katkaisu._
 
@@ -1600,7 +1605,7 @@ Liittym&auml;numeron voi valita napauttamalla kartalta sen geometriaa. Kerran na
 
 Ominaisuustietoikkunassa on kohteen ID, liittym&auml;numeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
 
-![Katselu.](k176.JPG)
+![Katselu.](k176_2.png)
 
 _Liittym&auml;numeron tietojen katselu._
 
@@ -1628,7 +1633,7 @@ Liittym&auml;numeron voi poistaa valitsemalla kartalta halutun viivan, ja valits
 
 ### Useamman liittym&auml;numeron muokkaus monivalintaty&ouml;kalulla
 
-Useamman kuin yhden tielinkin liittym&auml;numeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella valittavia tielinkkejä. Toinen tapa on muokkaustilan käyttää muokkaustilan työkalupalkin (7) monikulmio- ja laatikkovalintatyökaluja. Valituksi tulevat kaikki tielinkit laatikon/monikulmion sis&auml;ll&auml; ja tielinkit, joita laatikko/monikulmio leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (8), jossa kirjataan liittym&auml;numero ko. viivoille (9). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
+Useamman kuin yhden tielinkin liittym&auml;numeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella valittavia tielinkkejä. Toinen tapa on käyttää muokkaustilan työkalupalkin (7) monikulmio- ja laatikkovalintatyökaluja. Valituksi tulevat kaikki tielinkit laatikon/monikulmion sis&auml;ll&auml; ja tielinkit, joita laatikko/monikulmio leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (8), jossa kirjataan liittym&auml;numero ko. viivoille (9). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
 
 Huom! Muutos kumoaa kaikki valitun alueen aiempien liittym&auml;numeroiden tiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
  
@@ -1722,7 +1727,7 @@ Muokkaustilassa hoitoluokalle voi antaa uudet ominaisuustiedot ja niit&auml; voi
 
 _Hoitoluokkatietojen muokkaus._
 
-### Hoitoluokkatieton lis&auml;ys
+### Hoitoluokkatiedon lis&auml;ys
 
 Uusi hoitoluokkatieto lisätään järjestelmään asettamalla ensin tietolajivalikosta Hoitoluokat-tietolaji aktiiviseksi. Tämän jälkeen tulee tietolajipaneelin radionapeista valita joko talvi- tai viherhoitoluokka (huom. vain kunnan omistamilla teillä on mahdollista muokata tietoja). Karttaikkunassa tulee napauttaa tielinkin geometriaa, jolle hoitoluokka halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Hoitoluokka-radionappi aktiiviseksi (5), minkä jälkeen tarkennetaan hoitoluokka alasvetovalikosta. Tiedot tallennetaan painamalla Tallenna-painiketta (6).
 
@@ -1968,7 +1973,7 @@ Tielinkille voi lis&auml;t&auml; talvinopeusrajoituksen valitsemalla linkin geom
 
 _Talvinopeusrajoituksen lis&auml;&auml;minen._
 
-# 26 Liikennem&auml;&auml;r&auml;
+# 26. Liikennem&auml;&auml;r&auml;
 
 Kartalle voi valita tietolajipaletista (1) Liikennem&auml;&auml;r&auml;-valinnan. Liikennem&auml;&auml;r&auml; on viivamainen tietolaji, ja sen arvo ilmoitetaan kokonaisulukuna ajoneuvoa/vuorokausi. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat, joille liikennemäärä on merkattu on visualisoitu punaisella v&auml;rill&auml; (2) ja tielinkit, joiden liikennem&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml; (3).
 
@@ -1995,7 +2000,7 @@ Muokkaustilassa liikennem&auml;&auml;r&auml;lle voi antaa uuden arvon (kokonaisl
 
 ### Liikennem&auml;&auml;r&auml;n arvon muokkaus
 
-Liikennem&auml;&auml;r&auml;valintaa muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko tielinkkiketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Liikennem&auml;&auml;r&auml;valintaa muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (6). Kerran napauttamalla tulee valituksi koko tielinkkiketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa (7). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
 Huom! Liikennem&auml;&auml;r&auml;n arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
 
@@ -2005,7 +2010,7 @@ _Liikennem&auml;&auml;r&auml;n muokkaus._
 
 ### Liikennem&auml;&auml;rien muokkaus monivalintaty&ouml;kalulla
 
-Usean tielinkin liikennemääräarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit (8). Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki liikennemäärät piirretyn alueen sisällä ja liikennemäärät, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu ikkuna (9), josta liikennemäärille määritellään uudet arvot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+Usean tielinkin liikennemääräarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit (10). Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki liikennemäärät piirretyn alueen sisällä ja liikennemäärät, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu ikkuna (11), josta liikennemäärille määritellään uudet arvot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
 
 ![Liikennemäärän monivalinta](lkm4.png)
 
@@ -2013,8 +2018,8 @@ _Useamman tieosuuden liikennem&auml;&auml;r&auml;n muokkaus kerralla._
 
 ### Liikennem&auml;&auml;r&auml;kohteen katkaisu
 
-Liikennem&auml;&auml;r&auml;kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta liikennem&auml;&auml;r&auml;tieto halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Liikennem&auml;&auml;r&auml;geometrian katkaisu valitsee aina vain linkin mittaisen osion geometriasta, ei koko liikennem&auml;&auml;r&auml;ketjua.
-Geometrian katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen liikennem&auml;&auml;r&auml;tieto j&auml;&auml; voimaan.
+Liikennem&auml;&auml;r&auml;kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (12). Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta liikennem&auml;&auml;r&auml;tieto halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Liikennem&auml;&auml;r&auml;geometrian katkaisu valitsee aina vain linkin mittaisen osion geometriasta, ei koko liikennem&auml;&auml;r&auml;ketjua.
+Geometrian katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (14). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (13). Uudet rajoitukset tallennetaan tallenna-painikkeesta (8). Katkaisun voi peruuttaa peruuta-painikkeella (9), jolloin alkuper&auml;inen liikennem&auml;&auml;r&auml;tieto j&auml;&auml; voimaan.
 
 Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille liikennem&auml;&auml;r&auml;tiedoille eri arvot, jotta tallennus on mahdollista.
 
@@ -2024,7 +2029,7 @@ _Liikennem&auml;&auml;r&auml;kohteen katkaisu._
 
 ### Liikennem&auml;&auml;r&auml;kohteen poistaminen
 
-Tielinkin suurin liikennem&auml;&auml;r&auml;tieto poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla "Ei tiedossa".
+Tielinkin liikennemäärätieto poistetaan ominaisuustietonäkymässä (15) valitsemalla "Ei tiedossa".
 
 ![Liikennemäärän poisto](lkm6.png)
 
@@ -2041,7 +2046,7 @@ _Tierekisteri poistui käytöstä keväällä 2022 ja sen tilalla on Tievelho._
 
 Joukkoliikenteen pysäkit ovat julkisen liikenteen käytössä olevia pysäkkejä. Digiroadissa ylläpidettävät pysäkkityypit ovat linja-autopysäkit, raitiovaunujen pysäkit sekä virtuaalipysäkit. Vanhan tieliikennelain mukaisia linja-autojen paikallisliikenne-, pikavuoro- ja kaukoliikenne -pysäkkityyppejä ei enää ylläpidetä Digiroadissa. Digiroadissa pysäkin sijainti on sidottu keskilinjageometriaan, eikä pysäkki voi olla tieverkon ulkopuolella.
 
-Karttaikkunaan voi valita pysäkkejä valitsemalla tietolajivalikosta (1) "Joukkoliikenteen pysäkki". Pysäkkejä valitaan tietolajipaneelissa (2) karttanäkymään pysäkin voimassaolon mukaan: voimassa olevat, tulevat ja/tai käytöstä poistuneet. Pysäkit näkyvät kartalla, kun mittakaavataso on 1:20 000 tai tarkempi (3).  Pysäkin sijainti ja vaikutussuunta keskilinjageometrialla on visualisoitu pisaran muotoisella pisteellä ja sen tyyppi pysäkkikilpi-kuvakkeella. Pysäkin tyyppi ilmoittaa, minkälaista liikennettä pysäkki palvelee. Linja-autopysäkit (4) kattavat kaikki vanhan tieliikennelain mukaiset linja-autopysäkkityypit, ja raitiovaunupysäkit (5) ovat vain raitiovaunuliikenteen käytössä olevia pysäkkejä. Virtuaalipysäkit ovat maastoon merkitsemättömiä, vakituisia ja sovittuja pysähtymispaikkoja (6). Terminaalipysäkit (7) eivät itsessään ole varsinaisia pysäkkejä, vaan erillisiä pistekohteita, joihin voi liittää samalla terminaalialueella olevat pysäkit (ks. Terminaalipysäkit [25.8](#258-Terminaalipysakin-lisaaminen-ja-pysakin-liittaminen-terminaaliin)).
+Karttaikkunaan voi valita pysäkkejä valitsemalla tietolajivalikosta (1) "Joukkoliikenteen pysäkki". Pysäkkejä valitaan tietolajipaneelissa (2) karttanäkymään pysäkin voimassaolon mukaan: voimassa olevat, tulevat ja/tai käytöstä poistuneet. Pysäkit näkyvät kartalla, kun mittakaavataso on 1:20 000 tai tarkempi (3).  Pysäkin sijainti ja vaikutussuunta keskilinjageometrialla on visualisoitu pisaran muotoisella pisteellä ja sen tyyppi pysäkkikilpi-kuvakkeella. Pysäkin tyyppi ilmoittaa, minkälaista liikennettä pysäkki palvelee. Linja-autopysäkit (4) kattavat kaikki vanhan tieliikennelain mukaiset linja-autopysäkkityypit, ja raitiovaunupysäkit (5) ovat vain raitiovaunuliikenteen käytössä olevia pysäkkejä. Virtuaalipysäkit ovat maastoon merkitsemättömiä, vakituisia ja sovittuja pysähtymispaikkoja (6). Terminaalipysäkit (7) eivät itsessään ole varsinaisia pysäkkejä, vaan erillisiä pistekohteita, joihin voi liittää samalla terminaalialueella olevat pysäkit (ks. Terminaalipysäkit [27.8](#278-Terminaalipysakin-lisaaminen-ja-pysakin-liittaminen-terminaaliin)).
 
 Tielinkeillä on pysäkkinäkymässä oletuksena värillä korostettu Hallinnollinen luokka -valinta päällä. Visualisoinnin saa pois ottamalla tietolajipaneelin valintaruuduista Hallinnollinen luokka -valinnan pois. Sininen väri tarkoittaa yksityisen omistamaa tielinkkiä, vihreä kunnan omistamaa (katu) ja punainen valtion omistamaa (maantie). Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. Lisäksi tietolajipaneelissa on oletuksena näkyvillä palvelupisteet, johon kuuluu erilaisia julkisen liikenteen palvelupisteitä, kuten metroasemat ja rautatieasemat. Täydentävä geometria (8) on myös oletuksena näkyvillä karttanäkymässä, kun joukkoliikenteen pysäkit -tietolaji on valittuna. Digiroad-operaattori tekee pysäkin sijoittamista varten pyynnöstä täydentävää geometriaa alueille, joilla ei ole valmista keskilinjageometriaa, kuten linja-autoasemat ja piha-alueet.
 
@@ -2055,7 +2060,7 @@ Joukkoliikenteen pysäkkejä haetaan pysäkin valtakunnallisella ID:llä yksilö
 
 Esimerkki URL-osoitteesta:
 
- [https://digiroad.vaylapilvi.fi/#massTransitStopNationalId/307273](https://digiroad.vaylapilvi.fi/#massTransitStopNationalId/307273)(2)
+ [https://digiroad.vaylapilvi.fi/#massTransitStopNationalId/307273](https://digiroad.vaylapilvi.fi/#massTransitStopNationalId/307273)(9)
 
 Numerosarja 307273 esimerkin URL-osoitteessa on pysäkin valtakunnallinen ID. Hakemalla pysäkin, karttakäyttöliittymä kohdistetaan pysäkin kohdalle ja pysäkin ominaisuustietoikkuna (10) aukeaa sivun oikealle puolelle.
 
@@ -2067,7 +2072,7 @@ _Joukkoliikenteen pys&auml;kkien haku._
 
 ## 27.2 Pys&auml;kin tietojen katselu
 
-Yksittäisen pysäkin tietoja voi tarkastella, kun pysäkki on valittu. Pysäkki valitaan joko napauttamalla pysäkkipistettä karttanäkymässä, kun mittakaavataso on 1:20 000 tai tarkempi, tai hakemalla luvun [25.1](#251-Joukkoliikenteen-pys&auml;kkien-haku) mukaisesti, jolloin sivun oikeaan laitaan avautuu ominaisuustietoikkuna (12). Valitulle pysäkille avautuu karttanäkymään tietokupla (13), jossa näkyy pysäkin valtakunnallinen ID, suomenkielinen nimi, liikennöintisuuntima ja pysäkin tyyppi kuvakkeena. Muut pysäkit näkyvät haalennettuna niin kauan, kuin yksittäinen pysäkki on valittu.
+Yksittäisen pysäkin tietoja voi tarkastella, kun pysäkki on valittu. Pysäkki valitaan joko napauttamalla pysäkkipistettä karttanäkymässä, kun mittakaavataso on 1:20 000 tai tarkempi, tai hakemalla luvun [27.1](#271-Joukkoliikenteen-pys&auml;kkien-haku) mukaisesti, jolloin sivun oikeaan laitaan avautuu ominaisuustietoikkuna (12). Valitulle pysäkille avautuu karttanäkymään tietokupla (13), jossa näkyy pysäkin valtakunnallinen ID, suomenkielinen nimi, liikennöintisuuntima ja pysäkin tyyppi kuvakkeena. Muut pysäkit näkyvät haalennettuna niin kauan, kuin yksittäinen pysäkki on valittu.
 
 Jos kaksi tai useampi pysäkki ovat alle kuuden metrin päässä toisistaan, esitetään pysäkit käyttöliittymässä päällekkäin ryhmiteltynä. Päällekkäin asettelu mahdollistaa pysäkin tarkastelun ilman, että samassa sijainnissa olevia pysäkkejä tarvitsee siirtää.
 
@@ -2099,9 +2104,9 @@ Pysäkkien muokkaus tapahtuu muokkaustilassa (18). Pysäkkien valinta ja haku to
 
 Pysäkin ominaisuustietoja muokataan ominaisuustietoikkunassa (20) erilaisiin kenttätyyppeihin. Ominaisuustietokentät ovat tekstikenttiä, joihin ominaisuustieto kirjoitetaan merkkijonona, monivalintoja, josta voi valita oikeat vaihtoehdot tai pudotusvalikkoja, joista voi valita yhden vaihtoehdon. Pysäkin muokkaustoiminnallisuudet poikkeavat hieman kadun ja maantien pysäkkien välillä. Riippuen siitä onko pysäkki kunnan vai ELYn ylläpitämä, eri ominaisuustietojen täyttäminen on sallittua. Pääsääntönä on, että kuntakäyttäjällä muokattavissa on kaikki ne kentät, joita hänen on enimmillään tarpeen muokata. Samoin ELYn pysäkkivastaavalla on muokattavissa ne kentät, joita hänen on tarpeen ylläpitää. Maanteiden pysäkeille ne varustetiedot, joita ei voi muokata sovelluksessa, päivittyvät tulevaisuudessa Tievelhon kautta.
 
-Luvuissa [25.4.1](#2541-Pysakin-vaikutussuunnan-muuttaminen) ja [25.4.2](#2542-Pysakin-voimassaolopäivien-muokkaus) kerrotaan tarkemmin pysäkin vaikutussuunnan ja voimassaolon muokkauksesta. Kaikki pysäkin ominaisuustiedot sekä lyhyet kuvaukset niistä on listattu luvussa [25.4.3](#2543-Pys&auml;kin-ominaisuustiedot).
+Luvuissa [27.4.1](#2741-Pysakin-vaikutussuunnan-muuttaminen) ja [27.4.2](#2742-Pysakin-voimassaolopäivien-muokkaus) kerrotaan tarkemmin pysäkin vaikutussuunnan ja voimassaolon muokkauksesta. Kaikki pysäkin ominaisuustiedot sekä lyhyet kuvaukset niistä on listattu luvussa [27.4.3](#2743-Pys&auml;kin-ominaisuustiedot).
 
-Jos pysäkin tietoihin tekee muutoksen, tiedot tulee joko tallentaa napauttamalla “Tallenna” -painiketta (21) ominaisuustietoikkunan alaosassa tai “Peruuta” -painiketta, jos muokkauksia ei halua tallentaa. Tämän jälkeen pysäkin valinnan saa pois normaalisti napauttamalla karttanäkymää tai valitsemalla toisen pysäkin muokattavaksi. Pysäkkiä ei voi tallentaa, jos siltä puuttuu pakollisia tietoja. Nämä ovat tietojen ylläpitäjä ja pysäkin tyyppi, ja niiden tietokenttien nimet on korostettu oranssilla värillä. Pysäkkien ominaisuustietoikkunassa näkyy ilmoitus, jos pysäkiltä puuttuu pakollisia tietoja. Pysäkin voi tallentaa vain, jos mittakaavataso on 1:20 000 tai tarkempi. Sovellus antaa virheilmoituksen, jos pysäkkiä yrittää, jos pysäkin yrittää tallentaa väärällä mittakaavatasolla.
+Jos pysäkin tietoihin tekee muutoksen, tiedot tulee joko tallentaa napauttamalla “Tallenna” -painiketta (21) ominaisuustietoikkunan alaosassa tai “Peruuta” -painiketta, jos muokkauksia ei halua tallentaa. Tämän jälkeen pysäkin valinnan saa pois normaalisti napauttamalla karttanäkymää tai valitsemalla toisen pysäkin muokattavaksi. Pysäkkiä ei voi tallentaa, jos siltä puuttuu pakollisia tietoja. Nämä ovat tietojen ylläpitäjä ja pysäkin tyyppi, ja niiden tietokenttien nimet on korostettu oranssilla värillä. Pysäkkien ominaisuustietoikkunassa näkyy ilmoitus, jos pysäkiltä puuttuu pakollisia tietoja. Pysäkin voi tallentaa vain, jos mittakaavataso on 1:20 000 tai tarkempi. Sovellus antaa virheilmoituksen, jos pysäkin yrittää tallentaa väärällä mittakaavatasolla.
 
 ![Pys&auml;kin ominaisuustietojen muokkaus.](pysäkit_1_6.png)
 
@@ -2129,7 +2134,7 @@ Pysäkin voimassaolo näkyy karttanäkymässä pysäkin kuvakkeen (kilven) eri v
 
 ELYn ylläpitämille pysäkeille tallennetaan lisäksi inventointipäivä. Mikäli inventointipäivä-kenttä jätetään tyhjäksi, tallentaa sovellus siihen automaattisesti pysäkin tallennushetken päivämäärän. Inventointipäivä on muokattavissa sovelluksessa.
 
-Lisää viimeisestä voimassaolopäivästä ja pysäkin määrittämisestä poistuneeksi luvussa [25.7](#257-Pys&auml;kin-m&auml;&auml;ritt&auml;minen-k&auml;yt&ouml;st&auml;-poistuneeksi).
+Lisää viimeisestä voimassaolopäivästä ja pysäkin määrittämisestä poistuneeksi luvussa [27.7](#277-Pys&auml;kin-m&auml;&auml;ritt&auml;minen-k&auml;yt&ouml;st&auml;-poistuneeksi).
 
 ![Pys&auml;kin voimassaolopäivien muokkaus.](pysäkit_1_8.png)
 
@@ -2207,7 +2212,7 @@ _Joukkoliikenteen pysäkin siirtäminen._
 
 Uusia pysäkkejä voi lisätä, kun lisäystyökalu (+) on aktiivisena (32) ja mittakaavataso on 1:20 000 tai tarkempi. Uusi pysäkki luodaan napauttamalla kartan tiestöstä haluttu sijainti pysäkille. Pysäkin voi luoda olemassa olevalle tielinkille käyttäjän päivitysoikeuksien sallimalla maantieteellisellä alueella. Kuntaylläpitäjä ei voi lisätä uutta pysäkkiä maantielle. Jos lisättävä pysäkki on tyypiltään raitiovaunu, voi sen luoda myös kävelyn ja pyöräilyn väylälle, jos valinta on päällä tietolajipaneelissa (edellinen kuva 30). Jos valitulla kohdalla ei ole tielinkkiä, muodostuu pysäkki lähimmälle tielinkille. Jos kyseessä on tavallisen tieverkon ulkopuolelle lisättävä pysäkki (esim. linja-autoasema), eikä halutussa sijainnissa ole valmista geometriaa, voi Digiroad-operaattoria pyytää tekemään täydentävää geometriaa. Pyyntö tehdään lähettämällä sähköpostia osoitteeseen pysakit@digiroad.fi
 
-Kun pysäkki on asetettu, sivun oikealle puolelle avautuu ominaisuustietoikkuna (33), jossa pysäkille tallennetaan tiedossa olevat ominaisuustiedot (ks. luku [25.4](#254-Joukkoliikenteen-pys&auml;kin-ominaisuustietojen-muokkaus)).
+Kun pysäkki on asetettu, sivun oikealle puolelle avautuu ominaisuustietoikkuna (33), jossa pysäkille tallennetaan tiedossa olevat ominaisuustiedot (ks. luku [27.4](#274-Joukkoliikenteen-pys&auml;kin-ominaisuustietojen-muokkaus)).
 
 Sovellus muodostaa osan ominaisuustiedoista itse, jos niitä ei määritetä. Valtakunnallinen ID, eli pysäkin valtakunnallisesti yksilöivä tunnus, sekä Livi-tunnus (ELYn/maanteiden pysäkeille) muodostuvat Digiroadin omasta numeroavaruudesta, kun pysäkin tallentaa. Käyttäjä ei voi asettaa tai muokata niitä itse. Ennen tallennusta pysäkin valtakunnallisen ID:n sijaan ominaisuustietoikkunan yläosassa lukee “Uusi pysäkki” (34).
 
@@ -2438,6 +2443,8 @@ _Opastustaulun muokkaus._
 ### Opastustaulun lis&auml;ys
 
 Opastustaulu voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkissa lisäyspainiketta (7). Opastustaulu lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan tallenna-painiketta (3). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (8).
+
+![Opastustaulun lisäys](opas6.PNG)
 
 ### Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut
 
@@ -2671,7 +2678,7 @@ Palvelupisteen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn
 
 Muokattava palvelupiste valitaan napauttamalla sen geometriaa. Valitun kohteen geometria korostuu. Valittu palvelupiste voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna-painiketta (3). Muutokset voidaan kumota peruuta-painikkeella (4).
 
-### Palvelupsiteen siirto ja muokkaus
+### Palvelupisteen siirto ja muokkaus
 
 Yksitt&auml;ist&auml; palvelupistett&auml; voidaan my&ouml;s siirt&auml;&auml;. Ensin napautetaan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Palvelupisteen sijainti ei ole riippuvainen tien geometriasta, vaan sen voi sijoittaa mihin kohtaan tahansa. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-painikkeella(4).
 
