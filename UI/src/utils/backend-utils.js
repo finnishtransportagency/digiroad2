@@ -161,6 +161,12 @@
       });
     });
 
+    this.getSpeedLimitsWithComplementary = latestResponseRequestor(function(boundingBox, withRoadAddress) {
+      return validateBoundingBox(boundingBox,{
+        url: 'api/speedlimits/withComplementary?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
+      });
+    });
+
     this.getSpeedLimitsHistory = latestResponseRequestor(function(boundingBox) {
       return validateBoundingBox(boundingBox,{
         url: 'api/speedlimits/history?bbox=' + boundingBox
