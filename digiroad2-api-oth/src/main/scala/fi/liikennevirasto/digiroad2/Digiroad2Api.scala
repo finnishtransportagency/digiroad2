@@ -1404,7 +1404,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     fetchSpeedLimits(withComplementary = false)
   }
 
-  get("/speedlimits/withComplementary") {
+  get("/speedlimits/complementary") {
     fetchSpeedLimits(withComplementary = true)
   }
   

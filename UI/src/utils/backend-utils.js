@@ -163,7 +163,7 @@
 
     this.getSpeedLimitsWithComplementary = latestResponseRequestor(function(boundingBox, withRoadAddress) {
       return validateBoundingBox(boundingBox,{
-        url: 'api/speedlimits/withComplementary?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
+        url: 'api/speedlimits/complementary?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       });
     });
 
