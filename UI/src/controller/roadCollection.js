@@ -126,7 +126,7 @@
       backend.getRoadLinkHistoryByLinkId(linkIdsString, function (err, fetchedRoadLinks) {
         if (err) {
           console.error('Error fetching data:', err);
-          callback(err); // Call the callback with the error
+          callback(err);
         } else {
           var fetchedRoadLinkModels = fetchedRoadLinks.map(function(roadLinkGroup) {
             return roadLinkGroup.map(function(roadLink) {
@@ -135,7 +135,6 @@
           });
 
           me.roadLinkGroups = fetchedRoadLinkModels;
-          eventbus.trigger('expiredRoadLinks:fetched');
           callback(null, me.roadLinkGroups);
         }
       });

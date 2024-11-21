@@ -48,9 +48,11 @@
               console.error('Error fetching road links:', err);
               callback(err);
             } else {
-              var pos = roadLinks[0][0].getData().points[0];
-              eventbus.trigger('manoeuvresOnExpiredLinks:fetched', pos);
-              callback();
+              if (roadLinks.length > 0) {
+                var pos = roadLinks[0][0].getData().points[0];
+                eventbus.trigger('manoeuvresOnExpiredLinks:fetched', pos);
+                callback();
+              }
             }
           });
         }
