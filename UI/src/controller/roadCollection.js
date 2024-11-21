@@ -120,6 +120,27 @@
       },laneInfo);
     };
 
+    this.fetchExpiredRoadLinksByLinkIds = function (linkIds, callback) {
+      var linkIdsString = linkIds.join(',');
+
+      backend.getRoadLinkHistoryByLinkId(linkIdsString, function (err, fetchedRoadLinks) {
+        if (err) {
+          console.error('Error fetching data:', err);
+          callback(err); // Call the callback with the error
+        } else {
+          var fetchedRoadLinkModels = fetchedRoadLinks.map(function(roadLinkGroup) {
+            return roadLinkGroup.map(function(roadLink) {
+              return new RoadLinkModel(roadLink);
+            });
+          });
+
+          me.roadLinkGroups = fetchedRoadLinkModels;
+          eventbus.trigger('expiredRoadLinks:fetched');
+          callback(null, me.roadLinkGroups);
+        }
+      });
+    };
+
     this.fetchHistory = function (boundingBox,laneInfo) {
       backend.getHistoryRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinksHistory(), function(roadLink) {

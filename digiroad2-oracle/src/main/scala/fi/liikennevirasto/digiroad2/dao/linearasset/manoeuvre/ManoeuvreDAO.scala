@@ -100,11 +100,12 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
     Q.updateNA(queryFilter(query) + ")").execute
   }
 
-  def expireManoeuvre(id: Long) = {
+  def expireManoeuvresByIds(ids: Set[Long], username: String) = {
     sqlu"""
              update manoeuvre
-             set valid_to = current_timestamp
-             where id = $id
+             set valid_to = current_timestamp,
+             modified_by = ${username}
+             where id IN (#${ids.mkString(",")})
           """.execute
   }
 

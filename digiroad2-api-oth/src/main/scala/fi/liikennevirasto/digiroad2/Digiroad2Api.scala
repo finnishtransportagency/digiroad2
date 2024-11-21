@@ -804,6 +804,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
   }
 
+  get("/roadlinks/history/:linkIds") {
+    val linkIds = params("linkIds").split(',').toSet
+    val roadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(linkIds)
+    partitionRoadLinks(roadLinks)
+  }
+
   get("/roadlinks/history") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
@@ -1518,6 +1524,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     itemIdsToDelete match {
       case Some(ids) =>
+        manoeuvreService.expireManoeuvreByIds(ids, user.username)
         manoeuvreService.deleteManoeuvreWorkListItems(ids)
       case None => halt(BadRequest("No asset ids to delete provided"))
     }
@@ -1839,6 +1846,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  get("/manoeuvreOnExpiredRoadLink") {
+    params.get("assetId").map { assetId =>
+      val manoeuvreId = assetId.toLong
+      val manoeuvre = manoeuvreService.find(manoeuvreId)
+      Seq(manoeuvre)
+    } getOrElse {
+      BadRequest("Could not fetch manoeuvre")
     }
   }
 

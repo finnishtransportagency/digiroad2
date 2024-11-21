@@ -25,7 +25,8 @@
                 return items.map(function (item) {
                     return $('<tr/>')
                         .append(checkbox(item.assetId))
-                        .append($('<td/>').html(changeRow(item)));
+                        .append($('<td/>').html(changeRow(item)))
+                        .append($('<td/>').append(openMapButton(item)));
                 });
             };
 
@@ -62,35 +63,63 @@
                 return $('<td class="manoeuvreWorkListCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
             };
 
-            var deleteBtn = function () {
-                return $('<button disabled/>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
-                    new GenericConfirmPopup("Haluatko varmasti poistaa valitut kääntymisrajoitukset työlistasta?", {
-                        container: '#work-list',
-                        successCallback: function () {
-                            $(".verificationCheckbox:checkbox:checked").each(function () {
-                                selectedToDelete.push(parseInt(($(this).attr('value'))));
-                            });
-                            backend.deleteManoeuvresWorkListItems(selectedToDelete, function () {
-                                new GenericConfirmPopup("Valitut kääntymisrajoitukset poistettu työlistalta!", {
-                                    container: '#work-list',
-                                    type: "alert",
-                                    okCallback: function () {
-                                        location.reload();
-                                    }
-                                });
-                            }, function () {
-                                new GenericConfirmPopup("Valittuja kääntymisrajoituksia ei voitu poistaa työlistalta. Yritä myöhemmin uudelleen!", {
-                                    container: '#work-list',
-                                    type: "alert"
-                                });
-                            });
-                            selectedToDelete = [];
-                        },
-                        closeCallback: function () {
-                        }
+            var openMapButton = function (item) {
+                return $('<button/>')
+                    .addClass('btn btn-municipality')
+                    .text('Avaa kartalla')
+                    .click(function () {
+                        new WorkListPopUpMap(backend, item);
                     });
+            };
+
+
+            var deleteBtn = function () {
+                return $('<button disabled/>')
+                    .attr('id', 'deleteWorkListItems')
+                    .addClass('delete btn btn-municipality')
+                    .text('Poista valitut kohteet')
+                    .click(function () {
+                        var button = $(this);
+                        handleDeleteButton(button);
                 });
 
+            };
+
+            var handleDeleteButton = function(button) {
+                button.prop('disabled', true);
+                new GenericConfirmPopup("Haluatko varmasti poistaa kääntymisrajoitukset työlistasta?", {
+                    container: '#work-list',
+                    successCallback: function () {
+                        handleWorkListItemDelete();
+                    },
+                    closeCallback: function () {
+                        button.prop('disabled', false);
+                    }
+                });
+            };
+
+            var handleWorkListItemDelete = function() {
+                $(".verificationCheckbox:checkbox:checked").each(function () {
+                    selectedToDelete.push(parseInt(($(this).attr('value'))));
+                });
+                var remainingWorkListItems = workListItems.filter(function (item) {
+                    return !selectedToDelete.includes(item.assetId);
+                });
+                backend.deleteManoeuvresWorkListItems(selectedToDelete, function () {
+                    new GenericConfirmPopup("Valitut kääntymisrajoitukset poistettu työlistalta!", {
+                        container: '#work-list',
+                        type: "alert",
+                        okCallback: function () {
+                            me.generateWorkList(layerName, Promise.resolve(Array(remainingWorkListItems)));
+                        }
+                    });
+                }, function () {
+                    new GenericConfirmPopup("Valittuja kääntymisrajoituksia ei voitu poistaa työlistalta. Yritä myöhemmin uudelleen!", {
+                        container: '#work-list',
+                        type: "alert"
+                    });
+                });
+                selectedToDelete = [];
             };
 
             var addTable = function (manoeuvreWorkListItems) {
