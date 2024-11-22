@@ -77,7 +77,7 @@
                 return $('<button disabled/>')
                     .attr('id', 'deleteWorkListItems')
                     .addClass('delete btn btn-municipality')
-                    .text('Poista valitut kohteet')
+                    .text('Päätä valitut kohteet')
                     .click(function () {
                         var button = $(this);
                         handleDeleteButton(button);
@@ -87,7 +87,7 @@
 
             var handleDeleteButton = function(button) {
                 button.prop('disabled', true);
-                new GenericConfirmPopup("Haluatko varmasti poistaa kääntymisrajoitukset työlistasta?", {
+                new GenericConfirmPopup("Haluatko varmasti päättää kääntymisrajoitukset ja poistaa ne työlistalta?", {
                     container: '#work-list',
                     successCallback: function () {
                         handleWorkListItemDelete();
@@ -106,7 +106,7 @@
                     return !selectedToDelete.includes(item.assetId);
                 });
                 backend.deleteManoeuvresWorkListItems(selectedToDelete, function () {
-                    new GenericConfirmPopup("Valitut kääntymisrajoitukset poistettu työlistalta!", {
+                    new GenericConfirmPopup("Valitut kääntymisrajoitukset päätetty ja poistettu työlistalta!", {
                         container: '#work-list',
                         type: "alert",
                         okCallback: function () {
@@ -114,7 +114,7 @@
                         }
                     });
                 }, function () {
-                    new GenericConfirmPopup("Valittuja kääntymisrajoituksia ei voitu poistaa työlistalta. Yritä myöhemmin uudelleen!", {
+                    new GenericConfirmPopup("Valittuja kääntymisrajoituksia ei voitu päättää ja poistaa työlistalta. Yritä myöhemmin uudelleen!", {
                         container: '#work-list',
                         type: "alert"
                     });
