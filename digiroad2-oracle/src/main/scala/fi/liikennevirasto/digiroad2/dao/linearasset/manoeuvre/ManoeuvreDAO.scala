@@ -100,11 +100,12 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
     Q.updateNA(queryFilter(query) + ")").execute
   }
 
-  def expireManoeuvre(id: Long) = {
+  def expireManoeuvresByIds(ids: Set[Long], username: String) = {
     sqlu"""
              update manoeuvre
-             set valid_to = current_timestamp
-             where id = $id
+             set valid_to = current_timestamp,
+             modified_by = ${username}
+             where id IN (#${ids.mkString(",")})
           """.execute
   }
 
@@ -398,7 +399,7 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
   }
   
   def insertManoeuvreToWorkList(manoeuvresToInsert:Seq[Manoeuvre]): Unit ={
-    val insert= "insert into manouvre_samuutus_work_list (assetId, linkIds, exception_types, validity_periods, additional_info, created_date) values ((?), (?), (?), (?), (?), current_timestamp) ON CONFLICT (assetId) do nothing "
+    val insert= "insert into manoeuvres_on_expired_road_links (assetId, linkIds, exception_types, validity_periods, additional_info, created_date) values ((?), (?), (?), (?), (?), current_timestamp) ON CONFLICT (assetId) do nothing "
     MassQuery.executeBatch(insert) { p =>
       manoeuvresToInsert.foreach(manoeuvre => {
         val linkIds = manoeuvre.elements.flatMap(elem => Seq(elem.sourceLinkId, elem.destLinkId)).filterNot(_ == null).toSet
@@ -416,10 +417,10 @@ class ManoeuvreDao() extends PostGISLinearAssetDao{
   }
   
   def fetchManoeuvreWorklistItems(): List[ManoeuvreWorkListItem] = {
-    sql"""select assetId, linkIds, exception_types, validity_periods, additional_info, created_date from manouvre_samuutus_work_list """.as[ManoeuvreWorkListItem].list
+    sql"""select assetId, linkIds, exception_types, validity_periods, additional_info, created_date from manoeuvres_on_expired_road_links """.as[ManoeuvreWorkListItem].list
   }
 
   def deleteManoeuvreWorkListItems(assetIDsToDelete: Set[Long]) = {
-    sqlu"""DELETE FROM manouvre_samuutus_work_list WHERE assetId IN (#${assetIDsToDelete.mkString(",")})""".execute
+    sqlu"""DELETE FROM manoeuvres_on_expired_road_links WHERE assetId IN (#${assetIDsToDelete.mkString(",")})""".execute
   }
 }
