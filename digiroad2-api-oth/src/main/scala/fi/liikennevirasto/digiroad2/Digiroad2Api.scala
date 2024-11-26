@@ -1361,16 +1361,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/speedlimits") {
+  def fetchSpeedLimits(withComplementary: Boolean): Any = {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val speedLimits =
-        if (params("withRoadAddress").toBoolean)
-          roadAddressService.linearAssetWithRoadAddress(
-            speedLimitService.getSpeedLimitsByBbox(boundingRectangle))
-        else
-          speedLimitService.getSpeedLimitsByBbox(boundingRectangle)
+
+      val speedLimits = if (params("withRoadAddress").toBoolean) {
+        roadAddressService.linearAssetWithRoadAddress(
+          speedLimitService.getSpeedLimitsByBbox(boundingRectangle, withComplementary)
+        )
+      } else {
+        speedLimitService.getSpeedLimitsByBbox(boundingRectangle, withComplementary)
+      }
+
       speedLimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
@@ -1401,6 +1404,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
+  }
+
+  get("/speedlimits") {
+    fetchSpeedLimits(withComplementary = false)
+  }
+
+  get("/speedlimits/complementary") {
+    fetchSpeedLimits(withComplementary = true)
   }
   
   get("/speedlimits/history") {

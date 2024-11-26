@@ -6,18 +6,18 @@ Parameters:
     Description: URL to repository, where the container is, e.g. 012345678910.dkr.ecr.eu-west-1.amazonaws.com
   CacheHost:
     Type: String
-    Description: URL to cache , e.g. name.4xakoi.cfg.euw1.cache.amazonaws.com 
+    Description: URL to cache , e.g. name.4xakoi.cfg.euw1.cache.amazonaws.com
   CachePort:
     Type: Number
     Default: 11211
     Description: port number
   ECSTaskRoleName:
     Type: String
-    Default: dev-digiroad2-ecs-task-role
+    Default: qa-digiroad2-ecs-task-role
     Description: Name of ECS task definition task role
   ApiS3BucketName:
     Type: String
-    Default: dev-vayla-digiroad2-api-store-bucket
+    Default: qa-vayla-digiroad2-api-store-bucket
     Description: Name of s3 bucket for apis
   ApiS3ObjectTTLSeconds:
     Type: Number
@@ -60,8 +60,9 @@ Resources:
   ECSLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /dev/Digiroad-logs
+      LogGroupName: /qa/Digiroad-logs
       RetentionInDays: 180
+
 
   Taskdefinition:
     Type: AWS::ECS::TaskDefinition
@@ -71,19 +72,19 @@ Resources:
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
       TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${ECSTaskRoleName}'
-      Memory: '2048'
-      Family: digiroad2-dev
-      Cpu: '1024'
+      Memory: '30720'
+      Family: digiroad2-qa
+      Cpu: '4096'
       ContainerDefinitions:
         -
           Cpu: 0
-          memory: 2048
-          Image: !Sub '${RepositoryURL}:latest'
+          memory: 30720
+          Image: !Sub '${RepositoryURL}:test'
           Name: digiroad2
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /dev/Digiroad-logs
+              awslogs-group: /qa/Digiroad-logs
               awslogs-region: eu-west-1
               awslogs-stream-prefix: ecs
               awslogs-create-group: true
@@ -93,7 +94,7 @@ Resources:
               Protocol: tcp
           Environment:
             - Name: containerCPU
-              Value: -XX:ActiveProcessorCount=1
+              Value: -XX:ActiveProcessorCount=4
             - Name: REGION
               Value: eu-west-1
             - Name: speedLimitProvider
@@ -106,14 +107,18 @@ Resources:
               Value: 'fi.liikennevirasto.digiroad2.DigiroadEventBus'
             - Name: kgv.endpoint
               Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/v1/collections/'
+            - Name: viiteRestApiEndPoint
+              Value: 'https://api.testivaylapilvi.fi/viite/api/viite/'
             - Name: authenticationTestMode
               Value: 'false'
             - Name: vkmUrl
               Value: 'https://api.vaylapilvi.fi'
             - Name: vallu.server.sending_enabled
-              Value: 'false'
+              Value: 'true'
             - Name: vallu.server.address
               Value: 'https://api.testivaylapilvi.fi/koontikartta/pysakit/xml/'
+            - Name: viite.importTimeStamp
+              Value: '1510876800000'
             - Name: http.proxySet
               Value: 'true'
             - Name: http.proxyHost
@@ -123,11 +128,11 @@ Resources:
             - Name: http.nonProxyHosts
               Value: '172.17.*|localhost|127.*'
             - Name: feedbackAssetsEndPoint
-              Value: 'https://digiroaddev.testivaylapilvi.fi/'
+              Value: 'https://digiroadtest.testivaylapilvi.fi/'
             - Name: bonecp.jdbcUrl
-              Value: 'jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2'
+              Value: 'jdbc:postgresql://rdspg13test.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/digiroadtest'
             - Name: bonecp.username
-              Value: 'digiroad2dbuser'
+              Value: 'digiroadtest'
             - Name: emailTo
               Value: 'info@digiroad.fi'
             - Name: emailHost
@@ -137,13 +142,13 @@ Resources:
             - Name: emailFrom
               Value: 'noreply.digiroad@vaylapilvi.fi'
             - Name: env
-              Value: 'dev'
+              Value: 'qa'
             - Name: caching
               Value: 'true'
             - Name: cacheHostname
               Value: !Sub '${CacheHost}'
             - Name: cacheHostPort
-              Value: !Sub '${CachePort}' 
+              Value: !Sub '${CachePort}'
             - Name: cacheTTL
               Value: '72000'
             - Name: rasterServiceUrl
@@ -154,25 +159,25 @@ Resources:
               Value: !Sub '${ApiS3ObjectTTLSeconds}'
           Secrets:
             - Name: bonecp.password
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/bonecp.password'
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/bonecp.password'
+            - Name: viite.apikey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/viite'
             - Name: vkm.apikey
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/apikey/viitekehysmuunnin'
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/viitekehysmuunnin'
             - Name: rasterService.apikey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/apikey/mml_map'
             - Name: ses.username
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/ses_username'
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/ses_username'
             - Name: ses.password
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/ses_password'
-            - Name: vvhRest.password
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/vvhRest.password'
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/ses_password'
             - Name: kgv.apikey
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/apikey/kgv.apikey'
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/kgv.apikey'
             - Name: vallu.apikey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/vallu.apikey'
             - Name: googlemapapi.client_id
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/googlemapapi.client_id'
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/googlemapapi.client_id'
             - Name: googlemapapi.crypto_key
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/googlemapapi.crypto_key'
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/googlemapapi.crypto_key'
           HealthCheck:
             StartPeriod: 15
             Command:
@@ -185,7 +190,7 @@ Resources:
         - Key: Name
           Value: digiroad2
         - Key: Environment
-          Value: dev
+          Value: qa
         - Key: Owner
           Value: vayla
         - Key: Project
