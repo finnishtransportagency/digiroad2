@@ -22,7 +22,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
 
   case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String,
                                      mValue: Double, floating: Boolean, timeStamp: Long, linkSource: LinkGeomSource,
-                                     propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
+                                     propertyData: Seq[Property] = Seq(), externalId: Option[String] = None) extends PersistedPointAsset
 
   case class testPedestrianCrossing(override val id: Long, override val linkId: String,
                                     override val lon: Double, override val lat: Double, override val mValue: Double,
@@ -30,7 +30,7 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
                                     override val propertyData: Seq[Property], override val createdBy: Option[String] = None,
                                     override val createdAt: Option[DateTime] = None, override val modifiedBy: Option[String] = None,
                                     override val modifiedAt: Option[DateTime] = None, override val expired: Boolean = false,
-                                    override val linkSource: LinkGeomSource) extends PersistedPoint
+                                    override val linkSource: LinkGeomSource, override val externalId: Option[String] = None) extends PersistedPoint
 
   val roadLinkChangeClient = new RoadLinkChangeClient
   val source: scala.io.BufferedSource = scala.io.Source.fromFile("digiroad2-oracle/src/test/resources/smallChangeSet.json")
@@ -267,7 +267,8 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
 
     sqlu"""UPDATE ASSET
           SET CREATED_DATE = to_timestamp('2021-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z'),
-              MODIFIED_BY = 'testModifier', MODIFIED_DATE = to_timestamp('2022-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z')
+              MODIFIED_BY = 'testModifier', MODIFIED_DATE = to_timestamp('2022-05-10T10:52:28.783Z', 'YYYY-MM-DD"T"HH24:MI:SS.FF3Z'),
+              EXTERNAL_ID = 'testExternalId'
           WHERE id in (${pcId}, ${oId}, ${rcId})
       """.execute
 
@@ -451,6 +452,91 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
 
       corrected.floating should be(false)
       corrected.linkId should be(newLinkId)
+    }
+  }
+
+  test("After samuutus the externalId should remain the same and be a part of the saved asset data") {
+    runWithRollback {
+      val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val roadLink = RoadLink(oldLinkId, Seq(Point(367880.004, 6673884.307), Point(367824.646, 6674001.441)), 131.683, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+
+      val ids = createTestAssets(367880.004, 6673884.307, roadLink)
+      Seq(pedestrianCrossingService, obstacleService).foreach { service =>
+        val asset = service.getPersistedAssetsByIds(ids).head
+        val corrected = updater.correctPersistedAsset(asset, change)
+        val newId = service.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+        val newAsset = service.getPersistedAssetsByIds(Set(newId)).head.asInstanceOf[PersistedPoint]
+        newAsset.externalId should be(asset.externalId)
+      }
+      val asset = railwayCrossingService.getPersistedAssetsByIds(ids).head
+      val corrected = updater.correctPersistedAsset(asset, change)
+      val newId = railwayCrossingService.adjustmentOperation(asset, corrected, change.newLinks.find(_.linkId == corrected.linkId).get)
+      val newAsset = railwayCrossingService.getPersistedAssetsByIds(Set(newId)).head
+      newAsset.externalId should be(asset.externalId)
+    }
+  }
+
+  test("After samuutus the externalId should remain the same and be a part of the saved FLOATING asset data.") {
+    runWithRollback {
+      val oldLinkId = "d2fb5669-b512-4c41-8fc8-c40a1c62f2b8:1"
+      val newLinkId = "76271938-fc08-4061-8e23-d2cfdce8f051:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+
+      val testAsset = testPersistedPointAsset(1, 379539.5523067349, 6676588.239922434, 49, oldLinkId,
+        0.7993821710321284, true, 0, NormalLinkInterface, Seq(), Some("externalId"))
+      val correctedTestAsset = updater.correctPersistedAsset(testAsset, change)
+      val pedestrianCrossing = testPedestrianCrossing(1, oldLinkId, 379539.5523067349, 6676588.239922434, 0.799, true, 0, 49, Seq(), None, None, None, None, false, NormalLinkInterface, Some("ExternalId"))
+      val correctedPedestrianCrossing = updater.correctPersistedAsset(pedestrianCrossing, change)
+
+      correctedTestAsset.externalId should be(testAsset.externalId)
+
+      correctedPedestrianCrossing.externalId should be(pedestrianCrossing.externalId)
+    }
+  }
+
+  test("Link gets a new version, asset externalId should stay with the updated asset") {
+    runWithRollback {
+      val oldLinkId = "8619f047-cf35-4d2e-a9d7-ae00349e872b:1"
+      val lon = 531191.535
+      val lat = 7101805.878
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val asset = testPersistedPointAsset(1, lon, lat, 205, oldLinkId,
+        0.5, true, 0, NormalLinkInterface, Seq(), externalId = Some("10"))
+      val corrected = updater.correctPersistedAsset(asset, change)
+
+      corrected.externalId should be(asset.externalId)
+    }
+  }
+
+  test("ExternalId is included in a report for changed asset") {
+    runWithRollback {
+      val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+      val newLinkId = "6eec9a4a-bcac-4afb-afc8-f4e6d40ec571:1"
+      val property = Property(1, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val oldAsset = testPedestrianCrossing(1, oldLinkId, 370243.9245965985, 6670363.935476765, 35.83348978134948549, false,
+        0L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface, Some("ExternalId"))
+      val assetUpdate = AssetUpdate(1, 370243.8824352341, 6670361.792711945, newLinkId, 35.2122522338214, None, None, 1L, false, None, Some("ExternalId"))
+      val newAsset = testPedestrianCrossing(1, newLinkId, assetUpdate.lon, assetUpdate.lat, assetUpdate.mValue, false,
+        1L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface, Some("ExternalId"))
+      val reportedChange = updater.reportChange(oldAsset, newAsset, Move, change, assetUpdate)
+
+      reportedChange.after.head.externalId should be(reportedChange.before.head.externalId)
+    }
+  }
+
+  test("Link version has changed: externalId stays the same") {
+    runWithRollback {
+      val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
+      val newLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:2"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val asset = testPersistedPointAsset(1, 367834.833, 6673991.432, 49, oldLinkId,
+        123.74459961959604, true, 0, NormalLinkInterface, Seq(), Some("externalIdtest"))
+      val corrected = updater.correctPersistedAsset(asset, change)
+
+      corrected.linkId should be(newLinkId)
+      corrected.externalId should be(asset.externalId)
     }
   }
 }
