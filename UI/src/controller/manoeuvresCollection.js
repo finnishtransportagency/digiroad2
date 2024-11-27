@@ -7,6 +7,11 @@
     var roadlinkAdjacents = {};
     var dirty = false;
     var manoeuvreAssetTypeId = 380;
+    var manoeuvreElementType = {
+      firstElement: 1,
+      intermediateElement: 2,
+      lastElement: 3
+    };
 
     //----------------------------------
     // Public methods
@@ -519,14 +524,20 @@
     */
     var formatManoeuvres = function(manoeuvres) {
       return _.map(manoeuvres, function (manoeuvre) {
-        var sourceLinkId = manoeuvre.elements[0].sourceLinkId;
-        var firstTargetLinkId = manoeuvre.elements[0].destLinkId;
-        var lastElementIndex = manoeuvre.elements.length - 1;
-        var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
+        var findElement = function(typeId) {
+          return _.find(manoeuvre.elements, function(element) {
+            return element.elementType === typeId;
+          });
+        };
+        var sourceElement = findElement(manoeuvreElementType.firstElement);
+        var destElement = findElement(manoeuvreElementType.lastElement);
+        var sourceLinkId = sourceElement.sourceLinkId;
+        var firstTargetLinkId = sourceElement.destLinkId;
+        var destLinkId = destElement.sourceLinkId;
         var linkIds = _.chain(manoeuvre.elements).map('sourceLinkId').value();
         var intermediateLinkIds = _.chain(manoeuvre.elements)
           .filter(function(element) {
-            return element.elementType === 2;
+            return element.elementType === manoeuvreElementType.intermediateElement;
           })
           .map('sourceLinkId')
           .value();
