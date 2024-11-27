@@ -37,7 +37,7 @@ sealed case class LinkInfo(constructionType:ConstructionType)
   * @param isPointAsset
   */
 sealed case class Asset(assetId: Long, values: String, municipalityCode: Option[Int], geometry: Option[Seq[Point]],
-                        linearReference: Option[LinearReferenceForReport], linkInfo: Option[LinkInfo], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None) {
+                        linearReference: Option[LinearReferenceForReport], linkInfo: Option[LinkInfo], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None, externalId: Option[String] = None) {
 
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
   val logger: Logger = LoggerFactory.getLogger(getClass)
