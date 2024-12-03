@@ -63,6 +63,27 @@
       });
     });
 
+    this.getManoeuvresOnExpiredLinks = _.throttle(function(assetId, callback) {
+      $.getJSON('api/manoeuvreOnExpiredRoadLink?assetId=' + assetId)
+          .done(function(data) {
+            callback(null, data);
+          })
+          .fail(function(error) {
+            callback(error);
+          });
+    }, 1000);
+
+
+    this.getRoadLinkHistoryByLinkId = _.throttle(function(linkIds, callback) {
+      $.getJSON('api/roadlinks/history/' + linkIds)
+          .done(function(data) {
+            callback(null, data);
+          })
+          .fail(function(error) {
+            callback(error);
+          });
+    }, 1000);
+
     this.updateManoeuvreDetails = function(details, success, failure) {
       $.ajax({
         contentType: "application/json",
@@ -158,6 +179,12 @@
     this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
       return validateBoundingBox(boundingBox,{
         url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
+      });
+    });
+
+    this.getSpeedLimitsWithComplementary = latestResponseRequestor(function(boundingBox, withRoadAddress) {
+      return validateBoundingBox(boundingBox,{
+        url: 'api/speedlimits/complementary?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       });
     });
 
