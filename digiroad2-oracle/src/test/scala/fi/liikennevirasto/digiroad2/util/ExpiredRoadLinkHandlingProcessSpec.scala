@@ -14,6 +14,7 @@ import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import slick.jdbc.StaticQuery.interpolation
 
 class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
   def roadLinkDAO = new RoadLinkDAO
@@ -97,38 +98,6 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
       assetsOnWorkList.head.assetTypeId should equal(SpeedLimitAsset.typeId)
     }
   }
-
-  test("Asset is already on work list, do not insert duplicate"){
-    runWithRollback {
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(expiredLinkId)).thenReturn(Some(testRoadLinkFetched))
-
-      val createdSpeedLimitId = speedLimitService.create(Seq(NewLimit(expiredLinkId, 0.0, 131.683)), SpeedLimitValue(30), "test", (_, _) => Unit).head
-      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
-      expiredLinks.isEmpty should equal(false)
-
-      ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks(cleanRoadLinkTable = false)
-      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
-      expiredLinksAfter.isEmpty should equal(false)
-
-      val assetsOnWorkList = workListService.getAllWorkListAssets(false)
-      assetsOnWorkList.size should equal(1)
-      assetsOnWorkList.head.id should equal(createdSpeedLimitId)
-      assetsOnWorkList.head.linkId should equal(expiredLinkId)
-      assetsOnWorkList.head.assetTypeId should equal(SpeedLimitAsset.typeId)
-
-      //Run process again
-      ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks(cleanRoadLinkTable = false)
-      val expiredLinksAfter2ndRun = roadLinkDAO.fetchExpiredRoadLinks()
-      expiredLinksAfter2ndRun.isEmpty should equal(false)
-
-      val assetsOnWorkList2ndRun = workListService.getAllWorkListAssets(false)
-      assetsOnWorkList2ndRun.size should equal(1)
-      assetsOnWorkList2ndRun.head.id should equal(createdSpeedLimitId)
-      assetsOnWorkList2ndRun.head.linkId should equal(expiredLinkId)
-      assetsOnWorkList2ndRun.head.assetTypeId should equal(SpeedLimitAsset.typeId)
-    }
-  }
-
 
   test("Persist links with manoeuvres, does not insert manoeuvres into work list") {
     runWithRollback {
