@@ -620,7 +620,7 @@
       };
       var renderSamuutusWorkList = function renderSamuutusWorkList() {
         $('ul[class=information-content]').append('' +
-            '<li><button id="work-list-link-manoeuvre-samuutus" class="manoeuvre-samuutus-work-list btn btn-tertiary" onclick=location.href="#work-list/manoeuvreSamuutusWorkList">Tarkistettavien kääntymisrajoituksien lista</button></li>');
+            '<li><button id="work-list-link-manoeuvre-samuutus" class="manoeuvre-samuutus-work-list btn btn-tertiary" onclick=location.href="#work-list/manoeuvreSamuutusWorkList">Kääntymisrajoitukset päättyneillä tielinkeillä</button></li>');
       };
 
       eventbus.on('layer:selected', function(layer) {
