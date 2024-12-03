@@ -22,6 +22,9 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
   val testLinkId: String = LinkIdGenerator.generateRandom()
   val roadLink = RoadLinkFetched(testLinkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val linkId1 = "11c0e7f3-7616-4d5f-9add-665b0bcca8aa:1"
+  val linkId2 = "080f5065-5ce7-4c58-b838-d0b4daf84adc:1"
+  val linkId3 = "ddaf2f37-252b-40e7-9f7b-5953278b994f:1"
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
     
@@ -58,11 +61,12 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
   test("filter out disallowed link types") {
     runWithRollback {
       val roadLinks = Seq(
-        RoadLink("11c0e7f3-7616-4d5f-9add-665b0bcca8aa:1", List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CableFerry, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+        RoadLink(linkId1, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CableFerry, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(linkId3, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, HardShoulder, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
@@ -74,14 +78,15 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
   test("filter out disallowed functional classes") {
     runWithRollback {
       val roadLinks = Seq(
-        RoadLink("11c0e7f3-7616-4d5f-9add-665b0bcca8aa:1", List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 7, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 8, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+        RoadLink(linkId1, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 7, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 8, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(linkId3, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 9, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
-      speedLimits.map(_.id) should equal(Seq(300103))
+      speedLimits.map(_.linkId) should equal(Seq(linkId3, linkId1))
     }
   }
 

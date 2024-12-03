@@ -122,7 +122,8 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       FunctionalClass3.value,
       FunctionalClass4.value,
       FunctionalClass5.value,
-      AnotherPrivateRoad.value).mkString(", ")
+      AnotherPrivateRoad.value,
+      FunctionalClass9.value).mkString(", ")
 
     // Add queries for complementary roadlinks
     val complementaryLinksQuery = if (withComplementary) {
