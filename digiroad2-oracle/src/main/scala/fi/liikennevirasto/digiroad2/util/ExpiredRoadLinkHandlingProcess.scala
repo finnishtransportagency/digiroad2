@@ -60,6 +60,11 @@ object ExpiredRoadLinkHandlingProcess {
     })
   }
 
+  def getAllExistingManoeuvresOnExpiredRoadLinks(expiredRoadLinks: Seq[RoadLinkWithExpiredDate]) = {
+    val roadLinkIds = expiredRoadLinks.map(_.roadLink.linkId)
+    manoeuvreDao.fetchManoeuvresByLinkIds(roadLinkIds).flatMap(_._2)
+  }
+
 
   def process(cleanRoadLinkTable: Boolean = true): Unit = {
     withDynTransaction{
@@ -74,13 +79,16 @@ object ExpiredRoadLinkHandlingProcess {
     logger.info(s"Expired road links count: ${expiredRoadLinksWithExpireDates.size}")
     val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
     val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
+    val manoeuvresOnExpiredLinks = getAllExistingManoeuvresOnExpiredRoadLinks(expiredRoadLinksWithExpireDates)
     val emptyExpiredLinks = expiredRoadLinks.filter(rl => {
       val linkIdsWithExistingAssets = assetsOnExpiredLinks.map(_.linkId)
-      !linkIdsWithExistingAssets.contains(rl.linkId)
+      val linkIdsWithExistingManoeuvres = manoeuvresOnExpiredLinks.flatMap(manoeuvre => Seq(manoeuvre.linkId,manoeuvre.destLinkId)).toSeq
+      !linkIdsWithExistingAssets.contains(rl.linkId) && !linkIdsWithExistingManoeuvres.contains(rl.linkId)
     }).map(_.linkId).toSet
 
     logger.info(s"Empty expired links count: ${emptyExpiredLinks.size}")
     logger.info(s"Assets on expired links count: ${assetsOnExpiredLinks.size}")
+    logger.info(s"Manoeuvres on expired links count: ${manoeuvresOnExpiredLinks.size}")
     
     if (cleanRoadLinkTable && emptyExpiredLinks.nonEmpty) {
       LogUtils.time(logger, "Delete and expire road links and properties") {

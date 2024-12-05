@@ -49,21 +49,34 @@
           speedLimit.endMeasure.toFixed(2);
     };
 
-    this.fetch = function(boundingBox, center) {
-      return backend.getSpeedLimits(boundingBox, applicationModel.getWithRoadAddress()).then(function(speedLimitGroups) {
-        var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
-          return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
-        });
-        var knownSpeedLimits = partitionedSpeedLimitGroups[true] || [];
-        var unknownSpeedLimits = _.map(partitionedSpeedLimitGroups[false], function(speedLimitGroup) {
-              return _.map(speedLimitGroup, function(speedLimit) {
-                return _.merge({}, speedLimit, { generatedId: generateUnknownLimitId(speedLimit) });
+    this.fetch = function (boundingBox, center) {
+      var fetchSpeedLimits;
+      if (isComplementaryActive) {
+        fetchSpeedLimits = backend.getSpeedLimitsWithComplementary;
+      } else {
+        fetchSpeedLimits = backend.getSpeedLimits;
+      }
+
+      return fetchSpeedLimits(boundingBox, applicationModel.getWithRoadAddress())
+          .then(function (speedLimitGroups) {
+            var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function (speedLimitGroup) {
+              return _.some(speedLimitGroup, function (speedLimit) {
+                return _.has(speedLimit, "id");
               });
-            }) || [];
-        speedLimits = knownSpeedLimits.concat(unknownSpeedLimits);
-        eventbus.trigger('speedLimits:fetched', self.getAll());
-        verificationCollection.fetch(boundingBox, center, 20, true);
-      });
+            });
+
+            var knownSpeedLimits = partitionedSpeedLimitGroups[true] || [];
+            var unknownSpeedLimits =
+                _.map(partitionedSpeedLimitGroups[false], function (speedLimitGroup) {
+                  return _.map(speedLimitGroup, function (speedLimit) {
+                    return _.merge({}, speedLimit, { generatedId: generateUnknownLimitId(speedLimit) });
+                  });
+                }) || [];
+
+            speedLimits = knownSpeedLimits.concat(unknownSpeedLimits);
+            eventbus.trigger('speedLimits:fetched', self.getAll());
+            verificationCollection.fetch(boundingBox, center, 20, true);
+          });
     };
 
     this.fetchHistory = function (boundingbox) {
@@ -246,9 +259,9 @@
       isComplementaryActive = enable;
     };
 
-    function complementaryIsActive() {
-       return isComplementaryActive;
-    }
+    this.complementaryIsActive= function() {
+      return isComplementaryActive;
+    };
 
   };
 })(this);

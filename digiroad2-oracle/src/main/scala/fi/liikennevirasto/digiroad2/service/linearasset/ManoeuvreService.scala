@@ -86,12 +86,22 @@ class ManoeuvreService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
      withDynTransaction {
       val manoeuvreRowOld = dao.fetchManoeuvreById(oldManoeuvreId).head
       val manoeuvreId = dao.createManoeuvreForUpdate(userName, manoeuvreRowOld, manoeuvreUpdates.additionalInfo, modifiedDate: Option[DateTime])
-      dao.expireManoeuvre(oldManoeuvreId)
+      expireManoeuvreByIds(Set(oldManoeuvreId), userName, false)
       manoeuvreUpdates.exceptions.foreach(dao.setManoeuvreExceptions(manoeuvreId))
       manoeuvreUpdates.validityPeriods.foreach(dao.setManoeuvreValidityPeriods(manoeuvreId))
 
       eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(oldManoeuvreId) ++ Set(manoeuvreId)))
       manoeuvreId
+    }
+  }
+
+  def expireManoeuvreByIds(manoeuvreIds: Set[Long], username: String, newTransaction: Boolean = true) = {
+    if (newTransaction) {
+      withDynTransaction {
+        dao.expireManoeuvresByIds(manoeuvreIds, username)
+      }
+    } else {
+      dao.expireManoeuvresByIds(manoeuvreIds, username)
     }
   }
 

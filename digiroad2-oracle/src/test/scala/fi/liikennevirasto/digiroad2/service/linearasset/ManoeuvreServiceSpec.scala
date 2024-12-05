@@ -406,4 +406,34 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       manoeuvre.createdBy should be ("traffic_sign_generated")
     }
   }
+
+  test("Given a manoeuvre on worklist; When the manoeuvre is expired and removed from worklist; It should not be fetched or appear on worklist") {
+    val roadLink1 = RoadLink(linkId5, Seq(Point(0.0, 0.0), Point(0.0, 100)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLink2 = RoadLink(linkId6, Seq(Point(0.0, 0.0), Point(0.0, 150)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLink3 = RoadLink(linkId7, Seq(Point(0.0, 0.0), Point(0.0, 500)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+    RoadLink(linkId7, List(Point(20.0, 0.0), Point(25.0, 0.0)), 25.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None)
+    runWithRollback {
+      when(mockRoadLinkService.getAdjacent(any[String], any[Seq[Point]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.pickLeftMost(any[RoadLink], any[Seq[RoadLink]])).thenReturn(roadLink1)
+      when(mockRoadLinkService.getRoadLinkEndDirectionPoints(any[RoadLink], any[Option[Int]])).thenReturn(Seq(Point(0.0, 100)))
+
+      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(linkId5, linkId7, linkId6), None, false), Seq(roadLink1, roadLink2, roadLink3))
+      val manoeuvre = manoeuvreService.find(manoeuvreId).get
+
+      manoeuvreService.insertManoeuvresToWorkList(Seq(manoeuvre))
+      val worklistimes = manoeuvreService.getManoeuvreWorkList()
+      worklistimes.size should be(1)
+      worklistimes.head.assetId should be(manoeuvreId)
+
+      manoeuvreService.expireManoeuvreByIds(Set(manoeuvreId), "unittest")
+      manoeuvreService.deleteManoeuvreWorkListItems(Set(manoeuvreId))
+
+      val manoeuvreExpired = manoeuvreService.find(manoeuvreId)
+      manoeuvreExpired should be(None)
+
+      val worklistItemsDeleted = manoeuvreService.getManoeuvreWorkList()
+      worklistItemsDeleted.size should be(0)
+    }
+  }
 }

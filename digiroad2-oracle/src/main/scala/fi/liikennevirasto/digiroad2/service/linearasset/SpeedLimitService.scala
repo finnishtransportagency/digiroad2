@@ -59,9 +59,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitDao.getLinksWithLength(id)
   }
 
-  def getSpeedLimitsByBbox(bbox: BoundingRectangle): Seq[Seq[PieceWiseLinearAsset]] = {
+  def getSpeedLimitsByBbox(bbox: BoundingRectangle, withCompelementary: Boolean): Seq[Seq[PieceWiseLinearAsset]] = {
     val (speedLimits, allRoadLinks) = withDynTransaction {
-      speedLimitDao.fetchByBBox(bbox)
+      speedLimitDao.fetchByBBox(bbox, withCompelementary)
     }
 
     val roadLinksFT = allRoadLinks.map(rl => RoadLinkForFillTopology(rl.linkId, rl.length, rl.trafficDirection,
