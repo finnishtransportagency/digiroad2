@@ -22,7 +22,7 @@ import scala.util.Try
 
 case class NewSpeedLimitMassOperation(creator: String, typeId: Int, linkId: String, linkMeasures: Measures, sideCode: SideCode, 
                                       value: Option[SpeedLimitValue], timeStamp: Option[Long],
-                                      createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource)
+                                      createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource, externalId: Seq[String] = Seq())
 
 
 class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) extends DynamicLinearAssetService(roadLinkService, eventbus) {
@@ -531,7 +531,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
   override def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, timeStamp: Long = createTimeStamp(), roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                         createdByFromUpdate: Option[String] = Some(""),
-                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long={
+                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None, externalId: Seq[String] = Seq()): Long={
     speedLimitDao.createSpeedLimit(username,linkId, measures, SideCode(sideCode),value.asInstanceOf[SpeedLimitValue], timeStamp, (_, _) => Unit).get
   }
 
