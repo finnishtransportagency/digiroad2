@@ -400,7 +400,7 @@ class AssetFiller {
         dbAsset.endMeasure, Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime, dbAsset.createdBy,
         dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection, dbAsset.timeStamp, dbAsset.geomModifiedDate,
         dbAsset.linkSource, roadLink.administrativeClass, attributes = attributesToUse, verifiedBy = dbAsset.verifiedBy, verifiedDate = dbAsset.verifiedDate, informationSource = dbAsset.informationSource,
-        oldId = dbAsset.oldId
+        oldId = dbAsset.oldId, externalId = dbAsset.externalId
       )
     }
   }
