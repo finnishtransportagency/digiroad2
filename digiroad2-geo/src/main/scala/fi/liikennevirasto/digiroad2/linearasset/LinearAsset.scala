@@ -184,13 +184,13 @@ case class PieceWiseLinearAsset(id: Long, linkId: String, sideCode: SideCode, va
                                 createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
                                 timeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass,
                                 attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime],
-                                informationSource: Option[InformationSource],oldId:Long = 0  /*for keeping record in LinearAssetUpdater */   ) extends LinearAsset
+                                informationSource: Option[InformationSource],oldId: Long = 0  /*for keeping record in LinearAssetUpdater */, externalId: Seq[String] = Seq()) extends LinearAsset
 
 case class PersistedLinearAsset(id: Long, linkId: String, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
                                 timeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime],
-                                informationSource: Option[InformationSource], oldId:Long = 0  /*for keeping record in LinearAssetUpdater */ ){
+                                informationSource: Option[InformationSource], oldId: Long = 0  /*for keeping record in LinearAssetUpdater */, externalId: Seq[String] = Seq()){
   def toJson: JObject = JObject(
     JField("modifiedBy", JString(modifiedBy.getOrElse(""))),
     JField("createdBy", JString(createdBy.getOrElse(""))),
