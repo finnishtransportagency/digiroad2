@@ -337,8 +337,7 @@ INSERT INTO municipality (id,name_fi,name_sv,ely_nro,road_maintainer_id,geometry
     (564,'Oulu','Uleåborg',13,12,'SRID=3067;POINT (441764.231197278 7225946.21207637)'::geometry,5),
     (309,'Outokumpu','Outokumpu',8,8,'SRID=3067;POINT (599871.776893653 6956108.68054279)'::geometry,5),
     (854,'Pello','Pello',15,14,'SRID=3067;POINT (381297.914478349 7409155.7812528)'::geometry,5),
-    (584,'Perho','Perho',11,10,'SRID=3067;POINT (372507.461451162 7016684.11767525)'::geometry,5),
-    (588,'Pertunmaa','Pertunmaa',8,8,'SRID=3067;POINT (469991.42700425 6818553.57791074)'::geometry,5);
+    (584,'Perho','Perho',11,10,'SRID=3067;POINT (372507.461451162 7016684.11767525)'::geometry,5);
 INSERT INTO municipality (id,name_fi,name_sv,ely_nro,road_maintainer_id,geometry,zoom) VALUES
     (592,'Petäjävesi','Petäjävesi',10,9,'SRID=3067;POINT (407660.378178971 6907776.38607199)'::geometry,5),
     (593,'Pieksämäki','Pieksämäki',8,8,'SRID=3067;POINT (510514.118554209 6906719.03858473)'::geometry,5),
