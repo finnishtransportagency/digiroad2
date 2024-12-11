@@ -46,7 +46,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
       case old if (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
         PostGISTrafficLightDao.create(setAssetPosition(updatedAsset, linkGeometry, value), value, username, municipality,
-          timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
+          timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalIds, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
         PostGISTrafficLightDao.update(id, updatedAsset, value, username, municipality,
           Some(timeStamp.getOrElse(createTimeStamp())), linkSource, fromPointAssetUpdater)
@@ -96,7 +96,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   override def createOperation(asset: PersistedAsset, adjustment: AssetUpdate): PersistedAsset = {
     new PersistedAsset(adjustment.assetId, adjustment.linkId, adjustment.lon, adjustment.lat, adjustment.mValue,
       adjustment.floating, asset.timeStamp, asset.municipalityCode, asset.propertyData, asset.createdBy,
-      asset.createdAt, asset.modifiedBy, asset.modifiedAt, asset.linkSource, asset.externalId)
+      asset.createdAt, asset.modifiedBy, asset.modifiedAt, asset.linkSource, asset.externalIds)
   }
 
   override def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetUpdate, roadLink: RoadLinkInfo): Long = {

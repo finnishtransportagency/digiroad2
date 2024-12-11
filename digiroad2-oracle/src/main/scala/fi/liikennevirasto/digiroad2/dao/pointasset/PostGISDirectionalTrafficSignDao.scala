@@ -28,7 +28,7 @@ case class DirectionalTrafficSignRow(id: Long, linkId: String,
                                     modifiedAt: Option[DateTime] = None,
                                     geometry: Seq[Point] = Nil,
                                     linkSource: LinkGeomSource,
-                                    externalId: Option[String] = None)
+                                    externalIds: Seq[String] = Seq())
 
 case class DirectionalTrafficSign(id: Long, linkId: String,
                                   lon: Double, lat: Double,
@@ -44,7 +44,7 @@ case class DirectionalTrafficSign(id: Long, linkId: String,
                                   modifiedAt: Option[DateTime] = None,
                                   geometry: Seq[Point] = Nil,
                                   linkSource: LinkGeomSource,
-                                  externalId: Option[String] = None) extends PersistedPointAsset {
+                                  externalIds: Seq[String] = Seq()) extends PersistedPointAsset {
   override def getValidityDirection: Option[Int] = Some(this.validityDirection)
   override def getBearing: Option[Int] = this.bearing
 }
@@ -58,7 +58,7 @@ object PostGISDirectionalTrafficSignDao {
             when ev.name_fi is not null then ev.name_fi
             when tpv.value_fi is not null then tpv.value_fi
             else null
-          end as display_value, pos.side_code, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, pos.link_source, a.external_id
+          end as display_value, pos.side_code, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, pos.link_source, a.external_ids
          from asset a
          join asset_link al on a.id = al.asset_id
          join lrm_position pos on al.position_id = pos.id
@@ -99,7 +99,7 @@ object PostGISDirectionalTrafficSignDao {
       id -> DirectionalTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         validityDirection = row.validityDirection, bearing = row.bearing, createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
-        geometry = row.geometry, linkSource = row.linkSource, externalId = row.externalId)
+        geometry = row.geometry, linkSource = row.linkSource, externalIds = row.externalIds)
     }.values.toSeq
   }
 
@@ -143,10 +143,13 @@ object PostGISDirectionalTrafficSignDao {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val bearing = r.nextIntOption()
       val linkSource = r.nextInt()
-      val externalId = r.nextStringOption()
+      val externalIds: Seq[String] = Seq(r.nextStringOption()).flatMap {
+        case Some(value) => value.split(",")
+        case None => Seq.empty
+      }
 
       DirectionalTrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, validityDirection.getOrElse(99),
-        bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), externalId = externalId)
+        bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), externalIds = externalIds)
     }
   }
 
@@ -169,19 +172,21 @@ object PostGISDirectionalTrafficSignDao {
     id
   }
 
-  def create(sign: IncomingDirectionalTrafficSign, mValue: Double,  municipality: Int, username: String,
+  def create(sign: IncomingDirectionalTrafficSign, mValue: Double, municipality: Int, username: String,
              createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime],
-             externalIdFromUpdate: Option[String], fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None,
+             externalIdsFromUpdate: Seq[String], fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None,
              modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
 
     val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
     val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
 
+    val externalIdString = externalIdsFromUpdate.mkString(",")
+
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-       insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $modifiedBy, $modifiedAt);
+       insert into asset(id, external_ids, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
+        values ($id, $externalIdString, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $modifiedBy, $modifiedAt);
         insert into lrm_position(id, start_measure, link_id, side_code, modified_date)
         values ($lrmPositionId, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp);
        insert into asset_link(asset_id, position_id)

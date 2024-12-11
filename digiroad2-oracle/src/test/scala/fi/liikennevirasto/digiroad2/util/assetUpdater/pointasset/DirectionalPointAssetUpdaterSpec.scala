@@ -20,7 +20,7 @@ class DirectionalPointAssetUpdaterSpec extends FunSuite with Matchers {
   case class testDirectionalPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String,
                                      mValue: Double, floating: Boolean, timeStamp: Long, validityDirection: Int,
                                      bearing: Option[Int], linkSource: LinkGeomSource,
-                                     propertyData: Seq[Property] = Seq(), externalId: Option[String] = None) extends PersistedPointAsset {
+                                     propertyData: Seq[Property] = Seq(), externalIds: Seq[String] = Seq()) extends PersistedPointAsset {
     override def getValidityDirection: Option[Int] = Some(this.validityDirection)
     override def getBearing: Option[Int] = this.bearing
   }
