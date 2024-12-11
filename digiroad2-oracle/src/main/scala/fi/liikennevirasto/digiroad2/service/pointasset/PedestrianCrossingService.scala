@@ -104,7 +104,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
       case old if (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
         dao.create(setAssetPosition(updatedAsset, linkGeom, value), value, username, linkMunicipality,
-          timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
+          timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalIds, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
         dao.update(id, updatedAsset, value, username, linkMunicipality,
           Some(timeStamp.getOrElse(createTimeStamp())), linkSource, fromPointAssetUpdater)
@@ -119,7 +119,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   override def createOperation(asset: PersistedAsset, adjustment: AssetUpdate): PersistedAsset = {
     new PersistedAsset(adjustment.assetId, adjustment.linkId, adjustment.lon, adjustment.lat,
       adjustment.mValue, adjustment.floating, asset.timeStamp, asset.municipalityCode, asset.propertyData, asset.createdBy,
-      asset.createdAt, asset.modifiedBy, asset.modifiedAt, linkSource = asset.linkSource, externalId = asset.externalId)
+      asset.createdAt, asset.modifiedBy, asset.modifiedAt, linkSource = asset.linkSource, externalIds = asset.externalIds)
   }
 
   override def adjustmentOperation(asset: PersistedAsset, adjustment: AssetUpdate, link: RoadLinkInfo): Long = {

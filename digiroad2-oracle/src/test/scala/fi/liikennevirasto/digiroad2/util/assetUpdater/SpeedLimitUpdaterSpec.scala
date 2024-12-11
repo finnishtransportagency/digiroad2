@@ -478,7 +478,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     }
   }
 
-  test("When change type is Replace. After samuutus processing, the externalId should remain with the asset that is projected onto the new link.") {
+  test("When change type is Replace. After samuutus processing, the externalIds should remain with the asset that is projected onto the new link.") {
     val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
     val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
     val assetTypeId = SpeedLimitAsset.typeId
@@ -496,17 +496,17 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
 
       assetsBefore.size should be(1)
       assetsBefore.head.linkId should be(oldLinkID)
-      assetsBefore.head.externalId should be(Seq("externalId"))
+      assetsBefore.head.externalIds should be(Seq("externalId"))
 
       TestLinearAssetUpdater.updateByRoadLinks(assetTypeId, changes)
 
       val assetsAfter = speedLimitService.getPersistedAssetsByIds(assetTypeId, Set(id.get), false)
       assetsAfter.head.linkId should be(newLinkID)
-      assetsAfter.head.externalId should be(assetsBefore.head.externalId)
+      assetsAfter.head.externalIds should be(assetsBefore.head.externalIds)
     }
   }
 
-  test("When change type is Split. After samuutus processing, the externalId should remain with the asset that is projected onto the new link.") {
+  test("When change type is Split. After samuutus processing, the externalIds should remain with the asset that is projected onto the new link.") {
     val oldLinkID = "cc2bc598-8527-4600-861f-4c70eaacae61:1"
     val newLinkID = "46b888db-6fcd-4e8c-afbd-6532023a1759:1"
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
@@ -522,13 +522,13 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
 
       val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
       assetsBefore.head.linkId should be(oldLinkID)
-      assetsBefore.head.externalId should be(Seq("externalId"))
+      assetsBefore.head.externalIds should be(Seq("externalId"))
 
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
 
       val assetsAfter = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
       assetsAfter.head.linkId should be(newLinkID)
-      assetsAfter.head.externalId should be(assetsBefore.head.externalId)
+      assetsAfter.head.externalIds should be(assetsBefore.head.externalIds)
     }
   }
 
@@ -537,7 +537,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
     val newLinkID1 = "4b061477-a7bc-4b72-b5fe-5484e3cec03d:1"
     val newLinkID2 = "b0b54052-7a0e-4714-80e0-9de0ea62a347:1"
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
-    val testExternalId: Seq[String] = Seq("testID1", "testID2")
+    val testExternalIds: Seq[String] = Seq("testID1", "testID2")
 
     runWithRollback {
       val newRoadLink1 = roadLinkService.getRoadLinkByLinkId(newLinkID1).get
@@ -546,18 +546,18 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty, false)).thenReturn(Seq.empty[RoadLink])
 
-      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, 45.230), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface, testExternalId)
+      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, 45.230), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface, testExternalIds)
 
       val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
       assetsBefore.head.linkId should be(oldLinkID)
-      assetsBefore.head.externalId should be(testExternalId)
+      assetsBefore.head.externalIds should be(testExternalIds)
 
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
 
       val assetsOnNewLinks = speedLimitService.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLinkID1, newLinkID2), false)
       assetsOnNewLinks.size should be(2)
-      assetsOnNewLinks.head.externalId should be(testExternalId)
-      assetsOnNewLinks.last.externalId should be(testExternalId)
+      assetsOnNewLinks.head.externalIds should be(testExternalIds)
+      assetsOnNewLinks.last.externalIds should be(testExternalIds)
     }
   }
 }
