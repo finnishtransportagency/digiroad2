@@ -2583,7 +2583,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     }
   }
 
-  test("When change type is Replace and asset type is DamagedByThaw, After samuutus processes the externalId of the asset should stay with the projected asset") {
+  test("When change type is Replace and asset type is DamagedByThaw, After samuutus processes the externalIds of the asset should stay with the projected asset") {
     val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
     val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
 
@@ -2594,22 +2594,22 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
-      val id = service.createWithoutTransaction(DamagedByThaw.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None, externalId = Seq("externalId"))
+      val id = service.createWithoutTransaction(DamagedByThaw.typeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None, externalIds = Seq("externalId"))
 
       val assetsBefore = service.getPersistedAssetsByIds(DamagedByThaw.typeId, Set(id), false)
 
       assetsBefore.size should be(1)
       assetsBefore.head.linkId should be(oldLinkID)
-      assetsBefore.head.externalId should be(Seq("externalId"))
+      assetsBefore.head.externalIds should be(Seq("externalId"))
 
       TestLinearAssetUpdater.updateByRoadLinks(DamagedByThaw.typeId, changes)
       val assetsAfter = service.getPersistedAssetsByIds(DamagedByThaw.typeId, Set(id), false)
       assetsAfter.head.linkId should be(newLinkID)
-      assetsAfter.head.externalId should be(assetsBefore.head.externalId)
+      assetsAfter.head.externalIds should be(assetsBefore.head.externalIds)
     }
   }
 
-  test("When change type is Replace and asset type is RoadWidth, After samuutus processes the externalId of the asset should stay with the projected asset") {
+  test("When change type is Replace and asset type is RoadWidth, After samuutus processes the externalIds of the asset should stay with the projected asset") {
     val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
     val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
     val assetTypeId = RoadWidth.typeId
@@ -2620,18 +2620,18 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
-      val id = service.createWithoutTransaction(assetTypeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None, externalId = Seq("externalId"))
+      val id = service.createWithoutTransaction(assetTypeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None, externalIds = Seq("externalId"))
 
       val assetsBefore = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
 
       assetsBefore.size should be(1)
       assetsBefore.head.linkId should be(oldLinkID)
-      assetsBefore.head.externalId should be(Seq("externalId"))
+      assetsBefore.head.externalIds should be(Seq("externalId"))
 
       TestLinearAssetUpdater.updateByRoadLinks(assetTypeId, changes)
       val assetsAfter = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
       assetsAfter.head.linkId should be(newLinkID)
-      assetsAfter.head.externalId should be(assetsBefore.head.externalId)
+      assetsAfter.head.externalIds should be(assetsBefore.head.externalIds)
     }
   }
 
@@ -2648,18 +2648,18 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val newRoadLink1 = roadLinkService.getRoadLinkByLinkId(newLinkID1).get
       val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLinkID2).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID1, newLinkID2), false)).thenReturn(Seq(newRoadLink1, newRoadLink2))
-      val id = service.createWithoutTransaction(assetTypeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 45.230), "testuser", 0L, Some(oldRoadLink), false, None, None, externalId = Seq("externalId", "externalId2"))
+      val id = service.createWithoutTransaction(assetTypeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 45.230), "testuser", 0L, Some(oldRoadLink), false, None, None, externalIds = Seq("externalId", "externalId2"))
 
       val assetsBefore = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
       assetsBefore.head.linkId should be(oldLinkID)
-      assetsBefore.head.externalId should be(Seq("externalId", "externalId2"))
+      assetsBefore.head.externalIds should be(Seq("externalId", "externalId2"))
 
       TestLinearAssetUpdater.updateByRoadLinks(assetTypeId, changes)
 
       val assetsOnNewLinks = service.getPersistedAssetsByLinkIds(assetTypeId, Seq(newLinkID1, newLinkID2), false)
       assetsOnNewLinks.size should be(2)
-      assetsOnNewLinks.head.externalId should be(Seq("externalId", "externalId2"))
-      assetsOnNewLinks.last.externalId should be(Seq("externalId", "externalId2"))
+      assetsOnNewLinks.head.externalIds should be(Seq("externalId", "externalId2"))
+      assetsOnNewLinks.last.externalIds should be(Seq("externalId", "externalId2"))
     }
   }
 }

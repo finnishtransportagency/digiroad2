@@ -37,7 +37,7 @@ sealed case class LinkInfo(constructionType:ConstructionType)
   * @param isPointAsset
   */
 sealed case class Asset(assetId: Long, values: String, municipalityCode: Option[Int], geometry: Option[Seq[Point]],
-                        linearReference: Option[LinearReferenceForReport], linkInfo: Option[LinkInfo], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None, externalId: Option[String] = None) {
+                        linearReference: Option[LinearReferenceForReport], linkInfo: Option[LinkInfo], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None, externalIds: Seq[String] = Seq()) {
 
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -279,10 +279,10 @@ object ChangeReporter {
 
           constructionTypeBefore,
           assetBefore.assetId, beforeGeometry, assetBefore.values, assetBefore.municipalityCode.getOrElse(null),
-          beforeValidityDirection, beforeBearing, beforeLinkId, beforeStartMValue, beforeEndMValue, beforeLength, assetBefore.getUrl, assetBefore.externalId,
+          beforeValidityDirection, beforeBearing, beforeLinkId, beforeStartMValue, beforeEndMValue, beforeLength, assetBefore.getUrl, assetBefore.externalIds,
           constructionTypeAfter,
           assetAfter.assetId,  afterGeometry,  assetAfter.values, assetAfter.municipalityCode.getOrElse(null),
-          afterValidityDirection, afterBearing, afterLinkId, afterStartMValue, afterEndMValue, afterLength, assetAfter.getUrl, assetAfter.externalId)
+          afterValidityDirection, afterBearing, afterLinkId, afterStartMValue, afterEndMValue, afterLength, assetAfter.getUrl, assetAfter.externalIds)
         if (withGeometry) {
           csvRow
         } else {
@@ -306,7 +306,7 @@ object ChangeReporter {
           val linearReference = before.linearReference.get
           val constructionType:String = Try(before.linkInfo.get.constructionType.value.toString).getOrElse("")
           Seq(constructionType,before.assetId, before.geometryToString, before.values, before.municipalityCode.getOrElse(0), linearReference.sideCode.getOrElse(0), linearReference.linkId,
-            linearReference.startMValue.toString, linearReference.endMValue.getOrElse(0).toString, linearReference.length.toString, before.getUrl, before.externalId)
+            linearReference.startMValue.toString, linearReference.endMValue.getOrElse(0).toString, linearReference.length.toString, before.getUrl, before.externalIds.mkString(";"))
         case None => Seq("", "", "", "", "", "", "", "", "", "", "", "")
       }
       val beforeFieldsWithoutGeometry = beforeFields.patch(2, Nil, 1)
@@ -319,7 +319,7 @@ object ChangeReporter {
           val linearReference = after.linearReference.get
           val constructionType :String = Try(after.linkInfo.get.constructionType.value.toString).getOrElse("")
           val afterFields = Seq(constructionType,after.assetId, after.geometryToString, after.values, after.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
-            linearReference.startMValue.toString, linearReference.endMValue.get.toString, linearReference.length.toString, after.getUrl, after.externalId)
+            linearReference.startMValue.toString, linearReference.endMValue.get.toString, linearReference.length.toString, after.getUrl, after.externalIds.mkString(";"))
           val afterFieldsWithoutGeometry = afterFields.patch(2, Nil, 1)
           if (withGeometry) {
             metaFields ++ beforeFields ++ afterFields
@@ -363,9 +363,9 @@ object ChangeReporter {
         case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "point" =>
           val labels = Seq("asset_type_id", "change_type", "floating_reason", "roadlink_change", "before_constructionType", "before_asset_id",
             "before_geometry", "before_value", "before_municipality_code", "before_validity_direction", "before_bearing", "before_link_id",
-            "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "before_external_id", "after_constructionType", "after_asset_id",
+            "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "before_external_ids", "after_constructionType", "after_asset_id",
             "after_geometry", "after_value", "after_municipality_code", "after_validity_direction", "after_bearing", "after_link_id",
-            "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url", "after_external_id")
+            "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url", "after_external_ids")
           val labelsWithoutGeometry = labels.slice(0, 6) ++ labels.slice(7, 19) ++ labels.slice(20, labels.size)
           if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
           val contentRowCount = changes.map { change =>
@@ -379,9 +379,9 @@ object ChangeReporter {
         case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "linear" =>
           val labels = Seq("asset_type_id", "change_type", "roadlink_change", "before_constructionType", "before_asset_id",
             "before_geometry", "before_value", "before_municipality_code", "before_side_code", "before_link_id",
-            "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "before_external_id", "after_constructionType", "after_asset_id",
+            "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "before_external_ids", "after_constructionType", "after_asset_id",
             "after_geometry", "after_value", "after_municipality_code", "after_side_code", "after_link_id",
-            "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url", "after_external_id")
+            "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url", "after_external_ids")
           val labelsWithoutGeometry = labels.filterNot(_.contains("geometry"))
           if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
           val contentRowCount = changes.map { change =>

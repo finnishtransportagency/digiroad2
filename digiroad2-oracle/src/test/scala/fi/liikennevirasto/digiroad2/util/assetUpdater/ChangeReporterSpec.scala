@@ -120,9 +120,9 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     val after1LinearRef = LinearReferenceForReport(linkId = newLinkId1, startMValue = 0.0, endMValue = Some(156.867),
       sideCode = Some(2), validityDirection = None, length = 156.867)
     val beforeAsset = Asset(assetId = 123, values = values, municipalityCode = Some(49), geometry = None,
-      linearReference = Some(beforeLinearRef), lifecycleChange, isPointAsset = false, floatingReason = None, externalId = None)
+      linearReference = Some(beforeLinearRef), lifecycleChange, isPointAsset = false, floatingReason = None, externalIds = Seq("id1", "id2"))
     val afterAsset1 = Asset(assetId = 124, values = values, municipalityCode = Some(49), geometry = None,
-      linearReference = Some(after1LinearRef), lifecycleChange, isPointAsset = false, floatingReason = None, externalId = None)
+      linearReference = Some(after1LinearRef), lifecycleChange, isPointAsset = false, floatingReason = None, externalIds = Seq("id1", "id2"))
 
     val changedAsset = ChangedAsset(linkId = oldLinkId, assetId = beforeAsset.assetId, changeType = Replaced,
       roadLinkChangeType = RoadLinkChangeType.Replace, before = Some(beforeAsset), after = Seq(afterAsset1))
@@ -177,8 +177,8 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     header(12) should be("before_roadlink_url")
     //row1(12) should be("")
 
-    header(13) should be("before_external_id")
-    row1(13) should be("None")
+    header(13) should be("before_external_ids")
+    row1(13) should be("id1;id2")
 
     header(14) should be("after_constructionType")
     row1(14) should be(lifecycleChange.get.constructionType.value.toString)
@@ -210,7 +210,8 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     //row1(22) should be("after_roadlink_url")
     header(23) should be("after_roadlink_url")
 
-    header(24) should be("after_external_id\r")
+    header(24) should be("after_external_ids\r")
+    row1(24) should be("id1;id2\r")
   }
 
   test("check that all properties are in correct place, point like") {
@@ -285,7 +286,7 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     header(14) should be("before_roadlink_url")
     //row1(14) should be("")
 
-    header(15) should be("before_external_id")
+    header(15) should be("before_external_ids")
 
     header(16) should be("after_constructionType")
     row1(16) should be(lifecycleChange.get.constructionType.value.toString)
@@ -320,7 +321,7 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     header(26) should be("after_roadlink_url")
     //row1(25) should be("after_roadlink_url")
 
-    header(27) should be("after_external_id\r")
+    header(27) should be("after_external_ids\r")
   }
 
   // run locally to test the performance of csv generation
@@ -411,18 +412,18 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     println(s"CSV generation took ${(endTime - startTime) / 1e9} seconds")
   }
 
-  test("change report contains the externalId of the changed asset") {
+  test("change report contains the externalIds of the changed asset") {
     val changedAsset = ChangedAsset("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1", 1, Floating, Remove,
       Some(Asset(1, s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
         Some(49), Some(List(Point(366414.9482441691, 6674451.461887036))),
-        Some(LinearReferenceForReport("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1", 14.033238836181871, None, None, None, Some(2), 0.0)), lifecycleChange, true, None, Some("externalId"))),
+        Some(LinearReferenceForReport("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1", 14.033238836181871, None, None, None, Some(2), 0.0)), lifecycleChange, true, None, Seq("externalIds"))),
       List(Asset(1, s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
-        Some(49), None, None, lifecycleChange, true, Some(NoRoadLinkFound))))
+        Some(49), None, None, lifecycleChange, true, Some(NoRoadLinkFound), Seq("externalIds"))))
     val changeReport = ChangeReport(PedestrianCrossings.typeId, Seq(changedAsset))
     val (csv, contentRows) = ChangeReporter.generateCSV(changeReport, true)
     val contents = csv.split("\\\n")(2)
 
     contentRows should be(1)
-    contents.contains("Some(externalId)") should be(true)
+    contents.contains("List(externalIds)") should be(true)
   }
 }
