@@ -153,7 +153,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
       case old if (old.bearing != updatedAsset.bearing || !GeometryUtils.areAdjacent(Point(old.lon, old.lat), Point(updatedAsset.lon, updatedAsset.lat)) || old.validityDirection != updatedAsset.validityDirection) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
         PostGISTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode,
-          timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
+          timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt, old.externalIds, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
         PostGISTrafficSignDao.update(id, updatedAsset, value, roadLink.municipalityCode, username, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource, fromPointAssetUpdater)
     }
@@ -187,7 +187,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     new PersistedAsset(adjustment.assetId, adjustment.linkId, adjustment.lon, adjustment.lat,
       adjustment.mValue, adjustment.floating, asset.timeStamp, asset.municipalityCode, asset.propertyData,
       asset.createdBy, asset.createdAt, asset.modifiedBy, asset.modifiedAt, validityDirection, adjustment.bearing,
-      asset.linkSource, externalId = asset.externalId)
+      asset.linkSource, externalIds = asset.externalIds)
   }
 
   override def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetUpdate, link: RoadLinkInfo): Long = {
