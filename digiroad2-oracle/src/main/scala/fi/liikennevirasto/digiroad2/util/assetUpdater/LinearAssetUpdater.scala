@@ -591,7 +591,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     new Parallel().operation(changesGrouped, level) { tasks =>
       tasks.flatMap {
         changesPerThread =>
-          LogUtils.time(logger, s"Processing ${changesPerThread.size} changes in a single thread") {
+          LogUtils.time(logger, s"Processing ${changesPerThread.size} changes in a single thread", startLogging = true) {
             changesPerThread.map(change => {
               goThroughChanges(assetsGroup, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
             })
@@ -655,7 +655,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                initStep: OperationStep, change: RoadLinkChange, initStepSplit:OperationStepSplit): Option[OperationStep] = {
 
     nonAssetUpdate(change, Seq(), null)
-    LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
+    val oldLinkId = change.oldLink.getOrElse("")
+    val newLinkIds = change.newLinks.map(_.linkId).mkString("\n  - ")
+
+    val logMessage =
+      s"""TEST LOG goThroughChanges with
+         |Change type: ${change.changeType.value}
+         |oldLinkID: $oldLinkId
+         |newLinkIDs:
+         |  - $newLinkIds
+         |Operating changes
+      """.stripMargin
+    LogUtils.time(logger, logMessage, startLogging = true) {
       val assets = Try(assetsAllG(change.oldLink.get.linkId)) match {
         case Success(value) => value.toSeq
         case Failure(_) => Seq()
