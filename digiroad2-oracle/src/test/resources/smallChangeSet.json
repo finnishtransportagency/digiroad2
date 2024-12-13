@@ -4384,5 +4384,63 @@
         "digitizationChange": false
       }
     ]
+  },
+  {
+    "changeType": "split",
+    "old": {
+      "linkId": "2cfd9e51-d5b6-4199-981c-9e49cd82400b:1",
+      "linkLength": 84.769,
+      "geometry": "SRID=3067;LINESTRING ZM (676638.753 6915469.26 103.852 0,676648.01 6915504.577 103.734 36.51,676654.755 6915527.971 103.725 60.857,676660.695 6915551.134 103.511 84.769)",
+      "roadClass": 12131,
+      "adminClass": 1,
+      "municipality": 848,
+      "surfaceType": 1,
+      "trafficDirection": 0,
+      "lifeCycleStatus": 3
+    },
+    "new": [
+      {
+        "linkId": "3fca223a-66ba-498c-b8ed-b900525df0ea:1",
+        "linkLength": 81.316,
+        "geometry": "SRID=3067;LINESTRING ZM (676638.753 6915469.26 103.852 0,676648.01 6915504.577 103.734 36.51,676654.755 6915527.971 103.725 60.857,676659.852 6915547.785 103.549 81.316)",
+        "roadClass": 12131,
+        "adminClass": 1,
+        "municipality": 848,
+        "surfaceType": 1,
+        "trafficDirection": 0,
+        "lifeCycleStatus": 3
+      },
+      {
+        "linkId": "6c9b4c7c-f1e9-4649-b286-5635f83e0fda:1",
+        "linkLength": 86.285,
+        "geometry": "SRID=3067;LINESTRING ZM (676659.852 6915547.785 103.549 0,676660.695 6915551.134 103.511 3.453,676667.062 6915579.177 103.09 32.21,676672.402 6915603.106 102.752 56.728,676679.323 6915631.842 102.371 86.285)",
+        "roadClass": 12131,
+        "adminClass": 1,
+        "municipality": 848,
+        "surfaceType": 1,
+        "trafficDirection": 0,
+        "lifeCycleStatus": 3
+      }
+    ],
+    "replaceInfo": [
+      {
+        "oldLinkId": "2cfd9e51-d5b6-4199-981c-9e49cd82400b:1",
+        "newLinkId": "3fca223a-66ba-498c-b8ed-b900525df0ea:1",
+        "oldFromMValue": 0,
+        "oldToMValue": 81.316,
+        "newFromMValue": 0,
+        "newToMValue": 81.316,
+        "digitizationChange": false
+      },
+      {
+        "oldLinkId": "2cfd9e51-d5b6-4199-981c-9e49cd82400b:1",
+        "newLinkId": "6c9b4c7c-f1e9-4649-b286-5635f83e0fda:1",
+        "oldFromMValue": 81.316,
+        "oldToMValue": 84.769,
+        "newFromMValue": 0,
+        "newToMValue": 3.453,
+        "digitizationChange": false
+      }
+    ]
   }
 ]

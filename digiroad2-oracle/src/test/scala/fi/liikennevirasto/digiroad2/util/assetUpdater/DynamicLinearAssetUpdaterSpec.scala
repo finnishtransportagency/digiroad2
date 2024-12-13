@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeType, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue}
@@ -328,6 +328,49 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
       sortedAssets.last.value.get.toString should be(cyclingAndWalkingValue2.toString)
       sortedAssets.last.startMeasure should be(666.153)
       sortedAssets.last.endMeasure should be(700.537)
+    }
+  }
+
+  test("Split. Given a Road Link that is split into 2 new links;" +
+                  "When the old link has a careClass asset;" +
+                  "Then that asset should be moved to a new link and a new one should be created for the other") {
+    val oldLinkID = "2cfd9e51-d5b6-4199-981c-9e49cd82400b:1"
+    val newLink1ID = "3fca223a-66ba-498c-b8ed-b900525df0ea:1"
+    val newLink2ID = "6c9b4c7c-f1e9-4649-b286-5635f83e0fda:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink1 = roadLinkService.getRoadLinkByLinkId(newLink1ID).get
+      val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLink2ID).get
+      val careClassValue = DynamicValue(DynamicAssetValue(Seq(
+        DynamicProperty("hoitoluokat_talvihoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(7))),
+        DynamicProperty("hoitoluokat_viherhoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(3)))
+      )))
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLink1ID, newLink2ID), false)).thenReturn(Seq(newRoadLink1, newRoadLink2))
+
+      val id = serviceDynamic.createWithoutTransaction(CareClass.typeId, oldLinkID, careClassValue, SideCode.BothDirections.value, Measures(0.0, 84.770), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val assetsBefore = service.assetDao.getAssetsByTypesAndLinkId(Set(CareClass.typeId), Seq(oldLinkID))
+      assetsBefore.size should be(1)
+
+      TestDynamicLinearAssetUpdater.updateByRoadLinks(CareClass.typeId, changes)
+
+      val assetsOnOldLink = serviceDynamic.assetDao.getAssetsByTypesAndLinkId(Set(CareClass.typeId), Seq(oldLinkID))
+      val assetsOnNewLink1 = serviceDynamic.assetDao.getAssetsByTypesAndLinkId(Set(CareClass.typeId), Seq(newLink1ID))
+      val assetsOnNewLink2 = serviceDynamic.assetDao.getAssetsByTypesAndLinkId(Set(CareClass.typeId), Seq(newLink2ID))
+
+      assetsOnOldLink.size should be(0)
+      assetsOnNewLink1.size should be(1)
+      assetsOnNewLink2.size should be(1)
+
+      val asset1 = serviceDynamic.getPersistedAssetsByIds(CareClass.typeId, Set(id), false)
+      val asset2 = serviceDynamic.getPersistedAssetsByIds(CareClass.typeId, Set(assetsOnNewLink2.head.id), false)
+
+      asset1.head.startMeasure should be(0)
+      asset1.head.endMeasure should be(newRoadLink1.length)
+
+      asset2.head.startMeasure should be(0)
+      asset2.head.endMeasure should be(newRoadLink2.length)
     }
   }
 }
