@@ -91,6 +91,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   // Mark generated part to be removed. Used when removing pavement in PaveRoadUpdater
   protected val removePart: Int = -1
+  // See [AssetFiller.MaxAllowedMValueError]
   val TOLERANCE = 0.1
 
   def resetReport(): Unit = {
