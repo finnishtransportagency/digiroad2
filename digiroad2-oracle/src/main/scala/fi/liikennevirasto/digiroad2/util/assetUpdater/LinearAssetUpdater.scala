@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.MValueCalculator.roundMeasure
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Remove}
@@ -90,6 +91,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   // Mark generated part to be removed. Used when removing pavement in PaveRoadUpdater
   protected val removePart: Int = -1
+  val TOLERANCE = 0.1
 
   def resetReport(): Unit = {
     changesForReport.clear()
@@ -183,7 +185,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       }
       val difference = roundMeasures(Math.abs(replaceInfo.oldToMValue.getOrElse(0.0)-asset.endMeasure))
       // See [AssetFiller.MaxAllowedMValueError]
-      val inTolerance = difference <= 0.1
+      val inTolerance = difference <= TOLERANCE
       val endMeasureIsGreaterThanOldToValue = replaceInfo.oldToMValue.getOrElse(0.0) >= asset.endMeasure || inTolerance
       hasMatchingLinkId && startMeasureIsGreaterThanOldFomValue && endMeasureIsGreaterThanOldToValue
     }
@@ -880,7 +882,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     def partitioner(asset: PersistedLinearAsset, change: RoadLinkChange): Boolean = {
       def assetIsAlreadySlicedOrFitIn(asset: PersistedLinearAsset, selectInfo: ReplaceInfo): Boolean = {
-        asset.endMeasure <= selectInfo.oldToMValue.getOrElse(0.0) && asset.startMeasure >= selectInfo.oldFromMValue.getOrElse(0.0)
+        val endMeasureInTolerance = roundMeasure(asset.endMeasure, 1) <= roundMeasure(selectInfo.oldToMValue.getOrElse(0.0), 1)
+        val startMeasureInTolerance = roundMeasure(asset.startMeasure, 1) >= roundMeasure(selectInfo.oldFromMValue.getOrElse(0.0), 1)
+        endMeasureInTolerance && startMeasureInTolerance
       }
 
       val selectInfoOpt = sortAndFind(change, asset, fallInReplaceInfoOld)
