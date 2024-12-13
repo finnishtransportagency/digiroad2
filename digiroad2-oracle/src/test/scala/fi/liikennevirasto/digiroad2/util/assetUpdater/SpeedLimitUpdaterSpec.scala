@@ -507,8 +507,8 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       assetsOnNewLink1.size should be(1)
       assetsOnNewLink2.size should be(1)
 
-      val asset1 = service.getPersistedAssetsByIds(CareClass.typeId, Set(id.get), false)
-      val asset2 = service.getPersistedAssetsByIds(CareClass.typeId, Set(assetsOnNewLink2.head.id), false)
+      val asset1 = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
+      val asset2 = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(assetsOnNewLink2.head.id), false)
 
       asset1.head.startMeasure should be(0)
       asset1.head.endMeasure should be(newRoadLink1.length)
