@@ -33,7 +33,7 @@ object ClientUtils {
     }
   }
 
-  def clientBuilder(timeout: Int = 2 * 1000): CloseableHttpClient = {
+  def clientBuilder(timeout: Int = 10 * 1000): CloseableHttpClient = {
 
     HttpClientBuilder.create()
       .setConnectionManager(new BasicHttpClientConnectionManager()) // Use a basic connection manager (no pooling)
