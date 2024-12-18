@@ -37,7 +37,7 @@ SELECT ev.id
 FROM enumerated_value ev 
 JOIN property p ON ev.property_id = p.id
 AND public_id = 'paallysteluokka' AND 
-ev.name_fi IN ('Soratien pintaus', 'Sorakulutuskerros');
+ev.name_fi IN ('Sorakulutuskerros');
 
 WITH updated_rows AS (
     UPDATE single_choice_value  
@@ -63,7 +63,7 @@ SELECT ev.id
 FROM enumerated_value ev 
 JOIN property p ON ev.property_id = p.id
 AND public_id = 'paallysteluokka' AND 
-ev.name_fi IN ('Betoni', 'Muut pinnoitteet');
+ev.name_fi IN ('Soratien pintaus', 'Betoni', 'Muut pinnoitteet');
 
 WITH updated_rows AS (
     UPDATE single_choice_value  
