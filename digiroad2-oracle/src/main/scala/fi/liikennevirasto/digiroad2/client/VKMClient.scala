@@ -331,10 +331,22 @@ class VKMClient {
   def resolveAddressAndLocations(assets: Seq[MassQueryResolve]): Seq[RoadAddressBoundToAsset] = {
     val roadAddress = LogUtils.time(logger, s"TEST LOG coordToAddressMassQuery") {
       coordToAddressMassQuery(assets.map(a => MassQueryParamsCoord(a.asset.toString, a.coord, a.road, a.roadPart)))
-      .map(convertToDeterminateSide(assets, _)).toSeq
     }
+
+    val roadAddressToDetermineSides = roadAddress.map(convertToDeterminateSide(assets, _)).toSeq
+
     LogUtils.time(logger, s"TEST LOG checkRoadSide") {
-        roadAddress.map(checkRoadSide)
+      roadAddressToDetermineSides.map(ra => {
+        try {
+          checkRoadSide(ra)
+        } catch {
+          case rae: RoadAddressException =>
+            logger.info(rae.getMessage)
+            val roadAddressForAsset = roadAddress.find(_._1 == ra.identifier).get._2
+            RoadAddressBoundToAsset(ra.identifier.toLong, roadAddressForAsset, RoadSide.Unknown)
+        }
+      })
+
     }
   }
   /**
@@ -343,7 +355,7 @@ class VKMClient {
     * @return
     */
   private def checkRoadSide(asset: DeterminateSide): RoadAddressBoundToAsset = {
-    val errorMessage = "Did not get needed Road address for the determinateRoadSide method"
+    val errorMessage = s"Did not get needed Road address for the determinateRoadSide method for asset ${asset.identifier}"
     
     val params = Seq(
       MassQueryParamsCoord(s"${asset.identifier}:behind", asset.points(0), Some(asset.roadNumber), Some(asset.roadPartNumber), asset.track),
