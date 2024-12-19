@@ -477,4 +477,44 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       assetsOnNewLink.head.endMeasure should be(newRoadLink.length)
     }
   }
+
+  test("Split. Given a Road Link that is split into 2 new links;" +
+    "When the old link has a speedLimit;" +
+    "Then that asset should be moved to a new link and a new one should be created for the other") {
+    val oldLinkID = "2cfd9e51-d5b6-4199-981c-9e49cd82400b:1"
+    val newLink1ID = "3fca223a-66ba-498c-b8ed-b900525df0ea:1"
+    val newLink2ID = "6c9b4c7c-f1e9-4649-b286-5635f83e0fda:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink1 = roadLinkService.getRoadLinkByLinkId(newLink1ID).get
+      val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLink2ID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLink1ID, newLink2ID), false)).thenReturn(Seq(newRoadLink1, newRoadLink2))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty, false)).thenReturn(Seq.empty[RoadLink])
+      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, oldRoadLink.length), SideCode.BothDirections, SpeedLimitValue(80), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface)
+
+      val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
+      assetsBefore.size should be(1)
+
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+
+      val assetsOnOldLink = speedLimitService.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(oldLinkID), false)
+      val assetsOnNewLink1 = speedLimitService.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLink1ID), false)
+      val assetsOnNewLink2 = speedLimitService.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, Seq(newLink2ID), false)
+
+      assetsOnOldLink.size should be(0)
+      assetsOnNewLink1.size should be(1)
+      assetsOnNewLink2.size should be(1)
+
+      val asset1 = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
+      val asset2 = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(assetsOnNewLink2.head.id), false)
+
+      asset1.head.startMeasure should be(0)
+      asset1.head.endMeasure should be(newRoadLink1.length)
+
+      asset2.head.startMeasure should be(0)
+      asset2.head.endMeasure should be(newRoadLink2.length)
+    }
+  }
 }
