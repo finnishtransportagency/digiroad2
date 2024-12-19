@@ -66,7 +66,7 @@ class RoadLinkDAOSpec extends FunSuite {
       sqlu"""insert into kgv_roadlink (linkId, municipalitycode, constructiontype, shape, expired_date) values ($linkId3, 235, ${ConstructionType.InUse.value},
             'SRID=3067;LINESTRING ZM(385935.666 6671107.833 19.85 0, 386028.217 6671112.363 20.596 92.661)'::geometry, '2022-05-10 10:52:28.783')""".execute
       val expiredLinks = dao.fetchExpiredRoadLinks()
-      val expiredLinkIds = expiredLinks.map(_.linkId)
+      val expiredLinkIds = expiredLinks.map(_.roadLink.linkId)
       expiredLinkIds shouldNot contain (linkId1)
       expiredLinkIds shouldNot contain (linkId2)
       expiredLinkIds should contain (linkId3)
