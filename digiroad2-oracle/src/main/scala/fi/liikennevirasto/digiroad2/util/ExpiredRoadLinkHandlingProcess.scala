@@ -49,15 +49,18 @@ object ExpiredRoadLinkHandlingProcess {
       AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate)
     }
 
-    expiredRoadLinks.flatMap(roadLinkWithExpiredDate => {
-      val roadLink = roadLinkWithExpiredDate.roadLink
-      val assetsOnExpiredLink = postGISLinearAssetDao.fetchAssetsWithPositionByLinkIds(assetTypeIds, Seq(roadLink.linkId), includeFloating = false, includeExpired = false)
-      val lanesOnExpiredLink = laneDao.fetchAllLanesByLinkIds(Seq(roadLink.linkId)).map(lane =>
-        AssetLinkWithMeasures(lane.id, Lanes.typeId, lane.linkId, lane.sideCode, lane.startMeasure, lane.endMeasure))
+    val roadLinkIds = expiredRoadLinks.map(_.roadLink.linkId)
+    val assetsOnExpiredLink = postGISLinearAssetDao.fetchAssetsWithPositionByLinkIds(assetTypeIds, roadLinkIds, includeFloating = false, includeExpired = false)
+    val lanesOnExpiredLink = laneDao.fetchAllLanesByLinkIds(roadLinkIds).map(lane =>
+      AssetLinkWithMeasures(lane.id, Lanes.typeId, lane.linkId, lane.sideCode, lane.startMeasure, lane.endMeasure))
 
-      val assetLinks = assetsOnExpiredLink ++ lanesOnExpiredLink
-      assetLinks.map(enrichAssetLink(_, roadLinkWithExpiredDate))
-    })
+    val assetLinksByLinkId: Map[String, Seq[AssetLinkWithMeasures]] =
+      (assetsOnExpiredLink ++ lanesOnExpiredLink).groupBy(_.linkId)
+    expiredRoadLinks.flatMap { roadLinkWithExpiredDate =>
+      assetLinksByLinkId.getOrElse(roadLinkWithExpiredDate.roadLink.linkId, Seq.empty).map { assetLink =>
+        enrichAssetLink(assetLink, roadLinkWithExpiredDate)
+      }
+    }
   }
 
   def getAllExistingManoeuvresOnExpiredRoadLinks(expiredRoadLinks: Seq[RoadLinkWithExpiredDate]) = {
