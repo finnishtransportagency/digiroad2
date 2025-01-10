@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.client.{EnrichedRoadLinkFetched, FeatureClas
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
+import fi.liikennevirasto.digiroad2.service.RoadLinkWithExpiredDate
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -201,6 +202,14 @@ class RoadLinkDAO {
     }
   }
 
+  implicit val getRoadLinkWithExpiredDate: GetResult[RoadLinkWithExpiredDate] = new GetResult[RoadLinkWithExpiredDate] {
+    def apply(r: PositionedResult): RoadLinkWithExpiredDate = {
+      val roadLinkFetched = getRoadLink.apply(r)
+      val expiredDate = new DateTime(r.nextTimestamp())
+      RoadLinkWithExpiredDate(roadLinkFetched, expiredDate)
+    }
+  }
+
   /**
     * Returns road links from db that have been changed between given time period.
     */
@@ -312,7 +321,7 @@ class RoadLinkDAO {
     getByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314))))
   }
 
-  def fetchExpiredRoadLinks(): Seq[RoadLinkFetched] = {
+  def fetchExpiredRoadLinks(): Seq[RoadLinkWithExpiredDate] = {
     getExpiredRoadLinks()
   }
   def fetchExpiredRoadLink(linkId: String): Seq[RoadLinkFetched] = {
@@ -583,21 +592,14 @@ class RoadLinkDAO {
     }
   }
 
-  protected def getExpiredRoadLinks(): Seq[RoadLinkFetched] = {
+  protected def getExpiredRoadLinks(): Seq[RoadLinkWithExpiredDate] = {
     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
-                 surfacetype, geometrylength
+                 surfacetype, geometrylength, expired_date
           from kgv_roadlink
           where expired_date is not null
-          """.as[RoadLinkFetched].list
-  }
-
-  protected def getRoadLinkExpiredDateWithFilter(filter: String): Seq[LinkIdAndExpiredDate] = {
-    sql"""select linkid, expired_date
-          from kgv_roadlink
-          where #$filter
-       """.as[LinkIdAndExpiredDate].list
+          """.as[RoadLinkWithExpiredDate].list
   }
 
   protected def getExpiredLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
@@ -662,10 +664,6 @@ class RoadLinkDAO {
 
   def deleteRoadLinksByIds(linkIdsToDelete: Set[String]) = {
     deleteLinksWithFilter(withLinkIdFilter(linkIdsToDelete))
-  }
-
-  def getRoadLinkExpiredDateWithLinkIds(linkIds: Set[String]): Seq[LinkIdAndExpiredDate] = {
-    getRoadLinkExpiredDateWithFilter(withLinkIdFilter(linkIds))
   }
 
 }

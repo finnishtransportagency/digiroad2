@@ -49,15 +49,24 @@ object ExpiredRoadLinkHandlingProcess {
       AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate)
     }
 
-    expiredRoadLinks.flatMap(roadLinkWithExpiredDate => {
-      val roadLink = roadLinkWithExpiredDate.roadLink
-      val assetsOnExpiredLink = postGISLinearAssetDao.fetchAssetsWithPositionByLinkIds(assetTypeIds, Seq(roadLink.linkId), includeFloating = false, includeExpired = false)
-      val lanesOnExpiredLink = laneDao.fetchAllLanesByLinkIds(Seq(roadLink.linkId)).map(lane =>
+    val roadLinkIds = expiredRoadLinks.map(_.roadLink.linkId)
+    val assetsOnExpiredLink = LogUtils.time(logger, s"TEST LOG fetchAssetsWithPositionByLinkIds with ${roadLinkIds.size} roadLinkIds", startLogging = true) {
+      postGISLinearAssetDao.fetchAssetsWithPositionByLinkIds(assetTypeIds, roadLinkIds, includeFloating = false, includeExpired = false)
+    }
+    val lanesOnExpiredLink = LogUtils.time(logger, s"TEST LOG fetchAllLanesByLinkIds with ${roadLinkIds.size} roadLinkIds", startLogging = true) {
+      laneDao.fetchAllLanesByLinkIds(roadLinkIds).map(lane =>
         AssetLinkWithMeasures(lane.id, Lanes.typeId, lane.linkId, lane.sideCode, lane.startMeasure, lane.endMeasure))
+    }
 
-      val assetLinks = assetsOnExpiredLink ++ lanesOnExpiredLink
-      assetLinks.map(enrichAssetLink(_, roadLinkWithExpiredDate))
-    })
+    val assetLinksByLinkId: Map[String, Seq[AssetLinkWithMeasures]] =
+      (assetsOnExpiredLink ++ lanesOnExpiredLink).groupBy(_.linkId)
+    LogUtils.time(logger, s"TEST LOG enrichAssetLinks", startLogging = true) {
+      expiredRoadLinks.flatMap { roadLinkWithExpiredDate =>
+        assetLinksByLinkId.getOrElse(roadLinkWithExpiredDate.roadLink.linkId, Seq.empty).map { assetLink =>
+          enrichAssetLink(assetLink, roadLinkWithExpiredDate)
+        }
+      }
+    }
   }
 
   def getAllExistingManoeuvresOnExpiredRoadLinks(expiredRoadLinks: Seq[RoadLinkWithExpiredDate]) = {
