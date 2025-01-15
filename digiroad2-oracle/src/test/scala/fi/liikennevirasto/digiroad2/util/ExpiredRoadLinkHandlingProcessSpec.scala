@@ -111,7 +111,7 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
       ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks()
       val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
       expiredLinksAfter.size should equal(2)
-      expiredLinksAfter.map(_.linkId).toSet should be(manoeuvreLinkIds.toSet)
+      expiredLinksAfter.map(_.roadLink.linkId).toSet should be(manoeuvreLinkIds.toSet)
 
       val manoeuvreWorkList = manoeuvreService.getManoeuvreWorkList(false)
       manoeuvreWorkList.size should equal(0)

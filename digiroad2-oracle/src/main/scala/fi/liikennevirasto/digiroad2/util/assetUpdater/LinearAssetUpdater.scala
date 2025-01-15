@@ -594,7 +594,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     new Parallel().operation(changesGrouped, level) { tasks =>
       tasks.flatMap {
         changesPerThread =>
-          LogUtils.time(logger, s"Processing ${changesPerThread.size} changes in a single thread") {
+          LogUtils.time(logger, s"Processing ${changesPerThread.size} changes in a single thread", startLogging = true) {
             changesPerThread.map(change => {
               goThroughChanges(assetsGroup, onlyNeededNewRoadLinks, changeSet, initStep, change, OperationStepSplit(Seq(), Some(changeSet)))
             })
@@ -658,7 +658,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                initStep: OperationStep, change: RoadLinkChange, initStepSplit:OperationStepSplit): Option[OperationStep] = {
 
     nonAssetUpdate(change, Seq(), null)
-    LogUtils.time(logger, s"Change type: ${change.changeType.value}, Operating changes") {
+    val oldLinkId = change.oldLink.getOrElse("")
+    val newLinkIds = change.newLinks.map(_.linkId).mkString("\n  - ")
+
+    val logMessage =
+      s"""TEST LOG goThroughChanges with
+         |Change type: ${change.changeType.value}
+         |oldLinkID: $oldLinkId
+         |newLinkIDs:
+         |  - $newLinkIds
+         |Operating changes
+      """.stripMargin
+    LogUtils.time(logger, logMessage, startLogging = true) {
       val assets = Try(assetsAllG(change.oldLink.get.linkId)) match {
         case Success(value) => value.toSeq
         case Failure(_) => Seq()
@@ -794,47 +805,56 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def handleReplacements(changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
-    val roadLinkInfo = change.newLinks.head
-    val assetInInvalidLink = !onlyNeededNewRoadLinks.exists(_.linkId == roadLinkInfo.linkId)
-    if(assetInInvalidLink) { // assets is now in invalid link, expire
-      assets.map(a => {
-        val expireStep = OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(a.id))), assetsBefore = Seq())
-        Some(reportAssetChanges(Some(a), None, Seq(change), expireStep, Some(ChangeTypeReport.Deletion),useGivenChange = true))
-      }).foldLeft(Some(initStep))(mergerOperations)
-    } else {
-      val projected = assets.map(a => projecting(changeSets, change, a, a))
-      LogUtils.time(logger, "Merging steps after projecting") {
-        projected.filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)
+    LogUtils.time(logger, s"TEST LOG handleReplacements with ${assets.size} assets", startLogging = true) {
+      val roadLinkInfo = change.newLinks.head
+      val assetInInvalidLink = !onlyNeededNewRoadLinks.exists(_.linkId == roadLinkInfo.linkId)
+      if (assetInInvalidLink) { // assets is now in invalid link, expire
+        LogUtils.time(logger, s"TEST LOG expiring ${assets.size} assets on an invalid link", startLogging = true) {
+          assets.map(a => {
+            val expireStep = OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(a.id))), assetsBefore = Seq())
+            Some(reportAssetChanges(Some(a), None, Seq(change), expireStep, Some(ChangeTypeReport.Deletion), useGivenChange = true))
+          }).foldLeft(Some(initStep))(mergerOperations)
+        }
+      } else {
+        logger.info(s"TEST LOG Projecting ${assets.size} assets to a new link")
+        val projected = assets.map(a => projecting(changeSets, change, a, a))
+        LogUtils.time(logger, "Merging steps after projecting",startLogging = true) {
+          projected.filter(_.nonEmpty).foldLeft(Some(initStep))(mergerOperations)
+        }
       }
     }
   }
 
   private def handleSplits(changeSet: ChangeSet, initStep: OperationStepSplit, change: RoadLinkChange, assets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
-    val divided = operationForSplit(change, assets, changeSet, onlyNeededNewRoadLinks)
-    val splitOperation = divided.foldLeft(initStep)(mergerOperationsSplit)
+    LogUtils.time(logger, s"TEST LOG handleSplits with ${assets.size} assets", startLogging = true) {
+      val divided = operationForSplit(change, assets, changeSet, onlyNeededNewRoadLinks)
+      val splitOperation = divided.foldLeft(initStep)(mergerOperationsSplit)
 
-    Some(OperationStep(assetsAfter = splitOperation.assetsAfter, changeInfo = splitOperation.changeInfo, assetsBefore = splitOperation.assetsBefore))
+      Some(OperationStep(assetsAfter = splitOperation.assetsAfter, changeInfo = splitOperation.changeInfo, assetsBefore = splitOperation.assetsBefore))
+    }
   }
 
   private def operationForSplit(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSet: ChangeSet,
                                 onlyNeededNewRoadLinks: Seq[RoadLink]): Seq[OperationStepSplit]= {
-    def checkForExpire(splits: Seq[OperationStepSplit]): Boolean = {
-      val newLinkIds = splits.map(_.newLinkId)
-      val someRoadLinksFound = onlyNeededNewRoadLinks.map(_.linkId).exists(newLinkIds.contains)
-      newLinkIds.forall(_ == "") || !someRoadLinksFound
-    }
-
-    val relevantAssets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
-    relevantAssets.flatMap(sliceFrom => {
-      val sliced = slicer(Seq(sliceFrom), Seq(), change)
-      val splits = sliced.map(part => projectingSplit(changeSet, change, part, sliceFrom).get)
-      if (checkForExpire(splits)) {
-        reportAssetChanges(Some(sliceFrom), None, Seq(change), emptyStep, Some(ChangeTypeReport.Deletion), useGivenChange = true)
-        splits.map(split => updateSplitOperationWithExpiredIds(split, sliceFrom.id))
-      } else {
-        splits
+    LogUtils.time(logger, s"TEST LOG operationForSplit with ${assetsAll.size} assets", startLogging = true) {
+      def checkForExpire(splits: Seq[OperationStepSplit]): Boolean = {
+        val newLinkIds = splits.map(_.newLinkId)
+        val someRoadLinksFound = onlyNeededNewRoadLinks.map(_.linkId).exists(newLinkIds.contains)
+        newLinkIds.forall(_ == "") || !someRoadLinksFound
       }
-    })
+
+      val relevantAssets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
+      relevantAssets.flatMap(sliceFrom => {
+        val sliced = slicer(Seq(sliceFrom), Seq(), change)
+        val splits = sliced.map(part => projectingSplit(changeSet, change, part, sliceFrom).get)
+        if (checkForExpire(splits)) {
+          reportAssetChanges(Some(sliceFrom), None, Seq(change), emptyStep, Some(ChangeTypeReport.Deletion), useGivenChange = true)
+          splits.map(split => updateSplitOperationWithExpiredIds(split, sliceFrom.id))
+        } else {
+          splits
+        }
+      })
+    }
   }
 
   @tailrec
@@ -926,18 +946,20 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def projectByUsingReplaceInfo(changeSets: ChangeSet, change: RoadLinkChange, asset: PersistedLinearAsset) = {
-    val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
-    val newId = info.newLinkId.getOrElse("")
-    val maybeLink = change.newLinks.find(_.linkId == newId)
-    val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
-    val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = newId),
-      Projection(
-        info.oldFromMValue.getOrElse(0.0), info.oldToMValue.getOrElse(0.0),
-        info.newFromMValue.getOrElse(0), info.newToMValue.getOrElse(0),
-        LinearAssetUtils.createTimeStamp(),
-        newId, maybeLinkLength),
-      changeSets, info.digitizationChange)
-    (newId, projected, changeSet)
+    LogUtils.time(logger, s"TEST LOG projectByUsingReplaceInfo", startLogging = true) {
+      val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
+      val newId = info.newLinkId.getOrElse("")
+      val maybeLink = change.newLinks.find(_.linkId == newId)
+      val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
+      val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = newId),
+        Projection(
+          info.oldFromMValue.getOrElse(0.0), info.oldToMValue.getOrElse(0.0),
+          info.newFromMValue.getOrElse(0), info.newToMValue.getOrElse(0),
+          LinearAssetUtils.createTimeStamp(),
+          newId, maybeLinkLength),
+        changeSets, info.digitizationChange)
+      (newId, projected, changeSet)
+    }
   }
   private def errorMessage(c: RoadLinkChange, a: PersistedLinearAsset): String = {
     s"Replace info for asset ${a.id} with start measure ${a.startMeasure} and end measure ${a.endMeasure} on link ${a.linkId} not found from change ${c}"

@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.util.function.BiConsumer
+import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 import org.slf4j.Logger
 
 object LogUtils {
@@ -53,6 +55,35 @@ object LogUtils {
       logger.info(s"$operationName is $currentTenPercent% complete")
     }
     currentTenPercent
+  }
+
+  /**
+   * Logs the state of all active threads at a fixed interval.
+   *
+   * @param logger          The logger to use for output.
+   * @param intervalSeconds The interval in seconds between each thread state dump.
+   * @return ScheduledExecutorService to allow managing the scheduled task.
+   */
+  def logThreadStatesAtInterval(logger: Logger, intervalSeconds: Long): ScheduledExecutorService = {
+    val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
+
+    val logThreadStates: Runnable = new Runnable {
+      override def run(): Unit = {
+        val allThreads = Thread.getAllStackTraces
+        logger.info(s"=== Thread State Dump at ${java.time.LocalDateTime.now} ===")
+
+        allThreads.forEach(new BiConsumer[Thread, Array[StackTraceElement]] {
+          override def accept(thread: Thread, stackTrace: Array[StackTraceElement]): Unit = {
+            logger.info(s"Thread: ${thread.getName}, State: ${thread.getState}")
+          }
+        })
+
+        logger.info("=============================================")
+      }
+    }
+
+    executor.scheduleAtFixedRate(logThreadStates, 0, intervalSeconds, TimeUnit.SECONDS)
+    executor
   }
 
 }
