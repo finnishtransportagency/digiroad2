@@ -104,9 +104,12 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     }
   }
 
-  def fetchByBBox(bbox: BoundingRectangle): (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
+  def fetchByBBox(bbox: BoundingRectangle, withComplementary: Boolean): (Seq[PieceWiseLinearAsset], Seq[RoadLinkForUnknownGeneration]) = {
     val bboxFilter = PostGISDatabase.boundingBoxFilter(bbox, "shape")
-    val constructionFilter = Seq(ConstructionType.Planned.value, ConstructionType.ExpiringSoon.value, ConstructionType.UnderConstruction.value).mkString(", ")
+    val constructionFilter = Seq(
+      ConstructionType.Planned.value,
+      ConstructionType.ExpiringSoon.value,
+      ConstructionType.UnderConstruction.value).mkString(", ")
     val linkTypeFilter = Seq(
       RestArea.value,
       CycleOrPedestrianPath.value,
@@ -123,99 +126,207 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       FunctionalClass3.value,
       FunctionalClass4.value,
       FunctionalClass5.value,
-      AnotherPrivateRoad.value).mkString(", ")
+      AnotherPrivateRoad.value,
+      FunctionalClass9.value).mkString(", ")
+
+    // Add queries for complementary roadlinks
+    val complementaryLinksQuery = if (withComplementary) {
+      s"""
+        , cte_qgis_roadlink AS (
+          SELECT
+            qgis.linkid,
+            qgis.directiontype,
+            td.traffic_direction,
+            qgis.shape,
+            qgis.horizontallength,
+            COALESCE(NULLIF(ac.administrative_class, qgis.adminclass), qgis.adminclass) AS adminclass,
+            qgis.municipalitycode,
+            qgis.lifecyclestatus,
+            qgis.roadnamefin,
+            qgis.roadnameswe
+          FROM qgis_roadlinkex qgis
+          JOIN link_type lt ON qgis.linkid = lt.link_id
+          JOIN functional_class fc ON qgis.linkid = fc.link_id
+          LEFT JOIN administrative_class ac ON qgis.linkid = ac.link_id
+          LEFT JOIN traffic_direction td ON qgis.linkid = td.link_id
+          WHERE $bboxFilter
+            AND qgis.lifecyclestatus NOT IN ($constructionFilter)
+            AND qgis.roadclass NOT IN (12318, 12312)
+            AND lt.link_type NOT IN ($linkTypeFilter)
+            AND fc.functional_class IN ($functionalClassFilter)
+        )
+
+        SELECT
+                a.id,
+                pos.link_id,
+                pos.side_code,
+                cte_qgis.directiontype,
+                cte_qgis.traffic_direction,
+                e.value,
+                COALESCE(
+                  ST_LineSubstring(
+                    cte_qgis.shape,
+                    (pos.start_measure / cte_qgis.horizontallength),
+                    (pos.end_measure / cte_qgis.horizontallength)
+                  ),
+                  cte_qgis.shape
+                ) AS asset_geometry,
+                pos.start_measure,
+                pos.end_measure,
+                cte_qgis.horizontallength,
+                a.modified_by,
+                a.modified_date,
+                a.created_by,
+                a.created_date,
+                cte_qgis.adminclass,
+                cte_qgis.municipalitycode,
+                cte_qgis.lifecyclestatus,
+                cte_qgis.roadnamefin,
+                cte_qgis.roadnameswe,
+                p.public_id
+              FROM asset a
+              JOIN asset_link al ON a.id = al.asset_id
+              JOIN lrm_position pos ON al.position_id = pos.id
+              JOIN cte_qgis_roadlink cte_qgis ON pos.link_id = cte_qgis.linkid
+              LEFT JOIN property p ON a.asset_type_id = p.asset_type_id
+              LEFT JOIN single_choice_value s ON s.asset_id = a.id AND s.property_id = p.id
+              LEFT JOIN multiple_choice_value mc ON mc.asset_id = a.id AND mc.property_id = p.id AND p.property_type = 'checkbox'
+              LEFT JOIN enumerated_value e ON s.enumerated_value_id = e.id OR mc.enumerated_value_id = e.id
+              WHERE a.asset_type_id = 20
+                AND (a.valid_to IS NULL OR a.valid_to > current_timestamp)
+                AND a.floating = '0'
+
+        UNION ALL
+      """.stripMargin
+    } else {
+      ""
+    }
+
+    val unionQuery = if (withComplementary) {
+      """
+        UNION ALL
+        SELECT
+          NULL AS id,
+          cte_qgis.linkid,
+          NULL AS side_code,
+          cte_qgis.directiontype,
+          cte_qgis.traffic_direction,
+          NULL AS value,
+          cte_qgis.shape AS asset_geometry,
+          NULL AS start_measure,
+          NULL AS end_measure,
+          cte_qgis.horizontallength as geometrylength,
+          NULL AS modified_by,
+          NULL AS modified_date,
+          NULL AS created_by,
+          NULL AS created_date,
+          cte_qgis.adminclass,
+          cte_qgis.municipalitycode,
+          cte_qgis.lifecyclestatus as constructiontype,
+          cte_qgis.roadnamefin as roadname_fi,
+          cte_qgis.roadnameswe as roadname_se,
+          NULL AS public_id
+        FROM cte_qgis_roadlink cte_qgis
+      """.stripMargin
+    } else {
+      ""
+    }
+
     val query =
       sql"""
-      WITH cte_kgv_roadlink AS (
+        WITH cte_kgv_roadlink AS (
+          SELECT
+            kgv.linkid,
+            kgv.directiontype,
+            td.traffic_direction,
+            kgv.shape,
+            kgv.geometrylength,
+            COALESCE(NULLIF(ac.administrative_class, kgv.adminclass), kgv.adminclass) AS adminclass,
+            kgv.municipalitycode,
+            kgv.constructiontype,
+            kgv.roadname_fi,
+            kgv.roadname_se
+          FROM kgv_roadlink kgv
+          JOIN link_type lt ON kgv.linkid = lt.link_id
+          JOIN functional_class fc ON kgv.linkid = fc.link_id
+          LEFT JOIN administrative_class ac ON kgv.linkid = ac.link_id
+          LEFT JOIN traffic_direction td ON kgv.linkid = td.link_id
+          WHERE #${bboxFilter}
+            AND kgv.expired_date IS NULL
+            AND kgv.constructiontype NOT IN (#${constructionFilter})
+            AND kgv.mtkclass NOT IN (12318, 12312)
+            AND lt.link_type NOT IN (#${linkTypeFilter})
+            AND fc.functional_class IN (#${functionalClassFilter})
+        ) #${complementaryLinksQuery}
+
         SELECT
-          kgv.linkid,
-          kgv.directiontype,
-          td.traffic_direction,
-          kgv.shape,
-          kgv.geometrylength,
-          COALESCE(NULLIF(ac.administrative_class, kgv.adminclass), kgv.adminclass) AS adminclass,
-          kgv.municipalitycode,
-          kgv.constructiontype,
-          kgv.roadname_fi,
-          kgv.roadname_se
-        FROM kgv_roadlink kgv
-        JOIN link_type lt ON kgv.linkid = lt.link_id
-        JOIN functional_class fc ON kgv.linkid = fc.link_id
-        LEFT JOIN administrative_class ac ON kgv.linkid = ac.link_id
-        LEFT JOIN traffic_direction td ON kgv.linkid = td.link_id
-        WHERE #$bboxFilter
-          AND kgv.expired_date IS NULL
-          AND kgv.constructiontype NOT IN (#$constructionFilter)
-          AND kgv.mtkclass NOT IN (12318, 12312) -- Filter out HardShoulder and WinterRoad links
-          AND lt.link_type NOT IN (#$linkTypeFilter) -- Filter out unallowed types such as ferries
-          AND fc.functional_class IN (#$functionalClassFilter) -- Filter by allowed FunctionalClass values
-      )
+          a.id,
+          pos.link_id,
+          pos.side_code,
+          cte_kgv.directiontype,
+          cte_kgv.traffic_direction,
+          e.value,
+          COALESCE(
+            ST_LineSubstring(
+              cte_kgv.shape,
+              (pos.start_measure / cte_kgv.geometrylength),
+              (pos.end_measure / cte_kgv.geometrylength)
+            ),
+            cte_kgv.shape
+          ) AS asset_geometry,
+          pos.start_measure,
+          pos.end_measure,
+          cte_kgv.geometrylength,
+          a.modified_by,
+          a.modified_date,
+          a.created_by,
+          a.created_date,
+          cte_kgv.adminclass,
+          cte_kgv.municipalitycode,
+          cte_kgv.constructiontype,
+          cte_kgv.roadname_fi,
+          cte_kgv.roadname_se,
+          p.public_id
+        FROM asset a
+        JOIN asset_link al ON a.id = al.asset_id
+        JOIN lrm_position pos ON al.position_id = pos.id
+        JOIN cte_kgv_roadlink cte_kgv ON pos.link_id = cte_kgv.linkid
+        LEFT JOIN property p ON a.asset_type_id = p.asset_type_id
+        LEFT JOIN single_choice_value s ON s.asset_id = a.id AND s.property_id = p.id
+        LEFT JOIN multiple_choice_value mc ON mc.asset_id = a.id AND mc.property_id = p.id AND p.property_type = 'checkbox'
+        LEFT JOIN enumerated_value e ON s.enumerated_value_id = e.id OR mc.enumerated_value_id = e.id
+        WHERE a.asset_type_id = 20
+          AND (a.valid_to IS NULL OR a.valid_to > current_timestamp)
+          AND a.floating = '0'
 
-      SELECT
-        a.id,
-        pos.link_id,
-        pos.side_code,
-        cte_kgv.directiontype,
-        cte_kgv.traffic_direction,
-        e.value,
-        COALESCE(
-          ST_LineSubstring(
-            cte_kgv.shape,
-            (pos.start_measure / cte_kgv.geometrylength),
-            (pos.end_measure / cte_kgv.geometrylength)
-          ),
-          cte_kgv.shape
-        ) AS asset_geometry,
-        pos.start_measure,
-        pos.end_measure,
-        cte_kgv.geometrylength,
-        a.modified_by,
-        a.modified_date,
-        a.created_by,
-        a.created_date,
-        cte_kgv.adminclass,
-        cte_kgv.municipalitycode,
-        cte_kgv.constructiontype,
-        cte_kgv.roadname_fi,
-        cte_kgv.roadname_se,
-        p.public_id
-      FROM asset a
-      JOIN asset_link al ON a.id = al.asset_id
-      JOIN lrm_position pos ON al.position_id = pos.id
-      JOIN cte_kgv_roadlink cte_kgv ON pos.link_id = cte_kgv.linkid
-      LEFT JOIN property p ON a.asset_type_id = p.asset_type_id
-      LEFT JOIN single_choice_value s ON s.asset_id = a.id AND s.property_id = p.id
-      LEFT JOIN multiple_choice_value mc ON mc.asset_id = a.id AND mc.property_id = p.id AND p.property_type = 'checkbox'
-      LEFT JOIN enumerated_value e ON s.enumerated_value_id = e.id OR mc.enumerated_value_id = e.id
-      WHERE a.asset_type_id = 20
-        AND (a.valid_to IS NULL OR a.valid_to > current_timestamp)
-        AND a.floating = '0'
+        UNION ALL
 
-      UNION ALL
+        SELECT
+          NULL AS id,
+          cte_kgv.linkid,
+          NULL AS side_code,
+          cte_kgv.directiontype,
+          cte_kgv.traffic_direction,
+          NULL AS value,
+          cte_kgv.shape AS asset_geometry,
+          NULL AS start_measure,
+          NULL AS end_measure,
+          cte_kgv.geometrylength,
+          NULL AS modified_by,
+          NULL AS modified_date,
+          NULL AS created_by,
+          NULL AS created_date,
+          cte_kgv.adminclass,
+          cte_kgv.municipalitycode,
+          cte_kgv.constructiontype,
+          cte_kgv.roadname_fi,
+          cte_kgv.roadname_se,
+          NULL AS public_id
+        FROM cte_kgv_roadlink cte_kgv
 
-      SELECT
-        NULL AS id,
-        cte_kgv.linkid,
-        NULL AS side_code,
-        cte_kgv.directiontype,
-        cte_kgv.traffic_direction,
-        NULL AS value,
-        cte_kgv.shape AS asset_geometry,
-        NULL AS start_measure,
-        NULL AS end_measure,
-        cte_kgv.geometrylength,
-        NULL AS modified_by,
-        NULL AS modified_date,
-        NULL AS created_by,
-        NULL AS created_date,
-        cte_kgv.adminclass,
-        cte_kgv.municipalitycode,
-        cte_kgv.constructiontype,
-        cte_kgv.roadname_fi,
-        cte_kgv.roadname_se,
-        NULL AS public_id
-      FROM cte_kgv_roadlink cte_kgv;
-    """
+        #${unionQuery}
+        ;
+      """
 
     val speedLimitRows = query.as[SpeedLimitRowWithRoadInfo].list
     groupSpeedLimitsResultWithRoadInfo(speedLimitRows)

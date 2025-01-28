@@ -804,6 +804,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
   }
 
+  get("/roadlinks/history/:linkIds") {
+    val linkIds = params("linkIds").split(',').toSet
+    val roadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(linkIds)
+    partitionRoadLinks(roadLinks)
+  }
+
   get("/roadlinks/history") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
@@ -1355,16 +1361,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/speedlimits") {
+  def fetchSpeedLimits(withComplementary: Boolean): Any = {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val speedLimits =
-        if (params("withRoadAddress").toBoolean)
-          roadAddressService.linearAssetWithRoadAddress(
-            speedLimitService.getSpeedLimitsByBbox(boundingRectangle))
-        else
-          speedLimitService.getSpeedLimitsByBbox(boundingRectangle)
+
+      val speedLimits = if (params("withRoadAddress").toBoolean) {
+        roadAddressService.linearAssetWithRoadAddress(
+          speedLimitService.getSpeedLimitsByBbox(boundingRectangle, withComplementary)
+        )
+      } else {
+        speedLimitService.getSpeedLimitsByBbox(boundingRectangle, withComplementary)
+      }
+
       speedLimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
@@ -1395,6 +1404,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
+  }
+
+  get("/speedlimits") {
+    fetchSpeedLimits(withComplementary = false)
+  }
+
+  get("/speedlimits/complementary") {
+    fetchSpeedLimits(withComplementary = true)
   }
   
   get("/speedlimits/history") {
@@ -1518,6 +1535,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     itemIdsToDelete match {
       case Some(ids) =>
+        manoeuvreService.expireManoeuvreByIds(ids, user.username)
         manoeuvreService.deleteManoeuvreWorkListItems(ids)
       case None => halt(BadRequest("No asset ids to delete provided"))
     }
@@ -1839,6 +1857,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  get("/manoeuvreOnExpiredRoadLink") {
+    params.get("assetId").map { assetId =>
+      val manoeuvreId = assetId.toLong
+      val manoeuvre = manoeuvreService.find(manoeuvreId)
+      Seq(manoeuvre)
+    } getOrElse {
+      BadRequest("Could not fetch manoeuvre")
     }
   }
 

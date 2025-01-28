@@ -7,6 +7,11 @@
     var roadlinkAdjacents = {};
     var dirty = false;
     var manoeuvreAssetTypeId = 380;
+    var manoeuvreElementType = {
+      firstElement: 1,
+      intermediateElement: 2,
+      lastElement: 3
+    };
 
     //----------------------------------
     // Public methods
@@ -30,6 +35,33 @@
       });
       roadCollection.fetch(extent);
       verificationCollection.fetch(extent, center, manoeuvreAssetTypeId, true);
+    };
+
+    var fetchManoeuvresOnExpiredLinks = function (assetId, callback) {
+      backend.getManoeuvresOnExpiredLinks(assetId, function (err, data) {
+        if (err) {
+          console.error('Error fetching data:', err);
+          callback(err);
+        } else {
+          manoeuvres = formatManoeuvres(data);
+          var linkIds = manoeuvres.flatMap(function (manoeuvre) {
+            return manoeuvre.linkIds;
+          });
+
+          roadCollection.fetchExpiredRoadLinksByLinkIds(linkIds, function (err, roadLinks) {
+            if (err) {
+              console.error('Error fetching road links:', err);
+              callback(err);
+            } else {
+              if (roadLinks.length > 0) {
+                var pos = roadLinks[0][0].getData().points[0];
+                eventbus.trigger('manoeuvresOnExpiredLinks:fetched', pos);
+                callback();
+              }
+            }
+          });
+        }
+      });
     };
 
     /**
@@ -492,14 +524,20 @@
     */
     var formatManoeuvres = function(manoeuvres) {
       return _.map(manoeuvres, function (manoeuvre) {
-        var sourceLinkId = manoeuvre.elements[0].sourceLinkId;
-        var firstTargetLinkId = manoeuvre.elements[0].destLinkId;
-        var lastElementIndex = manoeuvre.elements.length - 1;
-        var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
+        var findElement = function(typeId) {
+          return _.find(manoeuvre.elements, function(element) {
+            return element.elementType === typeId;
+          });
+        };
+        var sourceElement = findElement(manoeuvreElementType.firstElement);
+        var destElement = findElement(manoeuvreElementType.lastElement);
+        var sourceLinkId = sourceElement.sourceLinkId;
+        var firstTargetLinkId = sourceElement.destLinkId;
+        var destLinkId = destElement.sourceLinkId;
         var linkIds = _.chain(manoeuvre.elements).map('sourceLinkId').value();
         var intermediateLinkIds = _.chain(manoeuvre.elements)
           .filter(function(element) {
-            return element.elementType === 2;
+            return element.elementType === manoeuvreElementType.intermediateElement;
           })
           .map('sourceLinkId')
           .value();
@@ -711,7 +749,8 @@
       getManoeuvreData : getManoeuvreData,
       getDestinationRoadLinksBySource : getDestinationRoadLinksBySource,
       getIntermediateRoadLinksBySource : getIntermediateRoadLinksBySource,
-      getAddedManoeuvre: getAddedManoeuvre
+      getAddedManoeuvre: getAddedManoeuvre,
+      fetchManoeuvresOnExpiredLinks: fetchManoeuvresOnExpiredLinks
     };
   };
 })(this);

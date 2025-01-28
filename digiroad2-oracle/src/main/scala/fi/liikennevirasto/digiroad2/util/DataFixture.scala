@@ -1656,22 +1656,6 @@ object DataFixture {
     }
   }
 
-  def mergeMunicipalities(): Unit = {
-    val municipalityToDelete = 99
-    val municipalityToMerge = 214
-
-    println(s"\nStart process of merging municipality $municipalityToDelete into $municipalityToMerge")
-    println(DateTime.now())
-    println("")
-
-    PostGISDatabase.withDynTransaction{
-      Queries.mergeMunicipalities(municipalityToDelete, municipalityToMerge)
-    }
-
-    println("")
-    println("Complete at time: " + DateTime.now())
-  }
-
   def updateLastModifiedAssets(): Unit = {
     println("\nUpdating last modified assets information")
     println(DateTime.now())
@@ -2019,8 +2003,6 @@ object DataFixture {
         getStateRoadWithFunctionalClassUndefined()
       case Some("add_obstacles_shapefile") =>
         addObstaclesShapefile()
-      case Some("merge_municipalities") =>
-        mergeMunicipalities()
       case Some("transform_lorry_parking_into_datex2") =>
         transformLorryParkingIntoDatex2()
       case Some("update_last_modified_assets_info") =>

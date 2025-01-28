@@ -95,6 +95,7 @@ object ValidatorLinearDao extends ValidatorDao{
       JOIN kgv_roadlink kr ON lp.link_id = kr.linkid
       ${filterLink("lp.link_id", links)}
       WHERE ${assetTypeFilter} and aty.geometry_type = 'linear'
+      AND (a.valid_to > current_timestamp OR a.valid_to IS NULL)
       AND kr.geometrylength >= 2.0
       AND (lp.end_measure - lp.start_measure) < 2.0
       """
