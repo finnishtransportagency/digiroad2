@@ -27,7 +27,7 @@ case class ObstacleRow(id: Long, linkId: String,
                        modifiedAt: Option[DateTime] = None,
                        expired: Boolean = false,
                        linkSource: LinkGeomSource,
-                       externalId: Option[String] = None)
+                       externalIds: Seq[String] = Seq())
 
 case class Obstacle(id: Long, linkId: String,
                     lon: Double, lat: Double,
@@ -41,7 +41,7 @@ case class Obstacle(id: Long, linkId: String,
                     modifiedAt: Option[DateTime] = None,
                     expired: Boolean = false,
                     linkSource: LinkGeomSource,
-                    externalId: Option[String] = None) extends PersistedPoint
+                    externalIds: Seq[String] = Seq()) extends PersistedPoint
 
 object PostGISObstacleDao {
 
@@ -51,7 +51,7 @@ object PostGISObstacleDao {
       case
         when ev.name_fi is not null then ev.name_fi
         else null
-      end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source, a.external_id
+      end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source, a.external_ids
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
@@ -108,7 +108,7 @@ object PostGISObstacleDao {
       id -> Obstacle(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
-        expired = row.expired, linkSource = row.linkSource, externalId = row.externalId)
+        expired = row.expired, linkSource = row.linkSource, externalIds = row.externalIds)
     }.values.toSeq
   }
 
@@ -130,7 +130,7 @@ object PostGISObstacleDao {
 
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
         s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, property_type, required, value, display_value, created_by, created_date," +
-          s" modified_by, modified_date, expired, link_source, external_id from ( ${queryFilter(query().replace("from", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum"
+          s" modified_by, modified_date, expired, link_source, external_ids from ( ${queryFilter(query().replace("from", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
     }
@@ -165,9 +165,12 @@ object PostGISObstacleDao {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean()
       val linkSource = r.nextInt()
-      val externalId = r.nextStringOption()
+      val externalIds: Seq[String] = Seq(r.nextStringOption()).flatMap {
+        case Some(value) => value.split(",")
+        case None => Seq.empty
+      }
 
-      ObstacleRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource), externalId)
+      ObstacleRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource), externalIds)
     }
   }
 
@@ -192,7 +195,7 @@ object PostGISObstacleDao {
   }
 
   def create(obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource,
-             createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String],
+             createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime], externalIdsFromUpdate: Seq[String],
              fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -200,9 +203,11 @@ object PostGISObstacleDao {
     val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
     val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
 
+    val externalIDsString = externalIdsFromUpdate.mkString(",")
+
     sqlu"""
-    insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, ${Obstacles.typeId}, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $modifiedBy, $modifiedAt);
+    insert into asset(id, external_ids, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
+        values ($id, $externalIDsString, ${Obstacles.typeId}, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $modifiedBy, $modifiedAt);
 
     insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
         values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value}, current_timestamp);
@@ -260,7 +265,7 @@ object PostGISObstacleDao {
               when ev.name_fi is not null then ev.name_fi
               else null
         end as display_value, a.created_by, a.created_date, a.modified_by,
-        a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source, a.external_id
+        a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source, a.external_ids
        from asset a
        join asset_link al on a.id = al.asset_id
        join lrm_position pos on al.position_id = pos.id

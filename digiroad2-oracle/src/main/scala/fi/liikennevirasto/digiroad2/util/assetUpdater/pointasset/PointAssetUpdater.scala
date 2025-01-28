@@ -100,20 +100,20 @@ class PointAssetUpdater(service: PointAssetOperations) {
     val linkInfo = if (roadLinkChange.oldLink.nonEmpty) Some(LinkInfo(roadLinkChange.oldLink.get.lifeCycleStatus)) else None
 
     val oldAsset = Asset(oldPersistedAsset.id, oldValues, Some(oldPersistedAsset.municipalityCode),
-      Some(Seq(Point(oldPersistedAsset.lon, oldPersistedAsset.lat))), Some(oldLinearReference),linkInfo, true, None, oldPersistedAsset.externalId)
+      Some(Seq(Point(oldPersistedAsset.lon, oldPersistedAsset.lat))), Some(oldLinearReference),linkInfo, true, None, oldPersistedAsset.externalIds)
 
     val newValues = compactJson(newPersistedAsset.propertyData.map(_.toJson))
     val newAsset = changeType match {
       case Floating =>
         val newLink = roadLinkChange.newLinks.find(_.linkId == newPersistedAsset.linkId)
         val linkInfo = if (newLink.nonEmpty) Some(LinkInfo(newLink.get.lifeCycleStatus)) else None
-        Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode), None, None,linkInfo, true, assetUpdate.floatingReason, newPersistedAsset.externalId)
+        Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode), None, None,linkInfo, true, assetUpdate.floatingReason, newPersistedAsset.externalIds)
       case _ =>
         val newLink = roadLinkChange.newLinks.find(_.linkId == newPersistedAsset.linkId).get
         val linkInfo = Some(LinkInfo(newLink.lifeCycleStatus))
         val newLinearReference = LinearReferenceForReport(newLink.linkId, newPersistedAsset.mValue, None, None, assetUpdate.validityDirection, assetUpdate.bearing, 0.0)
         Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode),
-          Some(Seq(Point(newPersistedAsset.lon, newPersistedAsset.lat))), Some(newLinearReference),linkInfo, true, None, newPersistedAsset.externalId)
+          Some(Seq(Point(newPersistedAsset.lon, newPersistedAsset.lat))), Some(newLinearReference),linkInfo, true, None, newPersistedAsset.externalIds)
     }
     ChangedAsset(oldPersistedAsset.linkId, oldPersistedAsset.id, changeType, roadLinkChange.changeType, Some(oldAsset), Seq(newAsset))
   }
@@ -156,7 +156,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
                                  digitizationChange: Boolean): AssetUpdate = {
     if (isVersionChange(asset.linkId, newLink.linkId) && newLink.linkLength == oldLink.linkLength) {
       toAssetUpdate(asset.id, Point(asset.lon, asset.lat), newLink.linkId, asset.mValue,
-                    asset.getValidityDirection, asset.getBearing, externalId = asset.externalId)
+                    asset.getValidityDirection, asset.getBearing, externalIds = asset.externalIds)
     } else {
       val oldLocation = Point(asset.lon, asset.lat)
       val newMValue = GeometryUtils.calculateLinearReferenceFromPoint(oldLocation, newLink.geometry)
@@ -165,7 +165,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
         case Some(point) if point.distance2DTo(oldLocation) <= MaxDistanceDiffAllowed =>
           val calculatedBearing = calculateBearing(point, newLink.geometry)
           val fixedValidityDirection = adjustValidityDirection(asset.getValidityDirection, digitizationChange)
-          toAssetUpdate(asset.id, point, newLink.linkId, newMValue, fixedValidityDirection, calculatedBearing, externalId = asset.externalId)
+          toAssetUpdate(asset.id, point, newLink.linkId, newMValue, fixedValidityDirection, calculatedBearing, externalIds = asset.externalIds)
         case _ =>
           setAssetAsFloating(asset, Some(FloatingReason.DistanceToRoad))
       }
@@ -179,13 +179,13 @@ class PointAssetUpdater(service: PointAssetOperations) {
 
   protected def setAssetAsFloating(asset: PersistedPointAsset, floatingReason: Option[FloatingReason]): AssetUpdate = {
     toAssetUpdate(asset.id, Point(asset.lon, asset.lat), asset.linkId, asset.mValue, asset.getValidityDirection,
-                  asset.getBearing, floating = true, floatingReason, asset.externalId)
+                  asset.getBearing, floating = true, floatingReason, asset.externalIds)
   }
 
   protected def toAssetUpdate(assetId: Long, point: Point, linkId: String, mValue: Double,
                             validityDirection: Option[Int], bearing: Option[Int],
-                            floating: Boolean = false, floatingReason: Option[FloatingReason] = None, externalId: Option[String] = None): AssetUpdate = {
+                            floating: Boolean = false, floatingReason: Option[FloatingReason] = None, externalIds: Seq[String] = Seq()): AssetUpdate = {
     AssetUpdate(assetId, point.x, point.y, linkId, mValue, validityDirection, bearing, DateTime.now().getMillis,
-                floating, floatingReason, externalId)
+                floating, floatingReason, externalIds)
   }
 }

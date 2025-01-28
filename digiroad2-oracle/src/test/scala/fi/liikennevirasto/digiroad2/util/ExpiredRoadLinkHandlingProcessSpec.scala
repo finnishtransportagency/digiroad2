@@ -63,7 +63,7 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
 
       val createdObstacleId = obstacleService.create(incomingObstacle, testUser, testRoadLink, newTransaction = false)
       val createdObstacle = Obstacle(createdObstacleId, expiredLinkId, 2.0, 0.0, 0.0, floating = true, 0L, 49, Seq(),
-        None, None, Some(testUser), Some(DateTime.now()), expired = false, LinkGeomSource.NormalLinkInterface, None)
+        None, None, Some(testUser), Some(DateTime.now()), expired = false, LinkGeomSource.NormalLinkInterface)
       obstacleService.updateFloatingAsset(createdObstacle)
       val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
       expiredLinks.isEmpty should equal(false)

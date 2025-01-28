@@ -67,7 +67,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val timeStamp: Long
   val linkSource: LinkGeomSource
   val propertyData: Seq[Property]
-  val externalId: Option[String]
+  val externalIds: Seq[String]
 
   def getValidityDirection: Option[Int] = None
   def getBearing: Option[Int] = None
@@ -92,7 +92,7 @@ trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
   val expired: Boolean
   val linkSource: LinkGeomSource
   val propertyData: Seq[Property]
-  val externalId: Option[String]
+  val externalIds: Seq[String]
 }
 
 
@@ -103,7 +103,7 @@ trait LightGeometry {
 
 case class AssetUpdate(assetId: Long, lon: Double, lat: Double, linkId: String, mValue: Double,
                        validityDirection: Option[Int], bearing: Option[Int], timeStamp: Long,
-                       floating: Boolean, floatingReason: Option[FloatingReason] = None, externalId: Option[String] = None)
+                       floating: Boolean, floatingReason: Option[FloatingReason] = None, externalIds: Seq[String] = Seq())
 
 trait  PointAssetOperations{
   private val logger = LoggerFactory.getLogger(getClass)
