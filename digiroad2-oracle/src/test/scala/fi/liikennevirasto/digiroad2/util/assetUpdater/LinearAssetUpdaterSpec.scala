@@ -1988,8 +1988,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val id2 = service.createWithoutTransaction(RoadWidth.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(100.0, 339.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id3 = service.createWithoutTransaction(EuropeanRoads.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(29.0, 39.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id4 = service.createWithoutTransaction(CyclingAndWalking.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(24.0, 139.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id5 = service.createWithoutTransaction(CareClass.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(22.0, 25.304), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id6 = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(14.0, 24.303), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id5 = service.createWithoutTransaction(CareClass.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(22.0, 35.304), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id6 = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(14.0, 34.303), "testuser", 0L, Some(oldRoadLink), false, None, None)
       // Assets that are not on the remaining part of the new link and will not be projected
       val id7 = service.createWithoutTransaction(ExitNumbers.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(12.0, 12.5), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id8 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(0.0, 10.0),"testuser", 0L, Some(oldRoadLink), false, None, None)
@@ -2542,6 +2542,44 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       generated.size should be(1)
       oldPart.size should be(1)
       oldPart.head.newAsset.get.assetId should be(id2)
+    }
+  }
+
+  test("Split. Given a roadlink with multiple parking prohibitions; When the link is split with a null part in the beginning; No prohibition should overlap.") {
+    val oldLinkID = "a50d7e94-b8cf-4359-adff-ae3d6890379d:2"
+    val newLinkID = "01f79bbe-d5bc-44cb-861d-32c9251ad1e8:1"
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.newLinks.map(_.linkId).contains(newLinkID) && change.changeType == RoadLinkChangeType.Split)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+
+      val mainProhibitionId = service.createWithoutTransaction(ParkingProhibition.typeId, oldLinkID, NumericValue(1), SideCode.BothDirections.value, Measures(25.409, 124.449), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val startProhibitionId = service.createWithoutTransaction(ParkingProhibition.typeId, oldLinkID, NumericValue(1), SideCode.AgainstDigitizing.value, Measures(0.0, 25.409), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val endProhibitionId = service.createWithoutTransaction(ParkingProhibition.typeId, oldLinkID, NumericValue(1), SideCode.TowardsDigitizing.value, Measures(124.449, 134.664), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(ParkingProhibition.typeId, Set(mainProhibitionId, startProhibitionId, endProhibitionId), false)
+      assetsBefore.size should be(3)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(ParkingProhibition.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(ParkingProhibition.typeId, Set(mainProhibitionId, startProhibitionId, endProhibitionId), false).sortBy(_.startMeasure)
+      assetsAfter.size should be(3)
+      assetsAfter.map(_.id).sorted should be(assetsBefore.map(_.id).sorted)
+
+      val startAsset = assetsAfter.head
+      val endAsset = assetsAfter.last
+      val startAssetLength = (startAsset.endMeasure - startAsset.startMeasure)
+      val endAssetLength = (endAsset.endMeasure - endAsset.startMeasure)
+      val startAssetEndAssetGap = (endAsset.startMeasure - startAsset.endMeasure)
+
+      startAsset.linkId should be(newLinkID)
+      endAsset.linkId should be(newLinkID)
+      MValueCalculator.roundMeasure(startAssetLength, 2) should be(12.83)
+      MValueCalculator.roundMeasure(endAssetLength, 2) should be(10.22)
+      MValueCalculator.roundMeasure(startAssetEndAssetGap, 2) should be(99.04)
     }
   }
 }
