@@ -1988,8 +1988,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val id2 = service.createWithoutTransaction(RoadWidth.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(100.0, 339.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id3 = service.createWithoutTransaction(EuropeanRoads.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(29.0, 39.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id4 = service.createWithoutTransaction(CyclingAndWalking.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(24.0, 139.177), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id5 = service.createWithoutTransaction(CareClass.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(22.0, 35.304), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id6 = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(14.0, 34.303), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id5 = service.createWithoutTransaction(CareClass.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(22.0, 26.304), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id6 = service.createWithoutTransaction(TrafficVolume.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(14.0, 26.303), "testuser", 0L, Some(oldRoadLink), false, None, None)
       // Assets that are not on the remaining part of the new link and will not be projected
       val id7 = service.createWithoutTransaction(ExitNumbers.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(12.0, 12.5), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id8 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkID, NumericValue(120), SideCode.BothDirections.value, Measures(0.0, 10.0),"testuser", 0L, Some(oldRoadLink), false, None, None)
