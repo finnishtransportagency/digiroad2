@@ -864,12 +864,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
       def sliceAsset(change: RoadLinkChange, asset: PersistedLinearAsset, selectInfo: ReplaceInfo, fromBeginning: Boolean): Seq[PersistedLinearAsset] = {
         val assetRemainingOnLink = if (fromBeginning) {
-          selectInfo.newLinkId match {
-            case Some(newLinkId) =>
-              asset.copy(startMeasure = selectInfo.oldToMValue.getOrElse(0.0), endMeasure = change.oldLink.head.linkLength)
-            case _ =>
-              asset.copy(startMeasure = selectInfo.oldToMValue.getOrElse(0.0))
-          }
+          asset.copy(startMeasure = selectInfo.oldToMValue.getOrElse(0.0))
         } else {
           asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
         }
