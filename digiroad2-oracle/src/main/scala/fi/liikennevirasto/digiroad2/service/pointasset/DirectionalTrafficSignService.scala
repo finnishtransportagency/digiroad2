@@ -99,7 +99,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
       case old if (old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon)) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
         PostGISDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, linkGeom, value), value,
-          linkMunicipality, username, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
+          linkMunicipality, username, old.createdBy, old.createdAt, old.externalIds, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
         PostGISDirectionalTrafficSignDao.update(id, updatedAsset, value,
           linkMunicipality, username, fromPointAssetUpdater)
@@ -111,7 +111,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     new PersistedAsset(adjustment.assetId, adjustment.linkId, adjustment.lon, adjustment.lat, adjustment.mValue,
       adjustment.floating, asset.timeStamp, asset.municipalityCode, asset.propertyData, validityDirection,
       adjustment.bearing, asset.createdBy, asset.createdAt, asset.modifiedBy, asset.modifiedAt,
-      linkSource = asset.linkSource, externalId = asset.externalId)
+      linkSource = asset.linkSource, externalIds = asset.externalIds)
   }
 
   override def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetUpdate, link: RoadLinkInfo): Long = {

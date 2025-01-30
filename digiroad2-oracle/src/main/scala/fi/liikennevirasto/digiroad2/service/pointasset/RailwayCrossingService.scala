@@ -45,7 +45,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   override def createOperation(asset: PersistedAsset, adjustment: AssetUpdate): PersistedAsset = {
     new PersistedAsset(adjustment.assetId, adjustment.linkId, adjustment.lon, adjustment.lat, adjustment.mValue,
       adjustment.floating, asset.timeStamp, asset.municipalityCode, asset.propertyData, asset.createdBy, asset.createdAt,
-      asset.modifiedBy, asset.modifiedAt, asset.linkSource, asset.externalId)
+      asset.modifiedBy, asset.modifiedAt, asset.linkSource, asset.externalIds)
   }
 
   override def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetUpdate, roadLink: RoadLinkInfo): Long = {
@@ -120,7 +120,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
       case old if (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) && !fromPointAssetUpdater =>
         expireWithoutTransaction(id)
         PostGISRailwayCrossingDao.create(setAssetPosition(updatedAsset, linkGeom, value), value, linkMunicipality, username,
-          timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalId, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
+          timeStamp.getOrElse(createTimeStamp()), linkSource, old.createdBy, old.createdAt, old.externalIds, fromPointAssetUpdater, old.modifiedBy, old.modifiedAt)
       case _ =>
         PostGISRailwayCrossingDao.update(id, updatedAsset, value, linkMunicipality, username,
           Some(timeStamp.getOrElse(createTimeStamp())), linkSource, fromPointAssetUpdater)

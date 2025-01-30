@@ -24,7 +24,7 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
                          municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
                          validityDirection: Option[Int], bearing: Option[Int],
                          validityPeriod: Option[String], floating: Boolean = false, timeStamp: Long = 0L,
-                         propertyData: Seq[Property] = Seq(), linkSource: LinkGeomSource, terminalId: Option[Long] = None) extends PersistedPointAsset {
+                         propertyData: Seq[Property] = Seq(), linkSource: LinkGeomSource, terminalId: Option[Long] = None, externalIds: Seq[String] = Seq()) extends PersistedPointAsset {
     override def getValidityDirection: Option[Int] = this.validityDirection
     override def getBearing: Option[Int] = this.bearing
   }
