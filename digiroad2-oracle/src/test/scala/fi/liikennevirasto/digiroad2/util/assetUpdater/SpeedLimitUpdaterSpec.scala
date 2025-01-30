@@ -460,7 +460,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty, false)).thenReturn(Seq.empty[RoadLink])
 
-      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, 339.277), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface)
+      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, oldRoadLink.length), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface)
 
       val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
       assetsBefore.size should be(1)
@@ -518,7 +518,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers with UpdaterUtilsSuit
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty, false)).thenReturn(Seq.empty[RoadLink])
 
-      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, 339.277), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface, Seq("externalId"))
+      val id = speedLimitDao.createSpeedLimit("testuser", oldLinkID, Measures(0, oldRoadLink.length), SideCode.BothDirections, SpeedLimitValue(40), Some(1L), None, None, None, LinkGeomSource.NormalLinkInterface, Seq("externalId"))
 
       val assetsBefore = speedLimitService.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id.get), false)
       assetsBefore.head.linkId should be(oldLinkID)
