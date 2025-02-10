@@ -27,11 +27,11 @@ object ExpiredRoadLinkHandlingProcess {
   val logger = LoggerFactory.getLogger(getClass)
 
   /**
-    * Get all assets (except manoeuvres) which are still on expired road links
-    * Enrich assets with geometry and roadLink expired date
-    * @param expiredRoadLinks All expired road links
-    * @return Enriched assets which are on expired road links
-    */
+   * Get all assets (except manoeuvres) which are still on expired road links
+   * Enrich assets with geometry and roadLink expired date
+   * @param expiredRoadLinks All expired road links
+   * @return Enriched assets which are on expired road links
+   */
   def getAllExistingAssetsOnExpiredLinks(expiredRoadLinks: Seq[RoadLinkWithExpiredDate]): Seq[AssetOnExpiredLink] = {
     def enrichAssetLink(assetLink: AssetLinkWithMeasures, roadLinkWithExpiredDate: RoadLinkWithExpiredDate): AssetOnExpiredLink = {
       val geometry = if(AssetTypeInfo.apply(assetLink.assetTypeId).geometryType == "linear") {
@@ -49,15 +49,29 @@ object ExpiredRoadLinkHandlingProcess {
       AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate)
     }
 
-    expiredRoadLinks.flatMap(roadLinkWithExpiredDate => {
-      val roadLink = roadLinkWithExpiredDate.roadLink
-      val assetsOnExpiredLink = postGISLinearAssetDao.fetchAssetsWithPositionByLinkIds(assetTypeIds, Seq(roadLink.linkId), includeFloating = false, includeExpired = false)
-      val lanesOnExpiredLink = laneDao.fetchAllLanesByLinkIds(Seq(roadLink.linkId)).map(lane =>
+    val roadLinkIds = expiredRoadLinks.map(_.roadLink.linkId)
+    val assetsOnExpiredLink = LogUtils.time(logger, s"TEST LOG fetchAssetsWithPositionByLinkIds with ${roadLinkIds.size} roadLinkIds", startLogging = true) {
+      postGISLinearAssetDao.fetchAssetsWithPositionByLinkIds(assetTypeIds, roadLinkIds, includeFloating = false, includeExpired = false)
+    }
+    val lanesOnExpiredLink = LogUtils.time(logger, s"TEST LOG fetchAllLanesByLinkIds with ${roadLinkIds.size} roadLinkIds", startLogging = true) {
+      laneDao.fetchAllLanesByLinkIds(roadLinkIds).map(lane =>
         AssetLinkWithMeasures(lane.id, Lanes.typeId, lane.linkId, lane.sideCode, lane.startMeasure, lane.endMeasure))
+    }
 
-      val assetLinks = assetsOnExpiredLink ++ lanesOnExpiredLink
-      assetLinks.map(enrichAssetLink(_, roadLinkWithExpiredDate))
-    })
+    val assetLinksByLinkId: Map[String, Seq[AssetLinkWithMeasures]] =
+      (assetsOnExpiredLink ++ lanesOnExpiredLink).groupBy(_.linkId)
+    LogUtils.time(logger, s"TEST LOG enrichAssetLinks", startLogging = true) {
+      expiredRoadLinks.flatMap { roadLinkWithExpiredDate =>
+        assetLinksByLinkId.getOrElse(roadLinkWithExpiredDate.roadLink.linkId, Seq.empty).map { assetLink =>
+          enrichAssetLink(assetLink, roadLinkWithExpiredDate)
+        }
+      }
+    }
+  }
+
+  def getAllExistingManoeuvresOnExpiredRoadLinks(expiredRoadLinks: Seq[RoadLinkWithExpiredDate]) = {
+    val roadLinkIds = expiredRoadLinks.map(_.roadLink.linkId)
+    manoeuvreDao.fetchManoeuvresByLinkIds(roadLinkIds).flatMap(_._2)
   }
 
 
@@ -74,23 +88,28 @@ object ExpiredRoadLinkHandlingProcess {
     logger.info(s"Expired road links count: ${expiredRoadLinksWithExpireDates.size}")
     val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
     val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
+    val assetIdsAlreadyOnWorkList = assetsOnExpiredLinksService.getAllWorkListAssets(newTransaction = false).map(_.id)
+    val assetsOnExpiredLinksNotOnWorkList = assetsOnExpiredLinks.filterNot(asset => assetIdsAlreadyOnWorkList.contains(asset.id))
+    val manoeuvresOnExpiredLinks = getAllExistingManoeuvresOnExpiredRoadLinks(expiredRoadLinksWithExpireDates)
     val emptyExpiredLinks = expiredRoadLinks.filter(rl => {
       val linkIdsWithExistingAssets = assetsOnExpiredLinks.map(_.linkId)
-      !linkIdsWithExistingAssets.contains(rl.linkId)
+      val linkIdsWithExistingManoeuvres = manoeuvresOnExpiredLinks.flatMap(manoeuvre => Seq(manoeuvre.linkId,manoeuvre.destLinkId)).toSeq
+      !linkIdsWithExistingAssets.contains(rl.linkId) && !linkIdsWithExistingManoeuvres.contains(rl.linkId)
     }).map(_.linkId).toSet
 
     logger.info(s"Empty expired links count: ${emptyExpiredLinks.size}")
     logger.info(s"Assets on expired links count: ${assetsOnExpiredLinks.size}")
-    
+    logger.info(s"Manoeuvres on expired links count: ${manoeuvresOnExpiredLinks.size}")
+
     if (cleanRoadLinkTable && emptyExpiredLinks.nonEmpty) {
       LogUtils.time(logger, "Delete and expire road links and properties") {
         roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
       }
     }
-    
-    if (assetsOnExpiredLinks.nonEmpty) {
-      LogUtils.time(logger, s"Insert ${assetsOnExpiredLinks.size} assets to worklist") {
-        assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
+
+    if (assetsOnExpiredLinksNotOnWorkList.nonEmpty) {
+      LogUtils.time(logger, s"Insert ${assetsOnExpiredLinksNotOnWorkList.size} assets to worklist") {
+        assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinksNotOnWorkList)
       }
     }
   }

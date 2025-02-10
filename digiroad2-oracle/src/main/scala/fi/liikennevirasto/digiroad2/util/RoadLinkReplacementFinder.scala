@@ -48,15 +48,17 @@ object RoadLinkReplacementFinder {
   def processChangeSets(): Unit = {
     val lastSuccess = PostGISDatabase.withDynSession(Queries.getLatestSuccessfulSamuutus(roadLinkReplacementTypeId))
     val changeSets = roadLinkChangeClient.getRoadLinkChanges(lastSuccess)
-    val changes = changeSets.flatMap(_.changes)
+    changeSets.foreach(changeSet => {
+      val changes = changeSet.changes
+      val matchedRoadLinks = LogUtils.time(logger, "Find possible road link replacements") {
+        findMissingReplacements(changes)
+      }
+      LogUtils.time(logger, s"Insert ${matchedRoadLinks.size} matched road links to work list") {
+        missingReplacementService.insertMatchedLinksToWorkList(matchedRoadLinks)
+      }
+      PostGISDatabase.withDynSession(Queries.updateLatestSuccessfulSamuutus(roadLinkReplacementTypeId, changeSet.targetDate))
+    })
 
-    val matchedRoadLinks = LogUtils.time(logger, "Find possible road link replacements") {
-      findMissingReplacements(changes)
-    }
-
-    LogUtils.time(logger, s"Insert ${matchedRoadLinks.size} matched road links to work list") {
-      missingReplacementService.insertMatchedLinksToWorkList(matchedRoadLinks)
-    }
   }
 
   def findMissingReplacements(changes: Seq[RoadLinkChange]): Seq[MatchedRoadLinks] = {
