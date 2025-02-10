@@ -2624,4 +2624,34 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetsOnNewLinks.last.externalIds should be(Seq("externalId", "externalId2"))
     }
   }
+
+  test("When change type is Replace and asset type is RoadWidth, After samuutus processes the externalIds of the asset should stay with the projected asset and externalIds should be included in the report.") {
+    val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
+    val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
+    val assetTypeId = RoadWidth.typeId
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(assetTypeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None, externalIds = Seq("externalId"))
+
+      val assetsBefore = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
+
+      assetsBefore.size should be(1)
+      assetsBefore.head.linkId should be(oldLinkID)
+      assetsBefore.head.externalIds should be(Seq("externalId"))
+
+      TestLinearAssetUpdater.updateByRoadLinks(assetTypeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
+      assetsAfter.head.linkId should be(newLinkID)
+      assetsAfter.head.externalIds should be(assetsBefore.head.externalIds)
+
+      val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption, a.changeType))
+      assets.head.oldAsset.get.externalIds.size should be(1)
+      assets.head.newAsset.get.externalIds.size should be(1)
+    }
+  }
 }
