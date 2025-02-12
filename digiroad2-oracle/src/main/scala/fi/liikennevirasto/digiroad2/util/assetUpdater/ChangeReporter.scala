@@ -279,10 +279,10 @@ object ChangeReporter {
 
           constructionTypeBefore,
           assetBefore.assetId, beforeGeometry, assetBefore.values, assetBefore.municipalityCode.getOrElse(null),
-          beforeValidityDirection, beforeBearing, beforeLinkId, beforeStartMValue, beforeEndMValue, beforeLength, assetBefore.getUrl, assetBefore.externalIds,
+          beforeValidityDirection, beforeBearing, beforeLinkId, beforeStartMValue, beforeEndMValue, beforeLength, assetBefore.getUrl, assetBefore.externalIds.mkString(";"),
           constructionTypeAfter,
           assetAfter.assetId,  afterGeometry,  assetAfter.values, assetAfter.municipalityCode.getOrElse(null),
-          afterValidityDirection, afterBearing, afterLinkId, afterStartMValue, afterEndMValue, afterLength, assetAfter.getUrl, assetAfter.externalIds)
+          afterValidityDirection, afterBearing, afterLinkId, afterStartMValue, afterEndMValue, afterLength, assetAfter.getUrl, assetAfter.externalIds.mkString(";"))
         if (withGeometry) {
           csvRow
         } else {
