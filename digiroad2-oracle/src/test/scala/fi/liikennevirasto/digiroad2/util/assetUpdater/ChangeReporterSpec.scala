@@ -412,18 +412,43 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     println(s"CSV generation took ${(endTime - startTime) / 1e9} seconds")
   }
 
-  test("change report contains the externalIds of the changed asset") {
+  test("change report contains the externalIds of the changed POINT asset and is presented as string") {
     val changedAsset = ChangedAsset("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1", 1, Floating, Remove,
       Some(Asset(1, s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
         Some(49), Some(List(Point(366414.9482441691, 6674451.461887036))),
         Some(LinearReferenceForReport("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1", 14.033238836181871, None, None, None, Some(2), 0.0)), lifecycleChange, true, None, Seq("externalIds"))),
       List(Asset(1, s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
-        Some(49), None, None, lifecycleChange, true, Some(NoRoadLinkFound), Seq("externalIds"))))
+        Some(49), None, None, lifecycleChange, true, Some(NoRoadLinkFound), Seq("externalIds", "externalIds2"))))
     val changeReport = ChangeReport(PedestrianCrossings.typeId, Seq(changedAsset))
     val (csv, contentRows) = ChangeReporter.generateCSV(changeReport, true)
     val contents = csv.split("\\\n")(2)
 
     contentRows should be(1)
-    contents.contains("List(externalIds)") should be(true)
+    contents.contains("List(externalIds, externalIds2)") should be(false)
+    contents.contains("externalIds;externalIds2") should be(true)
+  }
+
+  test("change report contains the externalIds of the changed LINEAR asset and is presented as string") {
+    val linkId = "7766bff4-5f02-4c30-af0b-42ad3c0296aa:1"
+    val assetId1 = 123
+    val assetId2 = 124
+    val geometry1 = Some(List(Point(366408.515, 6674439.018, 3.933), Point(366409.675, 6674441.156, 4.082), Point(366413.518, 6674448.237, 4.573), Point(366418.695, 6674459.91, 5.805), Point(366425.83199998754, 6674457.102000005, 5.956999999734991)))
+    val geometry2 = Some(List(Point(378371.653, 6675257.813, 10.874), Point(378371.4270000001, 6675265.207, 11.077), Point(378373.873, 6675279.028, 12.0), Point(378375.164, 6675294.114, 13.166), Point(378375.838, 6675302.261, 13.648), Point(378379.8780000001, 6675312.458, 13.945)))
+    val values1 = s"""{"publicId":"lane_type","values":["2"],"publicId":"start_date","values":["1.1.1970"],"publicId":"lane_code","values":["2"]}"""
+    val values2 = s"""{"publicId":"lane_type","values":["1"],"publicId":"start_date","values":["1.1.1970"],"publicId":"lane_code","values":["1"]}"""
+    val linearReference1 = LinearReferenceForReport(linkId, 0.0, Some(30.928), Some(2), None, None, 30.928)
+    val linearReference2 = LinearReferenceForReport(linkId, 0.0, Some(55.717), Some(2), None, None, 55.757)
+    val before1 = Asset(assetId1, values1, Some(49), geometry1, Some(linearReference1), lifecycleChange, isPointAsset = false, None, externalIds = Seq("externalId", "externalId2"))
+    val before2 = Asset(assetId2, values2, Some(49), geometry2, Some(linearReference2), lifecycleChange, isPointAsset = false, None)
+
+    val changedAsset1 = ChangedAsset(linkId = linkId, assetId = assetId1, changeType = Deletion, roadLinkChangeType = Remove, before = Some(before1), after = Seq())
+    val changedAsset2 = ChangedAsset(linkId = linkId, assetId = assetId2, changeType = Deletion, roadLinkChangeType = Remove, before = Some(before2), after = Seq())
+    val changeReport = ChangeReport(Lanes.typeId, Seq(changedAsset1, changedAsset2))
+
+    val (csv, contentRowCount) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
+    contentRowCount should be(2)
+    val contents = csv.split("\\\n")(2)
+    contents.contains("List(externalIds, externalIds2)") should be(false)
+    contents.contains("externalId;externalId2") should be(true)
   }
 }
