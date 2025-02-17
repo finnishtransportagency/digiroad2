@@ -9,7 +9,7 @@ import org.scalatest._
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 
-  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String, mValue: Double, floating: Boolean, timeStamp: Long, linkSource: LinkGeomSource, propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
+  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String, mValue: Double, floating: Boolean, timeStamp: Long, linkSource: LinkGeomSource, propertyData: Seq[Property] = Seq(), externalIds: Seq[String]) extends PersistedPointAsset
 
   test ("Calculate bearing for point: horizontal") {
     val bearing = calculateBearing(Point(0,0,0), Seq(Point(1,-1,0), Point(1,1,0)))

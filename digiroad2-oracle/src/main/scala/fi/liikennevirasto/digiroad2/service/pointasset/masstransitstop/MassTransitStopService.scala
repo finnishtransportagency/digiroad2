@@ -35,7 +35,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: String, 
                                     validityDirection: Option[Int], bearing: Option[Int],
                                     validityPeriod: Option[String], floating: Boolean, timeStamp: Long,
                                     created: Modification, modified: Modification,
-                                    propertyData: Seq[Property], linkSource: LinkGeomSource, terminalId: Option[Long] = None) extends PersistedPointAsset with TimeStamps {
+                                    propertyData: Seq[Property], linkSource: LinkGeomSource, terminalId: Option[Long] = None, externalIds: Seq[String] = Seq()) extends PersistedPointAsset with TimeStamps {
   override def getValidityDirection: Option[Int] = this.validityDirection
   override def getBearing: Option[Int] = this.bearing
 }

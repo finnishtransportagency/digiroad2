@@ -184,11 +184,11 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
       (CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }
 
-    val optionalAsset = massTransitStopService.getByNationalId(nationalId, municipalityValidation, massTransitStopTransformation)
+    val optionalAsset = massTransitStopService.getByNationalId(nationalId, municipalityValidation, massTransitStopTransformation, false)
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
+        if (!roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(nationalId)
     }
