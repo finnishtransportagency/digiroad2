@@ -1045,7 +1045,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         Map("ROADNAME_SE" -> "roadname_se",
           "ROADNAME_FI" -> "roadname_fi")
 
-      val props = Seq.empty[SimplePointAssetProperty]
+      val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.RoadName_SE, Seq(PropertyValue(propertyValue = "", propertyDisplayValue = Some("")))), SimplePointAssetProperty(MassTransitStopOperations.RoadName_FI, Seq(PropertyValue(propertyValue = "", propertyDisplayValue = Some("")))))
       val roadLink = RoadLinkFetched(randomLinkId7, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
       val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)

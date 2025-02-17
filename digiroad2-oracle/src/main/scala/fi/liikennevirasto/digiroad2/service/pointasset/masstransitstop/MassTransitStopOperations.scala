@@ -194,7 +194,7 @@ object MassTransitStopOperations {
     } ++ properties
 
     defaultproperties.map { parameter =>
-      if ((parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "") && parameter.values.exists(_.asInstanceOf[PropertyValue].propertyDisplayValue.nonEmpty)) || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "-")) {
+      if ((parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "") && parameter.values.exists(_.asInstanceOf[PropertyValue].propertyDisplayValue.nonEmpty)) || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "" && parameter.values.exists(_.asInstanceOf[PropertyValue].propertyDisplayValue == None))) {
         parameter.publicId match {
           case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
           case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))
