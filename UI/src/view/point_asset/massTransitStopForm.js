@@ -644,13 +644,12 @@
             element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
-          var hideInventoryDate = property.publicId === "inventointipaiva" && !isTRMassTransitStop ? "style='visibility:hidden'":"";
-          element = $('<input type="text"' +  hideInventoryDate + '/>').addClass('form-control').attr('id', property.publicId ).on('keyup datechange', _.debounce(function(target){
+          element = $('<input type="text"' + '/>').addClass('form-control').attr('id', property.publicId ).on('keyup datechange', _.debounce(function(target){
             // tab press
             if(target.keyCode === 9){
               return;
             }
-            var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
+            var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.iso8601toFinnish(target.currentTarget.value);
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: propertyValue, propertyDisplayValue: propertyValue }], property.propertyType, property.required);
           }, 500));
 
