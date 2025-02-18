@@ -244,7 +244,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         }
       }
     }
-
+    if (expiredAssetIds.exists(_ == 82498572)) {logger.info(s"TEST LOG asset 82498572 to be added to expiredAssetIds")}
     val changeSet = ChangeSet(droppedAssetIds = droppedAssetIds.toSet,
       adjustedMValues = adjustedMValues.distinct, adjustedSideCodes = adjustedSideCodes.distinct,
       expiredAssetIds = expiredAssetIds.toSet, valueAdjustments = valueAdjustments.distinct)
@@ -632,6 +632,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (assetsOperated, changeInfo) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
       adjustAndReport(typeId, onlyNeededNewRoadLinks, changes,operated)
     }
+    if (assetsOperated.exists(_.id == 82498572)) {logger.info(s"TEST LOG asset 82498572 to be retained on link with id 0a475061-defb-4807-9785-41620d4d4d08:2")}
     (assetsOperated, changeInfo.get)
   }
 

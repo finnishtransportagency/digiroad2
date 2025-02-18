@@ -107,6 +107,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     val changeSets = operation.changeInfo
     val expiredPavementSteps = assetsToBeRemoved.map(asset => {
       if (asset.id != 0) {
+        if (asset.linkId == "0a475061-defb-4807-9785-41620d4d4d08:2") {logger.info(s"TEST LOG pavement ${asset.id} to be removed from link with id 0a475061-defb-4807-9785-41620d4d4d08:2")}
         Some(operation.copy(assetsAfter = Seq(), changeInfo = Some(changeSets.get.copy(expiredAssetIds = changeSets.get.expiredAssetIds ++ Set(asset.id)))))
       } else {
         val originalAsset = operation.assetsBefore.find(_.id == asset.oldId)
@@ -140,7 +141,8 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
       case ((removableAcc, retainableAcc), (_, assets)) =>
         val (removableAssets, retainableAssets) = assets.partition(a => pavementShouldBeRemoved(a, changesRemovePavement))
         val (replaceableAssets, irreplaceableAssets) = retainableAssets.partition(asset => PavementClass.isReplaceablePavementClass(asset.value))
-
+        if (replaceableAssets.exists(_.linkId == "0a475061-defb-4807-9785-41620d4d4d08:2")) {logger.info(s"TEST LOG ${replaceableAssets.size} assets to be replaced on link with id 0a475061-defb-4807-9785-41620d4d4d08:2")}
+        if (irreplaceableAssets.exists(_.linkId == "0a475061-defb-4807-9785-41620d4d4d08:2")) {logger.info(s"TEST LOG ${irreplaceableAssets.size} assets to retain on link with id 0a475061-defb-4807-9785-41620d4d4d08:2")}
         if (irreplaceableAssets.nonEmpty) {
           (removableAcc ++ removableAssets ++ replaceableAssets, retainableAcc ++ irreplaceableAssets)
         } else {
