@@ -83,7 +83,6 @@ object LinearAssetUpdateProcess {
   lazy val roadLinkPropertyUpdater = new RoadLinkPropertyUpdater
 
   def main(args: Array[String]): Unit = {
-    val threadStateLogger = logThreadStatesAtInterval(logger, 10)
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
       println("*******************************************************************************************")
@@ -141,7 +140,6 @@ object LinearAssetUpdateProcess {
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
       logger.info(s"Ending samuutus with parameter: $assetName")
-      threadStateLogger.shutdown()
     }
   }
 }
