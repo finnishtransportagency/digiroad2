@@ -2470,6 +2470,64 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetLength2 should be(newRoadLink2.length)
     }
   }
+
+  test("Merge. When running updater in parallel mode, expiredIds should not be filtered within adjustment loop.") {
+    val oldLinkId11 = "a0969dff-4d77-4bea-8c1c-d1b1620a6280:1"
+    val oldLinkId12 = "a5f5d9c7-408e-469a-bcd6-1ad6dd4912e0:1"
+    val newLinkId1 = "0a475061-defb-4807-9785-41620d4d4d08:2"
+
+    val oldLinkId21 = "3b9529ab-6120-4ab3-b737-c2f69d8652fe:2"
+    val oldLinkId22 = "a6124a16-902a-4f43-aadd-02a5c845db23:1"
+    val newLinkId2 = "9152085e-17f9-4634-9f47-5c91b1ec4ac9:1"
+
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLink11 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId11).get
+      val oldRoadLink12 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId12).get
+      val newRoadLink1 = roadLinkService.getRoadLinkByLinkId(newLinkId1).get
+
+      val oldRoadLink21 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId21).get
+      val oldRoadLink22 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId22).get
+      val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLinkId2).get
+
+      val asphaltValue = DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(1)))
+        , DynamicProperty("suggest_box", "checkbox", false, List())
+      )))
+      val unknownValue = DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(99)))
+        , DynamicProperty("suggest_box", "checkbox", false, List())
+      )))
+
+      val id1 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId11, asphaltValue, SideCode.TowardsDigitizing.value, Measures(0.0, oldRoadLink11.length), "testuser", 0L, Some(oldRoadLink11), false, None, None)
+      val id2 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId12, unknownValue, SideCode.TowardsDigitizing.value, Measures(0.0, oldRoadLink12.length), "testuser", 0L, Some(oldRoadLink12), false, None, None)
+      val id3 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId21, asphaltValue, SideCode.BothDirections.value, Measures(0.0, oldRoadLink21.length), "testuser", 0L, Some(oldRoadLink21), false, None, None)
+      val id4 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId22, unknownValue, SideCode.BothDirections.value, Measures(0.0, oldRoadLink22.length), "testuser", 0L, Some(oldRoadLink22), false, None, None)
+      val assetIds = Set(id1, id2, id3, id4)
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, assetIds, false)
+      assetsBefore.size should be(4)
+
+      TestLinearAssetUpdaterNoRoadLinkMockTestParallelRun.updateByRoadLinks(PavedRoad.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId1, newLinkId2), false).sortBy(_.id)
+      assetsAfter.size should be(2)
+
+      val assetLength1 = assetsAfter.head.endMeasure - assetsAfter.head.startMeasure
+      assetsAfter.head.linkId should be(newLinkId1)
+      assetLength1 should be(newRoadLink1.length)
+
+      val assetLength2 = assetsAfter.last.endMeasure - assetsAfter.head.startMeasure
+      assetsAfter.last.linkId should be(newLinkId2)
+      assetLength2 should be(newRoadLink2.length)
+
+      val changeReport = ChangeReport(PavedRoad.typeId, TestLinearAssetUpdaterNoRoadLinkMockTestParallelRun.getReport())
+      val relevantChangesSorted = changeReport.changes.asInstanceOf[Seq[ChangedAsset]].filter(change => assetIds.contains(change.assetId)).sortBy(_.assetId)
+      relevantChangesSorted.size should equal(4)
+      relevantChangesSorted.head.changeType should equal(Replaced)
+      relevantChangesSorted.head.assetId should be(id1)
+      relevantChangesSorted.last.changeType should equal(Deletion)
+      relevantChangesSorted.last.assetId should be(id4)
+    }
+  }
   
   test("Small rounding error between our asset length and roadlink length, corrected with using tolerance") {
     val oldLinkID = "8e3393a1-56ae-4f4a-bd49-d7aa601acd7f:1"
