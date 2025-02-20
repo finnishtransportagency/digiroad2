@@ -185,7 +185,7 @@ object MassTransitStopOperations {
   }
 
   def setPropertiesDefaultValues(properties: Seq[SimplePointAssetProperty], roadLink: RoadLinkLike): Seq[SimplePointAssetProperty] = {
-    val arrayProperties = Seq(MassTransitStopOperations.InventoryDateId, MassTransitStopOperations.RoadName_FI, MassTransitStopOperations.RoadName_SE )
+    val arrayProperties = Seq(MassTransitStopOperations.RoadName_FI, MassTransitStopOperations.RoadName_SE )
     val defaultproperties =  arrayProperties.flatMap{
       key =>
         if(!properties.exists(_.publicId == key))
@@ -195,11 +195,10 @@ object MassTransitStopOperations {
     } ++ properties
 
     defaultproperties.map { parameter =>
-      if (parameter.values.isEmpty || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "")) {
+      if ((parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "") && parameter.values.exists(_.asInstanceOf[PropertyValue].propertyDisplayValue.nonEmpty)) || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "" && parameter.values.exists(_.asInstanceOf[PropertyValue].propertyDisplayValue == None))) {
         parameter.publicId match {
           case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
           case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))
-          case MassTransitStopOperations.InventoryDateId => parameter.copy(values = Seq(PropertyValue(toIso8601.print(DateTime.now()))))
           case _ => parameter
         }
       } else

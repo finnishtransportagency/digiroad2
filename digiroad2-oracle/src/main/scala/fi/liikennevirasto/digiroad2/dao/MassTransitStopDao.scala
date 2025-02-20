@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.model.PointAssetLRMPosition
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{LightGeometryMassTransitStop, MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, Interval, LocalDate}
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
@@ -294,13 +294,27 @@ class MassTransitStopDao {
   private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
     propertyType match {
       case Text | LongText => {
-        if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-        if (propertyValues.isEmpty) {
-          deleteTextProperty(assetId, propertyId).execute
-        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
-        } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
+        if (propertyValues.size > 1) {
+          throw new IllegalArgumentException(s"Text property must have exactly one value: $propertyValues")
+        }
+        if (propertyValues.nonEmpty) {
+          val propertyValue = propertyValues.head.propertyValue
+          if (propertyValue.equals("-") || propertyValues.head.propertyValue.equals("")) {
+            deleteTextProperty(assetId, propertyId).execute
+          } else if (propertyPublicId.equals("inventointipaiva")) {
+            val formattedDate = finnishToIso8601(propertyValue)
+            if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+              insertTextProperty(assetId, propertyId, formattedDate).execute
+            } else {
+              updateTextProperty(assetId, propertyId, formattedDate).execute
+            }
+          } else {
+            if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+              insertTextProperty(assetId, propertyId, propertyValue).execute
+            } else {
+              updateTextProperty(assetId, propertyId, propertyValue).execute
+            }
+          }
         }
       }
       case SingleChoice => {
@@ -318,6 +332,16 @@ class MassTransitStopDao {
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
+  }
+
+  private def finnishToIso8601(propertyValue: String): String = {
+    val iso8601Formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val finnishFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+    try iso8601Formatter.parseDateTime(propertyValue).toString("yyyy-MM-dd")
+    catch {
+      case _: Exception => finnishFormatter.parseDateTime(propertyValue).toString("yyyy-MM-dd")
     }
   }
 
@@ -375,7 +399,13 @@ class MassTransitStopDao {
         val optionalDateTime = propertyValues.headOption match {
           case None => None
           case Some(x) if x.propertyValue.trim.isEmpty => None
-          case Some(x) => Some(formatter.parseDateTime(x.propertyValue))
+          case Some(x) => try {
+            val isoDateString = finnishToIso8601(x.propertyValue)
+            val dateTime = DateTime.parse(isoDateString, formatter)
+            Some(dateTime)
+          } catch {
+            case _: Exception => None
+          }
         }
         updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute
       }
