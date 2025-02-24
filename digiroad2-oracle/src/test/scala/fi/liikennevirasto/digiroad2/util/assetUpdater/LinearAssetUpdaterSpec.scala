@@ -2755,7 +2755,6 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
     val oldLinkId = "554ba6f9-1325-4883-a6a2-093c77fae840:1"
     val newLinkId1 = "b7d4f7d1-1e07-4d66-a5c4-20674aa6a188:1"
     val newLinkId2 = "c20bc164-8200-4132-a1c2-416ddbc5a02e:1"
-    val fakeLinkId = "b7d4p111-1e07-4d66-a5c4-20674aa6a188:1"
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.oldLink.map(_.linkId).contains(oldLinkId) && change.changeType == RoadLinkChangeType.Split)
 
     runWithRollback {
