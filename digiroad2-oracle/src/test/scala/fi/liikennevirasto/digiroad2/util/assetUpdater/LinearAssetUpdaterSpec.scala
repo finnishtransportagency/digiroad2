@@ -2544,4 +2544,40 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       oldPart.head.newAsset.get.assetId should be(id2)
     }
   }
+
+  test("Split. Given a roadlink that is split into 2 new links; When one new link has ConstructionType 5 Expiring Soon; The asset projected to the new part is not moved but expired instead.") {
+    val oldLinkId = "554ba6f9-1325-4883-a6a2-093c77fae840:1"
+    val newLinkId1 = "b7d4f7d1-1e07-4d66-a5c4-20674aa6a188:1"
+    val newLinkId2 = "c20bc164-8200-4132-a1c2-416ddbc5a02e:1"
+    val fakeLinkId = "b7d4p111-1e07-4d66-a5c4-20674aa6a188:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.oldLink.map(_.linkId).contains(oldLinkId) && change.changeType == RoadLinkChangeType.Split)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId).get
+      val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLinkId2).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkId1, newLinkId2), false)).thenReturn(Seq(newRoadLink2))
+
+      val assetId = service.createWithoutTransaction(DamagedByThaw.typeId, oldLinkId, NumericValue(1), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(DamagedByThaw.typeId, Set(assetId), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(DamagedByThaw.typeId, changes)
+
+      val assetsAfter = service.getPersistedAssetsByLinkIds(DamagedByThaw.typeId, Seq(oldLinkId, newLinkId1, newLinkId2), false)
+      assetsAfter.size should be(1)
+
+      assetsAfter.head.linkId should be(newLinkId2)
+      assetsAfter.head.startMeasure should be(0)
+      assetsAfter.head.endMeasure should be(newRoadLink2.length)
+
+      val changeReport = ChangeReport(PavedRoad.typeId, TestLinearAssetUpdater.getReport())
+      val relevantChangesSorted = changeReport.changes.asInstanceOf[Seq[ChangedAsset]].sortBy(_.assetId)
+      relevantChangesSorted.size should equal(2)
+      relevantChangesSorted.head.changeType should equal(Deletion)
+      relevantChangesSorted.head.assetId should be(assetId)
+      relevantChangesSorted.last.changeType should equal(Divided)
+    }
+  }
 }
