@@ -20,11 +20,9 @@ import scala.util.Try
 
 class MassTransitStopCsvOperation(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   lazy val propertyUpdater = new Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
-  lazy val positionUpdater = new PositionUpdater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
-  lazy val creator = new Creator(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
 
   private def getStrategies(): Seq[CsvOperations] = {
-    Seq(propertyUpdater, creator, positionUpdater)
+    Seq(propertyUpdater)
   }
 
   lazy val importLogDao: ImportLogDAO = new ImportLogDAO
@@ -81,6 +79,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   private val isValidTypeEnumeration = Set(1, 2, 5, 99)
   private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
   private val stopAdministratorValueMappings = Set(1, 2, 3, 99).map(_.toString)
+  private val serviceLevelValueMappings = Set(1, 2, 3, 4, 5, 6, 7, 8, 99).map(_.toString)
 
   private val textFieldMappings = Map(
     "pysäkin nimi" -> "nimi_suomeksi",
@@ -89,12 +88,25 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
     "liikennöintisuunta" -> "liikennointisuunta",
     "lisätiedot" -> "lisatiedot",
-    "vyöhyketieto" -> "vyohyketieto"
+    "vyöhyketieto" -> "vyohyketieto",
+    "vaihtoehtoinen link_id" -> "alternative_link_id",
+    "pysäkin omistaja" -> "pysakin_omistaja",
+    "osoite suomeksi" -> "osoite_suomeksi",
+    "osoite ruotsiksi" -> "osoite_ruotsiksi",
+    "laiturinumero" -> "laiturinumero",
+    "esteettömyys liikuntarajoitteiselle" -> "esteettomyys_liikuntarajoitteiselle",
+    "liityntäpysäköintipaikkojen määrä" -> "liityntapysakointipaikkojen_maara",
+    "liityntäpysäköinnin lisätiedot" -> "liityntapysakoinnin_lisatiedot",
+    "palauteosoite" -> "palauteosoite"
   )
 
-  val multipleChoiceFieldMappings = Map("pysäkin tyyppi" -> "pysakin_tyyppi")
+  val massTransitStopType = Map("pysäkin tyyppi" -> "pysakin_tyyppi")
+
+  val multipleChoiceFieldMappings = massTransitStopType
 
   val stopAdministratorProperty =  Map("tietojen ylläpitäjä" -> "tietojen_yllapitaja")
+
+  val serviceLevelProperty = Map("pysäkin palvelutaso" -> "pysakin_palvelutaso")
 
   private val singleChoiceFieldMappings = Map(
     "aikataulu" -> "aikataulu",
@@ -106,8 +118,8 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "valaistus" -> "valaistus",
     "saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla",
     "korotettu" -> "korotettu",
-    "roska-astia" -> "roska_astia") ++
-    stopAdministratorProperty
+    "roska-astia" -> "roska_astia"
+  ) ++ stopAdministratorProperty ++ serviceLevelProperty
 
    protected val nationalIdMapping = Map("valtakunnallinen id" -> "national_id")
 
@@ -115,14 +127,22 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   override val coordinateMappings = Map(
     "koordinaatti x" -> "maastokoordinaatti_x",
-    "koordinaatti y" -> "maastokoordinaatti_y"
+    "koordinaatti y" -> "maastokoordinaatti_y",
+    "koordinaatti z" -> "maastokoordinaatti_z"
   )
 
   override val longValueFieldsMapping = coordinateMappings
 
-  val optionalMappings = nationalIdMapping ++ coordinateMappings
+  val inventoryDateMapping = Map("inventointipäivä" -> "inventointipaiva")
 
-  val mappings: Map[String, String] = textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings
+  override val dateFieldsMapping: Map[String, String] = Map(
+    "ensimmäinen voimassaolopäivä" -> "ensimmainen_voimassaolopaiva",
+    "viimeinen voimassaolopäivä" -> "viimeinen_voimassaolopaiva"
+  ) ++ inventoryDateMapping
+
+  val mandatoryMappings = nationalIdMapping ++ stopAdministratorProperty ++ massTransitStopType
+
+  val mappings: Map[String, String] = textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings ++ dateFieldsMapping ++ coordinateMappings
 
   private def municipalityValidation(municipality: Int)(user: User): Unit = {
     if (!user.isAuthorizedToWrite(municipality)) {
@@ -159,16 +179,16 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   private def updateAssetByNationalIdLimitedByRoadType(nationalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String, optPosition: Option[Position]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
-      val roadLink = roadLinkService.fetchByLinkId(stop.linkId)
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(stop.linkId)
       val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
       (CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }
 
-    val optionalAsset = massTransitStopService.getByNationalId(nationalId, municipalityValidation, massTransitStopTransformation)
+    val optionalAsset = massTransitStopService.getByNationalId(nationalId, municipalityValidation, massTransitStopTransformation, false)
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
+        if (!roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(nationalId)
     }
@@ -218,13 +238,33 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
       val (key, value) = parameter
       if (isBlank(value)) {
-        if (mandatoryFields.contains(key))
+        if (mandatoryMappings.contains(key))
           result.copy(_1 = List(key) ::: result._1, _2 = result._2)
         else
           result
+      } else if (value.equals("-")) {
+          if (mandatoryMappings.contains(key)) {
+            result.copy(_1 = List(key) ::: result._1, _2 = result._2)
+          } else if (singleChoiceFieldMappings.contains(key)) {
+            val (malformedParameters, properties) = assetSingleChoiceToProperty(key, Unknown.value.toString)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          } else if (inventoryDateMapping.contains(key)) {
+            result.copy(_2 = AssetProperty(columnName = inventoryDateMapping(key), value = Seq(PropertyValue(value))) :: result._2)
+          } else if (dateFieldsMapping.contains(key)) {
+            result.copy(_2 = AssetProperty(columnName = dateFieldsMapping(key), value = Seq(PropertyValue(""))) :: result._2)
+          } else if (textFieldMappings.contains(key)) {
+            result.copy(_2 = AssetProperty(columnName = textFieldMappings(key), value = Seq(PropertyValue(""))) :: result._2)
+          } else if (longValueFieldsMapping.contains(key)) {
+            result.copy(_2 = AssetProperty(columnName = longValueFieldsMapping(key), value = Seq(PropertyValue(""))) :: result._2)
+          } else if (multipleChoiceFieldMappings.contains(key)) {
+            result.copy(_2 = AssetProperty(columnName = multipleChoiceFieldMappings(key), value = Seq(PropertyValue(Unknown.value.toString))) :: result._2)
+          } else result
       } else {
         if (longValueFieldsMapping.contains(key)) {
           val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (dateFieldsMapping.contains(key)) {
+          val (malformedParameters, properties) = verifyDateType(key, value)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if(intValueFieldsMapping.contains(key)) {
           val (malformedParameters, properties) = verifyIntType(key, value.toString)
@@ -249,6 +289,11 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
       case name if stopAdministratorProperty.get(name).nonEmpty =>
         if (stopAdministratorValueMappings.contains(assetSingleChoice))
           (Nil, List(AssetProperty(singleChoiceFieldMappings(name), List(PropertyValue(assetSingleChoice)))))
+        else
+          (List(name), Nil)
+      case name if serviceLevelProperty.get(name).nonEmpty =>
+        if (serviceLevelValueMappings.contains(assetSingleChoice))
+          (Nil, List(AssetProperty(serviceLevelProperty(name), List(PropertyValue(assetSingleChoice)))))
         else
           (List(name), Nil)
       case _ =>
@@ -340,8 +385,8 @@ trait CsvOperations extends MassTransitStopCsvImporter {
   val decisionFieldsMapping : Map[String, String]
 
   def is(csvRowWithHeaders: Map[String, String]): Boolean = {
-    val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
-    val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
+    val missingMandatory = mandatoryMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+    val actionParameters = mandatoryMappings.keySet.toList.diff(missingMandatory)
     decisionFieldsMapping.keys.toSeq.sorted.equals(actionParameters.sorted)
   }
 }
@@ -353,8 +398,8 @@ class Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkS
   override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def mandatoryFields: Set[String] = nationalIdMapping.keySet
-  override val decisionFieldsMapping = nationalIdMapping
+  override def mandatoryFields: Set[String] = nationalIdMapping.keySet ++ stopAdministratorProperty.keySet ++ massTransitStopType.keySet
+  override val decisionFieldsMapping = nationalIdMapping ++ stopAdministratorProperty ++ massTransitStopType
   override def mandatoryFieldsMapping: Map[String, String] = mappings ++ nationalIdMapping
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
@@ -362,87 +407,5 @@ class Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkS
     val nationalId = getPropertyValue(properties, "national_id").toString.toInt
     updateAsset(nationalId, None, properties.filterNot(_.columnName == "national_id"), roadTypeLimitations, user)
       .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
-  }
-}
-
-class Creator(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
-  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
-  override def eventBus: DigiroadEventBus = eventBusImpl
-
-  override val decisionFieldsMapping = coordinateMappings
-
-  override def mandatoryFields: Set[String] = coordinateMappings.keySet ++ stopAdministratorProperty.keySet ++ multipleChoiceFieldMappings.keySet
-
-  override def mandatoryFieldsMapping: Map[String, String] = mappings ++ coordinateMappings
-
-  def getDirection(roadLink: RoadLink): ParsedProperties = {
-      val direction = roadLink.trafficDirection  match {
-        case TrafficDirection.BothDirections => TrafficDirection.TowardsDigitizing
-        case _ => roadLink.trafficDirection
-      }
-
-    List(AssetProperty("vaikutussuunta", TrafficDirection.toSideCode(direction).value))
-  }
-
-  override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
-    println("Creating busStop")
-    val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
-    val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
-    val stopType = massTransitStopService.getBusStopPropertyValue(properties)
-    val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations, stopType)
-
-    if(roadLink.isEmpty)
-      List(ExcludedRow(affectedRows = "RoadLink no longer available", csvRow = rowToString(row)))
-    else {
-      val prop = convertProperties(getDirection(roadLink.head) ++ properties)
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.head.geometry)
-      val bearing = GeometryUtils.calculateBearing(roadLink.head.geometry, Some(mValue))
-      val point = GeometryUtils.calculatePointFromLinearReference(roadLink.head.geometry, mValue)
-      val asset = NewMassTransitStop(point.map(_.x).getOrElse(lon), point.map(_.y).getOrElse(lat), roadLink.head.linkId, bearing, prop)
-
-      massTransitStopService.checkDuplicates(asset) match {
-        case Some(existingAsset) =>
-          updateAsset(existingAsset.nationalId, None, properties, roadTypeLimitations, user)
-            .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
-        case _ =>
-          massTransitStopService.create(asset, user.username, roadLink.head, newTransaction = false)
-          List()
-      }
-    }
-  }
-}
-
-class PositionUpdater (roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
-  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
-  override def eventBus: DigiroadEventBus = eventBusImpl
-
-  override val decisionFieldsMapping = coordinateMappings ++ nationalIdMapping
-  override def mandatoryFields: Set[String] = coordinateMappings.keySet ++ nationalIdMapping.keySet
-  override def mandatoryFieldsMapping:  Map[String, String] = mappings ++ coordinateMappings ++ nationalIdMapping
-
-
-  override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
-    println("Moving busStop")
-    val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
-    val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
-    val nationalId = getPropertyValue(properties, "national_id").toString.toInt
-    val stopType = massTransitStopService.getBusStopPropertyValue(properties)
-    val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations, stopType)
-
-    if (roadLink.isEmpty)
-      List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))
-    else {
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.head.geometry)
-      val bearing = GeometryUtils.calculateBearing(roadLink.head.geometry, Some(mValue))
-      val position = Some(Position(lon, lat, roadLink.head.linkId, Some(bearing)))
-      updateAsset(nationalId, position, properties.filterNot(_.columnName == "national_id"), roadTypeLimitations, user)
-        .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
-    }
   }
 }

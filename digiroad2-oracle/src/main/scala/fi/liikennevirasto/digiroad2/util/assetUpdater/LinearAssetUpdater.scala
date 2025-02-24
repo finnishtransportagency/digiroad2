@@ -196,7 +196,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value,
       asset.value, asset.startMeasure, asset.endMeasure, asset.createdBy,
       asset.createdDateTime, asset.modifiedBy, asset.modifiedDateTime, asset.expired, asset.typeId, asset.timeStamp,
-      asset.geomModifiedDate, asset.linkSource, asset.verifiedBy, asset.verifiedDate, asset.informationSource, asset.oldId)
+      asset.geomModifiedDate, asset.linkSource, asset.verifiedBy, asset.verifiedDate, asset.informationSource, asset.oldId, asset.externalIds)
   }
 
   /**
@@ -244,7 +244,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         }
       }
     }
-
+    logger.info(s"TEST LOG ${expiredAssetIds.size} assets to be expired before adjustmentLoop")
     val changeSet = ChangeSet(droppedAssetIds = droppedAssetIds.toSet,
       adjustedMValues = adjustedMValues.distinct, adjustedSideCodes = adjustedSideCodes.distinct,
       expiredAssetIds = expiredAssetIds.toSet, valueAdjustments = valueAdjustments.distinct)
@@ -319,7 +319,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         val assetGeometry = GeometryUtils.truncateGeometry3D(linkOld.geometry, ol.startMeasure, ol.endMeasure)
         val measures = Measures(ol.startMeasure, ol.endMeasure).roundMeasures()
         val linearReference = LinearReferenceForReport(ol.linkId, measures.startMeasure, Some(measures.endMeasure), Some(ol.sideCode), None, None, measures.length())
-        Some(Asset(ol.id, values, Some(linkOld.municipality.getOrElse(throw new NoSuchElementException(s"${linkOld.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo))
+        Some(Asset(ol.id, values, Some(linkOld.municipality.getOrElse(throw new NoSuchElementException(s"${linkOld.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo, externalIds = ol.externalIds))
       case None =>
         val linkOld = relevantRoadLinkChange.oldLink
         if (linkOld.nonEmpty) {
@@ -336,7 +336,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val assetGeometry = GeometryUtils.truncateGeometry3D(newLink.geometry, asset.startMeasure, asset.endMeasure)
       val measures = Measures(asset.startMeasure, asset.endMeasure).roundMeasures()
       val linearReference = LinearReferenceForReport(asset.linkId, measures.startMeasure, Some(measures.endMeasure), Some(asset.sideCode), None, None, measures.length())
-      Asset(asset.id, values, Some(newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo)
+      Asset(asset.id, values, Some(newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo, externalIds = asset.externalIds)
     })
 
     if (propertyChange) {
@@ -766,7 +766,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                 droppedAssetIds = x.droppedAssetIds.intersect(ids),
                 adjustedMValues = x.adjustedMValues.filter(a => links.contains(a.linkId)),
                 adjustedSideCodes = x.adjustedSideCodes.filter(a => ids.contains(a.assetId)),
-                expiredAssetIds = x.expiredAssetIds.intersect(ids),
+                expiredAssetIds = x.expiredAssetIds,
                 valueAdjustments = x.valueAdjustments
               ))
               case None => None
@@ -876,7 +876,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
       def sliceAsset(change: RoadLinkChange, asset: PersistedLinearAsset, selectInfo: ReplaceInfo, fromBeginning: Boolean): Seq[PersistedLinearAsset] = {
         val assetRemainingOnLink = if (fromBeginning) {
-          asset.copy(startMeasure = selectInfo.oldToMValue.getOrElse(0.0), endMeasure = change.oldLink.head.linkLength)
+          asset.copy(startMeasure = selectInfo.oldToMValue.getOrElse(0.0))
         } else {
           asset.copy(endMeasure = selectInfo.oldToMValue.getOrElse(0.0))
         }
@@ -1004,7 +1004,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
       timeStamp = projection.timeStamp, geomModifiedDate = None, linkSource = asset.linkSource, verifiedBy = asset.verifiedBy, verifiedDate = asset.verifiedDate,
-      informationSource = asset.informationSource, asset.oldId), changeSet)
+      informationSource = asset.informationSource, asset.oldId, asset.externalIds), changeSet)
   }
 
   def updateChangeSet(changeSet: ChangeSet): Unit = {
@@ -1018,6 +1018,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val ids = changeSet.expiredAssetIds.toSeq
     if (ids.nonEmpty) {
       logger.debug(s"Expiring ids ${ids.mkString(", ")}")
+      logger.info(s"TEST LOG ${ids.size} expired assets remaining after adjustment loop")
       dao.updateExpirations(ids,expired = true,AutoGeneratedUsername.generatedInUpdate)
     }
     
@@ -1044,11 +1045,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           case (Some(createdBy), Some(createdDateTime)) =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
               Measures(linearAsset.startMeasure, linearAsset.endMeasure).roundMeasures(), AutoGeneratedUsername.generatedInUpdate, linearAsset.timeStamp,
-              service.getLinkSource(roadlink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.modifiedBy, linearAsset.modifiedDateTime, linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = service.getGeometry(roadlink))
+              service.getLinkSource(roadlink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.modifiedBy, linearAsset.modifiedDateTime, linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = service.getGeometry(roadlink), externalIds = linearAsset.externalIds)
           case _ =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
               Measures(linearAsset.startMeasure, linearAsset.endMeasure).roundMeasures(), AutoGeneratedUsername.generatedInUpdate, linearAsset.timeStamp,
-              service.getLinkSource(roadlink), geometry = service.getGeometry(roadlink))
+              service.getLinkSource(roadlink), geometry = service.getGeometry(roadlink), externalIds = linearAsset.externalIds)
         }
 
       linearAsset.value match {

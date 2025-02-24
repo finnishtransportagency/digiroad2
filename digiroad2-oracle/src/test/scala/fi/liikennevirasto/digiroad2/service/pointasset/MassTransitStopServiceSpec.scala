@@ -116,37 +116,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   val assetLock = "Used to prevent deadlocks"
 
-  test("create and update inventory date propertie") {
-
-    val props = Seq(SimplePointAssetProperty("foo", Seq()))
-    val roadLink = RoadLinkFetched(randomLinkId7, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-
-    val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
-    after should have size (4)
-    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size (1)
-    val after2 = MassTransitStopOperations.setPropertiesDefaultValues(after, roadLink)
-    after2 should have size (4)
-  }
-
-  test("update empty inventory date") {
-    val roadLink = RoadLinkFetched(randomLinkId7, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.InventoryDateId, Seq()))
-    val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
-    after should have size (3)
-    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size(1)
-    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
-  }
-
-  test("do not update existing inventory date") {
-    val roadLink = RoadLinkFetched(randomLinkId7, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
-    val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
-    after should have size (3)
-    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size(1)
-    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values should have size(1)
-    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ( "2015-12-30")
-  }
-
   test("Calculate mass transit stop validity periods") {
     runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
@@ -676,6 +645,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
+  test("Update existing masstransitstop if the new distance is greater than 50 meters"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
+      val properties = List(
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
+      val linkId = randomLinkId1
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
+
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
+        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+      )
+      val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
+      val oldAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $oldAssetId""".as[(Long, Int, String, String)].firstOption
+      oldAsset should be (Some(oldAssetId, municipalityCode, null, null))
+
+      val updatedAssetId = service.updateExistingById(oldAssetId, Some(Position(0, 51, linkId, Some(0))), Set(), "test",  (_, _) => Unit).id
+
+      val updatedAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $updatedAssetId""".as[(Long, Int, String, String)].firstOption
+      updatedAsset should be (Some(updatedAssetId, municipalityCode, null, null))
+    }
+  }
+  
   test("Should not copy existing masstransitstop if the new distance is less or equal than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
@@ -1047,11 +1045,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         Map("ROADNAME_SE" -> "roadname_se",
           "ROADNAME_FI" -> "roadname_fi")
 
-      val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
+      val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.RoadName_SE, Seq(PropertyValue(propertyValue = "", propertyDisplayValue = Some("")))), SimplePointAssetProperty(MassTransitStopOperations.RoadName_FI, Seq(PropertyValue(propertyValue = "", propertyDisplayValue = Some("")))))
       val roadLink = RoadLinkFetched(randomLinkId7, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
       val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
-      after should have size (3)
+      after should have size (2)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_fi")
@@ -1063,11 +1061,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       Map("ROADNAME_SE" -> "roadname_se",
         "ROADNAME_FI" -> "roadname_fi")
 
-    val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.RoadName_SE, Seq.empty[PropertyValue]), SimplePointAssetProperty(MassTransitStopOperations.RoadName_FI, Seq.empty[PropertyValue]))
+    val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.RoadName_SE, Seq(PropertyValue(propertyValue = "", propertyDisplayValue = Some("osoite_ruotsiksi")))), SimplePointAssetProperty(MassTransitStopOperations.RoadName_FI, Seq(PropertyValue(propertyValue = "", propertyDisplayValue = Some("osoite_suomeksi")))))
     val roadLink = RoadLinkFetched(randomLinkId7, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
     val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
-    after should have size (3)
+    after should have size (2)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_fi")
@@ -1084,7 +1082,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val roadLink = RoadLinkFetched(randomLinkId7, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
     val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
-    after should have size (3)
+    after should have size (2)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("user_road_name_fi")

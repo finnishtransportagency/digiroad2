@@ -29,7 +29,7 @@ case class PersistedTrafficSign(id: Long, linkId: String,
                                 bearing: Option[Int],
                                 linkSource: LinkGeomSource,
                                 expired: Boolean = false,
-                                externalId: Option[String] = None) extends PersistedPoint {
+                                externalIds: Seq[String] = Seq()) extends PersistedPoint {
   override def getValidityDirection: Option[Int] = Some(this.validityDirection)
   override def getBearing: Option[Int] = this.bearing
 }
@@ -49,7 +49,7 @@ case class TrafficSignRow(id: Long, linkId: String,
                           linkSource: LinkGeomSource,
                           additionalPanel: Option[AdditionalPanelRow] = None,
                           expired: Boolean = false,
-                          externalId: Option[String] = None)
+                          externalIds: Seq[String] = Seq())
 
 object PostGISTrafficSignDao {
 
@@ -66,7 +66,7 @@ object PostGISTrafficSignDao {
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source, a.bearing,
                 pos.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
                ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color,
-               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.external_id
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.external_ids
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -108,7 +108,7 @@ object PostGISTrafficSignDao {
         s"select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, " +
         s"property_type, required, value, display_value, created_by, created_date, modified_by, modified_date, link_source, " +
         s"bearing, side_code, additional_sign_type, additional_sign_value, additional_sign_info, form_position, " +
-        s"additional_sign_text, additional_sign_size, additional_sign_coating_type, additional_sign_panel_color, expired, external_id" +
+        s"additional_sign_text, additional_sign_size, additional_sign_coating_type, additional_sign_panel_color, expired, external_ids" +
         s" from ( ${queryFilter(query().replace("from", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
@@ -154,7 +154,7 @@ object PostGISTrafficSignDao {
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
                lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
                ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color,
-               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.external_id
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.external_ids
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -181,7 +181,7 @@ object PostGISTrafficSignDao {
         floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
         linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing, expired = row.expired,
-        externalId = row.externalId)
+        externalIds = row.externalIds)
     }.values.toSeq
   }
 
@@ -243,11 +243,14 @@ object PostGISTrafficSignDao {
         case _ => None
       }
       val expired = r.nextBoolean()
-      val externalId = r.nextStringOption()
+      val externalIds: Seq[String] = Seq(r.nextStringOption()).flatMap {
+        case Some(value) => value.split(",")
+        case None => Seq.empty
+      }
 
       TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property,
         validityDirection.getOrElse(99), bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource),
-        additionalPanel, expired, externalId)
+        additionalPanel, expired, externalIds)
     }
   }
 
@@ -293,16 +296,19 @@ object PostGISTrafficSignDao {
 
   def create(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long,
              linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""),
-             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String],
+             createdDateTimeFromUpdate: Option[DateTime], externalIdsFromUpdate: Seq[String],
              fromPointAssetUpdater: Boolean = false, modifiedByFromUpdate: Option[String] = None, modifiedDateTimeFromUpdate: Option[DateTime] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
     val modifiedBy = if (fromPointAssetUpdater) modifiedByFromUpdate.getOrElse(null) else username
     val modifiedAt = if (fromPointAssetUpdater) modifiedDateTimeFromUpdate.getOrElse(null) else DateTime.now()
+
+    val externalIDsString = externalIdsFromUpdate.mkString(",")
+
     sqlu"""
-        insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, $externalIdFromUpdate, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $modifiedBy, $modifiedAt);
+        insert into asset(id, external_ids, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
+        values ($id, $externalIDsString, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $modifiedBy, $modifiedAt);
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code, modified_date)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection}, current_timestamp);
