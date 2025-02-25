@@ -277,12 +277,12 @@ class MassTransitStopDao {
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
+  def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty], isCsvImported: Boolean = false) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
         updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values.map(_.asInstanceOf[PropertyValue]))
       } else {
-        updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values.map(_.asInstanceOf[PropertyValue]))
+        updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values.map(_.asInstanceOf[PropertyValue]), isCsvImported)
       }
     }
   }
@@ -291,29 +291,40 @@ class MassTransitStopDao {
     Q.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
-  private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
+  private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue], isCsvImported: Boolean = false) {
     propertyType match {
       case Text | LongText => {
         if (propertyValues.size > 1) {
           throw new IllegalArgumentException(s"Text property must have exactly one value: $propertyValues")
         }
-        if (propertyValues.nonEmpty) {
-          val propertyValue = propertyValues.head.propertyValue
-          if (propertyValue.equals("-") || propertyValues.head.propertyValue.equals("")) {
+        if (isCsvImported) {
+          if (propertyValues.nonEmpty) {
+            val propertyValue = propertyValues.head.propertyValue
+            if (propertyValue.equals("-")) {
+              deleteTextProperty(assetId, propertyId).execute
+            } else if (propertyPublicId.equals("inventointipaiva")) {
+              val formattedDate = finnishToIso8601(propertyValue)
+              if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+                insertTextProperty(assetId, propertyId, formattedDate).execute
+              } else {
+                updateTextProperty(assetId, propertyId, formattedDate).execute
+              }
+            } else {
+              if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+                insertTextProperty(assetId, propertyId, propertyValue).execute
+              } else {
+                updateTextProperty(assetId, propertyId, propertyValue).execute
+              }
+            }
+          }
+        }
+        if (!isCsvImported) {
+          if (propertyValues.isEmpty) {
             deleteTextProperty(assetId, propertyId).execute
-          } else if (propertyPublicId.equals("inventointipaiva")) {
-            val formattedDate = finnishToIso8601(propertyValue)
-            if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-              insertTextProperty(assetId, propertyId, formattedDate).execute
-            } else {
-              updateTextProperty(assetId, propertyId, formattedDate).execute
-            }
+          } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+            insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
           } else {
-            if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-              insertTextProperty(assetId, propertyId, propertyValue).execute
-            } else {
-              updateTextProperty(assetId, propertyId, propertyValue).execute
-            }
+            updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
           }
         }
       }

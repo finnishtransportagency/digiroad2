@@ -199,7 +199,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     (resultAsset, PublishInfo(Some(resultAsset)))
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink, isCsvImported: Boolean): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     if (properties.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(properties.toSeq, roadLink)
@@ -218,8 +218,8 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
       filterNot(_._1 == AssetPropertyConfiguration.ValidityDirectionId)
 
-    val props = MassTransitStopOperations.setPropertiesDefaultValues(properties.toSeq, roadLink)
-    updatePropertiesForAsset(asset.id, props, roadLink.administrativeClass, asset.nationalId)
+    val props = MassTransitStopOperations.setPropertiesDefaultValues(properties.toSeq, roadLink, isCsvImported)
+    updatePropertiesForAsset(asset.id, props, roadLink.administrativeClass, asset.nationalId, isCsvImported)
 
     val resultAsset = enrichBusStop(fetchAsset(asset.id))._1
     (resultAsset, PublishInfo(Some(resultAsset)))

@@ -43,7 +43,7 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
     val isOnTerminatedRoad = properties.find(_.publicId == MassTransitStopOperations.FloatingReasonPublicId).exists(_.values.headOption.exists(_.asInstanceOf[PropertyValue].propertyValue == FloatingReason.TerminatedRoad.value.toString))
     isOnTerminatedRoad
   }
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink, isCsvImported: Boolean = false): (PersistedMassTransitStop, AbstractPublishInfo) = {
     if(!allowedPropertyChanges(properties) || changesOnDefaultValues(properties, asset))
       throw new UnsupportedOperationException("Changes on bus stops on terminated roads only allowed on: " + allowedChanges.mkString(","))
 
