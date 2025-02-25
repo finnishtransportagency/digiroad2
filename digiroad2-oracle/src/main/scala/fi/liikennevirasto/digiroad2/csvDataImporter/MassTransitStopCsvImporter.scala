@@ -76,10 +76,15 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     new MassTransitStopServiceWithDynTransaction(eventBus, roadLinkService, roadAddressService)
   }
 
-  private val isValidTypeEnumeration = Set(1, 2, 5, 99)
+  private val isValidTypeEnumeration = Set(1, 2, 5)
   private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
-  private val stopAdministratorValueMappings = Set(1, 2, 3, 99).map(_.toString)
+  private val stopAdministratorValueMappings = Set(1, 2, 3).map(_.toString)
   private val serviceLevelValueMappings = Set(1, 2, 3, 4, 5, 6, 7, 8, 99).map(_.toString)
+
+  private val roadNameMappings = Map(
+    "osoite suomeksi" -> "osoite_suomeksi",
+    "osoite ruotsiksi" -> "osoite_ruotsiksi"
+  )
 
   private val textFieldMappings = Map(
     "pysäkin nimi" -> "nimi_suomeksi",
@@ -91,14 +96,12 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "vyöhyketieto" -> "vyohyketieto",
     "vaihtoehtoinen link_id" -> "alternative_link_id",
     "pysäkin omistaja" -> "pysakin_omistaja",
-    "osoite suomeksi" -> "osoite_suomeksi",
-    "osoite ruotsiksi" -> "osoite_ruotsiksi",
     "laiturinumero" -> "laiturinumero",
     "esteettömyys liikuntarajoitteiselle" -> "esteettomyys_liikuntarajoitteiselle",
     "liityntäpysäköintipaikkojen määrä" -> "liityntapysakointipaikkojen_maara",
     "liityntäpysäköinnin lisätiedot" -> "liityntapysakoinnin_lisatiedot",
     "palauteosoite" -> "palauteosoite"
-  )
+  ) ++ roadNameMappings
 
   val massTransitStopType = Map("pysäkin tyyppi" -> "pysakin_tyyppi")
 
@@ -140,7 +143,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "viimeinen voimassaolopäivä" -> "viimeinen_voimassaolopaiva"
   ) ++ inventoryDateMapping
 
-  val mandatoryMappings = nationalIdMapping ++ stopAdministratorProperty ++ massTransitStopType
+  val mandatoryMappings = nationalIdMapping
 
   val mappings: Map[String, String] = textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings ++ dateFieldsMapping ++ coordinateMappings
 
@@ -159,7 +162,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(nationalId, municipalityValidation, false)
     optionalAsset match {
       case Some(asset) =>
-        massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, user.username, (_, _) => Unit, false)
+        massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, user.username, (_, _) => Unit, true,false)
       case None => throw new AssetNotFoundException(nationalId)
     }
   }
@@ -188,7 +191,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
+        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, true, false))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(nationalId)
     }
@@ -245,6 +248,8 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
       } else if (value.equals("-")) {
           if (mandatoryMappings.contains(key)) {
             result.copy(_1 = List(key) ::: result._1, _2 = result._2)
+          } else if (multipleChoiceFieldMappings.contains(key)) {
+            result.copy(_1 = List(key) ::: result._1, _2 = result._2)
           } else if (singleChoiceFieldMappings.contains(key)) {
             val (malformedParameters, properties) = assetSingleChoiceToProperty(key, Unknown.value.toString)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
@@ -252,12 +257,12 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
             result.copy(_2 = AssetProperty(columnName = inventoryDateMapping(key), value = Seq(PropertyValue(value))) :: result._2)
           } else if (dateFieldsMapping.contains(key)) {
             result.copy(_2 = AssetProperty(columnName = dateFieldsMapping(key), value = Seq(PropertyValue(""))) :: result._2)
+          } else if (roadNameMappings.contains(key)) {
+            result.copy(_2 = AssetProperty(columnName = roadNameMappings(key), value = Seq(PropertyValue("-"))) :: result._2)
           } else if (textFieldMappings.contains(key)) {
             result.copy(_2 = AssetProperty(columnName = textFieldMappings(key), value = Seq(PropertyValue(""))) :: result._2)
           } else if (longValueFieldsMapping.contains(key)) {
             result.copy(_2 = AssetProperty(columnName = longValueFieldsMapping(key), value = Seq(PropertyValue(""))) :: result._2)
-          } else if (multipleChoiceFieldMappings.contains(key)) {
-            result.copy(_2 = AssetProperty(columnName = multipleChoiceFieldMappings(key), value = Seq(PropertyValue(Unknown.value.toString))) :: result._2)
           } else result
       } else {
         if (longValueFieldsMapping.contains(key)) {
@@ -398,8 +403,8 @@ class Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkS
   override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def mandatoryFields: Set[String] = nationalIdMapping.keySet ++ stopAdministratorProperty.keySet ++ massTransitStopType.keySet
-  override val decisionFieldsMapping = nationalIdMapping ++ stopAdministratorProperty ++ massTransitStopType
+  override def mandatoryFields: Set[String] = nationalIdMapping.keySet
+  override val decisionFieldsMapping = nationalIdMapping
   override def mandatoryFieldsMapping: Map[String, String] = mappings ++ nationalIdMapping
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {

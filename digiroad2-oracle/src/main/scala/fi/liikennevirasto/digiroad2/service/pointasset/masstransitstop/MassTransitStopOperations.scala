@@ -184,7 +184,7 @@ object MassTransitStopOperations {
       .getOrElse("")
   }
 
-  def setPropertiesDefaultValues(properties: Seq[SimplePointAssetProperty], roadLink: RoadLinkLike): Seq[SimplePointAssetProperty] = {
+  def setPropertiesDefaultValues(properties: Seq[SimplePointAssetProperty], roadLink: RoadLinkLike, isCsvImported: Boolean = false): Seq[SimplePointAssetProperty] = {
     val arrayProperties = Seq(MassTransitStopOperations.RoadName_FI, MassTransitStopOperations.RoadName_SE )
     val defaultproperties =  arrayProperties.flatMap{
       key =>
@@ -195,7 +195,9 @@ object MassTransitStopOperations {
     } ++ properties
 
     defaultproperties.map { parameter =>
-      if ((parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "") && parameter.values.exists(_.asInstanceOf[PropertyValue].propertyDisplayValue.nonEmpty)) || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "" && parameter.values.exists(_.asInstanceOf[PropertyValue].propertyDisplayValue == None))) {
+      if ((isCsvImported && parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "-")) ||
+        (!isCsvImported && (parameter.values.isEmpty || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "")))) {
+
         parameter.publicId match {
           case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
           case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))
@@ -203,7 +205,6 @@ object MassTransitStopOperations {
         }
       } else
         parameter
-
     }
   }
 
