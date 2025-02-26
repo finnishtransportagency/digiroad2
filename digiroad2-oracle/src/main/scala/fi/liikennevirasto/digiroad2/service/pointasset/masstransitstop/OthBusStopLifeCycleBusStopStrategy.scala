@@ -107,12 +107,12 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink, isCsvImported: Boolean): (PersistedMassTransitStop, AbstractPublishInfo) = {
     if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(props.toSeq, roadLink)
     }
 
-    val properties = MassTransitStopOperations.setPropertiesDefaultValues(props.toSeq, roadLink).toSet
+    val properties = MassTransitStopOperations.setPropertiesDefaultValues(props.toSeq, roadLink, isCsvImported).toSet
 
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
@@ -135,19 +135,19 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     if (was(asset)) {
       val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
       update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
-        username)
+        username, isCsvImported)
     } else {
       //Updates the asset in OTH with new liviId
       update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, toLiviId.format(asset.nationalId),
-        username)
+        username, isCsvImported)
     }
   }
 
 
-  private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimplePointAssetProperty], roadLink: RoadLink, liviId: String, username: String): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimplePointAssetProperty], roadLink: RoadLink, liviId: String, username: String, isCsvImported: Boolean): (PersistedMassTransitStop, AbstractPublishInfo) = {
     optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
     massTransitStopDao.updateAssetLastModified(asset.id, username)
-    massTransitStopDao.updateAssetProperties(asset.id, properties)
+    massTransitStopDao.updateAssetProperties(asset.id, properties, isCsvImported)
     massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
     updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 

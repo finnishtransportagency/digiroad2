@@ -159,7 +159,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
     (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 
-  override def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
+  private def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
     properties.filterNot(prop => AssetPropertyConfiguration.commonAssetProperties.contains(prop.publicId)).map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
       updateProperties(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
     }
