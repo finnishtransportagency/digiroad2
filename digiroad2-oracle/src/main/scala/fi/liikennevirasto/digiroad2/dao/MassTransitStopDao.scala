@@ -294,6 +294,16 @@ class MassTransitStopDao {
     Q.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
+  /**
+   * Updates asset specific properties when updated via CSV import.
+   * Inserting an empty value in a CSV row does not alter the property value unlike an empty value in the UI sets the value as empty.
+   * Therefore updates from CSV import require a separate implementation.
+   * @param assetId
+   * @param propertyPublicId
+   * @param propertyId
+   * @param propertyType
+   * @param propertyValues
+   */
   private def updateAssetSpecificPropertyFromCSV(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
     propertyType match {
       case Text | LongText => {
