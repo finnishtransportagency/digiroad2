@@ -191,7 +191,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (!roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
+        if (!roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, true, false))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(nationalId)
     }
