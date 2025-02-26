@@ -182,7 +182,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   private def updateAssetByNationalIdLimitedByRoadType(nationalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String, optPosition: Option[Position]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
-      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(stop.linkId)
+      val roadLink = roadLinkService.getRoadLinksAndComplementaryByLinkIds(Set(stop.linkId), false).headOption
       val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
       (CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }
