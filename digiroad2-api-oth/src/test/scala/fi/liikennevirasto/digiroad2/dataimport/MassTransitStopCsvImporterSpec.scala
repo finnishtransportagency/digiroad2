@@ -143,7 +143,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, RoadLinkClient) = {
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     stops.foreach { case(id, administrativeClass) =>
-      when(mockRoadLinkService.fetchByLinkId(ArgumentMatchers.eq(id.toString))).thenReturn(Some(RoadLinkFetched(id.toString, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIds(ArgumentMatchers.eq(Set(id.toString)), ArgumentMatchers.eq(false))).thenReturn(Seq(RoadLink(id.toString, Seq(Point(0,0)),10, administrativeClass, FunctionalClass1.value, TrafficDirection.BothDirections, LinkType.apply(1), modifiedAt = Some(""), modifiedBy = Some(""))))
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
@@ -386,7 +386,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val assetFields = Map("valtakunnallinen id" -> 1, "tietojen ylläpitäjä" -> 1, "pysäkin tyyppi" -> 1, "pysäkin nimi" -> "NewName")
       val csv =  massTransitStopImporterUpdate.csvRead(assetFields)
 
-      val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser,  roadTypeLimitations = Set(Municipality))
+      val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser,  roadTypeLimitations = Set(State, Private))
       result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
         excludedRows = List(ExcludedRow(affectedRows = "State", csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(assetFields))))))
 
@@ -398,7 +398,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkClient, mockRoadLinkService, mockEventBus, mockMassTransitStopService)
       val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "tietojen ylläpitäjä" -> 1, "pysäkin tyyppi" -> 1, "pysäkin nimi" -> "NewName"))
 
-      val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, roadTypeLimitations = Set(Municipality))
+      val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, roadTypeLimitations = Set(State, Private))
       result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
       val properties = Set(SimplePointAssetProperty("nimi_suomeksi", Seq(PropertyValue("NewName"))), SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("1"))), SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))))
       verify(mockMassTransitStopService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean(), anyBoolean())
@@ -409,7 +409,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkClient, mockRoadLinkService, mockEventBus, mockMassTransitStopService)
       val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "tietojen ylläpitäjä" -> 1, "pysäkin tyyppi" -> 1, "pysäkin nimi" -> "NewName1"), Map("valtakunnallinen id" -> 2, "tietojen ylläpitäjä" -> 2, "pysäkin tyyppi" -> 2, "pysäkin nimi" -> "NewName2"))
 
-      val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, roadTypeLimitations = Set(State, Municipality))
+      val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, roadTypeLimitations = Set(Private))
       result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
 
       val properties1 = Set(SimplePointAssetProperty("nimi_suomeksi", List(PropertyValue("NewName1"))), SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("1"))), SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))))
@@ -425,7 +425,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val assetOnRoadFields = Map("valtakunnallinen id" -> 2, "tietojen ylläpitäjä" -> 1, "pysäkin tyyppi" -> 2, "pysäkin nimi" -> "NewName2")
       val csv = massTransitStopImporterUpdate.csvRead(assetOnStreetFields, assetOnRoadFields)
 
-      val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, roadTypeLimitations = Set(Private))
+      val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, roadTypeLimitations = Set(State, Municipality))
       result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
         excludedRows = List(ExcludedRow(affectedRows = "State", csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(assetOnRoadFields))),
           ExcludedRow(affectedRows = "Municipality", csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(assetOnStreetFields))))))

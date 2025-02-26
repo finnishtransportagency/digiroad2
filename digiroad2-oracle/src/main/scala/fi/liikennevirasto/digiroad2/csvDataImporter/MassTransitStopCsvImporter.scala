@@ -182,16 +182,16 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   private def updateAssetByNationalIdLimitedByRoadType(nationalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String, optPosition: Option[Position]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
-      val roadLink = roadLinkService.fetchByLinkId(stop.linkId)
+      val roadLink = roadLinkService.getRoadLinksAndComplementaryByLinkIds(Set(stop.linkId), false).headOption
       val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
       (CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }
 
-    val optionalAsset = massTransitStopService.getByNationalId(nationalId, municipalityValidation, massTransitStopTransformation)
+    val optionalAsset = massTransitStopService.getByNationalId(nationalId, municipalityValidation, massTransitStopTransformation, false)
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, true, false))
+        if (!roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(nationalId)
     }

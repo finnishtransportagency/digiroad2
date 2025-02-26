@@ -245,7 +245,10 @@ class Extractor extends ExtractorBase {
     val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => anyToDouble(point(0)).get + " " + anyToDouble(point(1)).get + " " + anyToDouble(point(2)).get + " " + anyToDouble(point(3)).get).mkString(", ")})"))
 
     val linkId = attributes("id").asInstanceOf[String]
-    val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
+    val municipalityCode = attributes("municipalitycode") match {
+      case Some(value: String) => value.toInt
+      case _ => 0
+    }
 
     val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
 
