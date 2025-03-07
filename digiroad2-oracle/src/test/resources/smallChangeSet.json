@@ -4641,5 +4641,63 @@
         "digitizationChange": false
       }
     ]
+  },
+  {
+    "changeType": "split",
+    "old": {
+      "linkId": "554ba6f9-1325-4883-a6a2-093c77fae840:1",
+      "linkLength": 114.283,
+      "geometry": "SRID=3067;LINESTRING ZM (434628.052 6947825.273 111.883 0,434613.466 6947836.774 111.467 18.575,434604.188 6947843.27 111.157 29.901,434593.628 6947846.032 110.601 40.816,434570.702 6947848.065 109.44 63.832,434540.566 6947850.469 107.686 94.064,434520.415 6947852.132 106.947 114.283)",
+      "roadClass": 12132,
+      "adminClass": 3,
+      "municipality": 992,
+      "surfaceType": 1,
+      "trafficDirection": 0,
+      "lifeCycleStatus": 3
+    },
+    "new": [
+      {
+        "linkId": "b7d4f7d1-1e07-4d66-a5c4-20674aa6a188:1",
+        "linkLength": 66.345,
+        "geometry": "SRID=3067;LINESTRING ZM (434628.052 6947825.273 111.883 0,434613.466 6947836.774 111.467 18.575,434604.188 6947843.27 111.157 29.901,434593.628 6947846.032 110.601 40.816,434568.234 6947848.652 109.301 66.345)",
+        "roadClass": 12132,
+        "adminClass": 3,
+        "municipality": 992,
+        "surfaceType": 1,
+        "trafficDirection": 0,
+        "lifeCycleStatus": 5
+      },
+      {
+        "linkId": "c20bc164-8200-4132-a1c2-416ddbc5a02e:1",
+        "linkLength": 47.947,
+        "geometry": "SRID=3067;LINESTRING ZM (434568.234 6947848.652 109.301 0,434540.566 6947850.469 107.686 27.728,434520.415 6947852.132 106.947 47.947)",
+        "roadClass": 12132,
+        "adminClass": 3,
+        "municipality": 992,
+        "surfaceType": 1,
+        "trafficDirection": 0,
+        "lifeCycleStatus": 3
+      }
+    ],
+    "replaceInfo": [
+      {
+        "oldLinkId": "554ba6f9-1325-4883-a6a2-093c77fae840:1",
+        "newLinkId": "b7d4f7d1-1e07-4d66-a5c4-20674aa6a188:1",
+        "oldFromMValue": 0,
+        "oldToMValue": 66.339,
+        "newFromMValue": 0,
+        "newToMValue": 66.345,
+        "digitizationChange": false
+      },
+      {
+        "oldLinkId": "554ba6f9-1325-4883-a6a2-093c77fae840:1",
+        "newLinkId": "c20bc164-8200-4132-a1c2-416ddbc5a02e:1",
+        "oldFromMValue": 66.339,
+        "oldToMValue": 114.283,
+        "newFromMValue": 0,
+        "newToMValue": 47.947,
+        "digitizationChange": false
+      }
+    ]
   }
 ]

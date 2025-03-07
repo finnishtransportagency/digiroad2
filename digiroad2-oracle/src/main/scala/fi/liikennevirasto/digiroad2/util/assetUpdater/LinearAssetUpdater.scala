@@ -834,24 +834,36 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
+  /***
+   * Main operation for Split changes.
+   * Slices relevant assets and projects them to new links.
+   * If an old asset is projected to an invalid link, it will be expired instead.
+   * If a new asset is projected to an invalid link, it will be ignored instead.
+   * Only assets on valid links will be retained.
+   * @param change
+   * @param assetsAll
+   * @param changeSet
+   * @param onlyNeededNewRoadLinks
+   * @return valid split operations and possible expirations
+   */
   private def operationForSplit(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSet: ChangeSet,
                                 onlyNeededNewRoadLinks: Seq[RoadLink]): Seq[OperationStepSplit]= {
     LogUtils.time(logger, s"TEST LOG operationForSplit with ${assetsAll.size} assets", startLogging = true) {
-      def checkForExpire(splits: Seq[OperationStepSplit]): Boolean = {
-        val newLinkIds = splits.map(_.newLinkId)
-        val someRoadLinksFound = onlyNeededNewRoadLinks.map(_.linkId).exists(newLinkIds.contains)
-        newLinkIds.forall(_ == "") || !someRoadLinksFound
+      def isOnValidRoadLink(split: OperationStepSplit): Boolean = {
+        val someRoadLinkFound = onlyNeededNewRoadLinks.map(_.linkId).contains(split.newLinkId)
+        someRoadLinkFound
       }
 
       val relevantAssets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
       relevantAssets.flatMap(sliceFrom => {
         val sliced = slicer(Seq(sliceFrom), Seq(), change)
         val splits = sliced.map(part => projectingSplit(changeSet, change, part, sliceFrom).get)
-        if (checkForExpire(splits)) {
+        val (validSplits, invalidSplits) = splits.partition(isOnValidRoadLink)
+        if (invalidSplits.exists(split => split.assetsAfter.exists(_.id == sliceFrom.id))) {
           reportAssetChanges(Some(sliceFrom), None, Seq(change), emptyStep, Some(ChangeTypeReport.Deletion), useGivenChange = true)
-          splits.map(split => updateSplitOperationWithExpiredIds(split, sliceFrom.id))
+          validSplits ++ invalidSplits.map(split => updateSplitOperationWithExpiredIds(split, sliceFrom.id))
         } else {
-          splits
+          validSplits
         }
       })
     }
@@ -949,14 +961,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     LogUtils.time(logger, s"TEST LOG projectByUsingReplaceInfo", startLogging = true) {
       val info = sortAndFind(change, asset, fallInReplaceInfoOld).getOrElse(throw FailedToFindReplaceInfo(errorMessage(change, asset)))
       val newId = info.newLinkId.getOrElse("")
-      val maybeLink = change.newLinks.find(_.linkId == newId)
-      val maybeLinkLength = if (maybeLink.nonEmpty) maybeLink.get.linkLength else 0
+      val newLink = change.newLinks.find(_.linkId == newId)
+      val newLinkLength = newLink.map(_.linkLength).getOrElse(0.0)
       val (projected, changeSet) = projectLinearAsset(asset.copy(linkId = newId),
         Projection(
           info.oldFromMValue.getOrElse(0.0), info.oldToMValue.getOrElse(0.0),
           info.newFromMValue.getOrElse(0), info.newToMValue.getOrElse(0),
           LinearAssetUtils.createTimeStamp(),
-          newId, maybeLinkLength),
+          newId, newLinkLength),
         changeSets, info.digitizationChange)
       (newId, projected, changeSet)
     }
@@ -1095,7 +1107,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   /**
-   * Updates an OperationStepSplit with expired Ids of those assets that have fallen outside geometry after split.
+   * Updates an OperationStepSplit with expired Ids of those assets that have
+   * fallen outside geometry after split or
+   * are projected to an invalid link.
    *
    * @param operationStep post-split information of assets
    * @param expiredId set of expired asset Ids
