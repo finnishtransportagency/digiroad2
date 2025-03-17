@@ -140,7 +140,6 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
       case ((removableAcc, retainableAcc), (_, assets)) =>
         val (removableAssets, retainableAssets) = assets.partition(a => pavementShouldBeRemoved(a, changesRemovePavement))
         val (replaceableAssets, irreplaceableAssets) = retainableAssets.partition(asset => PavementClass.isReplaceablePavementClass(asset.value))
-
         if (irreplaceableAssets.nonEmpty) {
           (removableAcc ++ removableAssets ++ replaceableAssets, retainableAcc ++ irreplaceableAssets)
         } else {
