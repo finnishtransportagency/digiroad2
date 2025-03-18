@@ -339,13 +339,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       Asset(asset.id, values, Some(newLink.municipality.getOrElse(throw new NoSuchElementException(s"${newLink.linkId} does not have municipality code"))), Some(assetGeometry), Some(linearReference),linkInfo, externalIds = asset.externalIds)
     })
 
-    if (before.nonEmpty) {
-      logger.info(s"EXTID: ExternalID for asset $assetId is Before: ${before.head.externalIds}")
-    } else if (after.nonEmpty) {
-      logger.info(s"EXTID: ExternalID for asset $assetId is After: ${after.head.externalIds}")
-    }
-
-
     if (propertyChange) {
       changesForReport.add(ChangedAsset(linkId, assetId, ChangeTypeReport.PropertyChange,
         relevantRoadLinkChange.changeType, before, after.toSeq))
@@ -482,8 +475,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def generateAndSaveReport(typeId: Int, processedTo: DateTime = DateTime.now()): Unit = {
     val changeReport = ChangeReport(typeId, getReport())
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
-    logger.info(s"EXTID: ReportBody: $reportBody")
-    ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBody, contentRowCount)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
     ChangeReporter.saveReportToS3(AssetTypeInfo(changeReport.assetType).label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
     resetReport()
@@ -650,14 +642,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     logger.info(s"Adjusting ${operated.assetsAfter.size} projected assets")
     val (assetsOperated, changeInfo) = LogUtils.time(logger, "Adjusting and reporting projected assets") {
       adjustAndReport(typeId, onlyNeededNewRoadLinks, changes,operated)
-    }
-
-    assetsOperated.foreach { asset =>
-      if (asset.externalIds.isEmpty) {
-        logger.info(s"EXTID: ExternalID is empty for asset with id ${asset.id}")
-      } else {
-        logger.info(s"EXTID: ExternalId has value of ${asset.externalIds} for asset with id ${asset.id}")
-      }
     }
     (assetsOperated, changeInfo.get)
   }
