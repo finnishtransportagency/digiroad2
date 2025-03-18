@@ -399,7 +399,6 @@ object ChangeReporter {
 
   def saveReportToS3(assetName: String, changesProcessedUntil: DateTime, body: String, contentRowCount: Int,
                      hasGeometry: Boolean = false): Unit = {
-    logger.info(s"EXTID: SaveReportToS3 body: $body")
     val date = DateTime.now().toString("YYYY-MM-dd")
     val untilDate = changesProcessedUntil.toString("YYYY-MM-dd")
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
