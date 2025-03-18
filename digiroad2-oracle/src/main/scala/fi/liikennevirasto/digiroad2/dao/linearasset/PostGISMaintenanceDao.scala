@@ -33,7 +33,7 @@ class PostGISMaintenanceDao() {
                     end as value,
                     a.created_by, a.created_date, a.modified_by, a.modified_date,
                     case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
-                    pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
+                    pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source, a.external_ids
                    from asset a
                      join asset_link al on a.id = al.asset_id
                      join lrm_position pos on al.position_id = pos.id
@@ -54,7 +54,7 @@ class PostGISMaintenanceDao() {
 
       PersistedLinearAsset(id, row.linkId, row.sideCode, value = Some(DynamicValue(value)), row.startMeasure, row.endMeasure, row.createdBy,
         row.createdDate, row.modifiedBy, row.modifiedDate, row.expired, row.typeId, row.timeStamp,
-        row.geomModifiedDate, LinkGeomSource.apply(row.linkSource), row.verifiedBy, row.verifiedDate, row.informationSource.map(info => InformationSource.apply(info)))
+        row.geomModifiedDate, LinkGeomSource.apply(row.linkSource), row.verifiedBy, row.verifiedDate, row.informationSource.map(info => InformationSource.apply(info)), externalIds = row.externalIds)
 
     }.toSeq
   }
@@ -88,8 +88,12 @@ class PostGISMaintenanceDao() {
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
+      val externalIds: Seq[String] = Seq(r.nextStringOption()).flatMap {
+        case Some(value) => value.split(",")
+        case None => Seq.empty
+      }
 
-      DynamicAssetRow(id, linkId, sideCode.getOrElse(99), value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
+      DynamicAssetRow(id, linkId, sideCode.getOrElse(99), value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource, externalIds)
     }
   }
 

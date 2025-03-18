@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeType, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue}
 import fi.liikennevirasto.digiroad2.service.linearasset.{DamagedByThawService, DynamicLinearAssetService, Measures}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -371,6 +371,66 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers with UpdaterU
 
       asset2.head.startMeasure should be(0)
       asset2.head.endMeasure should be(newRoadLink2.length)
+    }
+  }
+
+  test("When change type is Replace and asset type is RoadWidth, After samuutus processes the externalIds of the asset should stay with the projected asset and externalIds should be included in the report.") {
+    val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
+    val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
+    val assetTypeId = RoadWidth.typeId
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(assetTypeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None, externalIds = Seq("externalId"))
+
+      val assetsBefore = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
+
+      assetsBefore.size should be(1)
+      assetsBefore.head.linkId should be(oldLinkID)
+      assetsBefore.head.externalIds should be(Seq("externalId"))
+
+      TestDynamicLinearAssetUpdater.updateByRoadLinks(assetTypeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
+      assetsAfter.head.linkId should be(newLinkID)
+      assetsAfter.head.externalIds should be(assetsBefore.head.externalIds)
+
+      val assets = TestDynamicLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption, a.changeType))
+      assets.head.oldAsset.get.externalIds.size should be(1)
+      assets.head.newAsset.get.externalIds.size should be(1)
+    }
+  }
+
+  test("When change type is Replace and asset type is Maintenance Road, After samuutus processes the externalIds of the asset should stay with the projected asset and externalIds should be included in the report.") {
+    val oldLinkID = "deb91a05-e182-44ae-ad71-4ba169d57e41:1"
+    val newLinkID = "0a4cb6e7-67c3-411e-9446-975c53c0d054:1"
+    val assetTypeId = MaintenanceRoadAsset.typeId
+    val allChanges = roadLinkChangeClient.convertToRoadLinkChange(source)
+    val changes = allChanges.filter(change => change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkId == oldLinkID)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkID).get
+      val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
+      val id = service.createWithoutTransaction(assetTypeId, oldLinkID, NumericValue(50), SideCode.BothDirections.value, Measures(0.0, 20.0), "testuser", 0L, Some(oldRoadLink), false, None, None, externalIds = Seq("externalId"))
+
+      val assetsBefore = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
+
+      assetsBefore.size should be(1)
+      assetsBefore.head.linkId should be(oldLinkID)
+      assetsBefore.head.externalIds should be(Seq("externalId"))
+
+      TestDynamicLinearAssetUpdater.updateByRoadLinks(assetTypeId, changes)
+      val assetsAfter = service.getPersistedAssetsByIds(assetTypeId, Set(id), false)
+      assetsAfter.head.linkId should be(newLinkID)
+      assetsAfter.head.externalIds should be(assetsBefore.head.externalIds)
+
+      val assets = TestDynamicLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption, a.changeType))
+      assets.head.oldAsset.get.externalIds.size should be(1)
+      assets.head.newAsset.get.externalIds.size should be(1)
     }
   }
 }

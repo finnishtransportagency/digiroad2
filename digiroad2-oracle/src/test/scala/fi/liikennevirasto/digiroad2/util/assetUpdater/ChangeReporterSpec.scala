@@ -451,4 +451,26 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     contents.contains("List(externalIds, externalIds2)") should be(false)
     contents.contains("externalId;externalId2") should be(true)
   }
+
+  test("change report contains the externalIds of the changed LINEAR asset Road width and is presented as string") {
+    val oldLinkId = "4f8a33d6-a939-4934-847d-d7b10193b7e9:1"
+    val assetId1 = 123
+
+    val geometry1 = Some(List(Point(367074.545, 6675175.568, 17.744), Point(367070.202, 6675185.493, 18.48), Point(367068.125, 6675190.727, 18.792)))
+
+    val linearReference1 = LinearReferenceForReport(oldLinkId, 0.0, Some(16.465), Some(0), None, None, 30.928)
+    val before1 = Asset(assetId1, "", Some(49), geometry1, Some(linearReference1), lifecycleChange, isPointAsset = false, None, externalIds = Seq("externalId", "externalId2"))
+
+    val after1 = Asset(assetId1, "", Some(49), geometry1, Some(linearReference1), lifecycleChange, isPointAsset = false, None, externalIds = Seq("externalId", "externalId2"))
+
+    val changedAsset1 = ChangedAsset(linkId = oldLinkId, assetId = assetId1, changeType = Replaced, roadLinkChangeType = RoadLinkChangeType.Replace, before = Some(before1), after = Seq(after1))
+    val changeReport = ChangeReport(RoadWidth.typeId, Seq(changedAsset1))
+
+    val (csv, contentRowCount) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
+    ChangeReporter.saveReportToLocalFile(AssetTypeInfo(changeReport.assetType).label, DateTime.now(), csv, contentRowCount, false)
+    contentRowCount should be(1)
+    val contents = csv.split("\\\n")(2)
+    contents.contains("List(externalIds, externalIds2)") should be(false)
+    contents.contains("externalId;externalId2") should be(true)
+  }
 }
