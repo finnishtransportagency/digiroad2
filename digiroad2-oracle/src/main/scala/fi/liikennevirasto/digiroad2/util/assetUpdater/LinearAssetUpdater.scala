@@ -425,21 +425,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def reportLoop(changes: Seq[RoadLinkChange], pairs: Set[Pair]): Unit = {
-    val hasEmptyExternalIdBefore = pairs.exists { asset =>
-      asset.oldAsset.head.externalIds.isEmpty
-    }
-    val hasEmptyExternalIdAfter = pairs.exists { asset =>
-      asset.newAsset.head.externalIds.isEmpty
-    }
-
-    if (hasEmptyExternalIdBefore || hasEmptyExternalIdAfter) {
-      logger.info("At least one asset has an empty value as externalID")
-    }
-
     LogUtils.time(logger, s"Reporting assets task with items count ${pairs.size} ") {
       pairs.foreach(asset => createRow(changes, asset))
     }
   }
+
   private def createRow(changes: Seq[RoadLinkChange], pair: Pair)= {
     LogUtils.time(logger, "Creating reporting rows") {
       pair.newAsset match {
