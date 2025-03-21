@@ -292,8 +292,12 @@ object Queries {
   def insertAdditionalPanelProperty(assetId: Long, value: AdditionalPanel) = {
     val id = Sequences.nextPrimaryKeySeqValue
     sqlu"""
-    INSERT INTO additional_panel (id, asset_id ,property_id, additional_sign_type, additional_sign_value, additional_sign_info, form_position, additional_sign_text, additional_sign_size, additional_sign_coating_type, additional_sign_panel_color)
-    VALUES ($id, $assetId, (select id from property where public_id='additional_panel'), ${value.panelType}, ${value.panelValue}, ${value.panelInfo}, ${value.formPosition}, ${value.text}, ${value.size}, ${value.coating_type}, ${value.additional_panel_color})
+    INSERT INTO additional_panel (id, asset_id ,property_id, additional_sign_type, additional_sign_value,
+                                  additional_sign_info, form_position, additional_sign_text, additional_sign_size,
+                                  additional_sign_coating_type, additional_sign_panel_color, created_date)
+    VALUES ($id, $assetId, (select id from property where public_id='additional_panel'), ${value.panelType},
+            ${value.panelValue}, ${value.panelInfo}, ${value.formPosition}, ${value.text}, ${value.size},
+            ${value.coating_type}, ${value.additional_panel_color}, current_timestamp)
     """
   }
 
@@ -304,7 +308,7 @@ object Queries {
   }
 
   def updateAdditionalPanelProperties (assetId: Long): Unit = {
-    sqlu"""UPDATE ADDITIONAL_PANEL SET ADDITIONAL_SIGN_SIZE = 99, ADDITIONAL_SIGN_COATING_TYPE = 99, ADDITIONAL_SIGN_PANEL_COLOR = 99
+    sqlu"""UPDATE ADDITIONAL_PANEL SET ADDITIONAL_SIGN_SIZE = 99, ADDITIONAL_SIGN_COATING_TYPE = 99, ADDITIONAL_SIGN_PANEL_COLOR = 99, modified_date = current_timestamp
            WHERE ASSET_ID = $assetId AND ADDITIONAL_SIGN_SIZE IS NULL OR ADDITIONAL_SIGN_COATING_TYPE IS NULL OR ADDITIONAL_SIGN_PANEL_COLOR IS NULL""".execute
 
   }
