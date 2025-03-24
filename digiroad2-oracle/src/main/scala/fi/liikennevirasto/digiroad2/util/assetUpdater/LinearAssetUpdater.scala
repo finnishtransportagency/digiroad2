@@ -440,6 +440,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       pairs.foreach(asset => createRow(changes, asset))
     }
   }
+
   private def createRow(changes: Seq[RoadLinkChange], pair: Pair)= {
     LogUtils.time(logger, "Creating reporting rows") {
       pair.newAsset match {
