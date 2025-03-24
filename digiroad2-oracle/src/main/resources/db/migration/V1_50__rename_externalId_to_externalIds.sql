@@ -1,1 +1,0 @@
-ALTER TABLE asset RENAME COLUMN external_id TO external_ids;
