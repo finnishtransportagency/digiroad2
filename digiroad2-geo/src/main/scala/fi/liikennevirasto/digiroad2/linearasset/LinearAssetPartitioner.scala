@@ -33,9 +33,9 @@ object LinearAssetPartitioner extends GraphPartitioner {
     }
 
     val linkGroups = twoWayLinks.groupBy { link =>
-      (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0)
+      (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0, link.trafficDirection)
     }
-    val (linksToPartition, linksToPass) = linkGroups.partition { case ((roadIdentifier, _, _, _), _) => roadIdentifier.isDefined }
+    val (linksToPartition, linksToPass) = linkGroups.partition { case ((roadIdentifier, _, _, _, _), _) => roadIdentifier.isDefined }
     val clusters = linksToPartition.values.map(p => {
       clusterLinks(p)
     }).toSeq.flatten
