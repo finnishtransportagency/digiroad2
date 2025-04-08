@@ -277,7 +277,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case Nil => Map()
           case _ => Map("validityPeriods" -> prohibitionValue.validityPeriods.map(toTimeDomain))
         }
-        Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
+        Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions ++ Map("additionalInfo" -> prohibitionValue.additionalInfo)
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
       case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty => dynamicTypeProperty.values.map { v =>

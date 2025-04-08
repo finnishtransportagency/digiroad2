@@ -1,0 +1,1 @@
+ALTER TABLE asset ALTER COLUMN external_ids TYPE varchar(10000) USING external_ids::varchar(10000);

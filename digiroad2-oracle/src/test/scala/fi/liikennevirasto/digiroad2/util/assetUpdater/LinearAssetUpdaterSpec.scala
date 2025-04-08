@@ -2470,7 +2470,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       assetLength2 should be(newRoadLink2.length)
     }
   }
-  
+
   test("Small rounding error between our asset length and roadlink length, corrected with using tolerance") {
     val oldLinkID = "8e3393a1-56ae-4f4a-bd49-d7aa601acd7f:1"
     val newLinkID = "f951ad53-6cfd-4e55-bf5f-5f8916fd69df:1"
@@ -2483,8 +2483,8 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val newRoadLink = roadLinkService.getRoadLinkByLinkId(newLinkID).get
       when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkID), false)).thenReturn(Seq(newRoadLink))
 
-      val id = service.createWithoutTransaction(CareClass.typeId, oldLinkID, NumericValue(1), SideCode.BothDirections.value, Measures(0.0,  2065.317), "testuser", 0L, Some(oldRoadLink), false, None, None)
-   
+      val id = service.createWithoutTransaction(CareClass.typeId, oldLinkID, NumericValue(1), SideCode.BothDirections.value, Measures(0.0, 2065.317), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
       val assetsBefore = service.getPersistedAssetsByIds(CareClass.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
@@ -2492,7 +2492,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(CareClass.typeId, changes)
       val assetsAfter = service.getPersistedAssetsByIds(CareClass.typeId, Set(id), false).sortBy(_.startMeasure)
       assetsAfter.size should be(1)
-      
+
       assetsAfter.head.startMeasure should be(0)
       assetsAfter.head.endMeasure should be(2065.538)
       assetsAfter.head.value.get should be(NumericValue(1))
@@ -2690,6 +2690,99 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       val assets = TestLinearAssetUpdater.getReport().map(a => PairAsset(a.before, a.after.headOption, a.changeType))
       assets.head.oldAsset.get.externalIds.size should be(1)
       assets.head.newAsset.get.externalIds.size should be(1)
+    }
+  }
+
+  test("Merge. When running updater in parallel mode, expiredIds should not be filtered within adjustment loop.") {
+    val oldLinkId11 = "a0969dff-4d77-4bea-8c1c-d1b1620a6280:1"
+    val oldLinkId12 = "a5f5d9c7-408e-469a-bcd6-1ad6dd4912e0:1"
+    val newLinkId1 = "0a475061-defb-4807-9785-41620d4d4d08:2"
+
+    val oldLinkId21 = "3b9529ab-6120-4ab3-b737-c2f69d8652fe:2"
+    val oldLinkId22 = "a6124a16-902a-4f43-aadd-02a5c845db23:1"
+    val newLinkId2 = "9152085e-17f9-4634-9f47-5c91b1ec4ac9:1"
+
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLink11 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId11).get
+      val oldRoadLink12 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId12).get
+      val newRoadLink1 = roadLinkService.getRoadLinkByLinkId(newLinkId1).get
+
+      val oldRoadLink21 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId21).get
+      val oldRoadLink22 = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId22).get
+      val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLinkId2).get
+
+      val asphaltValue = DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(1)))
+        , DynamicProperty("suggest_box", "checkbox", false, List())
+      )))
+      val unknownValue = DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(99)))
+        , DynamicProperty("suggest_box", "checkbox", false, List())
+      )))
+
+      val id1 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId11, asphaltValue, SideCode.TowardsDigitizing.value, Measures(0.0, oldRoadLink11.length), "testuser", 0L, Some(oldRoadLink11), false, None, None)
+      val id2 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId12, unknownValue, SideCode.TowardsDigitizing.value, Measures(0.0, oldRoadLink12.length), "testuser", 0L, Some(oldRoadLink12), false, None, None)
+      val id3 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId21, asphaltValue, SideCode.BothDirections.value, Measures(0.0, oldRoadLink21.length), "testuser", 0L, Some(oldRoadLink21), false, None, None)
+      val id4 = service.createWithoutTransaction(PavedRoad.typeId, oldLinkId22, unknownValue, SideCode.BothDirections.value, Measures(0.0, oldRoadLink22.length), "testuser", 0L, Some(oldRoadLink22), false, None, None)
+      val assetIds = Set(id1, id2, id3, id4)
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, assetIds, false)
+      assetsBefore.size should be(4)
+
+      TestLinearAssetUpdaterNoRoadLinkMockTestParallelRun.updateByRoadLinks(PavedRoad.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newLinkId1, newLinkId2), false).sortBy(_.id)
+      assetsAfter.size should be(2)
+
+      val assetLength1 = assetsAfter.head.endMeasure - assetsAfter.head.startMeasure
+      assetsAfter.head.linkId should be(newLinkId1)
+      assetLength1 should be(newRoadLink1.length)
+
+      val assetLength2 = assetsAfter.last.endMeasure - assetsAfter.head.startMeasure
+      assetsAfter.last.linkId should be(newLinkId2)
+      assetLength2 should be(newRoadLink2.length)
+
+      val changeReport = ChangeReport(PavedRoad.typeId, TestLinearAssetUpdaterNoRoadLinkMockTestParallelRun.getReport())
+      val relevantChangesSorted = changeReport.changes.asInstanceOf[Seq[ChangedAsset]].filter(change => assetIds.contains(change.assetId)).sortBy(_.assetId)
+      relevantChangesSorted.size should equal(4)
+      relevantChangesSorted.head.changeType should equal(Replaced)
+      relevantChangesSorted.head.assetId should be(id1)
+      relevantChangesSorted.last.changeType should equal(Deletion)
+      relevantChangesSorted.last.assetId should be(id4)
+    }
+  }
+
+  test("Split. Given a roadlink that is split into 2 new links; When one new link has ConstructionType 5 Expiring Soon; The asset projected to the new part is not moved but expired instead.") {
+    val oldLinkId = "554ba6f9-1325-4883-a6a2-093c77fae840:1"
+    val newLinkId1 = "b7d4f7d1-1e07-4d66-a5c4-20674aa6a188:1"
+    val newLinkId2 = "c20bc164-8200-4132-a1c2-416ddbc5a02e:1"
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(change => change.oldLink.map(_.linkId).contains(oldLinkId) && change.changeType == RoadLinkChangeType.Split)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(oldLinkId).get
+      val newRoadLink2 = roadLinkService.getRoadLinkByLinkId(newLinkId2).get
+      when(mockRoadLinkService.getExistingAndExpiredRoadLinksByLinkIds(Set(newLinkId1, newLinkId2), false)).thenReturn(Seq(newRoadLink2))
+
+      val assetId = service.createWithoutTransaction(DamagedByThaw.typeId, oldLinkId, NumericValue(1), SideCode.BothDirections.value, Measures(0.0, oldRoadLink.length), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(DamagedByThaw.typeId, Set(assetId), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks(DamagedByThaw.typeId, changes)
+
+      val assetsAfter = service.getPersistedAssetsByLinkIds(DamagedByThaw.typeId, Seq(oldLinkId, newLinkId1, newLinkId2), false)
+      assetsAfter.size should be(1)
+
+      assetsAfter.head.linkId should be(newLinkId2)
+      assetsAfter.head.startMeasure should be(0)
+      assetsAfter.head.endMeasure should be(newRoadLink2.length)
+
+      val changeReport = ChangeReport(PavedRoad.typeId, TestLinearAssetUpdater.getReport())
+      val relevantChangesSorted = changeReport.changes.asInstanceOf[Seq[ChangedAsset]].sortBy(_.assetId)
+      relevantChangesSorted.size should equal(2)
+      relevantChangesSorted.head.changeType should equal(Deletion)
+      relevantChangesSorted.head.assetId should be(assetId)
+      relevantChangesSorted.last.changeType should equal(Divided)
     }
   }
 }

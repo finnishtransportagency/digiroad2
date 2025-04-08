@@ -65,7 +65,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
 
     val roadLinksFT = allRoadLinks.map(rl => RoadLinkForFillTopology(rl.linkId, rl.length, rl.trafficDirection,
-      rl.administrativeClass, rl.linkSource, UnknownLinkType, rl.constructionType, rl.geometry, rl.municipalityCode))
+      rl.administrativeClass, rl.linkSource, UnknownLinkType, rl.constructionType, rl.geometry, rl.municipalityCode, Map("ROADNAME_FI"-> rl.roadNameFi, "ROADNAME_SE" -> rl.roadNameSe, "ROADNUMBER" -> rl.roadNumber, "ROADPARTNUMBER" -> rl.roadPartNumber)))
     val speedLimitsWithUnknowns = assetFiller.generateUnknowns(roadLinksFT, speedLimits.groupBy(_.linkId), SpeedLimitAsset.typeId)._1
 
     LinearAssetPartitioner.partition(speedLimitsWithUnknowns)
