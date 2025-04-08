@@ -5,26 +5,29 @@ import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures, NewLinearAssetMassOperation}
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
   override def filterChanges(typeId: Int, changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
-    val (remove, other) = super.filterChanges(typeId, changes).partition(_.changeType == RoadLinkChangeType.Remove)
-    val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
-    val filterChanges = if (linksOther.nonEmpty) {
-      val links = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(linksOther,false)
-      val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
-      val DEBUGLINK = links.find(_.linkId == "e6724c48-99ff-49d6-8efb-5f12068d8415:1") // REMOVE AFTER BUG SOURCE FOUND
-      if (DEBUGLINK.nonEmpty && !filteredLinks.contains(DEBUGLINK.get.linkId)) {
-        logger.info(s"New RoadLink 'e6724c48-99ff-49d6-8efb-5f12068d8415:1' filtered out of processed links. FunctionalClass is ${DEBUGLINK.get.functionalClass}") // REMOVED AFTER BUG SOURCE FOUND
-      }
-      else if (DEBUGLINK.isEmpty) {
-        logger.info(s"New RoadLink 'e6724c48-99ff-49d6-8efb-5f12068d8415:1' not found by getExistingAndExpiredRoadLinksByLinkIds") // REMOVE AFTER BUG SOURCE FOUND
-      }
-      other.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
-    } else Seq()
-    filterChanges ++ remove
+    LogUtils.time(logger, s"TEST LOG MaintenanceRoadUpdater filterChanges with ${changes.size} changes", startLogging = true) {
+      val (remove, other) = super.filterChanges(typeId, changes).partition(_.changeType == RoadLinkChangeType.Remove)
+      val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
+      val filterChanges = if (linksOther.nonEmpty) {
+        if (linksOther.contains("e6724c48-99ff-49d6-8efb-5f12068d8415:1")) {logger.info(s"New RoadLink e6724c48-99ff-49d6-8efb-5f12068d8415:1 present in filterChanges.linksOther")} // REMOVED AFTER BUG SOURCE FOUND
+        val links = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(linksOther, false)
+        val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
+        val DEBUGLINK = links.find(_.linkId == "e6724c48-99ff-49d6-8efb-5f12068d8415:1") // REMOVE AFTER BUG SOURCE FOUND
+        if (DEBUGLINK.nonEmpty && !filteredLinks.contains(DEBUGLINK.get.linkId)) {
+          logger.info(s"New RoadLink 'e6724c48-99ff-49d6-8efb-5f12068d8415:1' filtered out of processed links. FunctionalClass is ${DEBUGLINK.get.functionalClass}") // REMOVED AFTER BUG SOURCE FOUND
+        }
+        else if (DEBUGLINK.isEmpty) {
+          logger.info(s"New RoadLink 'e6724c48-99ff-49d6-8efb-5f12068d8415:1' not found by getExistingAndExpiredRoadLinksByLinkIds") // REMOVE AFTER BUG SOURCE FOUND
+        }
+        other.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
+      } else Seq()
+      filterChanges ++ remove
+    }
   }
   protected override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Unit = {
     val DEBUGASSET = newMaintenanceAssets.find(_.linkId == "e6724c48-99ff-49d6-8efb-5f12068d8415:1") // REMOVE AFTER BUG SOURCE FOUND

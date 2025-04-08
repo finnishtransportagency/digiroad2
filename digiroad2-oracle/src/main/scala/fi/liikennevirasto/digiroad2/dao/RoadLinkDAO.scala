@@ -353,7 +353,7 @@ class RoadLinkDAO {
   protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
     val constructionFilter = Seq(ConstructionType.ExpiringSoon.value, ConstructionType.UnknownConstructionType.value).mkString(", ")
     LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
-      sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
+      val query = sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
                  surfacetype, geometrylength
@@ -361,7 +361,8 @@ class RoadLinkDAO {
           where #$filter
           and expired_date is null
           and constructiontype not in (#$constructionFilter)
-          """.as[RoadLinkFetched].list
+          """
+        query.as[RoadLinkFetched].list
     }
   }
 
