@@ -113,7 +113,7 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtil
       assetsBefore.head.expired should be(false)
 
       TestMaintenanceRoadUpdater.updateByRoadLinks(MaintenanceRoadAsset.typeId, changes)
-      val assetsAfter = Service.getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(newLinkId, oldLinkId), false)
+      val assetsAfter = Service.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, Set(id), false)
 
       assetsAfter.size should be(1)
       assetsAfter.map(_.id).contains(id) should be(true)
@@ -151,7 +151,7 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtil
 
       TestMaintenanceRoadUpdater.updateByRoadLinks(MaintenanceRoadAsset.typeId, changes)
 
-      val assetsAfter = Service.getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(oldLinkId, newLinkId1,newLinkId2), false)
+      val assetsAfter = Service.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, Set(id1, id2), false)
       assetsAfter.size should be(2)
       assetsAfter.forall(_.linkId == oldLinkId) should be(true)
       assetsAfter.forall(_.expired) should be(true)

@@ -9,18 +9,6 @@ import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
-  override def filterChanges(typeId: Int, changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
-    LogUtils.time(logger, s"TEST LOG MaintenanceRoadUpdater filterChanges with ${changes.size} changes", startLogging = true) {
-      val (remove, other) = super.filterChanges(typeId, changes).partition(_.changeType == RoadLinkChangeType.Remove)
-      val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
-      val filterChanges = if (linksOther.nonEmpty) {
-        val links = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(linksOther, false)
-        val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
-        other.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
-      } else Seq()
-      filterChanges ++ remove
-    }
-  }
   protected override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Unit = {
     newMaintenanceAssets.foreach { linearAsset =>
       val roadLink = onlyNeededNewRoadLinks.find(_.linkId == linearAsset.linkId)
@@ -47,6 +35,20 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
     }
     if (newMaintenanceAssets.nonEmpty)
       logger.debug(s"Added assets for linkids ${newMaintenanceAssets.map(_.linkId)}")
+  }
+
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
+    expireMaintenanceRoadsOnInvalidLinks(operationStep, newRoadLinks)
+  }
+
+  private def expireMaintenanceRoadsOnInvalidLinks(operationStep: OperationStep, newRoadLinks: Seq[RoadLink]) = {
+    val validRoadLinkIds = newRoadLinks.filter(roadLink => roadLink.functionalClass > 4).map(_.linkId)
+    val expiredAssetIds = operationStep.assetsAfter.filter(asset => !validRoadLinkIds.contains(asset.linkId)).map(_.id).toSet
+    val combinedExpiredIds = operationStep.changeInfo.get.expiredAssetIds ++ expiredAssetIds
+
+    val updatedAssetsAfter = operationStep.assetsAfter.filterNot(asset => expiredAssetIds.contains(asset.id))
+    val updatedChangeInfo = operationStep.changeInfo.get.copy(expiredAssetIds = combinedExpiredIds)
+    Some(OperationStep(assetsAfter = updatedAssetsAfter, changeInfo = Some(updatedChangeInfo), assetsBefore = operationStep.assetsBefore))
   }
 
 }
