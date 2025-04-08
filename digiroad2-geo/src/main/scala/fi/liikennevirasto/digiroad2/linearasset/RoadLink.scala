@@ -30,7 +30,7 @@ case class RoadLinkProperties(linkId: String,
 
 case class TinyRoadLink(linkId: String)
 
-case class RoadLinkForUnknownGeneration(linkId: String, municipalityCode: Int, constructionType: ConstructionType, length:Double, geometry: Seq[Point], trafficDirection:TrafficDirection, administrativeClass:AdministrativeClass, linkSource:LinkGeomSource)
+case class RoadLinkForUnknownGeneration(linkId: String, municipalityCode: Int, constructionType: ConstructionType, length:Double, geometry: Seq[Point], trafficDirection:TrafficDirection, administrativeClass:AdministrativeClass, linkSource:LinkGeomSource, roadNameFi: Option[String], roadNameSe: Option[String], roadNumber: Option[Long], roadPartNumber: Option[Long])
 
 case class RoadLink(linkId: String, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,

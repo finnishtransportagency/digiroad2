@@ -59,61 +59,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitDao.getLinksWithLength(id)
   }
 
-  /**
-   * Gets roadname in Finnish and Swedish and the roadnumber, with the corresponding link id.
-   * @param links links for which the roadaddress is retrieved
-   * @return Tuple4 including link id, roadname_fi, roadname_se and roadnumber
-   */
-  def getRoadAddressesByLinkIds(links: Seq[String]): Seq[(String, String, String, Int)] = {
-    val linksWithRoadAddress: Seq[(String, String, String, Int)] = withDynTransaction {
-      links.map(link => speedLimitDao.getRoadAddressByLinkId(link))
-    }
-    linksWithRoadAddress
-  }
-
-  /**
-   * Maps roadidentifier attributes for generated unknown speedlimits: roadnames and roadnumber
-   * @param unknownSpeedLimits Seq of unknown speedlimits
-   * @return Unknown speedlimits with roadidentifier attributes
-   */
-  private def enrichUnknownSpeedLimitLinksWithRoadAddress(unknownSpeedLimits: Seq[PieceWiseLinearAsset]) = {
-    val linksOfUnknownSpeedLimits = unknownSpeedLimits.filter(_.id == 0).map(_.linkId)
-    val unknownSpeedLimitLinksWithRoadAddress = getRoadAddressesByLinkIds(linksOfUnknownSpeedLimits)
-
-    val unknownSpeedLimitLinkIdsWithAttributes: Seq[(String, Map[String, Any])] = unknownSpeedLimitLinksWithRoadAddress.map {
-      case (linkId, roadnameFi, roadnameSe, roadnumber) =>
-        val attributes = Map(
-          "ROADNAME_FI" -> roadnameFi,
-          "ROADNAME_SE" -> roadnameSe,
-          "ROADNUMBER" -> roadnumber
-        )
-        (linkId, attributes)
-    }
-
-    val unknownSpeedLimitsWithRoadAddress: Seq[PieceWiseLinearAsset] = unknownSpeedLimits.map { asset =>
-      val attributesMap = unknownSpeedLimitLinkIdsWithAttributes.find(_._1 == asset.linkId) match {
-        case Some((_, attributes)) => attributes
-        case None => Map.empty[String, Any]
-      }
-      asset.copy(attributes = attributesMap)
-    }
-    unknownSpeedLimitsWithRoadAddress
-  }
-
   def getSpeedLimitsByBbox(bbox: BoundingRectangle, withCompelementary: Boolean): Seq[Seq[PieceWiseLinearAsset]] = {
     val (speedLimits, allRoadLinks) = withDynTransaction {
       speedLimitDao.fetchByBBox(bbox, withCompelementary)
     }
 
     val roadLinksFT = allRoadLinks.map(rl => RoadLinkForFillTopology(rl.linkId, rl.length, rl.trafficDirection,
-      rl.administrativeClass, rl.linkSource, UnknownLinkType, rl.constructionType, rl.geometry, rl.municipalityCode))
+      rl.administrativeClass, rl.linkSource, UnknownLinkType, rl.constructionType, rl.geometry, rl.municipalityCode, Map("ROADNAME_FI"-> rl.roadNameFi, "ROADNAME_SE" -> rl.roadNameSe, "ROADNUMBER" -> rl.roadNumber, "ROADPARTNUMBER" -> rl.roadPartNumber)))
     val speedLimitsWithUnknowns = assetFiller.generateUnknowns(roadLinksFT, speedLimits.groupBy(_.linkId), SpeedLimitAsset.typeId)._1
 
-    val unknownSpeedLimits = speedLimitsWithUnknowns.filter(_.id == 0)
-
-    val unknownSpeedLimitsWithRoadAddress = enrichUnknownSpeedLimitLinksWithRoadAddress(unknownSpeedLimits)
-
-    LinearAssetPartitioner.partition(speedLimits ++ unknownSpeedLimitsWithRoadAddress)
+    LinearAssetPartitioner.partition(speedLimitsWithUnknowns)
   }
 
   def emptyRoadLinkToUnknownSpeedLimit(emptyRoadLinks: Seq[RoadLinkForUnknownGeneration]): Seq[PieceWiseLinearAsset] = {

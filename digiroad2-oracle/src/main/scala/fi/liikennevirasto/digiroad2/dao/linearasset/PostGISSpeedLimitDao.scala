@@ -77,9 +77,10 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       val adminClassValue = r.nextInt()
       val municipality = r.nextInt()
       val constructionTypeValue = r.nextInt()
-      val roadNameFi = r.nextString()
-      val roadNameSe = r.nextString()
-      val roadNumber = r.nextInt()
+      val roadNameFi = r.nextStringOption()
+      val roadNameSe = r.nextStringOption()
+      val roadNumber = r.nextLongOption()
+      val roadPartNumber = r.nextLongOption()
       val publicId = r.nextString()
 
       val adjustedTrafficDirection = trafficDirection.map(TrafficDirection.apply).getOrElse(KgvUtil.extractTrafficDirection(directionType))
@@ -92,7 +93,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       SpeedLimitRowWithRoadInfo(id = id, linkId = linkId, sideCode = sideCode, trafficDirection = adjustedTrafficDirection,
         value = value, geometry = geometry, startMeasure = startMeasure, endMeasure = endMeasure, roadLinkLength = geometryLength, modifiedBy = modifiedBy,
         modifiedDate = modifiedDateTime, createdBy = createdBy, createdDate = createdDateTime, administrativeClass = adminClass,
-        municipalityCode = municipality, constructionType = constructionType, linkSource = NormalLinkInterface, publicId = publicId, roadNameFi = roadNameFi, roadNameSe = roadNameSe, roadNumber = roadNumber)
+        municipalityCode = municipality, constructionType = constructionType, linkSource = NormalLinkInterface, publicId = publicId, roadNameFi = roadNameFi, roadNameSe = roadNameSe, roadNumber = roadNumber, roadPartNumber = roadPartNumber)
       }
   }
 
@@ -145,7 +146,8 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
             qgis.lifecyclestatus,
             qgis.roadnamefin,
             qgis.roadnameswe,
-            qgis.roadnumber
+            qgis.roadnumber,
+            qgis.roadpartnumber
           FROM qgis_roadlinkex qgis
           JOIN link_type lt ON qgis.linkid = lt.link_id
           JOIN functional_class fc ON qgis.linkid = fc.link_id
@@ -186,6 +188,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
                 cte_qgis.roadnamefin,
                 cte_qgis.roadnameswe,
                 cte_qgis.roadnumber,
+                cte_qgis.roadpartnumber,
                 p.public_id
               FROM asset a
               JOIN asset_link al ON a.id = al.asset_id
@@ -229,6 +232,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           cte_qgis.roadnamefin as roadname_fi,
           cte_qgis.roadnameswe as roadname_se,
           cte_qgis.roadnumber as roadnumber,
+          cte_qgis.roadpartnumber as roadpartnumber,
           NULL AS public_id
         FROM cte_qgis_roadlink cte_qgis
       """.stripMargin
@@ -250,7 +254,8 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
             kgv.constructiontype,
             kgv.roadname_fi,
             kgv.roadname_se,
-            kgv.roadnumber
+            kgv.roadnumber,
+            kgv.roadpartnumber
           FROM kgv_roadlink kgv
           JOIN link_type lt ON kgv.linkid = lt.link_id
           JOIN functional_class fc ON kgv.linkid = fc.link_id
@@ -292,6 +297,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           cte_kgv.roadname_fi,
           cte_kgv.roadname_se,
           cte_kgv.roadnumber,
+          cte_kgv.roadpartnumber,
           p.public_id
         FROM asset a
         JOIN asset_link al ON a.id = al.asset_id
@@ -328,6 +334,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           cte_kgv.roadname_fi,
           cte_kgv.roadname_se,
           cte_kgv.roadnumber,
+          cte_kgv.roadpartnumber,
           NULL AS public_id
         FROM cte_kgv_roadlink cte_kgv
 
@@ -357,7 +364,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         case _ => None
       }
 
-      val attributes = Map("municipality" -> asset.municipalityCode, "constructionType" -> asset.constructionType.value, "ROADNAME_FI" -> asset.roadNameFi, "ROADNAME_SE" -> asset.roadNameSe, "ROADNUMBER" -> asset.roadNumber)
+      val attributes = Map("municipality" -> asset.municipalityCode, "constructionType" -> asset.constructionType.value, "ROADNAME_FI" -> asset.roadNameFi, "ROADNAME_SE" -> asset.roadNameSe, "ROADNUMBER" -> asset.roadNumber, "ROADPARTNUMBER" -> asset.roadPartNumber)
 
       PieceWiseLinearAsset(id = assetId, linkId = asset.linkId, sideCode = asset.sideCode, value = speedLimitValue, geometry = asset.geometry, expired = false,
         startMeasure = asset.startMeasure, endMeasure = asset.endMeasure, endpoints = Set(asset.geometry.head, asset.geometry.last),
@@ -367,7 +374,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     }.toSeq
 
     val roadLinks = roadLinkRows.map(rl => {
-      RoadLinkForUnknownGeneration(rl.linkId, rl.municipalityCode, rl.constructionType, rl.roadLinkLength, rl.geometry, rl.trafficDirection, rl.administrativeClass, rl.linkSource)
+      RoadLinkForUnknownGeneration(rl.linkId, rl.municipalityCode, rl.constructionType, rl.roadLinkLength, rl.geometry, rl.trafficDirection, rl.administrativeClass, rl.linkSource, rl.roadNameFi, rl.roadNameSe, rl.roadNumber, rl.roadPartNumber)
     })
     (speedLimitAssets, roadLinks)
   }
@@ -389,26 +396,6 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
 		   where a.asset_type_id = 20 and floating = '0' #$queryFilter""".as[SpeedLimitRow].list
     }
     groupSpeedLimitsResult(speedLimitRows)
-  }
-
-  /**
-   * Gets roadnames and roadnumber of a link
-   * @param link for which the attributes are fetched
-   * @return (linkid, roadname_fi, roadname_se, roadnumber)
-   */
-  def getRoadAddressByLinkId(link: String): (String, String, String, Int) = {
-    val result: (String, String, String, Int) =
-      sql"""
-        select qgis.linkid, qgis.roadnamefin, qgis.roadnameswe, qgis.roadnumber
-        from qgis_roadlinkex qgis
-        where qgis.linkid = $link
-        union
-        select kr.linkid, kr.roadname_fi, kr.roadname_se, kr.roadnumber
-        from kgv_roadlink kr
-        where kr.linkid = $link
-        limit 1
-      """.as[(String, String, String, Int)].first
-    result
   }
 
   def groupSpeedLimitsResult(speedLimitRows: Seq[SpeedLimitRow]) : Seq[PersistedLinearAsset] = {
