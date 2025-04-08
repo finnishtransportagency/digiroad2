@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures, NewLinearAssetMassOperation}
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils}
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
