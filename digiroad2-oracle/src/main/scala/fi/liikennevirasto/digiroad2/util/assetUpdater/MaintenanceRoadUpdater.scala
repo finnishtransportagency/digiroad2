@@ -41,14 +41,24 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
     expireMaintenanceRoadsOnInvalidLinks(operationStep, newRoadLinks)
   }
 
+  /***
+   * Expires MaintenanceRoad assets that are projected on invalid links
+   * Does not remove expired from assetsAfter, as that is done later during adjustment process
+   * @param operationStep
+   * @param newRoadLinks
+   * @return
+   */
   private def expireMaintenanceRoadsOnInvalidLinks(operationStep: OperationStep, newRoadLinks: Seq[RoadLink]) = {
-    val validRoadLinkIds = newRoadLinks.filter(roadLink => roadLink.functionalClass > 4).map(_.linkId)
-    val expiredAssetIds = operationStep.assetsAfter.filter(asset => !validRoadLinkIds.contains(asset.linkId)).map(_.id).toSet
+    val validRoadLinkIds = newRoadLinks.filter(roadLink => roadLink.functionalClass > 4).map(_.linkId).toSet
+    val expiredAssetIds = operationStep.assetsAfter.filterNot(asset => validRoadLinkIds.contains(asset.linkId)).map(_.id).toSet
     val combinedExpiredIds = operationStep.changeInfo.get.expiredAssetIds ++ expiredAssetIds
-
-    val updatedAssetsAfter = operationStep.assetsAfter.filterNot(asset => expiredAssetIds.contains(asset.id))
     val updatedChangeInfo = operationStep.changeInfo.get.copy(expiredAssetIds = combinedExpiredIds)
-    Some(OperationStep(assetsAfter = updatedAssetsAfter, changeInfo = Some(updatedChangeInfo), assetsBefore = operationStep.assetsBefore))
+    Some(OperationStep(
+      assetsAfter = operationStep.assetsAfter,
+      changeInfo = Some(updatedChangeInfo),
+      assetsBefore = operationStep.assetsBefore
+      )
+    )
   }
 
 }
