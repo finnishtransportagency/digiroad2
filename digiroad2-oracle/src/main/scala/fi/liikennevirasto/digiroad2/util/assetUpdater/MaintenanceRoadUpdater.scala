@@ -14,25 +14,14 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
       val (remove, other) = super.filterChanges(typeId, changes).partition(_.changeType == RoadLinkChangeType.Remove)
       val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
       val filterChanges = if (linksOther.nonEmpty) {
-        if (linksOther.contains("e6724c48-99ff-49d6-8efb-5f12068d8415:1")) {logger.info(s"New RoadLink e6724c48-99ff-49d6-8efb-5f12068d8415:1 present in filterChanges.linksOther")} // REMOVED AFTER BUG SOURCE FOUND
         val links = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(linksOther, false)
         val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
-        val DEBUGLINK = links.find(_.linkId == "e6724c48-99ff-49d6-8efb-5f12068d8415:1") // REMOVE AFTER BUG SOURCE FOUND
-        if (DEBUGLINK.nonEmpty && !filteredLinks.contains(DEBUGLINK.get.linkId)) {
-          logger.info(s"New RoadLink 'e6724c48-99ff-49d6-8efb-5f12068d8415:1' filtered out of processed links. FunctionalClass is ${DEBUGLINK.get.functionalClass}") // REMOVED AFTER BUG SOURCE FOUND
-        }
-        else if (DEBUGLINK.isEmpty) {
-          logger.info(s"New RoadLink 'e6724c48-99ff-49d6-8efb-5f12068d8415:1' not found by getExistingAndExpiredRoadLinksByLinkIds") // REMOVE AFTER BUG SOURCE FOUND
-        }
         other.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
       } else Seq()
       filterChanges ++ remove
     }
   }
   protected override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Unit = {
-    val DEBUGASSET = newMaintenanceAssets.find(_.linkId == "e6724c48-99ff-49d6-8efb-5f12068d8415:1") // REMOVE AFTER BUG SOURCE FOUND
-    if (DEBUGASSET.isEmpty) {logger.info(s"No new maintenanceRoad projected to link e6724c48-99ff-49d6-8efb-5f12068d8415:1")} // REMOVE AFTER BUG SOURCE FOUND
-    else {logger.info(s"new MaintenanceRoad with id ${DEBUGASSET.get.id} projected to link e6724c48-99ff-49d6-8efb-5f12068d8415:1")} // REMOVE AFTER BUG SOURCE FOUND
     newMaintenanceAssets.foreach { linearAsset =>
       val roadLink = onlyNeededNewRoadLinks.find(_.linkId == linearAsset.linkId)
       val area = service.getAssetArea(onlyNeededNewRoadLinks.find(_.linkId == linearAsset.linkId), Measures(linearAsset.startMeasure, linearAsset.endMeasure))
