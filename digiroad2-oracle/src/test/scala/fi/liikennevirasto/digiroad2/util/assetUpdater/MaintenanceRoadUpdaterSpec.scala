@@ -93,7 +93,7 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtil
     }
   }
 
-  test("Replace. Given a roadlink that is replaced by another roadlink; When the new roadlink has an inappropriate functional class; Then that asset should be ended.") {
+  test("Replace. Given a roadlink that is replaced by another roadlink; When the new roadlink has an inappropriate functional class; Then that asset should be expired.") {
     val oldLinkId = "40ace33b-d9b4-4b99-aabe-44c2ed1e4a35:1"
     val newLinkId = "e6724c48-99ff-49d6-8efb-5f12068d8415:1"
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(_.newLinks.map(_.linkId).contains(newLinkId))
@@ -122,7 +122,7 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers with UpdaterUtil
     }
   }
 
-  test("Split. Given a roadlink that is split into 2 new roadlinks; When the new roadlinks have lifecycle status 5; Then those asset should be ended.") {
+  test("Split. Given a roadlink that is split into 2 new roadlinks; When the new roadlinks have lifecycle status 5; Then those asset should be expired.") {
     val oldLinkId = "16012727-a9c3-4272-95f9-d4016e132c4c:3"
     val newLinkId1 = "6eb20588-f184-4f9a-a590-3d677f1d9ef2:1"
     val newLinkId2 = "ecda3882-7f24-4efb-9df5-e9ba0d03978e:1"
