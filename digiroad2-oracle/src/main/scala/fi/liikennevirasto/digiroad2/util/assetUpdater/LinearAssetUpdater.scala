@@ -520,7 +520,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changes
     * @return
     */
-  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = Some(operationStep)
+  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = Some(operationStep)
   /**
     * 4.1) Add additional logic if something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -659,7 +659,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         rawData.filter(_.nonEmpty)
       }
     }
-    if (projectedToNewLinks.flatten.find { step => step.assetsAfter.exists(_.linkId == "e6724c48-99ff-49d6-8efb-5f12068d8415:1")}.isEmpty) {logger.info(s"No MaintenanceRoads projected to New Link e6724c48-99ff-49d6-8efb-5f12068d8415:1")} // REMOVE AFTER BUG SOURCE FOUND
     val (after, changeInfoM) = LogUtils.time(logger, "Merging operation steps before adjustment") {
       mergeAfterAndChangeSets(projectedToNewLinks :+ initStep)
     }
@@ -728,7 +727,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                                             operationStep: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
     val additionalSteps = LogUtils.time(logger, s"Performing additional operations for ${AssetTypeInfo.apply(typeId)}") {
-      additionalOperations(operationStep.get, changes)
+      additionalOperations(operationStep.get, changes, onlyNeededNewRoadLinks)
     }
 
     adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
@@ -820,7 +819,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     LogUtils.time(logger, s"TEST LOG handleReplacements with ${assets.size} assets", startLogging = true) {
       val roadLinkInfo = change.newLinks.head
       val assetInInvalidLink = !onlyNeededNewRoadLinks.exists(_.linkId == roadLinkInfo.linkId)
-      if (roadLinkInfo.linkId == "e6724c48-99ff-49d6-8efb-5f12068d8415:1") {logger.info(s"RoadLink e6724c48-99ff-49d6-8efb-5f12068d8415:1 is included in handleReplacements, assetInValidLink is ${assetInInvalidLink}")} // REMOVE AFTER BUG SOURCE FOUND
       if (assetInInvalidLink) { // assets is now in invalid link, expire
         LogUtils.time(logger, s"TEST LOG expiring ${assets.size} assets on an invalid link", startLogging = true) {
           assets.map(a => {
