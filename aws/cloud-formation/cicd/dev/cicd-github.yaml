@@ -258,6 +258,8 @@ Resources:
             Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
           - Name: eventBus
             Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
+          - Name: viiteRestApiEndPoint
+            Value: http://localhost:9080/api/viite/
           - Name: authenticationTestMode
             Value: true
           - Name: bonecp_password

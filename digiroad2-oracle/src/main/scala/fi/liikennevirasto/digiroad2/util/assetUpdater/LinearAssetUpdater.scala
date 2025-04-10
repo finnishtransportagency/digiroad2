@@ -425,6 +425,17 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def reportLoop(changes: Seq[RoadLinkChange], pairs: Set[Pair]): Unit = {
+    val hasEmptyExternalIdBefore = pairs.exists { asset =>
+      asset.oldAsset.head.externalIds.isEmpty
+    }
+    val hasEmptyExternalIdAfter = pairs.exists { asset =>
+      asset.newAsset.head.externalIds.isEmpty
+    }
+
+    if (hasEmptyExternalIdBefore || hasEmptyExternalIdAfter) {
+      logger.info("At least one asset has an empty value as externalID")
+    }
+
     LogUtils.time(logger, s"Reporting assets task with items count ${pairs.size} ") {
       pairs.foreach(asset => createRow(changes, asset))
     }
@@ -509,7 +520,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changes
     * @return
     */
-  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = Some(operationStep)
+  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = Some(operationStep)
   /**
     * 4.1) Add additional logic if something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -648,7 +659,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         rawData.filter(_.nonEmpty)
       }
     }
-
     val (after, changeInfoM) = LogUtils.time(logger, "Merging operation steps before adjustment") {
       mergeAfterAndChangeSets(projectedToNewLinks :+ initStep)
     }
@@ -717,7 +727,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                                             operationStep: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
     val additionalSteps = LogUtils.time(logger, s"Performing additional operations for ${AssetTypeInfo.apply(typeId)}") {
-      additionalOperations(operationStep.get, changes)
+      additionalOperations(operationStep.get, changes, onlyNeededNewRoadLinks)
     }
 
     adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
