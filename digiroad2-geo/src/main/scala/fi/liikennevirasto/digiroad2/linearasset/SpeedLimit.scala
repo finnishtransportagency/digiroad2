@@ -15,4 +15,4 @@ case class SpeedLimitRowWithRoadInfo(id: Long, linkId: String, sideCode: SideCod
                                      value: Option[Int], geometry: Seq[Point], startMeasure: Double, endMeasure: Double, roadLinkLength: Double,
                                      modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String],
                                      createdDate: Option[DateTime], administrativeClass: AdministrativeClass, municipalityCode: Int,
-                                     constructionType: ConstructionType, linkSource: LinkGeomSource, publicId: String, roadNameFi: String, roadNameSe: String)
+                                     constructionType: ConstructionType, linkSource: LinkGeomSource, publicId: String, roadNameFi: Option[String], roadNameSe: Option[String], roadNumber: Option[Long], roadPartNumber: Option[Long])
