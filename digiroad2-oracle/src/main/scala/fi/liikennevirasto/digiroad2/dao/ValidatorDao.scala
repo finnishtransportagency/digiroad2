@@ -216,26 +216,32 @@ object LaneValidatorDao extends ValidatorDao{
     StaticQuery.queryNA[LinearReferenceAsset](sql)(getResultLane).iterator.toSeq
   }
   
-  def incoherentLane(links: Set[String]): Seq[LinearReferenceAsset] = {
+  def outerLaneMisalignedToInner(links: Set[String]): Seq[LinearReferenceAsset] = {
     val sql =
       s"""
+      WITH inner_lane_bounds AS (
+        SELECT
+          l2.lane_code,
+          lp2.link_id,
+          lp2.side_code,
+          MIN(lp2.start_measure) AS min_start,
+          MAX(lp2.end_measure) AS max_end
+        FROM lane l2
+        JOIN lane_link ll2 ON l2.id = ll2.lane_id
+        JOIN lane_position lp2 ON ll2.lane_position_id = lp2.id
+        WHERE (l2.valid_to > current_timestamp OR l2.valid_to IS NULL)
+        GROUP BY l2.lane_code, lp2.link_id, lp2.side_code
+      )
       SELECT l.id, l.lane_code, lp.link_id, lp.side_code, lp.start_measure, lp.end_measure
       FROM lane l
       JOIN lane_link ll ON l.id = ll.lane_id
       JOIN lane_position lp ON ll.lane_position_id = lp.id
       ${filterLink("lp.link_id", links)}
+      JOIN inner_lane_bounds ib ON ib.link_id = lp.link_id AND ib.side_code = lp.side_code
       WHERE l.lane_code != 1
       AND (l.valid_to > current_timestamp OR l.valid_to IS NULL)
-      AND EXISTS(SELECT 1
-          FROM lane l2
-          JOIN lane_link ll2 ON l2.id = ll2.lane_id
-          JOIN lane_position lp2 ON ll2.lane_position_id = lp2.id
-          WHERE lp2.link_id = lp.link_id
-          AND (l2.valid_to > current_timestamp OR l2.valid_to IS NULL)
-          AND lp2.side_code = lp.side_code
-          AND MOD(l.lane_code, 2) = MOD(l2.lane_code, 2)
-          AND l2.lane_code < l.lane_code
-          AND (lp2.start_measure > lp.start_measure OR lp2.end_measure < lp.end_measure)
+      AND ib.lane_code < l.lane_code
+      AND (lp.start_measure < ib.min_start OR lp.end_measure > ib.max_end)
       )"""
     StaticQuery.queryNA[LinearReferenceAsset](sql)(getResultLane).iterator.toSeq
   }

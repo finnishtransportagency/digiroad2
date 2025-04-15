@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory
 object LaneValidators extends Validators {
   private val logger = LoggerFactory.getLogger(getClass)
   
-  override def forSamuutus: Seq[ValidatorFunction] = Seq(laneFitIntoLink, lanesIsNotTooShort, lanesDoesNotOverlap, incoherentLaneCode)
-  override def forTopology: Seq[ValidatorFunction] = Seq(laneFitIntoLink, lanesIsNotTooShort, lanesDoesNotOverlap, incoherentLaneCode)
+  override def forSamuutus: Seq[ValidatorFunction] = Seq(laneFitIntoLink, lanesIsNotTooShort, lanesDoesNotOverlap, outerLaneMisalignedToInner)
+  override def forTopology: Seq[ValidatorFunction] = Seq(laneFitIntoLink, lanesIsNotTooShort, lanesDoesNotOverlap, outerLaneMisalignedToInner)
 
   private def laneFitIntoLink(assetType: Int, linkIds: Set[String]): returnResult = {
     LogUtils.time(logger,"laneFitIntoLink"){
@@ -29,9 +29,9 @@ object LaneValidators extends Validators {
     
   }
   
-  private def incoherentLaneCode(assetType: Int, linkIds: Set[String]): returnResult = {
-    LogUtils.time(logger,"incoherentLaneCode"){
-      Validators.returnValidationResult("incoherentLaneCode",LaneValidatorDao.incoherentLane(linkIds))
+  private def outerLaneMisalignedToInner(assetType: Int, linkIds: Set[String]): returnResult = {
+    LogUtils.time(logger,"outerLaneMisalignedToInner"){
+      Validators.returnValidationResult("outerLaneMisalignedToInner",LaneValidatorDao.outerLaneMisalignedToInner(linkIds))
     }
     
   }
