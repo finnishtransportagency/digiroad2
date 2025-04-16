@@ -240,6 +240,7 @@ object LaneValidatorDao extends ValidatorDao{
       JOIN inner_lane_bounds ib ON ib.link_id = lp.link_id AND ib.side_code = lp.side_code
       WHERE l.lane_code != 1
       AND (l.valid_to > current_timestamp OR l.valid_to IS NULL)
+      AND l.lane_code % 2 = ib.lane_code % 2
       AND ib.lane_code < l.lane_code
       AND (lp.start_measure < ib.min_start OR lp.end_measure > ib.max_end)
       )"""
