@@ -243,7 +243,7 @@ object LaneValidatorDao extends ValidatorDao{
       AND l.lane_code % 2 = ib.lane_code % 2
       AND ib.lane_code < l.lane_code
       AND (lp.start_measure < ib.min_start OR lp.end_measure > ib.max_end)
-      )"""
+      """
     StaticQuery.queryNA[LinearReferenceAsset](sql)(getResultLane).iterator.toSeq
   }
   
