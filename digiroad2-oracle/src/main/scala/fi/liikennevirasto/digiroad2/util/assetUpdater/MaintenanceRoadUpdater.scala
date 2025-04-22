@@ -5,20 +5,10 @@ import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures, NewLinearAssetMassOperation}
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils}
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
-  override def filterChanges(typeId: Int, changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
-    val (remove, other) = super.filterChanges(typeId, changes).partition(_.changeType == RoadLinkChangeType.Remove)
-    val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
-    val filterChanges = if (linksOther.nonEmpty) {
-      val links = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(linksOther,false)
-      val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
-      other.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
-    } else Seq()
-    filterChanges ++ remove
-  }
   protected override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset], onlyNeededNewRoadLinks: Seq[RoadLink]): Unit = {
     newMaintenanceAssets.foreach { linearAsset =>
       val roadLink = onlyNeededNewRoadLinks.find(_.linkId == linearAsset.linkId)
@@ -45,6 +35,30 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
     }
     if (newMaintenanceAssets.nonEmpty)
       logger.debug(s"Added assets for linkids ${newMaintenanceAssets.map(_.linkId)}")
+  }
+
+  override def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = {
+    expireMaintenanceRoadsOnInvalidLinks(operationStep, newRoadLinks)
+  }
+
+  /***
+   * Expires MaintenanceRoad assets that are projected on invalid links
+   * Does not remove expired from assetsAfter, as that is done later during adjustment process
+   * @param operationStep
+   * @param newRoadLinks
+   * @return
+   */
+  private def expireMaintenanceRoadsOnInvalidLinks(operationStep: OperationStep, newRoadLinks: Seq[RoadLink]) = {
+    val validRoadLinkIds = newRoadLinks.filter(roadLink => roadLink.functionalClass > 4).map(_.linkId).toSet
+    val expiredAssetIds = operationStep.assetsAfter.filterNot(asset => validRoadLinkIds.contains(asset.linkId)).map(_.id).toSet
+    val combinedExpiredIds = operationStep.changeInfo.get.expiredAssetIds ++ expiredAssetIds
+    val updatedChangeInfo = operationStep.changeInfo.get.copy(expiredAssetIds = combinedExpiredIds)
+    Some(OperationStep(
+      assetsAfter = operationStep.assetsAfter,
+      changeInfo = Some(updatedChangeInfo),
+      assetsBefore = operationStep.assetsBefore
+      )
+    )
   }
 
 }

@@ -14,7 +14,7 @@ import scala.util.Try
 case class LinkAndAssets(assets:Set[PieceWiseLinearAsset], link:RoadLinkForFillTopology)
 
 case class RoadLinkForFillTopology(linkId: String, length:Double, trafficDirection:TrafficDirection, administrativeClass:AdministrativeClass, linkSource:LinkGeomSource,
-                                   linkType:LinkType, constructionType:ConstructionType, geometry: Seq[Point], municipalityCode:Int){
+                                   linkType:LinkType, constructionType:ConstructionType, geometry: Seq[Point], municipalityCode:Int, attributes: Map[String, Any] = Map()){
   def isSimpleCarTrafficRoad: Boolean = {
     val roadLinkTypeAllowed = Seq(ServiceOrEmergencyRoad, CycleOrPedestrianPath, PedestrianZone, TractorRoad, ServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry, RestArea)
     val constructionTypeAllowed: Seq[ConstructionType] = Seq(UnderConstruction, Planned)
@@ -394,7 +394,7 @@ class AssetFiller {
     dbAssets.map { dbAsset =>
       val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
-      val attributesToUse = Map("municipality" -> roadLink.municipalityCode, "constructionType" -> roadLink.constructionType.value)
+      val attributesToUse = Map("municipality" -> roadLink.municipalityCode, "constructionType" -> roadLink.constructionType.value) ++ roadLink.attributes
       PieceWiseLinearAsset(
         dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired, dbAsset.startMeasure,
         dbAsset.endMeasure, Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime, dbAsset.createdBy,
