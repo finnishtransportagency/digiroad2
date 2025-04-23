@@ -603,7 +603,7 @@ object LaneUpdater {
     })
   }
 
-  // If lanes from old roadLink are currently on Lane work list or Automatically processed lanes work list
+  // If changes link ids are present in Lane work list or Automatically processed lanes work list
   // then only process the main lanes on changed link
   def areLinkIDsOnWorkLists(change: RoadLinkChange, linkIdsOnLaneWorkList: Seq[String], linkIdsOnAutoProcessedLanesWorkList: Seq[String]): Boolean = {
     val changeLinkIds = change.newLinks.map(_.linkId) ++ change.oldLink.map(_.linkId)
