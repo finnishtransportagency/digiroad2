@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeClient, RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
+import fi.liikennevirasto.digiroad2.util.LogUtils.logThreadStatesAtInterval
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus}
 import org.slf4j.{Logger, LoggerFactory}
