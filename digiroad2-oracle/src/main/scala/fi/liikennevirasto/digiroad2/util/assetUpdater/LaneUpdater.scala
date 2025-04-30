@@ -626,12 +626,9 @@ object LaneUpdater {
 
   def handleTrafficDirectionChange(workListChanges: Seq[RoadLinkChange], workListMainLanes: Seq[PersistedLane],addedRoadLinks: Seq[RoadLink]): (ChangeSet, Seq[PersistedLane]) = {
     val laneIdsToExpire = workListMainLanes.map(_.id).toSet
-    val createdMainLanes = workListChanges.flatMap(change => {
-      val newLinkIds = change.newLinks.map(_.linkId)
-      val neededLinks = addedRoadLinks.filter(a=> newLinkIds.contains(a.linkId))
-      val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(neededLinks, saveResult = false)
-      createdMainLanes
-    })
+    val newLinkIdsToGenerateMainLanesOn = workListChanges.flatMap(change => change.newLinks.map(_.linkId)).toSet
+    val roadLinksToGenerateMainLanesOn = addedRoadLinks.filter(link => newLinkIdsToGenerateMainLanesOn.contains(link.linkId))
+    val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(roadLinksToGenerateMainLanesOn, saveResult = false)
 
     (ChangeSet(expiredLaneIds = laneIdsToExpire, generatedPersistedLanes = createdMainLanes), createdMainLanes)
   }
