@@ -44,18 +44,28 @@ object LinearAssetPartitioner extends GraphPartitioner {
       roadNumber.orElse(roadNameFi).orElse(roadNameSe)
     }
 
-    val linkGroups = twoWayLinks.groupBy { link =>
-      (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0, link.trafficDirection, link.attributes.get("ROADPARTNUMBER").orElse(None))
-
-    } ++ oneWayLinks.groupBy { link =>
+    val groupedTwoWay = twoWayLinks.groupBy { link =>
       (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0, link.trafficDirection, link.attributes.get("ROADPARTNUMBER").orElse(None))
     }
 
-    val (linksToPartition, linksToPass) = linkGroups.partition { case ((roadIdentifier, _, _, _, _, _), _) => roadIdentifier.isDefined }
-    val clusters = linksToPartition.values.map(p => {
+    val groupedOneWay = oneWayLinks.groupBy { link =>
+      (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0, link.trafficDirection, link.attributes.get("ROADPARTNUMBER").orElse(None))
+    }
+
+    val (linksToPartitionTwoWay, linksToPassTwoWay) = groupedTwoWay.partition { case ((roadIdentifier, _, _, _, _, _), _) => roadIdentifier.isDefined }
+    val clustersTwoWay = linksToPartitionTwoWay.values.map(p => {
       clusterLinks(p)
     }).toSeq.flatten
-    val linkPartitions = clusters.map(linksFromCluster)
-    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x))
+    val linkPartitionsTwoWay = clustersTwoWay.map(linksFromCluster)
+    val twoWayResult = linkPartitionsTwoWay ++ linksToPassTwoWay.values.flatten.map(x => Seq(x))
+
+    val (linksToPartitionOneWay, linksToPassOneWay) = groupedOneWay.partition { case ((roadIdentifier, _, _, _, _, _), _) => roadIdentifier.isDefined }
+    val clustersOneWay = linksToPartitionOneWay.values.map(p => {
+      clusterLinks(p)
+    }).toSeq.flatten
+    val linkPartitionsOneWay = clustersOneWay.map(linksFromCluster)
+    val oneWayResult = linkPartitionsOneWay ++ linksToPassOneWay.values.flatten.map(x => Seq(x))
+
+    twoWayResult ++ oneWayResult
   }
 }
