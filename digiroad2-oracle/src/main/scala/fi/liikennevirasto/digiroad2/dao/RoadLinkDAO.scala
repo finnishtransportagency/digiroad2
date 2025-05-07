@@ -560,7 +560,9 @@ class RoadLinkDAO {
       case Some(sqlArray: SqlArray) =>
         sqlArray.getArray.asInstanceOf[Array[AnyRef]].collect {
           case pgObject: PGobject =>
-            val Array(name, value, modifiedDate, modifiedBy) = pgObject.getValue.stripPrefix("(").stripSuffix(")").split(",", -1)
+            // Some private road association names may contain commas. These commas are ignored with this pattern.
+            val commasOutsideQuotedStrings = """,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"""
+            val Array(name, value, modifiedDate, modifiedBy) = pgObject.getValue.stripPrefix("(").stripSuffix(")").split(commasOutsideQuotedStrings, -1)
             (
               Option(name).filter(_.nonEmpty).map(cleanValue),
               Option(value).filter(_.nonEmpty).map(cleanValue),
