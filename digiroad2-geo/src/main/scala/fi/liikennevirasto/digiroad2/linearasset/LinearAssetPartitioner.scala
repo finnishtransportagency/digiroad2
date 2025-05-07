@@ -44,18 +44,24 @@ object LinearAssetPartitioner extends GraphPartitioner {
       roadNumber.orElse(roadNameFi).orElse(roadNameSe)
     }
 
-    val linkGroups = twoWayLinks.groupBy { link =>
-      (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0, link.trafficDirection, link.attributes.get("ROADPARTNUMBER").orElse(None))
+    def partitionLinkGroup(linkGroup:  Seq[T]):Seq[Seq[T]] = {
+      val grouped = linkGroup.groupBy { link =>
+        (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0, link.trafficDirection, link.attributes.get("ROADPARTNUMBER").orElse(None))
+      }
 
-    } ++ oneWayLinks.groupBy { link =>
-      (extractRoadIdentifier(link), link.administrativeClass, link.value, link.id == 0, link.trafficDirection, link.attributes.get("ROADPARTNUMBER").orElse(None))
+      val (linksToPartition, linksToPass) = grouped.partition { case ((roadIdentifier, _, _, _, _, _), _) => roadIdentifier.isDefined }
+      val clusters = linksToPartition.values.map(p => {
+        clusterLinks(p)
+      }).toSeq.flatten
+
+      val linkPartitions = clusters.map(linksFromCluster)
+      val result = linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x))
+      result
     }
 
-    val (linksToPartition, linksToPass) = linkGroups.partition { case ((roadIdentifier, _, _, _, _, _), _) => roadIdentifier.isDefined }
-    val clusters = linksToPartition.values.map(p => {
-      clusterLinks(p)
-    }).toSeq.flatten
-    val linkPartitions = clusters.map(linksFromCluster)
-    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x))
+    val twoWayResult = partitionLinkGroup(twoWayLinks)
+    val oneWayResult = partitionLinkGroup(oneWayLinks)
+
+    twoWayResult ++ oneWayResult
   }
 }
