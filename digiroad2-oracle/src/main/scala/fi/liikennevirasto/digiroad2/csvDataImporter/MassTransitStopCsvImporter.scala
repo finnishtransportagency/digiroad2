@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
-import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -8,14 +7,13 @@ import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{BusStopType, MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{BusStopType, MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
-import fi.liikennevirasto.digiroad2.util.LaneUtils.roadAddressService
 import org.apache.commons.lang3.StringUtils.isBlank
-import org.apache.http.impl.client.HttpClientBuilder
 
+import java.io.{InputStream, InputStreamReader}
 import scala.util.Try
 
 class MassTransitStopCsvOperation(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -345,13 +343,48 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
   }
 
+  override def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
+    val optNationalId: Option[Long] = getPropertyValueOption(parsedRow, "national_id") match {
+      case Some(value) => try {
+        Some(value.toString.toLong)
+      } catch {
+        case _: NumberFormatException => None
+      }
+      case None => None
+    }
+
+
+    optNationalId match {
+      case Some(natId) =>
+        val stop = massTransitStopService.getMassTransitStopByNationalId(natId, _ => (), false)
+        stop match {
+          case Some(stopData) =>
+            val roadLinks = getNearestRoadLink(stopData.lon, stopData.lat, user, Set(), BusStopType(stopData.stopTypes.head))
+            roadLinks.isEmpty match {
+              case false =>
+                if (assetHasEditingRestrictions(MassTransitStopAsset.typeId, roadLinks)) {
+                  (List("Asset type editing is restricted within municipality or admininistrative class."), Seq())
+                } else {
+                  (Nil, Nil)
+                }
+              case _ =>
+                (Nil, Nil)
+            }
+          case _ =>
+            (Nil, Nil)
+        }
+      case _ => (Nil, Nil)
+    }
+  }
+
   def processing(csvReader: List[Map[String, String]], user: User, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResultPointAsset = {
     withDynTransaction {
       csvReader.foldLeft(ImportResultPointAsset()) {
         (result, row) =>
           val missingParameters = findMissingParameters(row)
           val (malformedParameters, properties) = assetRowToProperties(row)
-          if (missingParameters.isEmpty && malformedParameters.isEmpty) {
+          val (notImportedParameters, _) = verifyData(properties, user)
+          if (missingParameters.isEmpty && malformedParameters.isEmpty && notImportedParameters.isEmpty) {
             try {
               val excludedRows = createOrUpdate(row, roadTypeLimitations, user, properties)
               result.copy(excludedRows = excludedRows ::: result.excludedRows)
@@ -370,7 +403,11 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
               malformedRows = malformedParameters match {
                 case Nil => result.malformedRows
                 case parameters => MalformedRow(malformedParameters = parameters, csvRow = rowToString(row)) :: result.malformedRows
-              }
+              },
+              notImportedData = notImportedParameters match {
+                case Nil => result.notImportedData
+                case parameters => NotImportedData(reason = parameters.head, csvRow = rowToString(row)) :: result.notImportedData
+            }
             )
           }
       }
