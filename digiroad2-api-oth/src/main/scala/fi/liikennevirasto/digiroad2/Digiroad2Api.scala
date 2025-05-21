@@ -4,7 +4,7 @@ import java.security.InvalidParameterException
 import java.time.LocalDate
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
-import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, RoadLinkProperties => RoadLinkPropertiesAsset, _}
 import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
@@ -875,7 +875,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   put("/linkproperties") {
     val properties = parsedBody.extract[Seq[LinkProperties]]
     val user = userProvider.getCurrentUser()
-    def municipalityValidation(municipalityCode: Int, administrativeClass: AdministrativeClass) = validateUserAccess(user, 460)(municipalityCode, administrativeClass)
+    def municipalityValidation(municipalityCode: Int, administrativeClass: AdministrativeClass) = validateUserAccess(user, RoadLinkPropertiesAsset.typeId)(municipalityCode, administrativeClass)
     properties.map { prop =>
       roadLinkService.updateLinkProperties(prop, Option(user.username), municipalityValidation, user.isOperator()).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
