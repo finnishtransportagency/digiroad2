@@ -114,6 +114,17 @@
       return servicePointPropertyOrdering;
     };
 
+    var isOnlyVirtualStop = function () {
+      return _.some(currentAsset.payload.properties, function (property) {
+        if (property.publicId === massTransitStopTypePublicId) {
+          return _.some(property.values, function (propertyValue) {
+            return (propertyValue.propertyValue === 5 && property.values.length === 1);
+          });
+        }
+        return false;
+      });
+    };
+
     var place = function(asset, other) {
       eventbus.trigger('asset:placed', asset);
       currentAsset = asset;
@@ -690,7 +701,8 @@
       isAnAddToolOption: isAnAddToolOption,
       isTerminalType: isTerminalType,
       isServicePointType: isServicePointType,
-      getServicePointPropertyOrdering: getServicePointPropertyOrdering
+      getServicePointPropertyOrdering: getServicePointPropertyOrdering,
+      isOnlyVirtualStop: isOnlyVirtualStop
     };
   };
 

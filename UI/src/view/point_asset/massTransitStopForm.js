@@ -170,18 +170,31 @@
     }
 
     var updateStatus = function() {
-      if(pointAssetToSave && !isValidServicePoint()){
-        element.prop('disabled', true);
-      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() &&
-          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
-          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
-        element.prop('disabled', false);
-      } else if(poistaSelected) {
-        element.prop('disabled', false);
+      // If the user is a municipality maintainer, only the isOnlyVirtualStop property matters
+      if (authorizationPolicy.isMunicipalityMaintainer()) {
+        if (selectedMassTransitStopModel.isOnlyVirtualStop()) {
+          element.prop('disabled', false);
+        } else {
+          element.prop('disabled', true);
+        }
       } else {
-        element.prop('disabled', true);
+        if (pointAssetToSave && !isValidServicePoint()) {
+          element.prop('disabled', true);
+        } else if (
+            selectedMassTransitStopModel.isDirty() &&
+            !selectedMassTransitStopModel.requiredPropertiesMissing() &&
+            !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
+            !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()
+        ) {
+          element.prop('disabled', false);
+        } else if (poistaSelected) {
+          element.prop('disabled', false);
+        } else {
+          element.prop('disabled', true);
+        }
       }
     };
+
 
     updateStatus();
 
@@ -390,12 +403,17 @@
 
         var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+        var municipalityUserStateRoadRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Kuntaylläpitäjänä voit muokata valtion teillä vain virtuaalipysäkkejä.'
         var message = '';
 
         if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
-        } else if (!authorizationPolicy.assetSpecificAccess())
+        } else if (!authorizationPolicy.assetSpecificAccess()) {
           message = noRights;
+        } else if (authorizationPolicy.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isOnlyVirtualStop()) {
+          message = municipalityUserStateRoadRights;
+        }
+
 
         if(message) {
           return '' +
@@ -1073,6 +1091,9 @@
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue != '2';}))) {
           isTRMassTransitStop = false;
           property.propertyType = "single_choice";
+          renderAssetForm();
+        }
+        if (property.publicId === 'pysakin_tyyppi') {
           renderAssetForm();
         }
         // Prevent getAssetForm() branching to 'Ei toteutettu'
