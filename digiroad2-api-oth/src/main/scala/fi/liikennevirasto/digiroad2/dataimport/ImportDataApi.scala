@@ -76,12 +76,8 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
       case municipalities => municipalities.map(_.toInt).toSet
     }
 
-    if (!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {
-      halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
-    }
-
-    if (userProvider.getCurrentUser().isMunicipalityMaintainer() && municipalitiesToExpire.diff(userProvider.getCurrentUser().configuration.authorizedMunicipalities).nonEmpty) {
-      halt(Forbidden(s"Puuttuvat muokkausoikeukset jossain listalla olevassa kunnassa: ${municipalitiesToExpire.mkString(",")}"))
+    if (!userProvider.getCurrentUser().isOperator()) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
 
    importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
@@ -121,8 +117,8 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
   }
 
   def validateOperation(): Unit = {
-    if(!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {
-      halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
+    if(!userProvider.getCurrentUser().isOperator()) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
   }
 
