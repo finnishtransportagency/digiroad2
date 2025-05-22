@@ -199,7 +199,8 @@ trait ResolvingFrozenRoadLinks {
   def resolveAddressesOnOverlappingGeometry(municipality: Int): (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
 
     val existingTempRoadAddress = roadLinkTempDao.getByMunicipality(municipality)
-    val roadLinksInMunicipality = roadLinkService.getRoadLinksByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == State)
+    val roadLinksInMunicipality = roadLinkService.getRoadLinksByMunicipality(municipality, newTransaction = false)
+      .filter(rl => rl.administrativeClass == State || rl.administrativeClass == Municipality)
 
     // Delete old saved Temp addresses on RoadLinks that are not valid anymore
     val tempAddressLinkIdsToDelete = existingTempRoadAddress.map(_.linkId).diff(roadLinksInMunicipality.map(_.linkId))
@@ -215,7 +216,7 @@ trait ResolvingFrozenRoadLinks {
       val linkIdsWithViiteRoadAddress = allViiteRoadAddresses.map(_.linkId)
       val hasAddressInfo = linkIdsWithViiteRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
 
-      !hasAddressInfo && roadLink.timeStamp > viiteTimestamp
+      !hasAddressInfo
     })
 
     val groupedRoadLinksMissingAddress = stateRoadLinksMissingAddress.groupBy(_.roadNameIdentifier.getOrElse(""))
