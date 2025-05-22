@@ -245,14 +245,14 @@ trait ResolvingFrozenRoadLinks {
 
           // Fetch Road Address info for road link end points from VKM
           val vkmAddressAtRoadLinkStart = try {
-            Some(vkmClient.coordToAddress(first, roadNumber, roadPartNumber, includePedestrian = Some(true)))
+            Some(vkmClient.coordToAddress(first, roadNumber, roadPartNumber, includePedestrian = Some(true), searchDistance = Some(3)))
           } catch {
             case roadAddressException: RoadAddressException =>
               logger.error(roadAddressException.getMessage)
               None
           }
           val vkmAddressAtRoadLinkEnd = try {
-            Some(vkmClient.coordToAddress(last, roadNumber, roadPartNumber, includePedestrian = Some(true)))
+            Some(vkmClient.coordToAddress(last, roadNumber, roadPartNumber, includePedestrian = Some(true), searchDistance = Some(3)))
           } catch {
             case roadAddressException: RoadAddressException =>
               logger.error(roadAddressException.getMessage)
