@@ -27,7 +27,6 @@ phases:
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
   build:
     commands:
-      - grunt test
       - sbt "project digiroad2-oracle" "run-main fi.liikennevirasto.digiroad2.util.DataFixture test"
       - sbt test
       - grunt deploy
