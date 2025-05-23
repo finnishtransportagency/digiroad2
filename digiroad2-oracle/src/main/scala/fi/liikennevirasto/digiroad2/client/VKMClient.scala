@@ -275,7 +275,7 @@ class VKMClient {
   }
 
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
-                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
+                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Int] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
 
     val finalSearchDistance = searchDistance.orElse(Some(500))
@@ -300,7 +300,7 @@ class VKMClient {
   }
 
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
-                        distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
+                        distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Int] = None,
                         includePedestrian: Option[Boolean] = Option(false)) : Seq[RoadAddress] = {
 
     coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )
