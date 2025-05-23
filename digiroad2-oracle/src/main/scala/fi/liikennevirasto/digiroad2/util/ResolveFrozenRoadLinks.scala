@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
+import fi.liikennevirasto.digiroad2.asset.{Municipality, SideCode, State}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
-import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTempDAO}
+import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.Try
@@ -81,10 +81,8 @@ trait ResolvingFrozenRoadLinks {
 
     tempAddressTrack match {
       case Some(track) =>
-        logger.info(s"""calculated track value: ${track.value} using first point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track)))
       case _ =>
-        logger.info(s"""could not calculate track using first point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq()
     }
   }
@@ -123,10 +121,8 @@ trait ResolvingFrozenRoadLinks {
 
     tempAddressTrack match {
       case Some(track) =>
-        logger.info(s"""calculated track value: ${track.value} using last point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track)))
       case _ =>
-        logger.info(s"""could not calculate track using last point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq()
     }
   }
@@ -262,13 +258,11 @@ trait ResolvingFrozenRoadLinks {
 
           val vkmAddresses = Seq(vkmAddressAtRoadLinkStart, vkmAddressAtRoadLinkEnd).flatten
           if (vkmAddresses.isEmpty || (vkmAddresses.nonEmpty && vkmAddresses.size != 2)) {
-            logger.error("VKM did not return address for both end points of linkID: " + roadLinkMissingAddress.linkId)
             Seq()
           } else {
             val groupedVkmAddresses = vkmAddresses.groupBy(addr => (addr.road, addr.roadPart))
             // Returned addresses must be on the same road part, in order to create temp road address for road link
             if (groupedVkmAddresses.keys.size > 1) {
-              logger.error("Returned VKM addresses for linkID: " + roadLinkMissingAddress.linkId + " are not on the same road part")
               None
             } else {
               val orderedAddress = vkmAddresses.sortBy(_.addrM)
