@@ -281,7 +281,7 @@ trait ResolvingFrozenRoadLinks {
         }
       }
 
-      recalculateTracksRecursively(viiteAddressesWithPoints, tempAddressesToCreate, Seq())
+      tempAddressesToCreate
     }.toSeq
 
     val roadLinksAddressUnresolved = stateRoadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
