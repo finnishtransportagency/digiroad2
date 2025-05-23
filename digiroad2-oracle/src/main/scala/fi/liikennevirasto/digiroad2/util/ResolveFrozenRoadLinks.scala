@@ -212,7 +212,6 @@ trait ResolvingFrozenRoadLinks {
     })
 
     val groupedRoadLinksMissingAddress = roadLinksMissingAddress.groupBy(_.roadNameIdentifier.getOrElse(""))
-    val groupedRoadLinks = roadLinksInMunicipality.groupBy(_.roadNameIdentifier.getOrElse(""))
 
     val resolvedAddresses = groupedRoadLinksMissingAddress.keys.flatMap { key =>
       val tempAddressesToCreate = groupedRoadLinksMissingAddress(key).flatMap { roadLinkMissingAddress =>
