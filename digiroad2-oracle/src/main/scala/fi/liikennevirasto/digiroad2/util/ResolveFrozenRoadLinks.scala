@@ -219,18 +219,6 @@ trait ResolvingFrozenRoadLinks {
     val groupedRoadLinks = roadLinksInMunicipality.groupBy(_.roadNameIdentifier.getOrElse(""))
 
     val resolvedAddresses = groupedRoadLinksMissingAddress.keys.flatMap { key =>
-      val relevantLinkIds = groupedRoadLinks.getOrElse(key, Seq())
-
-      val viiteAddressesWithPoints = allViiteRoadAddresses.flatMap { address =>
-        relevantLinkIds.find(x => x.linkId == address.linkId).map { roadLink =>
-          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-          val roadAddressTemp = RoadAddressTEMP(address.linkId, address.roadNumber,
-            address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, roadLink.geometry, Some(address.sideCode))
-
-          RoadAddressTEMPwithPoint(first, last, roadAddressTemp)
-        }
-      }
-
       val tempAddressesToCreate = groupedRoadLinksMissingAddress(key).flatMap { roadLinkMissingAddress =>
         val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
 
