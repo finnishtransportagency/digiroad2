@@ -37,10 +37,6 @@ trait ResolvingFrozenRoadLinks {
   lazy val roadLinkTempDao: RoadAddressTempDAO = new RoadAddressTempDAO
 
   lazy val username: String = "batch_process_temp_road_address"
-
-  //Timestamp for the instant when Viite road links were frozen
-  // 20.05.2023 16:29:59
-  lazy val viiteTimestamp: Long = 1684589399000L
   
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -131,7 +127,7 @@ trait ResolvingFrozenRoadLinks {
     * Try to create temp road address for links still missing road address info, by using adjacent
     * links road addresses and KGV road number and KGV road part number fields
     * @param roadLinksMissingAddress road links still missing address with adjacent road links
-    * @param mappedAddresses Viite and temp road addresses
+    * @param mappedAddresses Existing VKM and temp road addresses
     * @return generated temp addresses
     */
   def resolveUsingAdjacents(roadLinksMissingAddress: Seq[RoadLinkWithPointsAndAdjacents], mappedAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
@@ -187,10 +183,11 @@ trait ResolvingFrozenRoadLinks {
   }
 
   /**
-    * Viite uses frozen road links from November 2022, use VKM API to determine road addresses for up-to-date road links
+    * If Digiroad's road links are not synchronized with VKM, we can't get road addresses for road links using link ids
+    * so we use VKM API to transform road link coordinates to road addresses
     *
-    * @param municipality municipality where we want to generate temp road addresses for state road links
-    * @return Generated temp road addresses with start and end points, and state road links still missing road address
+    * @param municipality municipality where we want to generate temp road addresses for state and municipality road links
+    * @return Generated temp road addresses with start and end points, and state and municipality road links still missing road address
     */
   def resolveAddressesOnOverlappingGeometry(municipality: Int): (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
 
@@ -205,17 +202,16 @@ trait ResolvingFrozenRoadLinks {
       roadLinkTempDao.deleteInfoByLinkIds(tempAddressLinkIdsToDelete.toSet)
     }
 
-    // Some state road links are missing road address in Viite
-    val allViiteRoadAddresses = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
-    val stateRoadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
+    val roadAddressesByLinkIds = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
+    val roadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
       val linkIdsWithTempAddress = existingTempRoadAddress.map(_.linkId)
-      val linkIdsWithViiteRoadAddress = allViiteRoadAddresses.map(_.linkId)
-      val hasAddressInfo = linkIdsWithViiteRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
+      val linkIdsWithRoadAddress = roadAddressesByLinkIds.map(_.linkId)
+      val hasAddressInfo = linkIdsWithRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
 
       !hasAddressInfo
     })
 
-    val groupedRoadLinksMissingAddress = stateRoadLinksMissingAddress.groupBy(_.roadNameIdentifier.getOrElse(""))
+    val groupedRoadLinksMissingAddress = roadLinksMissingAddress.groupBy(_.roadNameIdentifier.getOrElse(""))
     val groupedRoadLinks = roadLinksInMunicipality.groupBy(_.roadNameIdentifier.getOrElse(""))
 
     val resolvedAddresses = groupedRoadLinksMissingAddress.keys.flatMap { key =>
@@ -272,7 +268,7 @@ trait ResolvingFrozenRoadLinks {
       tempAddressesToCreate
     }.toSeq
 
-    val roadLinksAddressUnresolved = stateRoadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
+    val roadLinksAddressUnresolved = roadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
     (resolvedAddresses, roadLinksAddressUnresolved)
   }
 
@@ -324,7 +320,7 @@ trait ResolvingFrozenRoadLinks {
              |Resolved ${adjacentsToCreate.size} addreses using adjacent addresses on linkIds:
              | ${adjacentsToCreate.map(_.linkId).mkString(", ")}
              |Total: ${(overlappingToCreate ++ adjacentsToCreate).size}
-             |New state road links without road address info: ${missing.size - adjacentsToCreate.size}
+             |State and municipality road links without road address info: ${missing.size - adjacentsToCreate.size}
              |Municipality: $municipality
              |""".stripMargin)
 
@@ -340,9 +336,9 @@ trait ResolvingFrozenRoadLinks {
   // could not find municipalities where addresses could be resolved using adjacent road address info
   // monitor this methods behaviour trough logs
   /**
-    * Use possible adjacent Viite road addresses and resolved temp road addresses to resolve road addresses on links
+    * Use possible adjacent existing VKM road addresses and resolved temp road addresses to resolve road addresses on links
     * where VKM could not resolve them
-    * @param missing  State road links still missing road address info
+    * @param missing  State and municipality road links still missing road address info
     * @param toCreate Resolved temp road addresses to be created
     * @return Road addresses resolved using adjacent road link addresses
     */
@@ -374,10 +370,10 @@ trait ResolvingFrozenRoadLinks {
 
   /**
     * Resolve temp addresses on new links where VKM could not provide addresses.
-    * Tries to resolve addresses recursively using already resolved temp addresses and Viite addresses
+    * Tries to resolve addresses recursively using already resolved temp addresses and existing VKM addresses
     * from adjacent road links until no new addresses are resolved
     * @param missingRoadLinks Road links still missing address info
-    * @param allAddresses Viite and Temp addresses to be used in resolving process
+    * @param allAddresses Existing VKM and Temp addresses to be used in resolving process
     * @param result Resulting resolved temp road addresses from past executions
     * @return Resulting resolved temp road addresses
     */
