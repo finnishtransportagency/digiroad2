@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{Municipality, SideCode, State}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
-import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
