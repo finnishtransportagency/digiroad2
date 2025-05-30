@@ -13,6 +13,7 @@ drop table if exists date_period_value cascade;
 drop table if exists date_period_value_history cascade;
 drop table if exists date_property_value cascade;
 drop table if exists date_property_value_history cascade;
+drop table if exists editing_restrictions cascade;
 drop table if exists ely cascade;
 drop table if exists enumerated_value cascade;
 drop table if exists export_lock cascade;

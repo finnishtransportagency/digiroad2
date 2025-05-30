@@ -1,6 +1,8 @@
 (function (root) {
   var unit = 'km/h';
+  var typeId = 20;
   var authorizationPolicy = new LinearAssetAuthorizationPolicy();
+  var editingRestrictions = new EditingRestrictions();
   var template = function(selectedSpeedLimit) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
@@ -65,9 +67,15 @@
 
       var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
+      var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
       var message = '';
 
-      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedSpeedLimit)) {
+      if (editingRestrictions.hasStateRestriction(selectedSpeedLimit.get(), typeId)) {
+        message = stateRoadEditingRestricted;
+      } else if(editingRestrictions.hasMunicipalityRestriction(selectedSpeedLimit.get(), typeId)) {
+        message = municipalityRoadEditingRestricted;
+      } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedSpeedLimit)) {
         message = limitedRights;
       } else if (validateAdministrativeClass(selectedSpeedLimit))
         message = noRights;
@@ -217,7 +225,7 @@
       rootElement.find('#separate-limit').on('click', function() { selectedSpeedLimit.separate(); });
       rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedSpeedLimit.save(); });
       rootElement.find('.form-controls.speed-limit button.cancel').on('click', function() { selectedSpeedLimit.cancel(); });
-      toggleMode(validateAdministrativeClass(selectedSpeedLimit) || applicationModel.isReadOnly());
+      toggleMode(validateAdministrativeClass(selectedSpeedLimit) || editingRestrictions.hasRestrictions(selectedSpeedLimit.get(), typeId) || applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselect', function() {
       rootElement.find('#feature-attributes-header').empty();

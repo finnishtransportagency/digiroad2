@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.text.Normalizer
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import fi.liikennevirasto.digiroad2.asset.{ServicePointsClass, State}
+import fi.liikennevirasto.digiroad2.asset.{Municipality, ServicePoints, ServicePointsClass, State}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingService, IncomingServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -10,7 +10,8 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{ServicePointException, ServicePointService}
 import fi.liikennevirasto.digiroad2.user.User
-import scala.util.{Try, Success, Failure}
+
+import scala.util.{Failure, Success, Try}
 
 class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter {
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -114,7 +115,12 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
         val municipality = municipalityBorderClient.findMunicipalityForPoint(Point(lon.toDouble, lat.toDouble), municipalityBorders)
         municipality match {
           case Some(foundMunicipality) =>
-            (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, Seq.empty[RoadLink])))
+            if (editingRestrictionsService.isEditingRestricted(ServicePoints.typeId, foundMunicipality.municipalityCode, Municipality) ||
+              editingRestrictionsService.isEditingRestricted(ServicePoints.typeId, foundMunicipality.municipalityCode, State)) {
+              (List("Asset type editing is restricted within municipality."), Seq())
+            } else {
+              (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, Seq.empty[RoadLink])))
+            }
           case None =>
             (Nil, Nil)
         }

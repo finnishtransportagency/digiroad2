@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty, State}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, RailwayCrossings, SimplePointAssetProperty, State}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
@@ -68,7 +68,12 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
         val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong), forCarTraffic = false, includeComplementaries = true)
         roadLinks.isEmpty match {
           case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
-          case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+          case false =>
+            if (assetHasEditingRestrictions(RailwayCrossings.typeId, roadLinks)) {
+              (List("Asset type editing is restricted within municipality or admininistrative class."), Seq())
+            } else {
+              (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+            }
         }
       case _ =>
         (Nil, Nil)

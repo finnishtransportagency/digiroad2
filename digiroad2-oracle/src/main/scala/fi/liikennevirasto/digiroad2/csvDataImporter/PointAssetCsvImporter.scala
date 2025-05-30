@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.service.EditingRestrictionsService
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 
@@ -46,6 +47,8 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
   val municipalityBorderClient = new KgvMunicipalityBorderClient(Some(KgvCollection.MunicipalityBorders))
+
+  def editingRestrictionsService = new EditingRestrictionsService
 
   def mandatoryFields: Set[String] = coordinateMappings.keySet
   def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
@@ -133,21 +136,11 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     Point(lon, lat)
   }
 
-  def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
-    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
-    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
-
-    (optLon, optLat) match {
-      case (Some(lon), Some(lat)) =>
-        val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong))
-        roadLinks.isEmpty match {
-          case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
-          case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
-        }
-      case _ =>
-        (Nil, Nil)
-    }
+  def assetHasEditingRestrictions(assetTypeId: Int, roadLinks: Seq[RoadLink]) : Boolean = {
+    roadLinks.exists(rl => editingRestrictionsService.isEditingRestricted(assetTypeId, rl.municipalityCode, rl.administrativeClass))
   }
+
+  def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv
 
   def csvLaneValidator(optLaneType: Option[Int], optLaneNumber: Option[String]): (Boolean, List[String]) = {
     (optLaneType, optLaneNumber) match {

@@ -44,6 +44,7 @@
       }
     };
     this.displayConfirmMessage = function() { new Confirm(); };
+    this.displayAssetCreationRestricted = function (message) { new AssetCreationRestrictedPopup(message); };
     this.handleMapMoved = function(state) {
       if (state.selectedLayer === layerName && state.zoom >= me.minZoomForContent ) {
         if (!me.isStarted()) {

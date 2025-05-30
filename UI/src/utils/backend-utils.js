@@ -502,6 +502,12 @@
       });
     };
 
+    this.getEditingRestrictions = function () {
+      $.get('api/editingRestrictions', function (restrictions) {
+        eventbus.trigger('editingRestrictions:fetched', restrictions);
+      });
+    };
+
     this.getStartupParametersWithCallback = function(callback) {
       var url = 'api/startupParameters';
       $.getJSON(url, callback);

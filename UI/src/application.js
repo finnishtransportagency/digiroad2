@@ -150,6 +150,7 @@
         window.applicationModel.selectLayer(assetTypeLayerName);
       });
     });
+    backend.getEditingRestrictions();
   };
 
   var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, assetConfiguration, isExperimental, clusterDistance) {
@@ -374,6 +375,7 @@
         style: PointAssetStyle(asset.layerName),
         mapOverlay: mapOverlay,
         layerName: asset.layerName,
+        typeId: asset.typeId,
         assetLabel: asset.label,
         newAsset: asset.newAsset,
         roadAddressInfoPopup: roadAddressInfoPopup,

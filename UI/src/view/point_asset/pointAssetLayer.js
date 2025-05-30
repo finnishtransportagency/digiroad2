@@ -9,6 +9,7 @@
       selectedAsset = params.selectedAsset,
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
+      typeId = params.typeId,
       newAsset = params.newAsset,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       assetLabel = params.assetLabel,
@@ -38,6 +39,8 @@
     me.vectorLayer.setOpacity(1);
     me.vectorLayer.setVisible(true);
     map.addLayer(me.vectorLayer);
+
+    var editingRestrictions = new EditingRestrictions();
 
     var selectControl = new SelectToolControl(application, me.vectorLayer, map, false,{
         style : function (feature) {
@@ -282,6 +285,10 @@
       return selectedAsset.getConstructionType(asset.linkId);
     }
 
+    function obtainMunicipalityCode(asset) {
+      return selectedAsset.getMunicipalityCodeByLinkId(asset.linkId);
+    }
+
     this.removeLayerFeatures = function() {
       me.vectorLayer.getSource().clear();
     };
@@ -404,6 +411,17 @@
         var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
         var administrativeClass = obtainAdministrativeClass(nearestLine);
         var constructionType = obtainConstructionType(nearestLine);
+        var municipalityCode = obtainMunicipalityCode(nearestLine);
+
+        if (administrativeClass === 'State' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+          me.displayAssetCreationRestricted('Kohteiden lisääminen on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.');
+          return;
+        }
+
+        if (administrativeClass === 'Municipality' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+          me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+          return;
+        }
 
         var asset = me.createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing,
             administrativeClass, constructionType);
