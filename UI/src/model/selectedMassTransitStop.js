@@ -532,20 +532,29 @@
       }
     }
 
-    function isAdminClassState(properties){
-      if(!properties)
-        properties = getProperties();
+    function getAdministrativeClass(properties) {
+      if (!properties) properties = getProperties();
 
       var adminClassProperty = _.find(properties, function(property){
         return property.publicId === 'linkin_hallinnollinen_luokka';
       });
 
-      if (adminClassProperty && !_.isEmpty(adminClassProperty.values))
-        return _.some(adminClassProperty.values, function(value){ return value.propertyValue === '1'; });
+      if (adminClassProperty && !_.isEmpty(adminClassProperty.values)) {
+        return _.first(adminClassProperty.values).propertyValue;
+      }
 
-      //Get administration class from roadlink
       var stopRoadLink = getRoadLink();
-      return stopRoadLink ? (stopRoadLink.getData().administrativeClass === 'State') : false;
+      if (stopRoadLink) {
+        return stopRoadLink.getData().administrativeClass;
+      }
+
+      return null;
+    }
+
+    function isAdminClassState(properties) {
+      var adminClass = getAdministrativeClass(properties);
+
+      return adminClass === '1' || adminClass === 'State';
     }
 
     function isAdministratorHSL(properties){
@@ -674,6 +683,7 @@
       getCurrentAsset: getCurrentAsset,
       deleteMassTransitStop: deleteMassTransitStop,
       getRoadLink: getRoadLink,
+      getAdministrativeClass: getAdministrativeClass,
       isAdminClassState: isAdminClassState,
       isAdministratorELY: isAdministratorELY,
       isAdministratorHSL: isAdministratorHSL,
