@@ -21,6 +21,13 @@ class EditingRestrictionsDAO {
     }
   }
 
+  def fetchAllRestrictions(): Seq[EditingRestrictions] = {
+    sql"""
+    SELECT id, municipality_id, state_road_restricted_asset_types, municipality_road_restricted_asset_types, created_at, modified_at
+    FROM editing_restrictions
+  """.as[EditingRestrictions].list
+  }
+
   def fetchRestrictionsByMunicipality(municipality: Int): Option[EditingRestrictions] = {
     sql"""
     SELECT id, municipality_id, state_road_restricted_asset_types, municipality_road_restricted_asset_types, created_at, modified_at
