@@ -306,19 +306,16 @@ trait ResolvingFrozenRoadLinks {
       PostGISDatabase.withDynTransaction {
         logger.info(s"Resolving addresses on new road links in municipality: $municipality")
         val (overlappingToCreate, missing) = resolveAddressesOnOverlappingGeometry(municipality)
-        val adjacentsToCreate = resolveAddressesUsingAdjacentAddresses(missing, overlappingToCreate)
 
         logger.info(
           s"""
              |Resolved ${overlappingToCreate.size} addresses on overlapping geometry
-             |Resolved ${adjacentsToCreate.size} addreses using adjacent addresses on linkIds:
-             | ${adjacentsToCreate.map(_.linkId).mkString(", ")}
-             |Total: ${(overlappingToCreate ++ adjacentsToCreate).size}
-             |State and municipality road links without road address info: ${missing.size - adjacentsToCreate.size}
+             |Total: ${(overlappingToCreate).size}
+             |State and municipality road links without road address info: ${missing.size}
              |Municipality: $municipality
              |""".stripMargin)
 
-        (adjacentsToCreate ++ overlappingToCreate.map(_.roadAddress)).foreach { resolvedAddress =>
+        (overlappingToCreate.map(_.roadAddress)).foreach { resolvedAddress =>
           roadLinkTempDao.insertInfo(resolvedAddress, username)
         }
       }
