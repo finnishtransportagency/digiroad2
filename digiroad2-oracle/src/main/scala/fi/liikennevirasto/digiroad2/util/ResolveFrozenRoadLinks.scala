@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
-import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
+import fi.liikennevirasto.digiroad2.asset.{Municipality, SideCode, State}
+import fi.liikennevirasto.digiroad2.client.{MassQueryParamsCoord, RoadLinkClient, VKMClient}
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.Try
@@ -37,10 +37,6 @@ trait ResolvingFrozenRoadLinks {
   lazy val roadLinkTempDao: RoadAddressTempDAO = new RoadAddressTempDAO
 
   lazy val username: String = "batch_process_temp_road_address"
-
-  //Timestamp for the instant when Viite road links were frozen
-  // 20.05.2023 16:29:59
-  lazy val viiteTimestamp: Long = 1684589399000L
   
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -81,10 +77,8 @@ trait ResolvingFrozenRoadLinks {
 
     tempAddressTrack match {
       case Some(track) =>
-        logger.info(s"""calculated track value: ${track.value} using first point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track)))
       case _ =>
-        logger.info(s"""could not calculate track using first point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq()
     }
   }
@@ -123,10 +117,8 @@ trait ResolvingFrozenRoadLinks {
 
     tempAddressTrack match {
       case Some(track) =>
-        logger.info(s"""calculated track value: ${track.value} using last point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track)))
       case _ =>
-        logger.info(s"""could not calculate track using last point on linkID: ${tempAddressToCalculate.roadAddress.linkId}""")
         Seq()
     }
   }
@@ -135,7 +127,7 @@ trait ResolvingFrozenRoadLinks {
     * Try to create temp road address for links still missing road address info, by using adjacent
     * links road addresses and KGV road number and KGV road part number fields
     * @param roadLinksMissingAddress road links still missing address with adjacent road links
-    * @param mappedAddresses Viite and temp road addresses
+    * @param mappedAddresses Existing VKM and temp road addresses
     * @return generated temp addresses
     */
   def resolveUsingAdjacents(roadLinksMissingAddress: Seq[RoadLinkWithPointsAndAdjacents], mappedAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
@@ -191,15 +183,17 @@ trait ResolvingFrozenRoadLinks {
   }
 
   /**
-    * Viite uses frozen road links from November 2022, use VKM API to determine road addresses for up-to-date road links
+    * If Digiroad's road links are not synchronized with VKM, we can't get road addresses for road links using link ids
+    * so we use VKM API to transform road link coordinates to road addresses
     *
-    * @param municipality municipality where we want to generate temp road addresses for state road links
-    * @return Generated temp road addresses with start and end points, and state road links still missing road address
+    * @param municipality municipality where we want to generate temp road addresses for state and municipality road links
+    * @return Generated temp road addresses with start and end points, and state and municipality road links still missing road address
     */
   def resolveAddressesOnOverlappingGeometry(municipality: Int): (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
 
     val existingTempRoadAddress = roadLinkTempDao.getByMunicipality(municipality)
-    val roadLinksInMunicipality = roadLinkService.getRoadLinksByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == State)
+    val roadLinksInMunicipality = roadLinkService.getRoadLinksByMunicipality(municipality, newTransaction = false)
+      .filter(rl => rl.administrativeClass == State || rl.administrativeClass == Municipality)
 
     // Delete old saved Temp addresses on RoadLinks that are not valid anymore
     val tempAddressLinkIdsToDelete = existingTempRoadAddress.map(_.linkId).diff(roadLinksInMunicipality.map(_.linkId))
@@ -208,88 +202,67 @@ trait ResolvingFrozenRoadLinks {
       roadLinkTempDao.deleteInfoByLinkIds(tempAddressLinkIdsToDelete.toSet)
     }
 
-    // Some state road links are missing road address in Viite
-    val allViiteRoadAddresses = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
-    val stateRoadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
+    val roadAddressesByLinkIds = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
+    val roadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
       val linkIdsWithTempAddress = existingTempRoadAddress.map(_.linkId)
-      val linkIdsWithViiteRoadAddress = allViiteRoadAddresses.map(_.linkId)
-      val hasAddressInfo = linkIdsWithViiteRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
+      val linkIdsWithRoadAddress = roadAddressesByLinkIds.map(_.linkId)
+      val hasAddressInfo = linkIdsWithRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
 
-      !hasAddressInfo && roadLink.timeStamp > viiteTimestamp
+      !hasAddressInfo
     })
 
-    val groupedRoadLinksMissingAddress = stateRoadLinksMissingAddress.groupBy(_.roadNameIdentifier.getOrElse(""))
-    val groupedRoadLinks = roadLinksInMunicipality.groupBy(_.roadNameIdentifier.getOrElse(""))
+    val massQueryParams: Seq[MassQueryParamsCoord] = roadLinksMissingAddress.flatMap { roadLinkMissingAddress =>
+      val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
+      val roadNumberOpt = Try(roadLinkMissingAddress.roadNumber.map(_.toInt).head).toOption
+      val roadPartOpt = Try(roadLinkMissingAddress.roadPartNumber.map(_.toInt).head).toOption
+      Seq(
+        MassQueryParamsCoord(s"${roadLinkMissingAddress.linkId}_start", first, roadNumberOpt, roadPartOpt, None),
+        MassQueryParamsCoord(s"${roadLinkMissingAddress.linkId}_end", last, roadNumberOpt, roadPartOpt, None)
+      )
+    }
 
-    val resolvedAddresses = groupedRoadLinksMissingAddress.keys.flatMap { key =>
-      val relevantLinkIds = groupedRoadLinks.getOrElse(key, Seq())
+    val massQueryResults: Map[String, RoadAddress] = try {
+      vkmClient.coordToAddressMassQuery(massQueryParams, searchDistance = Some(3))
+    } catch {
+      case ex: Exception =>
+        logger.error(s"Exception in VKM mass query: ${ex.getMessage}")
+        Map.empty[String, RoadAddress]
+    }
 
-      val viiteAddressesWithPoints = allViiteRoadAddresses.flatMap { address =>
-        relevantLinkIds.find(x => x.linkId == address.linkId).map { roadLink =>
-          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-          val roadAddressTemp = RoadAddressTEMP(address.linkId, address.roadNumber,
-            address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, roadLink.geometry, Some(address.sideCode))
+    // Process each road link to build temp addresses using the addresses from the mass query.
+    val resolvedAddresses: Seq[RoadAddressTEMPwithPoint] = roadLinksMissingAddress.flatMap { roadLinkMissingAddress =>
+      val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
+      val startPointIdentifier = s"${roadLinkMissingAddress.linkId}_start"
+      val endPointIdentifier = s"${roadLinkMissingAddress.linkId}_end"
 
-          RoadAddressTEMPwithPoint(first, last, roadAddressTemp)
-        }
-      }
-
-      val tempAddressesToCreate = groupedRoadLinksMissingAddress(key).flatMap { roadLinkMissingAddress =>
-        val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
-
-        try {
-          // KGV road address attributes are not always up-to-date, stop
-          // using them if problems arise, but for now they seem to be OK
-          val roadNumber = Try(roadLinkMissingAddress.roadNumber.map(_.toInt).head).toOption
-          val roadPartNumber = Try(roadLinkMissingAddress.roadPartNumber.map(_.toInt).head).toOption
-
-          // Fetch Road Address info for road link end points from VKM
-          val vkmAddressAtRoadLinkStart = try {
-            Some(vkmClient.coordToAddress(first, roadNumber, roadPartNumber, includePedestrian = Some(true)))
-          } catch {
-            case roadAddressException: RoadAddressException =>
-              logger.error(roadAddressException.getMessage)
-              None
-          }
-          val vkmAddressAtRoadLinkEnd = try {
-            Some(vkmClient.coordToAddress(last, roadNumber, roadPartNumber, includePedestrian = Some(true)))
-          } catch {
-            case roadAddressException: RoadAddressException =>
-              logger.error(roadAddressException.getMessage)
-              None
-          }
-
-          val vkmAddresses = Seq(vkmAddressAtRoadLinkStart, vkmAddressAtRoadLinkEnd).flatten
-          if (vkmAddresses.isEmpty || (vkmAddresses.nonEmpty && vkmAddresses.size != 2)) {
-            logger.error("VKM did not return address for both end points of linkID: " + roadLinkMissingAddress.linkId)
-            Seq()
+      (massQueryResults.get(startPointIdentifier), massQueryResults.get(endPointIdentifier)) match {
+        case (Some(vkmAddressAtRoadLinkStart), Some(vkmAddressAtRoadLinkEnd)) =>
+          val vkmAddresses = Seq(vkmAddressAtRoadLinkStart, vkmAddressAtRoadLinkEnd)
+          if (vkmAddresses.size != 2) {
+            Seq.empty
           } else {
             val groupedVkmAddresses = vkmAddresses.groupBy(addr => (addr.road, addr.roadPart))
             // Returned addresses must be on the same road part, in order to create temp road address for road link
             if (groupedVkmAddresses.keys.size > 1) {
-              logger.error("Returned VKM addresses for linkID: " + roadLinkMissingAddress.linkId + " are not on the same road part")
               None
             } else {
               val orderedAddress = vkmAddresses.sortBy(_.addrM)
-              // If start and end point road address Track values are not equal, Track needs to be calculated later
+              // If start and end point road address Track values are not equal, use Track.Unknown
               val track = if (orderedAddress.head.track == orderedAddress.last.track) orderedAddress.head.track else Track.Unknown
-              val tempRoadAddressSideCode = calculateSideCodeUsingEndPointAddrs(vkmAddressAtRoadLinkStart.get.addrM, vkmAddressAtRoadLinkEnd.get.addrM)
-              Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(roadLinkMissingAddress.linkId, orderedAddress.head.road,
-                orderedAddress.head.roadPart, track, orderedAddress.head.addrM, orderedAddress.last.addrM,
-                0, GeometryUtils.geometryLength(roadLinkMissingAddress.geometry), roadLinkMissingAddress.geometry, Some(tempRoadAddressSideCode), municipalityCode = Some(roadLinkMissingAddress.municipalityCode))))
+              val tempRoadAddressSideCode = calculateSideCodeUsingEndPointAddrs(vkmAddressAtRoadLinkStart.addrM, vkmAddressAtRoadLinkEnd.addrM)
+              Some(RoadAddressTEMPwithPoint(first, last,
+                RoadAddressTEMP(roadLinkMissingAddress.linkId, orderedAddress.head.road, orderedAddress.head.roadPart,
+                  track, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(roadLinkMissingAddress.geometry),
+                  roadLinkMissingAddress.geometry, Some(tempRoadAddressSideCode), municipalityCode = Some(roadLinkMissingAddress.municipalityCode))
+              ))
             }
           }
-        } catch {
-          case ex: Exception =>
-            logger.error(s"Exception in VKM for linkId ${roadLinkMissingAddress.linkId} exception $ex")
-            None
-        }
+        case _ =>
+          None
       }
+    }
 
-      recalculateTracksRecursively(viiteAddressesWithPoints, tempAddressesToCreate, Seq())
-    }.toSeq
-
-    val roadLinksAddressUnresolved = stateRoadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
+    val roadLinksAddressUnresolved = roadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
     (resolvedAddresses, roadLinksAddressUnresolved)
   }
 
@@ -333,19 +306,16 @@ trait ResolvingFrozenRoadLinks {
       PostGISDatabase.withDynTransaction {
         logger.info(s"Resolving addresses on new road links in municipality: $municipality")
         val (overlappingToCreate, missing) = resolveAddressesOnOverlappingGeometry(municipality)
-        val adjacentsToCreate = resolveAddressesUsingAdjacentAddresses(missing, overlappingToCreate)
 
         logger.info(
           s"""
              |Resolved ${overlappingToCreate.size} addresses on overlapping geometry
-             |Resolved ${adjacentsToCreate.size} addreses using adjacent addresses on linkIds:
-             | ${adjacentsToCreate.map(_.linkId).mkString(", ")}
-             |Total: ${(overlappingToCreate ++ adjacentsToCreate).size}
-             |New state road links without road address info: ${missing.size - adjacentsToCreate.size}
+             |Total: ${(overlappingToCreate).size}
+             |State and municipality road links without road address info: ${missing.size}
              |Municipality: $municipality
              |""".stripMargin)
 
-        (adjacentsToCreate ++ overlappingToCreate.map(_.roadAddress)).foreach { resolvedAddress =>
+        (overlappingToCreate.map(_.roadAddress)).foreach { resolvedAddress =>
           roadLinkTempDao.insertInfo(resolvedAddress, username)
         }
       }
@@ -357,9 +327,9 @@ trait ResolvingFrozenRoadLinks {
   // could not find municipalities where addresses could be resolved using adjacent road address info
   // monitor this methods behaviour trough logs
   /**
-    * Use possible adjacent Viite road addresses and resolved temp road addresses to resolve road addresses on links
+    * Use possible adjacent existing VKM road addresses and resolved temp road addresses to resolve road addresses on links
     * where VKM could not resolve them
-    * @param missing  State road links still missing road address info
+    * @param missing  State and municipality road links still missing road address info
     * @param toCreate Resolved temp road addresses to be created
     * @return Road addresses resolved using adjacent road link addresses
     */
@@ -391,10 +361,10 @@ trait ResolvingFrozenRoadLinks {
 
   /**
     * Resolve temp addresses on new links where VKM could not provide addresses.
-    * Tries to resolve addresses recursively using already resolved temp addresses and Viite addresses
+    * Tries to resolve addresses recursively using already resolved temp addresses and existing VKM addresses
     * from adjacent road links until no new addresses are resolved
     * @param missingRoadLinks Road links still missing address info
-    * @param allAddresses Viite and Temp addresses to be used in resolving process
+    * @param allAddresses Existing VKM and Temp addresses to be used in resolving process
     * @param result Resulting resolved temp road addresses from past executions
     * @return Resulting resolved temp road addresses
     */

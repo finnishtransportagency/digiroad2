@@ -275,31 +275,32 @@ class VKMClient {
   }
 
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
-                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
+                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Int] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
 
+    val finalSearchDistance = searchDistance.orElse(Some(500))
     val params = Map(
             VkmRoad -> road,
             VkmRoadPart -> roadPart,
             VkmTrackCodes -> track.map(_.value),
             "x" -> Option(coord.x),
             "y" -> Option(coord.y),
-            VkmSearchRadius -> searchDistance //Default in new VKM is 100
+            VkmSearchRadius -> finalSearchDistance
       )
-    val parameterString = "muunna?sade=500&" + urlParams(params)
-    
+    val parameterString = "muunna?" + urlParams(params)
+
     request(vkmBaseUrl + parameterString) match {
-      case Left(address) => 
+      case Left(address) =>
         if (address.features.length >= 2)
           logger.info(s"Search distance was too big to identify single response, request parameters: $parameterString and result: ${address.features.map(mapFields).mkString(",")}")
-        //TODO this is wrong way to select values, there can be two or more value dependent on how many track road has.  
+        //TODO this is wrong way to select values, there can be two or more value dependent on how many track road has.
         mapFields(address.features.head)
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
 
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
-                        distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
+                        distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Int] = None,
                         includePedestrian: Option[Boolean] = Option(false)) : Seq[RoadAddress] = {
 
     coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )

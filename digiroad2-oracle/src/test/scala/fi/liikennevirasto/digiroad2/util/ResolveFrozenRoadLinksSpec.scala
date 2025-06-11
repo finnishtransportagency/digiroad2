@@ -27,7 +27,6 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override lazy val vkmClient: VKMClient = mockVKMClient
     override lazy val roadLinkTempDao: RoadAddressTempDAO = mockRoadLinkTempDao
-    override lazy val viiteTimestamp: Long = -1
   }
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
