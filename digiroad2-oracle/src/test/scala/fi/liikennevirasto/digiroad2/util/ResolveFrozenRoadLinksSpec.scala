@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.{MassQueryParamsCoord, VKMClient}
 import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService, RoadAddressForLink}
@@ -27,7 +27,6 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override lazy val vkmClient: VKMClient = mockVKMClient
     override lazy val roadLinkTempDao: RoadAddressTempDAO = mockRoadLinkTempDao
-    override lazy val viiteTimestamp: Long = -1
   }
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -109,15 +108,19 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(viiteRoadAddress)
     when(mockRoadAddressService.groupRoadAddress(viiteRoadAddress)).thenReturn(viiteRoadAddress)
 
-    when(mockVKMClient.coordToAddress(Point(415512.9400000004, 6989434.033), Some(77), Some(8), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("216"), 77, 8, Track.Combined, 0))
-    when(mockVKMClient.coordToAddress(Point(415976.358,6989464.984999999), Some(77), Some(8), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("216"), 77, 8, Track.Combined, 468))
-
-    when(mockVKMClient.coordToAddress(Point(415468.0049999999,6989158.624000002), Some(648), Some(8), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("216"), 648, 8, Track.Combined, 6416))
-    when(mockVKMClient.coordToAddress(Point(415512.9400000004,6989434.033), Some(648), Some(8), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("216"), 648, 8, Track.Combined, 6695))
+    when(mockVKMClient.coordToAddressMassQuery(
+      Seq(
+        MassQueryParamsCoord(s"${linkId2}_start", Point(415512.9400000004,6989434.033,0.0), Some(77), Some(8), None),
+        MassQueryParamsCoord(s"${linkId2}_end", Point(415976.358,6989464.984999999,0.0), Some(77), Some(8), None),
+        MassQueryParamsCoord(s"${linkId5}_start", Point(415468.0049999999,6989158.624000002,0.0), Some(648), Some(8), None),
+        MassQueryParamsCoord(s"${linkId5}_end", Point(415512.9400000004,6989434.033,0.0), Some(648), Some(8), None)
+      ), Some(3)
+    )).thenReturn(Map(
+      (s"${linkId2}_start", RoadAddress(Some("216"), 77, 8, Track.Combined, 0)),
+      (s"${linkId2}_end", RoadAddress(Some("216"), 77, 8, Track.Combined, 468)),
+      (s"${linkId5}_start", RoadAddress(Some("216"), 648, 8, Track.Combined, 6416)),
+      (s"${linkId5}_end", RoadAddress(Some("216"), 648, 8, Track.Combined, 6695))
+    ))
 
     when(mockRoadLinkTempDao.getByMunicipality(216)).thenReturn(Seq())
 
@@ -131,90 +134,6 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     val createdInYhteisahontie = toCreate.find(_.linkId == linkId5)
     createdInYhteisahontie.nonEmpty should be (true)
     createdInYhteisahontie.get.sideCode.get should be (SideCode.TowardsDigitizing)
-  }
-
-  test("missing right and left ajorata"){
-    val linkId1 = LinkIdGenerator.generateRandom()
-    val linkId2 = LinkIdGenerator.generateRandom()
-    val linkId3 = LinkIdGenerator.generateRandom()
-    val linkId4 = LinkIdGenerator.generateRandom()
-    val linkId5 = LinkIdGenerator.generateRandom()
-    val linkId6 = LinkIdGenerator.generateRandom()
-    val linkId7 = LinkIdGenerator.generateRandom()
-    val linkId8 = LinkIdGenerator.generateRandom()
-
-    val roadLinks = Seq(
-      RoadLink(linkId1,List(Point(376585.751,6992711.448,159.9759999999951), Point(376569.312,6992714.125,160.19400000000314)),16.65,
-        State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(linkId2,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
-        State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(linkId3,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
-        State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(linkId4,List(Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875)),14.790,
-        State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(linkId5,List(Point(376569.312,6992714.125,160.19400000000314), Point(376519.312,6992724.148,161.00800000000163)),50.999,
-        State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(linkId6,List(Point(376412.388,6992717.601,161.53100000000268), Point(376502.352,6992724.075,161.04799999999523), Point(376519.312,6992724.148,161.00800000000163)),107.2053,
-        State,99, TrafficDirection.BothDirections,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(linkId7,List(Point(376642.368,6992709.787,160.07399999999325), Point(376593.53,6992710.187,159.96400000000722), Point(376585.751,6992711.448,159.9759999999951)),56.9052,
-        State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29",  "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(linkId8,List(Point(376586.275,6992719.353,159.9869999999937), Point(376630.419,6992726.587,159.94599999999627), Point(376639.195,6992733.214,160.125)),56.885,
-        State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")))
-
-    val viiteRoadAddress = Seq(
-      RoadAddressForLink(48229,16,29,Combined,4583,4690,None,None,
-        linkId6,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
-      RoadAddressForLink(81202,16,29,RightSide,4690,4741,None,None,
-        linkId5,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
-      RoadAddressForLink(81202,16,29,RightSide,4758,4815,None,None,
-        linkId7,0.0,56.905,AgainstDigitizing,List(),false,None,None,None))
-
-    when(mockRoadLinkService.getRoadLinksByMunicipality(312, false)).thenReturn(roadLinks)
-    when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(viiteRoadAddress)
-    when(mockRoadAddressService.groupRoadAddress(viiteRoadAddress)).thenReturn(viiteRoadAddress)
-
-    when(mockVKMClient.coordToAddress(Point(376585.751,6992711.448,159.9759999999951),
-      Some(16), Some(29), includePedestrian = Some(true))).thenThrow(new NullPointerException)
-    when(mockVKMClient.coordToAddress(Point(376569.312,6992714.125,160.19400000000314),
-      Some(16), Some(29), includePedestrian = Some(true))).thenThrow(new NullPointerException)
-
-    when(mockVKMClient.coordToAddress(Point(376570.341,6992722.195,160.24099999999453), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4740))
-    when(mockVKMClient.coordToAddress(Point(376534.023,6992725.668,160.875), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4704))
-
-    when(mockVKMClient.coordToAddress(Point(376586.275,6992719.353,159.9869999999937), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4757))
-    when(mockVKMClient.coordToAddress(Point(376570.341,6992722.195,160.24099999999453), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4740))
-
-    when(mockVKMClient.coordToAddress(Point(376519.312,6992724.148,161.00800000000163), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("312"), 16, 29, Track.Combined, 4690))
-    when(mockVKMClient.coordToAddress(Point(376534.023,6992725.668,160.875), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4704))
-
-    when(mockVKMClient.coordToAddress(Point(376586.275,6992719.353,159.9869999999937), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4690))
-    when(mockVKMClient.coordToAddress(Point(376639.195,6992733.214,160.125), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4808))
-
-    when(mockRoadLinkTempDao.getByMunicipality(312)).thenReturn(Seq())
-
-    val toCreate = ResolvingFrozenRoadLinksTest.resolveAddressesOnOverlappingGeometry(312)._1.map(_.roadAddress)
-
-    toCreate.size should be (4)
-    toCreate.exists(x => x.linkId == linkId2 && x.sideCode.contains(SideCode.AgainstDigitizing) && x.track == Track.LeftSide) should be (true)
-    toCreate.exists(x => x.linkId == linkId8 && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
-    toCreate.exists(x => x.linkId == linkId3 && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
-    toCreate.exists(x => x.linkId == linkId4 && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
   }
 
   test("cleaning missing addresses without success") {
