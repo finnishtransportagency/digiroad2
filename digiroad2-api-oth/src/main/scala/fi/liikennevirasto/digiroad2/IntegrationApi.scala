@@ -593,7 +593,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       if ( !properties.exists(_.publicId == publicId) )
         Some("")
       else
-        trafficLightService.getProperty(properties, publicId).map(_.propertyDisplayValue.getOrElse(""))
+        trafficLightService.getProperty(properties, publicId).map(_.propertyValue)
     }
 
     trafficLights.filterNot(x => x.floating | isSuggested(x)).map { trafficLight =>
