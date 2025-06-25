@@ -1,28 +1,60 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import scala.util.Try
 
 object LinearAssetPartitioner extends GraphPartitioner {
-  def partition[T <: LinearAsset](links: Seq[T], roadLinksForSpeedLimits: Map[String, RoadLink]): Seq[Seq[T]] = {
-    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
-    val linkGroups = twoWayLinks.groupBy { link =>
-      val roadLink = roadLinksForSpeedLimits.get(link.linkId)
-      val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
-      (roadIdentifier, roadLink.map(_.administrativeClass), link.value, link.id == 0)
+
+  /**
+   * Partitions a sequence of linear assets by enriching them with road link address data
+   * and delegating to a partitioning logic. It enriches each asset temporarily with additional
+   * attributes such as road number and road name if a corresponding RoadLink
+   * exists. After enrichment, it calls a secondary partitioning method on the enriched assets.
+   *
+   * @tparam T The specific subtype of PieceWiseLinearAsset.
+   * @param assetLinks              A sequence of linear assets to enrichAndPartition.
+   * @param roadAddressForPartition A map from link IDs to RoadLink objects,
+   *                                used to enrich each asset with road-specific address data.
+   * @return A sequence of partitions, where each enrichAndPartition is a sequence of assets of type T.
+   */
+  def enrichAndPartition[T <: PieceWiseLinearAsset](assetLinks: Seq[T], roadAddressForPartition: Map[String, RoadLink]): Seq[Seq[T]] = {
+
+    val enrichedLinks: Seq[PieceWiseLinearAsset] = assetLinks.map {
+      case pwla: PieceWiseLinearAsset =>
+        val roadLinkOption = roadAddressForPartition.get(pwla.linkId)
+        val additionalAttributes: Map[String, Any] = roadLinkOption match {
+          case Some(roadLink) =>
+            val attrs = roadLink.attributes
+            Map(
+              "ROADNUMBER" -> attrs.get("ROADNUMBER"),
+              "ROADNAME_FI" -> attrs.get("ROADNAME_FI"),
+              "ROADNAME_SE" -> attrs.get("ROADNAME_SE"),
+              "ROADPARTNUMBER" -> attrs.get("ROADPARTNUMBER")
+            ).collect { case (key, Some(value)) => key -> Some(value) }
+          case None => Map.empty
+        }
+
+        val mergedAttributes = pwla.attributes ++ additionalAttributes
+
+        pwla.copy(attributes = mergedAttributes)
     }
-
-    val (linksToPartition, linksToPass) = linkGroups.partition { case ((roadIdentifier, _, _, _), _) => roadIdentifier.isDefined }
-
-    val clusters = for (linkGroup <- linksToPartition.values.toSeq;
-                        cluster <- clusterLinks(linkGroup)) yield cluster
-    val linkPartitions = clusters.map(linksFromCluster)
-
-    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x)) ++ oneWayLinks.map(x => Seq(x))
+    partition(enrichedLinks).asInstanceOf[Seq[Seq[T]]]
   }
 
-  def partition[T <: PieceWiseLinearAsset](links: Seq[T]): Seq[Seq[T]] = {
-    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
+  /**
+   * Partitions a sequence of linear assets into clusters based on shared road-related attributes.
+   * Partitioned groups are activated together on the map when a link in the group is clicked.
+   *
+   * Splits assets into two-way and one-way groups, then clusters them by road identifier,
+   * administrative class, value, traffic direction, and other key attributes.
+   * Assets without a valid road identifier are returned as single-asset partitions.
+   *
+   * @tparam T Subtype of PieceWiseLinearAsset.
+   * @param links Linear assets to partition.
+   * @return A sequence of asset clusters that are selected together in the UI.
+   */
+  def partition[T <: PieceWiseLinearAsset](assetLinks: Seq[T]): Seq[Seq[T]] = {
+
+    val (twoWayLinks, oneWayLinks) = assetLinks.partition(_.sideCode == SideCode.BothDirections)
 
     def extractRoadIdentifier(link: PieceWiseLinearAsset): Option[Either[Long, String]] = {
 
