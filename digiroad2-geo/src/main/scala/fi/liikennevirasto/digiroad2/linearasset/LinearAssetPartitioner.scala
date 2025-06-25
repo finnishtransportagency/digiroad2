@@ -20,8 +20,8 @@ object LinearAssetPartitioner extends GraphPartitioner {
 
     val enrichedLinks: Seq[PieceWiseLinearAsset] = assetLinks.map {
       case pwla: PieceWiseLinearAsset =>
-        val maybeRoadLink = roadAddressForPartition.get(pwla.linkId)
-        val additionalAttributes: Map[String, Any] = maybeRoadLink match {
+        val roadLinkOption = roadAddressForPartition.get(pwla.linkId)
+        val additionalAttributes: Map[String, Any] = roadLinkOption match {
           case Some(roadLink) =>
             val attrs = roadLink.attributes
             Map(
