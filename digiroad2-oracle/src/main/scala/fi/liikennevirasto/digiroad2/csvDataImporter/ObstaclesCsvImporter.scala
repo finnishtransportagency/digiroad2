@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService}
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, NotImportedData, Point}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 
 class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter {
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
