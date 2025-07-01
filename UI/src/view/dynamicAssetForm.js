@@ -1,6 +1,7 @@
 (function(root) {
     root.DynamicAssetForm = function (formStructure) {
     var self = this;
+    var editingRestrictions = new EditingRestrictions();
 
     this.DynamicField = function (fieldSettings, isDisabled) {
         var me = this;
@@ -957,7 +958,7 @@
         };
 
         this._isReadOnly = function(selectedAsset){
-            return applicationModel.isReadOnly() || !checkAuthorizationPolicy(selectedAsset);
+            return applicationModel.isReadOnly() || editingRestrictions.hasRestrictions(selectedAsset.get(), self._assetTypeConfiguration.typeId) || !checkAuthorizationPolicy(selectedAsset);
         };
 
         this.createHeaderElement = function(selectedAsset) {
@@ -1158,9 +1159,16 @@
 
             var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
             var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+            var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
+            var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
             var message = '';
 
-            if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
+            if (editingRestrictions.hasStateRestriction(selectedAsset.get(), self._assetTypeConfiguration.typeId)) {
+                message = stateRoadEditingRestricted;
+            } else if(editingRestrictions.hasMunicipalityRestriction(selectedAsset.get(), self._assetTypeConfiguration.typeId)) {
+                message = municipalityRoadEditingRestricted;
+            }
+            else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
                 message = limitedRights;
             } else if(!checkAuthorizationPolicy(selectedAsset))
                 message = noRights;

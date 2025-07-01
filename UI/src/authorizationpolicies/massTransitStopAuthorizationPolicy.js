@@ -3,6 +3,8 @@
     AuthorizationPolicy.call(this);
 
     var me = this;
+    var editingRestrictions = new EditingRestrictions();
+    var typeId = 10;
 
     this.isElyMaintainerOrOperator = function(municipalityCode) {
       return (me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
@@ -39,6 +41,9 @@
 
     this.assetSpecificAccess = function(){
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
+      var adminClass = selectedMassTransitStopModel.getAdministrativeClass();
+
+      if (editingRestrictions.pointAssetHasRestriction(municipalityCode, adminClass, typeId)) return false;
 
       var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && me.hasRightsInMunicipality(municipalityCode);
       var isElyyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode);

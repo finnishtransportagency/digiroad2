@@ -4,7 +4,7 @@ import java.security.InvalidParameterException
 import java.time.LocalDate
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
-import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, RoadLinkProperties => RoadLinkPropertiesAsset, _}
 import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
@@ -875,7 +875,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   put("/linkproperties") {
     val properties = parsedBody.extract[Seq[LinkProperties]]
     val user = userProvider.getCurrentUser()
-    def municipalityValidation(municipalityCode: Int, administrativeClass: AdministrativeClass) = validateUserAccess(user, 460)(municipalityCode, administrativeClass)
+    def municipalityValidation(municipalityCode: Int, administrativeClass: AdministrativeClass) = validateUserAccess(user, RoadLinkPropertiesAsset.typeId)(municipalityCode, administrativeClass)
     properties.map { prop =>
       roadLinkService.updateLinkProperties(prop, Option(user.username), municipalityValidation, user.isOperator()).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
@@ -1697,8 +1697,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     optionalValue match {
       case Some(values) =>
       val idsSavedOrUpdated = speedLimitService.createOrUpdateSpeedLimit(newLimits, values, user.username,ids,
-          validateUserAccess(user, SpeedLimitAsset.typeId),
-          validateUserAccess(user, SpeedLimitAsset.typeId) _)
+          validateUserAccess(user, SpeedLimitAsset.typeId, false),
+          validateUserAccess(user, SpeedLimitAsset.typeId, false) _)
         speedLimitService.getSpeedLimitAssetsByIds(idsSavedOrUpdated.toSet)
       case _ => BadRequest("Speed limit value not provided")
     }
@@ -1711,7 +1711,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
       user.username,
-      validateUserAccess(user, SpeedLimitAsset.typeId) _)
+      validateUserAccess(user, SpeedLimitAsset.typeId, false) _)
   }
   
   post("/speedlimits/:speedLimitId/separate") {
@@ -1735,8 +1735,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "value").extract[SpeedLimitValue],
       user.username,
       Seq.empty[Long],
-      validateUserAccess(user, SpeedLimitAsset.typeId) _,
-      validateUserAccess(user, SpeedLimitAsset.typeId) _
+      validateUserAccess(user, SpeedLimitAsset.typeId, false) _,
+      validateUserAccess(user, SpeedLimitAsset.typeId, false) _
     ).headOption match {
       case Some(id) => speedLimitService.getSpeedLimitById(id)
       case _ => BadRequest("Speed limit creation failed")
@@ -1751,14 +1751,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def validateAssetTypeAccess(assetTypeId: Int, municipality: Int, administrativeClass: AdministrativeClass): Unit = {
-    if (editingRestrictionsService.isEditingRestricted(assetTypeId, municipality, administrativeClass, true)) {
+  private def validateAssetTypeAccess(assetTypeId: Int, municipality: Int, administrativeClass: AdministrativeClass, newTransaction: Boolean = true): Unit = {
+    if (editingRestrictionsService.isEditingRestricted(assetTypeId, municipality, administrativeClass, newTransaction)) {
       halt(Unauthorized("Editing this asset type is generally restricted in this municipality."))
     }
   }
 
-  private def validateUserAccess(user: User, typeId: Int)(municipality: Int, administrativeClass: AdministrativeClass) : Unit = {
-        validateAssetTypeAccess(typeId, municipality, administrativeClass)
+  private def validateUserAccess(user: User, typeId: Int, newTransaction: Boolean = true)(municipality: Int, administrativeClass: AdministrativeClass) : Unit = {
+        validateAssetTypeAccess(typeId, municipality, administrativeClass, newTransaction)
         validateAdministrativeClass(typeId, user, municipality)(administrativeClass)
     if (!user.isAuthorizedToWrite(municipality, administrativeClass)) {
       halt(Unauthorized("User not authorized"))
@@ -2568,6 +2568,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "trafficDirection" -> lane.attributes.get("trafficDirection"),
         "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
         "properties" -> lane.laneAttributes
+      )
+    }
+  }
+
+  get("/editingRestrictions") {
+    editingRestrictionsService.fetchRestrictions().map { restriction =>
+      Map(
+        "municipalityId" -> restriction.municipalityId,
+        "stateRoadRestrictedAssetTypes" -> restriction.stateRoadRestrictedAssetTypes,
+        "municipalityRoadRestrictedAssetTypes" -> restriction.municipalityRoadRestrictedAssetTypes
       )
     }
   }
