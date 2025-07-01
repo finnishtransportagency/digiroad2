@@ -509,7 +509,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param changes
     * @return
     */
-  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange]): Option[OperationStep] = Some(operationStep)
+  def additionalOperations(operationStep: OperationStep, changes: Seq[RoadLinkChange], newRoadLinks: Seq[RoadLink]): Option[OperationStep] = Some(operationStep)
   /**
     * 4.1) Add additional logic if something more also need updating like some other table. Default is do nothing.
     * @param change
@@ -648,7 +648,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         rawData.filter(_.nonEmpty)
       }
     }
-
     val (after, changeInfoM) = LogUtils.time(logger, "Merging operation steps before adjustment") {
       mergeAfterAndChangeSets(projectedToNewLinks :+ initStep)
     }
@@ -717,7 +716,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def adjustAndAdditionalOperations(typeId: Int, onlyNeededNewRoadLinks: Seq[RoadLink],
                                             operationStep: Option[OperationStep], changes: Seq[RoadLinkChange]): OperationStep = {
     val additionalSteps = LogUtils.time(logger, s"Performing additional operations for ${AssetTypeInfo.apply(typeId)}") {
-      additionalOperations(operationStep.get, changes)
+      additionalOperations(operationStep.get, changes, onlyNeededNewRoadLinks)
     }
 
     adjustAssets(typeId, onlyNeededNewRoadLinks, additionalSteps.get)
