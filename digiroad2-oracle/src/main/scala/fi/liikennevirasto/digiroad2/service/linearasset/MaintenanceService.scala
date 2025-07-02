@@ -28,14 +28,14 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
 
-    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.enrichAndPartition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   override def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
-    LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.enrichAndPartition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   private def addPolygonAreaAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
@@ -169,7 +169,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(potentialAssets.map(_.linkId).toSet)
     val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
     val filledTopology = generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId)
-    LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.enrichAndPartition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
@@ -177,7 +177,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(potentialAssets.map(_.linkId).toSet)
     val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
     val filledTopology = generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId)
-    LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.enrichAndPartition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String ,List[Long]]] ={
