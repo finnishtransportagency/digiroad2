@@ -369,7 +369,7 @@ Resources:
                       "rulePriority": 3,
                       "description": "Retain 3 latest untagged images",
                       "selection": {
-                          "tagStatus": "untagged",
+                          "tagStatus": "any",
                           "countType": "imageCountMoreThan",
                           "countNumber": 3
                       },

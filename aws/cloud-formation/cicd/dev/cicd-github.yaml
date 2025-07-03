@@ -391,9 +391,9 @@ Resources:
                   },
                   {
                       "rulePriority": 2,
-                      "description": "Retain 3 latest untagged images",
+                      "description": "Retain 3 latest images",
                       "selection": {
-                          "tagStatus": "untagged",
+                          "tagStatus": "any",
                           "countType": "imageCountMoreThan",
                           "countNumber": 3
                       },
