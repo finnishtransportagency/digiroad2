@@ -3,7 +3,8 @@
 
     var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
     new FeedbackDataTool(feedbackCollection, 'manoeuvre', authorizationPolicy);
-
+    var editingRestrictions = new EditingRestrictions();
+    var typeId = 380;
     /*
     * HTML Templates
     */
@@ -32,21 +33,25 @@
 
     var userInformationLog = function() {
       var hasMunicipality = function (linearAsset) {
-        return _.some(linearAsset.get(), function (asset) {
+        return _.some([linearAsset.get()], function (asset) {
           return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
         });
       };
 
       var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
+      var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
       var message = '';
 
-      eventbus.on('roles:fetched', function() {
-        if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedManoeuvreSource)) {
-          message = limitedRights;
-        } else if (!authorizationPolicy.formEditModeAccess(selectedManoeuvreSource))
-          message = noRights;
-      });
+      if (selectedManoeuvreSource.get() && editingRestrictions.hasStateRestriction([selectedManoeuvreSource.get()], typeId)) {
+        message = stateRoadEditingRestricted;
+      } else if(selectedManoeuvreSource.get() && editingRestrictions.hasMunicipalityRestriction([selectedManoeuvreSource.get()], typeId)) {
+        message = municipalityRoadEditingRestricted;
+      } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedManoeuvreSource)) {
+        message = limitedRights;
+      } else if (!authorizationPolicy.formEditModeAccess(selectedManoeuvreSource))
+        message = noRights;
 
       if(message) {
         return '' +
@@ -57,17 +62,19 @@
         return '';
     };
 
-    var templateWithHeaderAndFooter = '' +
-      '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark form-manoeuvre">' +
-          '<div class="form-group">' +
-            '<p class="form-control-static asset-log-info">Muokattu viimeksi:  <%- modifiedAt %> / <%- modifiedBy %></p>' +
-          '</div>' +
-          '<label>Kääntyminen kielletty linkeille</label>' +
-          '<div></div>' +
-          userInformationLog() +
-        '</div>' +
-      '</div>';
+    var templateWithHeaderAndFooter = function(data) {
+      return '' +
+          '<div class="wrapper read-only">' +
+            '<div class="form form-horizontal form-dark form-manoeuvre">' +
+              '<div class="form-group">' +
+                '<p class="form-control-static asset-log-info">Muokattu viimeksi:  ' + data.modifiedAt + ' / ' + data.modifiedBy + '</p>' +
+              '</div>' +
+              '<label>Kääntyminen kielletty linkeille</label>' +
+              '<div></div>' +
+              userInformationLog() +
+            '</div>' +
+          '</div>';
+    };
 
     var manouvresViewModeTemplate = '' +
       '<div class="form-group manoeuvre">' +
@@ -210,7 +217,7 @@
       // Listen to view/edit mode button
       eventbus.on('application:readOnly', function(readOnly){
         if('manoeuvre' ===  applicationModel.getSelectedLayer()) {
-          toggleMode(readOnly || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy));
+          toggleMode(readOnly || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId));
         }
       });
 
@@ -222,7 +229,7 @@
         roadLink.modifiedBy = roadLink.modifiedBy || '-';
         roadLink.modifiedAt = roadLink.modifiedAt || '';
         rootElement.find('#feature-attributes-header').html(_.template(header)(roadLink));
-        rootElement.find('#feature-attributes-form').html(_.template(templateWithHeaderAndFooter)(roadLink));
+        rootElement.find('#feature-attributes-form').html(templateWithHeaderAndFooter(roadLink));
         rootElement.find('#feature-attributes-footer').html(footer);
 
         // Create html elements for view mode
@@ -319,7 +326,7 @@
           })));
         });
 
-        toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy));
+        toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId));
 
         var manoeuvreData = function(formGroupElement) {
           var firstTargetLinkId = formGroupElement.attr('linkId');
@@ -550,7 +557,7 @@
             selectedManoeuvreSource.setExceptions(manoeuvre.manoeuvreId, manoeuvre.exceptions);
           }
         };
-        toggleMode(validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || applicationModel.isReadOnly());
+        toggleMode(validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || applicationModel.isReadOnly() || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId));
       });
 
       eventbus.on('manoeuvres:unselected', function() {

@@ -4,6 +4,7 @@
   };
 
   var infoContent = $('ul[class=information-content]');
+  var editingRestrictions = new EditingRestrictions();
 
   function bindEvents(linearAsset, formElements, feedbackModel) {
 
@@ -13,6 +14,7 @@
       title = linearAsset.title,
       authorizationPolicy = linearAsset.authorizationPolicy,
       layerName = linearAsset.layerName,
+      typeId = linearAsset.typeId,
       isVerifiable = linearAsset.isVerifiable,
       hasInaccurate = linearAsset.hasInaccurate;
       new FeedbackDataTool(feedbackModel, linearAsset.layerName, authorizationPolicy, eventCategory);
@@ -21,7 +23,7 @@
 
     eventbus.on(events('selected', 'cancelled'), function() {
       rootElement.find('#feature-attributes-header').html(header(selectedLinearAsset, title, newTitle));
-      rootElement.find('#feature-attributes-form').html(template(selectedLinearAsset, formElements, authorizationPolicy));
+      rootElement.find('#feature-attributes-form').html(template(selectedLinearAsset, formElements, authorizationPolicy, typeId));
       rootElement.find('#feature-attributes-footer').html(footer(selectedLinearAsset, isVerifiable));
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
@@ -39,7 +41,7 @@
       });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
-      toggleMode(applicationModel.isReadOnly() || !validateAccess(selectedLinearAsset, authorizationPolicy));
+      toggleMode(applicationModel.isReadOnly() || !validateAccess(selectedLinearAsset, authorizationPolicy) || editingRestrictions.hasRestrictions(selectedLinearAsset.get(), typeId));
     });
 
     eventbus.on(events('unselect'), function() {
@@ -56,7 +58,7 @@
 
     eventbus.on('application:readOnly', function(readOnly){
       if(layerName ===  applicationModel.getSelectedLayer()) {
-        toggleMode(!validateAccess(selectedLinearAsset, authorizationPolicy) || readOnly);
+        toggleMode(!validateAccess(selectedLinearAsset, authorizationPolicy) || readOnly || editingRestrictions.hasRestrictions(selectedLinearAsset.get(), typeId));
       }
     });
     eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
@@ -129,7 +131,7 @@
   };
 
 
-  function template(selectedLinearAsset, formElements, authorizationPolicy) {
+  function template(selectedLinearAsset, formElements, authorizationPolicy, typeId) {
     var modifiedBy = selectedLinearAsset.getModifiedBy() || '-';
     var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';
     var createdBy = selectedLinearAsset.getCreatedBy() || '-';
@@ -178,9 +180,15 @@
 
       var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
+      var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
       var message = '';
 
-      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinearAsset)) {
+      if (editingRestrictions.hasStateRestriction(selectedLinearAsset.get(), typeId)) {
+        message = stateRoadEditingRestricted;
+      } else if(editingRestrictions.hasMunicipalityRestriction(selectedLinearAsset.get(), typeId)) {
+        message = municipalityRoadEditingRestricted;
+      } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinearAsset)) {
         message = limitedRights;
       } else if (!authorizationPolicy.validateMultiple(selectedLinearAsset.get()))
         message = noRights;
