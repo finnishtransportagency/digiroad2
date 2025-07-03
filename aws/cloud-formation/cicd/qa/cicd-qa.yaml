@@ -364,7 +364,7 @@ Resources:
                       "action": {
                           "type": "expire"
                       }
-                  }
+                  },
                   {
                       "rulePriority": 3,
                       "description": "Retain 3 latest untagged images",
