@@ -354,7 +354,7 @@ Resources:
                   },
                   {
                       "rulePriority": 2,
-                      "description": "Retain images tagged with qa",
+                      "description": "Retain images tagged with test",
                       "selection": {
                           "tagStatus": "tagged",
                           "tagPrefixList": ["test"],
@@ -364,22 +364,9 @@ Resources:
                       "action": {
                           "type": "expire"
                       }
-                  },
+                  }
                   {
                       "rulePriority": 3,
-                      "description": "Retain images tagged with latest",
-                      "selection": {
-                          "tagStatus": "tagged",
-                          "tagPrefixList": ["latest"],
-                          "countType": "imageCountMoreThan",
-                          "countNumber": 999999
-                      },
-                      "action": {
-                          "type": "expire"
-                      }
-                  },
-                  {
-                      "rulePriority": 4,
                       "description": "Retain 3 latest untagged images",
                       "selection": {
                           "tagStatus": "untagged",
