@@ -554,7 +554,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     try {
       massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username,
-        validateUserAccessForMassTransitStops(userProvider.getCurrentUser(), MassTransitStopAsset.typeId, properties))
+        validateUserAccessForMassTransitStops(userProvider.getCurrentUser(), MassTransitStopAsset.typeId, properties, newTransaction = false))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
       case e: RoadAddressException =>
