@@ -41,9 +41,6 @@
 
     this.assetSpecificAccess = function(){
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
-      var adminClass = selectedMassTransitStopModel.getAdministrativeClass();
-
-      if (editingRestrictions.pointAssetHasRestriction(municipalityCode, adminClass, typeId)) return false;
 
       var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && me.hasRightsInMunicipality(municipalityCode);
       var isElyyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode);

@@ -410,9 +410,9 @@
         var municipalityUserStateRoadRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Kuntaylläpitäjänä voit muokata valtion teillä vain virtuaalipysäkkejä.';
         var message = '';
 
-        if (editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+        if (selectedMassTransitStopModel.getAdministrativeClass() == 1 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
           message = stateRoadEditingRestricted;
-        } else if(editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+        } else if(selectedMassTransitStopModel.getAdministrativeClass() == 2 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
           message = municipalityRoadEditingRestricted;
         } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
