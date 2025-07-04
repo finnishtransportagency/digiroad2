@@ -359,7 +359,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
         val stop = massTransitStopService.getMassTransitStopByNationalId(natId, _ => (), false)
         stop match {
           case Some(stopData) =>
-            val roadLinks = getNearestRoadLink(stopData.lon, stopData.lat, user, Set(), BusStopType(stopData.stopTypes.head))
+            val roadLinks = getNearestRoadLink(stopData.lon, stopData.lat, user, Set(), BusStopType(stopData.stopTypes.headOption.getOrElse(BusStopType.Unknown.value)))
             roadLinks.isEmpty match {
               case false =>
                 if (assetHasEditingRestrictions(MassTransitStopAsset.typeId, roadLinks)) {
