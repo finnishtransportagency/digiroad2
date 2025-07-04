@@ -793,6 +793,8 @@ sealed trait PointAssetValue {
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None, groupedId: Long = 0) extends AbstractProperty {
   def toJson = JObject(JField("id", JLong(id)), JField("publicId", JString(publicId)), JField("propertyType", JString(propertyType)),
     JField("required", JBool(required)), JField("values", JArray(values.map(_.toJson).toList)), JField("groupedId", JLong(groupedId)))
+
+  def toSimplePointAssetProperty: SimplePointAssetProperty = SimplePointAssetProperty(publicId, values, groupedId)
 }
 
 case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
