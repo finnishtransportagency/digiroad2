@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
-import fi.liikennevirasto.digiroad2.asset.{PointAssetState, PointAssetStructure, SimplePointAssetProperty, State}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetState, PointAssetStructure, SimplePointAssetProperty, State, TrafficLights}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.TrafficLight
 import fi.liikennevirasto.digiroad2.lane.LaneType
@@ -96,6 +96,8 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
         val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
         if (roadLinks.isEmpty) {
           (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+        } else if (assetHasEditingRestrictions(TrafficLights.typeId, roadLinks)) {
+          (List("Asset type editing is restricted within municipality or admininistrative class."), Seq())
         } else {
           (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
         }

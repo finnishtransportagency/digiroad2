@@ -20,6 +20,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
   var clusterView;
 
+  var editingRestrictions = new EditingRestrictions();
+  var typeId = 10;
+
   var showOrHideServicePointLayer = function (showOrHide) {
     servicePointLayer.setVisible(showOrHide);
   };
@@ -523,6 +526,21 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       }
       eventbus.trigger('busStop:selected', stopTypes[0]);
       selectedAsset = createAsset(data);
+      var administrativeClass = selectedMassTransitStopModel.getAdministrativeClass();
+      var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
+
+      if (administrativeClass === 'State' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+        me.displayAssetCreationRestricted('Kohteiden lisääminen on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.');
+        selectedMassTransitStopModel.cancel();
+        return;
+      }
+
+      if (administrativeClass === 'Municipality' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+        me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+        selectedMassTransitStopModel.cancel();
+        return;
+      }
+
       var feature = selectedAsset.massTransitStop.getMarkerFeature();
       selectControl.addSelectionFeatures([feature], false, false);
       applyBlockingOverlays();

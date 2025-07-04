@@ -3,6 +3,8 @@
     AuthorizationPolicy.call(this);
 
     var me = this;
+    var editingRestrictions = new EditingRestrictions();
+    var typeId = 10;
 
     this.isElyMaintainerOrOperator = function(municipalityCode) {
       return (me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();

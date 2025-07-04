@@ -2,6 +2,8 @@
   root.ServicePointForm = function() {
     PointAssetForm.call(this);
     var me = this;
+    var editingRestrictions = new EditingRestrictions();
+    var typeId = 250;
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
@@ -71,7 +73,8 @@
 
       eventbus.on('application:readOnly', function(readOnly) {
         if(me.applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
-          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || readOnly);
+          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || readOnly ||
+              editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'Municipality', typeId));
           if (isSingleService(selectedAsset)){
             rootElement.find('button.delete').hide();
           }
@@ -81,7 +84,8 @@
       eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
         if (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
           me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection, collection);
-          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
+          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly() ||
+              editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'Municipality', typeId));
           rootElement.find('button#save-button').prop('disabled', true);
           rootElement.find('button#cancel-button').prop('disabled', false);
           if(isSingleService(selectedAsset)){
@@ -105,6 +109,29 @@
         if(layerName === applicationModel.getSelectedLayer())
         $('ul[class=information-content]').empty();
       });
+    };
+
+    this.userInformationLog = function(authorizationPolicy, asset) {
+
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
+      var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var editingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä tai kunnan omassa tietojärjestelmässä.';
+      var message = '';
+
+      if (editingRestrictions.pointAssetHasRestriction(asset.getMunicipalityCode(), 'State', typeId) || editingRestrictions.pointAssetHasRestriction(asset.getMunicipalityCode(), 'Municipality', typeId)) {
+        message = editingRestricted;
+      } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(asset.getMunicipalityCode())) {
+        message = limitedRights;
+      } else if(!authorizationPolicy.formEditModeAccess(asset, me.roadCollection))
+        message = noRights;
+
+      if(message) {
+        return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info">' + message + '</p>' +
+            '</div>';
+      } else
+        return '';
     };
 
     this.renderValueElement = function(asset, collection, authorizationPolicy) {
@@ -153,7 +180,8 @@
 
         selectedAsset.set({services: services});
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection);
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly() ||
+            editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'Municipality', typeId));
         rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
         if(services.length < 2){
           rootElement.find('button.delete').hide();
@@ -168,7 +196,8 @@
         var newServices = services.concat({id: generatedId, assetId: assetId, serviceType: newServiceType, isAuthorityData: isAuthorityData(newServiceType)});
         selectedAsset.set({services: newServices});
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection);
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly() ||
+            editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'Municipality', typeId));
         rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
         if(newServices.length < 2){
           rootElement.find('button.delete').hide();

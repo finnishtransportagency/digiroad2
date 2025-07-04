@@ -3,6 +3,8 @@
   var poistaSelected = false;
   var authorizationPolicy;
   var pointAssetToSave = false;
+  var typeId = 10;
+  var editingRestrictions = new EditingRestrictions();
 
   var rootElement = $("#feature-attributes");
 
@@ -390,9 +392,15 @@
 
         var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+        var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
+        var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
         var message = '';
 
-        if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
+        if (selectedMassTransitStopModel.getAdministrativeClass() == 1 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+          message = stateRoadEditingRestricted;
+        } else if(selectedMassTransitStopModel.getAdministrativeClass() == 2 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+          message = municipalityRoadEditingRestricted;
+        } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
         } else if (!authorizationPolicy.assetSpecificAccess())
           message = noRights;

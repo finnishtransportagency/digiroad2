@@ -9,6 +9,7 @@
             roadCollection = params.roadCollection,
             selectedAsset = params.selectedAsset,
             layerName = params.layerName,
+            typeId = params.typeId,
             collection = params.collection;
 
          this.handleMapClick = function (coordinates) {
@@ -19,6 +20,8 @@
             }
         };
 
+        var editingRestrictions = new EditingRestrictions();
+
         this.createNewAsset = function(coordinates) {
             var selectedLon = coordinates.x;
             var selectedLat = coordinates.y;
@@ -27,6 +30,17 @@
                 var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
                 var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
                 var administrativeClass = obtainAdministrativeClass(nearestLine);
+                var municipalityCode = obtainMunicipalityCode(nearestLine);
+
+                if (administrativeClass === 'State' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+                    me.displayAssetCreationRestricted('Kohteiden lisääminen on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.');
+                    return;
+                }
+
+                if (administrativeClass === 'Municipality' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+                    me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+                    return;
+                }
 
                 var asset = me.createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
 
@@ -48,6 +62,10 @@
 
         function obtainAdministrativeClass(asset){
             return selectedAsset.getAdministrativeClass(asset.linkId);
+        }
+
+        function obtainMunicipalityCode(asset) {
+            return selectedAsset.getMunicipalityCodeByLinkId(asset.linkId);
         }
 
         return {

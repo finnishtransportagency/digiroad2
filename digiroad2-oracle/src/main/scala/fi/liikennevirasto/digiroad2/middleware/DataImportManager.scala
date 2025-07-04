@@ -43,7 +43,7 @@ class DataImportManager(roadLinkClient: RoadLinkClient, roadLinkService: RoadLin
       case TrafficSigns.layerName =>
         trafficSignCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId, importedInfo.additionalImportInfo.map(_.asInstanceOf[NumericValues].values))
       case MaintenanceRoadAsset.layerName =>
-        maintenanceRoadCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user.username, importedInfo.logId)
+        maintenanceRoadCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId)
       case "roadLinks" =>
         roadLinkCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user.username, importedInfo.logId)
       case MassTransitStopAsset.layerName =>
