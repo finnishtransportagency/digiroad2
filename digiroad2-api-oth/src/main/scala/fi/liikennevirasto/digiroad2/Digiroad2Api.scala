@@ -583,16 +583,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def validateElyMaintainerUser(properties: Seq[SimplePointAssetProperty]) = {
-    val user = userProvider.getCurrentUser()
-    val propertyToValidation = properties.find {
-      property => property.publicId.equals("tietojen_yllapitaja") && property.values.exists(p => p.asInstanceOf[PropertyValue].propertyValue.equals("2"))
-    }
-    if (propertyToValidation.isDefined && (!user.isELYMaintainer() && !user.isOperator)) {
-      halt(MethodNotAllowed("User not authorized, User needs to be elyMaintainer for do that action."))
-    }
-  }
-
   private def validateCreationProperties(properties: Seq[SimplePointAssetProperty]) = {
     val mandatoryProperties: Map[String, String] = massTransitStopService.mandatoryProperties(properties)
     val nonEmptyMandatoryProperties: Seq[SimplePointAssetProperty] = properties.filter { property =>
@@ -1772,7 +1762,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
 
     validateAssetTypeAccess(typeId, municipality, administrativeClass, newTransaction)
-    validateElyMaintainerUser(properties)
 
     val ahvenanmaaElyException = user.isAnElyException(municipality)
     val isMunicipalityMaintainerAndIsAuthorized = {
