@@ -14,9 +14,17 @@
 
         me.hasStateRestriction = function(linearAsset, typeId) {
             return _.some(linearAsset, function(asset){
-                if (asset.administrativeClass === 1 || asset.administrativeClass === 'State') {
-                    var restriction = _.find(me.restrictions, { municipalityId: asset.municipalityCode });
-                    return restriction && restriction.stateRoadRestrictedAssetTypes.includes(typeId);
+                var restriction = _.find(me.restrictions, { municipalityId: asset.municipalityCode });
+                if (asset.administrativeClass) {
+                    if (asset.administrativeClass === 1 || asset.administrativeClass === 'State') {
+                        return restriction && restriction.stateRoadRestrictedAssetTypes.includes(typeId);
+                    }
+                // for lanes, admin class has to be derived from links
+                } else {
+                    var adminClasses = _.map(asset.selectedLinks, 'administrativeClass');
+                    if (adminClasses.includes(1)) {
+                        return restriction && restriction.stateRoadRestrictedAssetTypes.includes(typeId);
+                    }
                 }
                 return false;
             });
@@ -24,9 +32,16 @@
 
         me.hasMunicipalityRestriction = function(linearAsset, typeId) {
             return _.some(linearAsset, function(asset){
-                if (asset.administrativeClass === 2 || asset.administrativeClass === 'Municipality') {
-                    var restriction = _.find(me.restrictions, { municipalityId: asset.municipalityCode });
-                    return restriction && restriction.municipalityRoadRestrictedAssetTypes.includes(typeId);
+                var restriction = _.find(me.restrictions, {municipalityId: asset.municipalityCode});
+                if (asset.administrativeClass) {
+                    if (asset.administrativeClass === 2 || asset.administrativeClass === 'Municipality') {
+                        return restriction && restriction.municipalityRoadRestrictedAssetTypes.includes(typeId);
+                    }
+                } else {
+                    var adminClasses = _.map(asset.selectedLinks, 'administrativeClass');
+                    if (adminClasses.includes(2)) {
+                        return restriction && restriction.municipalityRoadRestrictedAssetTypes.includes(typeId);
+                    }
                 }
                 return false;
             });

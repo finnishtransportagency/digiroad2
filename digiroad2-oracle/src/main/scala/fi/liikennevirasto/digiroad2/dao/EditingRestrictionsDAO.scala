@@ -12,8 +12,8 @@ class EditingRestrictionsDAO {
     def apply(r: PositionedResult): EditingRestrictions = {
       val id = r.nextInt()
       val municipalityId = r.nextInt()
-      val stateRoadRestrictedAssetTypes = r.nextString().split(",").toSeq.map(_.toInt)
-      val municipalityRoadRestrictedAssetTypes = r.nextString().split(",").toSeq.map(_.toInt)
+      val stateRoadRestrictedAssetTypes = Option(r.nextString()).filter(_.nonEmpty).map(_.split(",").toSeq.map(_.toInt)).getOrElse(Seq.empty)
+      val municipalityRoadRestrictedAssetTypes = Option(r.nextString()).filter(_.nonEmpty).map(_.split(",").toSeq.map(_.toInt)).getOrElse(Seq.empty)
       val createdAt = Option(r.nextTimestamp()).map(new DateTime(_))
       val modifiedAt = Option(r.nextTimestamp()).map(new DateTime(_))
 

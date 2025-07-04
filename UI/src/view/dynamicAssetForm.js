@@ -958,7 +958,7 @@
         };
 
         this._isReadOnly = function(selectedAsset){
-            return applicationModel.isReadOnly() || editingRestrictions.hasRestrictions(selectedAsset.get(), self._assetTypeConfiguration.typeId) || !checkAuthorizationPolicy(selectedAsset);
+            return applicationModel.isReadOnly() || editingRestrictions.hasRestrictions(selectedAsset.get(), self._assetTypeConfiguration.typeId) || !this.checkAuthorizationPolicy(selectedAsset);
         };
 
         this.createHeaderElement = function(selectedAsset) {
@@ -1170,7 +1170,7 @@
             }
             else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
                 message = limitedRights;
-            } else if(!checkAuthorizationPolicy(selectedAsset))
+            } else if(!this.checkAuthorizationPolicy(selectedAsset))
                 message = noRights;
 
             if(message) {
@@ -1229,10 +1229,10 @@
             return sideCode ? self._assetTypeConfiguration.className + '-' + sideCode : self._assetTypeConfiguration.className;
         };
 
-        function checkAuthorizationPolicy(selectedAsset){
+        this.checkAuthorizationPolicy = function(selectedAsset) {
             var auth = self._assetTypeConfiguration.authorizationPolicy || function() { return false; };
             return auth.validateMultiple(selectedAsset.get());
-        }
+        };
 
         this.isSplitOrSeparatedAllowed = function(){
             //When both are deleted
