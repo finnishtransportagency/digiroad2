@@ -172,18 +172,31 @@
     }
 
     var updateStatus = function() {
-      if(pointAssetToSave && !isValidServicePoint()){
-        element.prop('disabled', true);
-      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() &&
-          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
-          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
-        element.prop('disabled', false);
-      } else if(poistaSelected) {
-        element.prop('disabled', false);
+      // If the user is a municipality maintainer, only the isOnlyVirtualStop property matters
+      if (authorizationPolicy.isMunicipalityMaintainer()) {
+        if (selectedMassTransitStopModel.isOnlyVirtualStop()) {
+          element.prop('disabled', false);
+        } else {
+          element.prop('disabled', true);
+        }
       } else {
-        element.prop('disabled', true);
+        if (pointAssetToSave && !isValidServicePoint()) {
+          element.prop('disabled', true);
+        } else if (
+            selectedMassTransitStopModel.isDirty() &&
+            !selectedMassTransitStopModel.requiredPropertiesMissing() &&
+            !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
+            !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()
+        ) {
+          element.prop('disabled', false);
+        } else if (poistaSelected) {
+          element.prop('disabled', false);
+        } else {
+          element.prop('disabled', true);
+        }
       }
     };
+
 
     updateStatus();
 
@@ -394,6 +407,7 @@
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
         var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
         var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
+        var municipalityUserStateRoadRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Kuntaylläpitäjänä voit muokata valtion teillä vain virtuaalipysäkkejä.';
         var message = '';
 
         if (selectedMassTransitStopModel.getAdministrativeClass() == 1 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
@@ -402,8 +416,12 @@
           message = municipalityRoadEditingRestricted;
         } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
-        } else if (!authorizationPolicy.assetSpecificAccess())
+        } else if (!authorizationPolicy.assetSpecificAccess()) {
           message = noRights;
+        } else if (authorizationPolicy.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isOnlyVirtualStop()) {
+          message = municipalityUserStateRoadRights;
+        }
+
 
         if(message) {
           return '' +
@@ -915,7 +933,6 @@
 
         if (!selectedMassTransitStopModel.isTerminalType(busStopTypeSelected) && !selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)) {
           setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
-          disableFormIfTRMassTransitStopHasEndDate(properties);
         }
 
         var contents = _.take(properties, 2)
@@ -966,22 +983,6 @@
         var isAdminClassState = selectedMassTransitStopModel.isAdminClassState(properties);
 
         isTRMassTransitStop = isAdministratorELY || (isAdministratorHSL && isAdminClassState);
-      }
-
-      function disableFormIfTRMassTransitStopHasEndDate(properties) {
-
-        var expiryDate = selectedMassTransitStopModel.getEndDate();
-        var todaysDate = moment().format('YYYY-MM-DD');
-
-        var isBusStopExpired = _.some(properties, function (property) {
-          return todaysDate > expiryDate && property.publicId === 'viimeinen_voimassaolopaiva' &&
-            _.some(property.values, function (value) {
-              return value.propertyValue !== "";
-            });
-        });
-
-        if(authorizationPolicy.isActiveTrStopWithoutPermission(isBusStopExpired, isTRMassTransitStop))
-          readOnly = true;
       }
 
       function streetViewTemplates(longi,lati,heading) {
@@ -1081,6 +1082,9 @@
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue != '2';}))) {
           isTRMassTransitStop = false;
           property.propertyType = "single_choice";
+          renderAssetForm();
+        }
+        if (property.publicId === 'pysakin_tyyppi') {
           renderAssetForm();
         }
         // Prevent getAssetForm() branching to 'Ei toteutettu'
