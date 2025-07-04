@@ -25,14 +25,6 @@
       return stopProperty.publicId == 'tietojen_yllapitaja' && !me.isElyMaintainerOrOperator(municipalityCode);
     };
 
-    /**
-     * checks if bus stop is still active and then if user is an operator or ELY-maintainer(operating in permitted area)
-    * */
-    this.isActiveTrStopWithoutPermission = function(isExpired, isTrStop) {
-      var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
-      return !isExpired && isTrStop && !me.isElyMaintainerOrOperator(municipalityCode);
-    };
-
     /** Rules:
     * Municipality maintainer: can update bus stops and other asset types inside own municipalities on admin class 2(municipality) and 3(private)
     * Ely maintainer: can update bus stops and other asset types inside own ELY-area on admin class 1(state) and 2(municipality) and 3(private)
@@ -56,13 +48,6 @@
 
       var properties = selectedMassTransitStopModel.getProperties();
 
-      var owner = _.find(properties, function(property) {
-        return property.publicId === "tietojen_yllapitaja"; });
-
-      var condition = typeof owner != 'undefined' && typeof owner.values != 'undefined' &&  !_.isEmpty(owner.values) && _.includes(_.map(owner.values, function (value) {
-            return value.propertyValue;
-          }), "2");
-
       var hasLivi = _.find(properties, function(property) {
           return property.publicId === 'yllapitajan_koodi'; });
 
@@ -70,7 +55,7 @@
 
       var hasAccess = this.assetSpecificAccess();
 
-      eventbus.trigger('application:controlledTR', (condition && liviCondition));
+      eventbus.trigger('application:controlledTR', liviCondition);
       /**boolean inverted because it is used for 'isReadOnly' in mass transit stop form*/
       return !hasAccess;
     };

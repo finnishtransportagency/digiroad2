@@ -933,7 +933,6 @@
 
         if (!selectedMassTransitStopModel.isTerminalType(busStopTypeSelected) && !selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)) {
           setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
-          disableFormIfTRMassTransitStopHasEndDate(properties);
         }
 
         var contents = _.take(properties, 2)
@@ -984,22 +983,6 @@
         var isAdminClassState = selectedMassTransitStopModel.isAdminClassState(properties);
 
         isTRMassTransitStop = isAdministratorELY || (isAdministratorHSL && isAdminClassState);
-      }
-
-      function disableFormIfTRMassTransitStopHasEndDate(properties) {
-
-        var expiryDate = selectedMassTransitStopModel.getEndDate();
-        var todaysDate = moment().format('YYYY-MM-DD');
-
-        var isBusStopExpired = _.some(properties, function (property) {
-          return todaysDate > expiryDate && property.publicId === 'viimeinen_voimassaolopaiva' &&
-            _.some(property.values, function (value) {
-              return value.propertyValue !== "";
-            });
-        });
-
-        if(authorizationPolicy.isActiveTrStopWithoutPermission(isBusStopExpired, isTRMassTransitStop))
-          readOnly = true;
       }
 
       function streetViewTemplates(longi,lati,heading) {
