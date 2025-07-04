@@ -118,7 +118,7 @@
       return _.some(currentAsset.payload.properties, function (property) {
         if (property.publicId === massTransitStopTypePublicId) {
           return _.some(property.values, function (propertyValue) {
-            return (propertyValue.propertyValue === 5 && property.values.length === 1);
+            return (propertyValue.propertyValue == 5 && property.values.length === 1);
           });
         }
         return false;
