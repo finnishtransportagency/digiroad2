@@ -407,7 +407,7 @@
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
         var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
         var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
-        var municipalityUserStateRoadRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Kuntaylläpitäjänä voit muokata valtion teillä vain virtuaalipysäkkejä.'
+        var municipalityUserStateRoadRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Kuntaylläpitäjänä voit muokata valtion teillä vain virtuaalipysäkkejä.';
         var message = '';
 
         if (editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
