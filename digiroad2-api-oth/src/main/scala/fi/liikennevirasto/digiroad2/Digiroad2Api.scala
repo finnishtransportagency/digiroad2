@@ -353,7 +353,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case true => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
         case _ =>
           val properties = a.propertyData.map(_.toSimplePointAssetProperty)
-          val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(a.linkId).getOrElse(throw new NoSuchElementException)
+          val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(a.linkId).getOrElse(throw new NoSuchElementException(s"No road link found with linkId: ${a.linkId}"))
           validateUserAccessForMassTransitStops(userProvider.getCurrentUser(), MassTransitStopAsset.typeId, properties)(roadLink.municipalityCode, roadLink.administrativeClass)
       }
       massTransitStopService.deleteMassTransitStopData(assetId)
