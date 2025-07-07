@@ -4,7 +4,7 @@ import java.security.InvalidParameterException
 import java.time.LocalDate
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
-import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, RoadLinkProperties => RoadLinkPropertiesAsset, _}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, RoadLinkProperties => RoadLinkPropertiesAsset, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicat
 import fi.liikennevirasto.digiroad2.service.lane.{AutoProcessedLanesWorkListService, LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ProhibitionService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop, ServicePointStopService}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopOperations, MassTransitStopService, NewMassTransitStop, ServicePointStopService}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util._
 import org.apache.commons.lang3.StringUtils.isBlank
@@ -351,7 +351,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
       LinkId.isUnknown(a.linkId) match {
         case true => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
-        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
+        case _ =>
+          val properties = a.propertyData.map(_.toSimplePointAssetProperty)
+          val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(a.linkId).getOrElse(throw new NoSuchElementException(s"No road link found with linkId: ${a.linkId}"))
+          validateUserAccessForMassTransitStops(userProvider.getCurrentUser(), MassTransitStopAsset.typeId, properties)(roadLink.municipalityCode, roadLink.administrativeClass)
       }
       massTransitStopService.deleteMassTransitStopData(assetId)
     }
@@ -540,13 +543,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   put("/massTransitStops/:id") {
-    def validateMunicipalityAuthorization(id: Long)(municipalityCode: Int, administrativeClass: AdministrativeClass): Unit = {
-      if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode, administrativeClass))
-        halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
-    }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimplePointAssetProperty]].getOrElse(Seq())
-    validateElyMaintainerUser(properties)
     val id = params("id").toLong
 
     validatePropertiesMaxSize(properties)
@@ -555,7 +553,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case _ => None
     }
     try {
-      massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
+      massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username,
+        validateUserAccessForMassTransitStops(userProvider.getCurrentUser(), MassTransitStopAsset.typeId, properties, newTransaction = false))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
       case e: RoadAddressException =>
@@ -581,16 +580,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         } catch {
           case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
         }
-    }
-  }
-
-  private def validateElyMaintainerUser(properties: Seq[SimplePointAssetProperty]) = {
-    val user = userProvider.getCurrentUser()
-    val propertyToValidation = properties.find {
-      property => property.publicId.equals("tietojen_yllapitaja") && property.values.exists(p => p.asInstanceOf[PropertyValue].propertyValue.equals("2"))
-    }
-    if (propertyToValidation.isDefined && (!user.isELYMaintainer() && !user.isOperator)) {
-      halt(MethodNotAllowed("User not authorized, User needs to be elyMaintainer for do that action."))
     }
   }
 
@@ -630,8 +619,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimplePointAssetProperty]]
     val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(linkId).getOrElse(throw new NoSuchElementException)
-    validateUserAccess(userProvider.getCurrentUser(), MassTransitStopAsset.typeId)(roadLink.municipalityCode, roadLink.administrativeClass)
-    validateElyMaintainerUser(properties)
+    validateUserAccessForMassTransitStops(userProvider.getCurrentUser(), MassTransitStopAsset.typeId, properties)(roadLink.municipalityCode, roadLink.administrativeClass)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
     try {
@@ -1764,6 +1752,31 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(Unauthorized("User not authorized"))
     }
   }
+
+  private def validateUserAccessForMassTransitStops(user: User, typeId: Int, properties: Seq[SimplePointAssetProperty], newTransaction: Boolean = true)
+                                                   (municipality: Int, administrativeClass: AdministrativeClass): Unit = {
+
+    def isVirtualStop(properties: Seq[SimplePointAssetProperty]): Boolean = {
+      val stopType = properties.find(pro => pro.publicId == MassTransitStopOperations.MassTransitStopTypePublicId)
+      stopType.exists(_.values.exists(_.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.VirtualBusStopPropertyValue))
+    }
+
+    validateAssetTypeAccess(typeId, municipality, administrativeClass, newTransaction)
+
+    val ahvenanmaaElyException = user.isAnElyException(municipality)
+    val isMunicipalityMaintainerAndIsAuthorized = {
+      user.isMunicipalityMaintainer() &&
+        ((administrativeClass != State && user.configuration.authorizedMunicipalities.contains(municipality)) ||
+          (administrativeClass == State && isVirtualStop(properties) && user.configuration.authorizedMunicipalities.contains(municipality)))
+    }
+    val isElyMaintainerAndIsAuthorized = user.isELYMaintainer() && user.configuration.authorizedMunicipalities.contains(municipality)
+
+    val authorizedToWrite = ahvenanmaaElyException || isMunicipalityMaintainerAndIsAuthorized || isElyMaintainerAndIsAuthorized || user.isOperator()
+    if (!authorizedToWrite) {
+      halt(Unauthorized("User not authorized"))
+    }
+  }
+
 
   private def validateUserMunicipalityAccessByMunicipality(user: User)(municipality: Int) : Unit = {
     if (!user.isAuthorizedToWrite(municipality)) {
