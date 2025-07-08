@@ -29,14 +29,15 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
 
     (optLon, optLat) match {
       case (Some(lon), Some(lat)) =>
-        val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong))
+        val roadLinks = roadLinkService.getClosestRoadlink(user, Point(lon.toLong, lat.toLong))
+        val enrichedRoadLinks = roadLinkService.enrichFetchedRoadLinks(roadLinks.toSeq)
         roadLinks.isEmpty match {
           case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
           case false =>
-            if (assetHasEditingRestrictions(Obstacles.typeId, roadLinks)) {
+            if (assetHasEditingRestrictions(Obstacles.typeId, enrichedRoadLinks)) {
               (List("Asset type editing is restricted within municipality or admininistrative class."), Seq())
             } else {
-              (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+              (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, enrichedRoadLinks)))
             }
         }
       case _ =>
