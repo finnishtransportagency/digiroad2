@@ -15,8 +15,8 @@
     };
 
     var obstacleTypes = {
-      1: 'Muu pysyvä esterakenne',
-      2: 'Avattava puomi',
+      1: 'Kiinteä esterakennelma',
+      2: 'Avattava esterakennelma',
       3: 'Kaivanne',
       99: 'Ei tiedossa'
     };
@@ -32,8 +32,8 @@
         '      <p class="form-control-static">' + obstacleTypes[me.selectedAsset.getByProperty('esterakennelma')] + '</p>' +
         '        <select id="esterakennelma-select" class="form-control" style="display:none">' +
         '         <option value="" ' + (me.selectedAsset.getByProperty('esterakennelma') === null ? 'selected' : '') + '></option>' +
-        '         <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Muu pysyvä esterakennelma</option>' +
-        '         <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
+        '         <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Kiinteä esterakennelma</option>' +
+        '         <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava esterakennelma</option>' +
         '         <option value="3" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 3 ? 'selected' : '') +'>Kaivanne</option>' +
         '         <option value="99" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 99 ? 'selected' : '') +'>Ei tiedossa</option>' +
         '      </select>' +
