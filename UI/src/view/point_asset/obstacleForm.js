@@ -28,7 +28,7 @@
       return '' +
         '<div class="edit-mode"> '+
         '    <div class="form-group editable form-obstacle">' +
-        '      <label class="control-label required" for="esterakennelma">Esterakennelma</label>' +
+        '      <label class="control-label required">Esterakennelma</label>' +
         '      <p class="form-control-static">' + obstacleTypes[me.selectedAsset.getByProperty('esterakennelma')] + '</p>' +
         '        <select id="esterakennelma-select" class="form-control" style="display:none">' +
         '         <option value="" ' + (me.selectedAsset.getByProperty('esterakennelma') === null ? 'selected' : '') + '></option>' +
