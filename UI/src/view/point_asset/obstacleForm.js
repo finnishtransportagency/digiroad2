@@ -26,16 +26,19 @@
     this.renderValueElement = function(asset, collection, authorizationPolicy) {
       var components = me.renderComponents(asset.propertyData, propertyOrdering, authorizationPolicy);
       return '' +
+        '<div class="edit-mode"> '+
         '    <div class="form-group editable form-obstacle">' +
-        '      <label class="control-label">Esterakennelma</label>' +
+        '      <label class="control-label required" for="esterakennelma">Esterakennelma</label>' +
         '      <p class="form-control-static">' + obstacleTypes[me.selectedAsset.getByProperty('esterakennelma')] + '</p>' +
-        '      <select class="form-control" style="display:none">  ' +
-        '        <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Muu pysyvä esterakennelma</option>' +
-        '        <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
-        '        <option value="3" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 3 ? 'selected' : '') +'>Kaivanne</option>' +
-        '        <option value="99" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 99 ? 'selected' : '') +'>Ei tiedossa</option>' +
+        '        <select id="esterakennelma-select" class="form-control" style="display:none">' +
+        '         <option value="" ' + (me.selectedAsset.getByProperty('esterakennelma') === null ? 'selected' : '') + '></option>' +
+        '         <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Muu pysyvä esterakennelma</option>' +
+        '         <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
+        '         <option value="3" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 3 ? 'selected' : '') +'>Kaivanne</option>' +
+        '         <option value="99" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 99 ? 'selected' : '') +'>Ei tiedossa</option>' +
         '      </select>' +
         '    </div>' +
+        '</div>' +
           components;
     };
 

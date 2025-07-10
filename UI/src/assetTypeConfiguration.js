@@ -1138,7 +1138,7 @@
         title: 'Esterakennelma',
         allowComplementaryLinks: true,
         newAsset: { propertyData: [
-            {'name': 'Esterakennelma', 'propertyType': 'single_choice', 'publicId': "esterakennelma", values: [ {propertyValue: 1, propertyDisplayValue: ""} ] },
+            {'name': 'Esterakennelma', 'propertyType': 'single_choice', 'publicId': "esterakennelma", values: [ {propertyValue: "", propertyDisplayValue: ""} ] },
             {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         legendValues: [
