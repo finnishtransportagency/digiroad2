@@ -52,6 +52,12 @@ root.PointAssetForm = function() {
         rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
         rootElement.find('button#cancel-button').prop('disabled', false);
       }
+      if (layerName === 'obstacles') {
+        var obstacleTypeSelect = rootElement.find('#esterakennelma-select');
+        var obstacleValue = obstacleTypeSelect.val();
+        var isValid = obstacleValue !== "";
+        rootElement.find('#save-button').prop('disabled', !isValid || !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
+      }
     });
 
     eventbus.on(layerName + ':changed', function() {
@@ -62,6 +68,12 @@ root.PointAssetForm = function() {
         var bearingElement = rootElement.find('.form-point-asset input#bearing');
         rootElement.find('button#save-button').prop('disabled', bearingElement.prop('disabled') === false &&
             (bearingElement.val() < 0 || bearingElement.val() > 360 || _.isEmpty(bearingElement.val())));
+      }
+      if (layerName === 'obstacles') {
+        var obstacleTypeSelect = rootElement.find('#esterakennelma-select');
+        var obstacleValue = obstacleTypeSelect.val();
+        var isValid = obstacleValue !== "";
+        rootElement.find('#save-button').prop('disabled', !isValid || !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
       }
     });
 
