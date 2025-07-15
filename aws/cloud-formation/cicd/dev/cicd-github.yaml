@@ -378,32 +378,6 @@ Resources:
               "rules": [
                   {
                       "rulePriority": 1,
-                      "description": "Retain images tagged with prod",
-                      "selection": {
-                          "tagStatus": "tagged",
-                          "tagPrefixList": ["prod"],
-                          "countType": "imageCountMoreThan",
-                          "countNumber": 999999
-                      },
-                      "action": {
-                          "type": "expire"
-                      }
-                  },
-                  {
-                      "rulePriority": 2,
-                      "description": "Retain images tagged with qa",
-                      "selection": {
-                          "tagStatus": "tagged",
-                          "tagPrefixList": ["qa"],
-                          "countType": "imageCountMoreThan",
-                          "countNumber": 999999
-                      },
-                      "action": {
-                          "type": "expire"
-                      }
-                  },
-                  {
-                      "rulePriority": 3,
                       "description": "Retain images tagged with latest",
                       "selection": {
                           "tagStatus": "tagged",
@@ -416,13 +390,12 @@ Resources:
                       }
                   },
                   {
-                      "rulePriority": 4,
-                      "description": "Expire images not tagged with qa or prod after 90 days",
+                      "rulePriority": 2,
+                      "description": "Retain 3 latest images",
                       "selection": {
                           "tagStatus": "any",
-                          "countType": "sinceImagePushed",
-                          "countUnit": "days",
-                          "countNumber": 90
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 3
                       },
                       "action": {
                           "type": "expire"

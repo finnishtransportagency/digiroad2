@@ -354,7 +354,7 @@ Resources:
                   },
                   {
                       "rulePriority": 2,
-                      "description": "Retain images tagged with qa",
+                      "description": "Retain images tagged with test",
                       "selection": {
                           "tagStatus": "tagged",
                           "tagPrefixList": ["test"],
@@ -367,25 +367,11 @@ Resources:
                   },
                   {
                       "rulePriority": 3,
-                      "description": "Retain images tagged with latest",
-                      "selection": {
-                          "tagStatus": "tagged",
-                          "tagPrefixList": ["latest"],
-                          "countType": "imageCountMoreThan",
-                          "countNumber": 999999
-                      },
-                      "action": {
-                          "type": "expire"
-                      }
-                  },
-                  {
-                      "rulePriority": 4,
-                      "description": "Expire images not tagged with qa or prod after 90 days",
+                      "description": "Retain 3 latest untagged images",
                       "selection": {
                           "tagStatus": "any",
-                          "countType": "sinceImagePushed",
-                          "countUnit": "days",
-                          "countNumber": 90
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 3
                       },
                       "action": {
                           "type": "expire"
