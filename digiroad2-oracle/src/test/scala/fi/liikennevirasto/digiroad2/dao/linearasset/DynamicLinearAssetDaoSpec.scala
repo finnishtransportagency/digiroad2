@@ -31,7 +31,7 @@ class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
 
       val numberValue1 = 666
       val numberValue2 = 777
-      val enumeratedValue1_nameFi = "Avattava puomi"
+      val enumeratedValue1_nameFi = "Avattava esterakennelma"
       val enumeratedValue2_nameFi = "C28 Ohituskielto"
       val enumeratedValue1_value = 2
       val enumeratedValue2_value = 28
