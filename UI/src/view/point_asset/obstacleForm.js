@@ -39,7 +39,15 @@
         '      </select>' +
         '    </div>' +
         '</div>' +
-          components;
+          components +
+          '      <div class="obstacle-info-text" style="margin-top:12px;">' +
+          '        <ul style="margin-bottom:0;">' +
+          '          <li><strong>Kiinteä esterakennelma</strong> tarkoittaa, että estettä ei voi avata eikä lihasvoimin poistaa, kuten betoniporsas, pollari tai kivi.</li>' +
+          '          <li><strong>Avattava esterakennelma</strong> on este, jonka saa auki tarvittaessa (voi olla lukittu tai lukitsematon). Avattava puomi kattaa myös portit, ketjut sekä kävelyn ja pyöräilyn väylien sulkuportit.</li>' +
+          '          <li><strong>Kaivanne</strong> tarkoittaa tien poikki kaivettua uraa, joka estää tiellä kulkemisen.</li>' +
+          '          <li><strong>Ei tiedossa</strong> tarkoittaa, että esterakennelman tarkempi tyyppi ei ole tiedossa.</li>' +
+          '        </ul>' +
+          '      </div>';
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
