@@ -613,8 +613,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       return null;
     }), null);
 
-    if(!authorizationPolicy.formEditModeAccess() && !applicationModel.isReadOnly())
-        dragControl.activate();
+    if(!authorizationPolicy.formEditModeAccess() && !applicationModel.isReadOnly() && !editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+      dragControl.activate();
+    } else {
+      dragControl.deactivate();
+    }
 
     selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
     terminalSource.clear();
@@ -897,7 +900,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   function toggleMode(readOnly) {
     if(applicationModel.isReadOnly() || readOnly){
       dragControl.deactivate();
-    } else if(selectedMassTransitStopModel.exists() && !authorizationPolicy.formEditModeAccess()) {
+    } else if(selectedMassTransitStopModel.exists() && !authorizationPolicy.formEditModeAccess() && !editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
       dragControl.activate();
     }
   }
