@@ -41,6 +41,7 @@
     map.addLayer(me.vectorLayer);
 
     var editingRestrictions = new EditingRestrictions();
+    var servicePointTypeId = 250;
 
     var selectControl = new SelectToolControl(application, me.vectorLayer, map, false,{
         style : function (feature) {
@@ -61,10 +62,16 @@
       if(feature.selected.length > 0 && feature.deselected.length === 0){
           var properties = feature.selected[0].getProperties();
           var administrativeClass = obtainAdministrativeClass(properties);
+          var municipalityCode = obtainMunicipalityCode(properties);
           var asset = _.merge({}, properties, {administrativeClass: administrativeClass});
           selectedAsset.open(asset);
-          if(authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) && !applicationModel.isReadOnly())
-            dragControl.activate();
+          if (authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) && !applicationModel.isReadOnly()) {
+            if (typeId === servicePointTypeId && !(editingRestrictions.pointAssetHasRestriction(selectedAsset.get().municipalityCode, 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.get().municipalityCode, 'Municipality', typeId))) {
+              dragControl.activate();
+            } else if (typeId !== servicePointTypeId && !editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+              dragControl.activate();
+            }
+          }
       }
       else {
         if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
@@ -322,7 +329,11 @@
       if(readOnly){
         dragControl.deactivate();
       } else if(selectedAsset.exists() && authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection)) {
-        dragControl.activate();
+        if (typeId === servicePointTypeId && !(editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'Municipality', typeId))) {
+          dragControl.activate();
+        } else if (typeId !== servicePointTypeId && !editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), selectedAsset.getAdministrativeClass(), typeId)) {
+          dragControl.activate();
+        }
       }
     }
 

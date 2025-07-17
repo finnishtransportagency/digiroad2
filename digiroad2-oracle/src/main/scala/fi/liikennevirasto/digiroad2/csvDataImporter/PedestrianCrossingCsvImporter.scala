@@ -26,9 +26,9 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
 
     (optLon, optLat) match {
       case (Some(lon), Some(lat)) =>
-        val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong))
+        val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong)).filter(_.administrativeClass != State)
         roadLinks.isEmpty match {
-          case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+          case true => (List(s"No Rights for Municipality or nonexistent non-state road links near asset position"), Seq())
           case false =>
             if (assetHasEditingRestrictions(PedestrianCrossings.typeId, roadLinks)) {
               (List("Asset type editing is restricted within municipality or admininistrative class."), Seq())
@@ -48,7 +48,7 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
 
       val position = getCoordinatesFromProperties(csvProperties)
 
-      val nearestRoadLink = nearbyLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+      val nearestRoadLink = nearbyLinks.minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
 
       val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 

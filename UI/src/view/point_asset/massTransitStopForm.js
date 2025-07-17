@@ -260,7 +260,7 @@
         poistaSelected = false;
         pointAssetToSave = false;
 
-        readOnly = authorizationPolicy.formEditModeAccess();
+        readOnly = authorizationPolicy.formEditModeAccess() || editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId);
         var wrapper;
         if(readOnly){
           wrapper = $('<div />').addClass('wrapper read-only');
