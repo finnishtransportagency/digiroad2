@@ -171,29 +171,27 @@
       }
     }
 
-    var updateStatus = function() {
-      // If the user is a municipality maintainer, only the isOnlyVirtualStop property matters
-      if (authorizationPolicy.isMunicipalityMaintainer()) {
-        if (selectedMassTransitStopModel.isOnlyVirtualStop()) {
-          element.prop('disabled', false);
-        } else {
-          element.prop('disabled', true);
-        }
+    var updateStatus = function () {
+      var isStateAdminClass = selectedMassTransitStopModel.getAdministrativeClass() == 1 || selectedMassTransitStopModel.getAdministrativeClass() === 'State';
+
+      if (pointAssetToSave && !isValidServicePoint()) {
+        element.prop('disabled', true);
+      } else if (
+          selectedMassTransitStopModel.isDirty() &&
+          !selectedMassTransitStopModel.requiredPropertiesMissing() &&
+          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
+          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink() &&
+          (!authorizationPolicy.isMunicipalityMaintainer() || !isStateAdminClass ||
+              (authorizationPolicy.isMunicipalityMaintainer() &&
+                  isStateAdminClass &&
+                  selectedMassTransitStopModel.isOnlyVirtualStop())
+          )
+      ) {
+        element.prop('disabled', false);
+      } else if (poistaSelected) {
+        element.prop('disabled', false);
       } else {
-        if (pointAssetToSave && !isValidServicePoint()) {
-          element.prop('disabled', true);
-        } else if (
-            selectedMassTransitStopModel.isDirty() &&
-            !selectedMassTransitStopModel.requiredPropertiesMissing() &&
-            !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
-            !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()
-        ) {
-          element.prop('disabled', false);
-        } else if (poistaSelected) {
-          element.prop('disabled', false);
-        } else {
-          element.prop('disabled', true);
-        }
+        element.prop('disabled', true);
       }
     };
 
@@ -410,15 +408,18 @@
         var municipalityUserStateRoadRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Kuntaylläpitäjänä voit muokata valtion teillä vain virtuaalipysäkkejä.';
         var message = '';
 
-        if (selectedMassTransitStopModel.getAdministrativeClass() == 1 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+        var stateAdminClassLink = selectedMassTransitStopModel.getAdministrativeClass() == 1 || selectedMassTransitStopModel.getAdministrativeClass() === 'State';
+        var municipalityAdminClassLink = selectedMassTransitStopModel.getAdministrativeClass() == 2 || selectedMassTransitStopModel.getAdministrativeClass() === 'Municipality';
+
+        if (stateAdminClassLink && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
           message = stateRoadEditingRestricted;
-        } else if(selectedMassTransitStopModel.getAdministrativeClass() == 2 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+        } else if(municipalityAdminClassLink && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
           message = municipalityRoadEditingRestricted;
         } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
         } else if (!authorizationPolicy.assetSpecificAccess()) {
           message = noRights;
-        } else if (authorizationPolicy.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isOnlyVirtualStop()) {
+        } else if (authorizationPolicy.isMunicipalityMaintainer() && stateAdminClassLink && !selectedMassTransitStopModel.isOnlyVirtualStop()) {
           message = municipalityUserStateRoadRights;
         }
 
