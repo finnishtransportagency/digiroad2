@@ -761,6 +761,13 @@
         return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices).append(choiceValidation.element));
       };
 
+      var allowOnlyVirtualStopChoice = function(propertyValue) {
+        var isStateAdminClass = selectedMassTransitStopModel.getAdministrativeClass() == 1 || selectedMassTransitStopModel.getAdministrativeClass() === 'State';
+
+        return authorizationPolicy.isMunicipalityMaintainer() && isStateAdminClass &&
+            selectedMassTransitStopModel.isOnlyVirtualStop() && (propertyValue === "1" || propertyValue === "2");
+      };
+
       var createMultiChoiceElement = function(readOnly, property, choices) {
         var element;
         var currentValue = _.cloneDeep(property);
@@ -786,6 +793,11 @@
             return prop.propertyValue == value.propertyValue;
           });
 
+          var shouldDisable = false;
+          if (property.publicId === "pysakin_tyyppi") {
+            shouldDisable = allowOnlyVirtualStopChoice(value.propertyValue);
+          }
+
           if (readOnly) {
             if (value.checked) {
               var item = $('<li />');
@@ -796,20 +808,25 @@
           } else {
             var container = $('<div class="checkbox" />');
             var input = $('<input type="checkbox" />').change(function (evt) {
+              if (shouldDisable) return;
               value.checked = evt.currentTarget.checked;
               var values = _.chain(enumValues)
-                .filter(function (value) {
-                  return value.checked;
-                })
-                .map(function (value) {
-                  return { propertyValue: parseInt(value.propertyValue, 10), propertyDisplayValue: value.propertyDisplayValue, checked: true };
-                })
-                .value();
+                  .filter(function (value) {
+                    return value.checked;
+                  })
+                  .map(function (value) {
+                    return { propertyValue: parseInt(value.propertyValue, 10), propertyDisplayValue: value.propertyDisplayValue, checked: true };
+                  })
+                  .value();
               if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
               selectedMassTransitStopModel.setProperty(property.publicId, values, property.propertyType);
             });
 
             input.prop('checked', value.checked);
+
+            if (shouldDisable) {
+              input.prop('disabled', true);
+            }
 
             var label = $('<label />').text(value.propertyDisplayValue);
             element.append(container.append(label.append(input)));
