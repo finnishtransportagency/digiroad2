@@ -761,11 +761,10 @@
         return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices).append(choiceValidation.element));
       };
 
-      var allowOnlyVirtualStopChoice = function(propertyValue) {
+      var allowOnlyVirtualStopChoice = function() {
         var isStateAdminClass = selectedMassTransitStopModel.getAdministrativeClass() == 1 || selectedMassTransitStopModel.getAdministrativeClass() === 'State';
 
-        return authorizationPolicy.isMunicipalityMaintainer() && isStateAdminClass &&
-            selectedMassTransitStopModel.isOnlyVirtualStop() && (propertyValue === "1" || propertyValue === "2");
+        return authorizationPolicy.isMunicipalityMaintainer() && isStateAdminClass && selectedMassTransitStopModel.isOnlyVirtualStop();
       };
 
       var createMultiChoiceElement = function(readOnly, property, choices) {
@@ -795,7 +794,7 @@
 
           var shouldDisable = false;
           if (property.publicId === "pysakin_tyyppi") {
-            shouldDisable = allowOnlyVirtualStopChoice(value.propertyValue);
+            shouldDisable = allowOnlyVirtualStopChoice();
           }
 
           if (readOnly) {
