@@ -172,7 +172,7 @@
     }
 
     var updateStatus = function () {
-      var isStateAdminClass = selectedMassTransitStopModel.getAdministrativeClass() == 1 || selectedMassTransitStopModel.getAdministrativeClass() === 'State';
+      var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState;
 
       if (pointAssetToSave && !isValidServicePoint()) {
         element.prop('disabled', true);
@@ -407,8 +407,8 @@
         var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
         var message = '';
 
-        var stateAdminClassLink = selectedMassTransitStopModel.getAdministrativeClass() == 1 || selectedMassTransitStopModel.getAdministrativeClass() === 'State';
-        var municipalityAdminClassLink = selectedMassTransitStopModel.getAdministrativeClass() == 2 || selectedMassTransitStopModel.getAdministrativeClass() === 'Municipality';
+        var stateAdminClassLink = selectedMassTransitStopModel.isAdminClassState();
+        var municipalityAdminClassLink = selectedMassTransitStopModel.isAdminClassMunicipality();
 
         if (stateAdminClassLink && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
           message = stateRoadEditingRestricted;
@@ -758,7 +758,7 @@
       };
 
       var allowOnlyVirtualStopChoice = function() {
-        var isStateAdminClass = selectedMassTransitStopModel.getAdministrativeClass() == 1 || selectedMassTransitStopModel.getAdministrativeClass() === 'State';
+        var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState();
 
         return authorizationPolicy.isMunicipalityMaintainer() && isStateAdminClass && selectedMassTransitStopModel.isOnlyVirtualStop();
       };

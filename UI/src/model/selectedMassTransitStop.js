@@ -578,9 +578,17 @@
     }
 
     function isAdminClassState(properties) {
+      if (!properties) properties = getProperties();
       var adminClass = getAdministrativeClass(properties);
 
       return adminClass === '1' || adminClass === 'State';
+    }
+
+    function isAdminClassMunicipality(properties) {
+      if (!properties) properties = getProperties();
+      var adminClass = getAdministrativeClass(properties);
+
+      return adminClass === '2' || adminClass === 'Municipality';
     }
 
     function isAdministratorHSL(properties){
@@ -711,6 +719,7 @@
       getRoadLink: getRoadLink,
       getAdministrativeClass: getAdministrativeClass,
       isAdminClassState: isAdminClassState,
+      isAdminClassMunicipality: isAdminClassMunicipality,
       isAdministratorELY: isAdministratorELY,
       isAdministratorHSL: isAdministratorHSL,
       validateDirectionsForSave : validateDirectionsForSave,
