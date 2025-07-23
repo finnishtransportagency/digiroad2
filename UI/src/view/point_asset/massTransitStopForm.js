@@ -172,7 +172,7 @@
     }
 
     var updateStatus = function () {
-      var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState;
+      var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState();
 
       if (pointAssetToSave && !isValidServicePoint()) {
         element.prop('disabled', true);

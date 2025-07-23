@@ -1,5 +1,7 @@
 (function(selectedMassTransitStop) {
   selectedMassTransitStop.initialize = function(backend, roadCollection) {
+    var enumerations = new Enumerations();
+
     var usedKeysFromFetchedAsset = [
       'bearing',
       'lat',
@@ -132,7 +134,8 @@
       assetHasBeenModified = true;
       // If stopType is 6 (Terminal) or 7 (ServicePoint), pass coordinates to backend.
       // Backend includes liitetyt_pysakit property in response for these types
-      var assetPosition = (asset.stopTypes && (asset.stopTypes.includes('6') || asset.stopTypes.includes('7'))) ? { lon: asset.lon, lat: asset.lat } : undefined;
+      var isTerminalOrServicePointType = (asset.stopTypes && (isServicePointType(asset.stopTypes[0]) || isTerminalType(asset.stopTypes[0])));
+      var assetPosition = isTerminalOrServicePointType ? { lon: asset.lon, lat: asset.lat } : undefined;
       backend.getAssetTypeProperties(assetPosition, function(properties) {
         _.find(properties, function (property) {
           return property.publicId === 'vaikutussuunta';
@@ -142,10 +145,10 @@
           return value;
         });
 
-        if(!_.isEmpty(currentAsset.stopTypes) && currentAsset.stopTypes[0] == '7')
+        if(!_.isEmpty(currentAsset.stopTypes) && isServicePointType(currentAsset.stopTypes[0]))
           properties =  _.filter(properties, function(prop) { return _.includes(servicePointPropertyOrdering, prop.publicId);});
 
-        if (!_.isEmpty(currentAsset.stopTypes) && currentAsset.stopTypes[0] == '5') {
+        if (!_.isEmpty(currentAsset.stopTypes) && isVirtualStopType(currentAsset.stopTypes[0])) {
           var stopTypeProperty = _.find(properties, { publicId: 'pysakin_tyyppi' });
           if (stopTypeProperty) {
             stopTypeProperty.values = [
@@ -682,11 +685,15 @@
     }
 
     function isTerminalType(busStopType) {
-      return busStopType == 6;
+      return busStopType == enumerations.massTransitStopTypes.Terminal.value;
     }
 
     function isServicePointType(busStopType) {
-      return busStopType == 7;
+      return busStopType == enumerations.massTransitStopTypes.ServicePoint.value;
+    }
+
+    function isVirtualStopType(busStopType) {
+      return busStopType == enumerations.massTransitStopTypes.Virtual.value;
     }
 
     return {
