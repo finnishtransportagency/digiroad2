@@ -405,7 +405,6 @@
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
         var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
         var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
-        var municipalityUserStateRoadRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Kuntaylläpitäjänä voit muokata valtion teillä vain virtuaalipysäkkejä.';
         var message = '';
 
         var stateAdminClassLink = selectedMassTransitStopModel.getAdministrativeClass() == 1 || selectedMassTransitStopModel.getAdministrativeClass() === 'State';
@@ -419,10 +418,7 @@
           message = limitedRights;
         } else if (!authorizationPolicy.assetSpecificAccess()) {
           message = noRights;
-        } else if (authorizationPolicy.isMunicipalityMaintainer() && stateAdminClassLink && !selectedMassTransitStopModel.isOnlyVirtualStop()) {
-          message = municipalityUserStateRoadRights;
         }
-
 
         if(message) {
           return '' +
@@ -1099,9 +1095,6 @@
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue != '2';}))) {
           isTRMassTransitStop = false;
           property.propertyType = "single_choice";
-          renderAssetForm();
-        }
-        if (property.publicId === 'pysakin_tyyppi') {
           renderAssetForm();
         }
         // Prevent getAssetForm() branching to 'Ei toteutettu'
