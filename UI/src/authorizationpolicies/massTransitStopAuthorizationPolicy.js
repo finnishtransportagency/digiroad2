@@ -36,13 +36,12 @@
       var isAdminClassState = selectedMassTransitStopModel.isAdminClassState();
       var isOnlyVirtualStop = selectedMassTransitStopModel.isOnlyVirtualStop();
 
-      var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && me.hasRightsInMunicipality(municipalityCode);
+      var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() &&
+          me.hasRightsInMunicipality(municipalityCode) &&
+          (!isAdminClassState || (isAdminClassState && isOnlyVirtualStop));
       var isElyyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode);
 
-      return me.isStateExclusions(selectedMassTransitStopModel) ||
-          ((isMunicipalityAndHaveRights && (!isAdminClassState || (isAdminClassState && isOnlyVirtualStop))) ||
-              isElyyAndHaveRights ||
-              me.isOperator());
+      return me.isStateExclusions(selectedMassTransitStopModel) || (isMunicipalityAndHaveRights || isElyyAndHaveRights || me.isOperator());
     };
 
 
