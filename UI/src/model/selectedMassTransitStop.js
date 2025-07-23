@@ -132,10 +132,7 @@
       assetHasBeenModified = true;
       // If stopType is 6 (Terminal) or 7 (ServicePoint), pass coordinates to backend.
       // Backend includes liitetyt_pysakit property in response for these types
-      var assetPosition = (asset.stopTypes && (asset.stopTypes.includes('6') || asset.stopTypes.includes('7')))
-          ? { lon: asset.lon, lat: asset.lat }
-          : undefined;
-
+      var assetPosition = (asset.stopTypes && (asset.stopTypes.includes('6') || asset.stopTypes.includes('7'))) ? { lon: asset.lon, lat: asset.lat } : undefined;
       backend.getAssetTypeProperties(assetPosition, function(properties) {
         _.find(properties, function (property) {
           return property.publicId === 'vaikutussuunta';
