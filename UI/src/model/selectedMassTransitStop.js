@@ -143,6 +143,19 @@
         if(!_.isEmpty(currentAsset.stopTypes) && currentAsset.stopTypes[0] == '7')
           properties =  _.filter(properties, function(prop) { return _.includes(servicePointPropertyOrdering, prop.publicId);});
 
+        if (!_.isEmpty(currentAsset.stopTypes) && currentAsset.stopTypes[0] == '5') {
+          var stopTypeProperty = _.find(properties, { publicId: 'pysakin_tyyppi' });
+          if (stopTypeProperty) {
+            stopTypeProperty.values = [
+              {
+                propertyValue: "5",
+                propertyDisplayValue: "Virtuaalipysäkki",
+                checked: false
+              }
+            ];
+          }
+        }
+
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);

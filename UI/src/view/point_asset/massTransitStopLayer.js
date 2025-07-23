@@ -832,11 +832,18 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
       selectControl.deactivate();
       var stopType = [];
+      var roadLinks = getCorrectRoadLinks();
+      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadLinks), coordinates.x, coordinates.y);
+      var roadLink = roadCollection.getRoadLinkByLinkId(nearestLine.linkId);
+      var administrativeClass = roadLink.getData().administrativeClass;
 
       if ( selectedControl === 'AddTerminal' ) {
         stopType = ['6'];
       } else if ( selectedControl === 'AddPointAsset' ) {
         stopType = ['7'];
+      } else if (selectedControl === 'Add' && (administrativeClass == 1 || administrativeClass === 'State') &&
+          authorizationPolicy.isMunicipalityMaintainer()) {
+        stopType = ['5'];
       }
 
       createNewAsset(coordinates, false, stopType );
