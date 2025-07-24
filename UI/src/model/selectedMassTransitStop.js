@@ -37,6 +37,14 @@
       return _.includes(['Add', 'AddTerminal', 'AddPointAsset'], optionTool);
     }
 
+    function isAddTerminalTool(optionTool){
+      return _.includes(['AddTerminal'], optionTool);
+    }
+
+    function isAddServicePointTool(optionTool){
+      return _.includes(['AddPointAsset'], optionTool);
+    }
+
     var close = function() {
       assetHasBeenModified = false;
       currentAsset = {};
@@ -740,6 +748,8 @@
       setAdditionalProperty: setAdditionalProperty,
       isSuggested: isSuggested,
       isAnAddToolOption: isAnAddToolOption,
+      isAddTerminalTool: isAddTerminalTool,
+      isAddServicePointTool: isAddServicePointTool,
       isTerminalType: isTerminalType,
       isServicePointType: isServicePointType,
       getServicePointPropertyOrdering: getServicePointPropertyOrdering,
