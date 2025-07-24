@@ -36,24 +36,47 @@
       settings.walkingCycling = !settings.walkingCycling;
     };
 
+    var excludeStateRoadLinks = function () {
+      settings.excludeStateRoadLinks = true;
+    };
+
+    var includeStateRoadLinks = function () {
+      settings.excludeStateRoadLinks = false;
+    };
+
     var updateByPosition = function (mousePoint) {
-      var nearestLine;
+      var roadLinks;
       if (settings.walkingCycling === true) {
-        nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForCarPedestrianCycling(), mousePoint[0], mousePoint[1]);
+        roadLinks = roadCollection.getRoadsForCarPedestrianCycling();
       } else {
-        nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForPointAssets(), mousePoint[0], mousePoint[1]);
+        roadLinks = roadCollection.getRoadsForPointAssets();
       }
-      var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, {
-        x: mousePoint[0],
-        y: mousePoint[1]
-      });
-      moveTo(projectionOnNearestLine.x, projectionOnNearestLine.y);
+
+      var filteredRoadLinks;
+      if( settings.excludeStateRoadLinks === true) {
+        filteredRoadLinks = _.filter(roadLinks, function(link) {
+          return link.administrativeClass !== "State";
+        });
+      } else {
+        filteredRoadLinks = roadLinks;
+      }
+
+      if (filteredRoadLinks && filteredRoadLinks.length !== 0) {
+        var nearestLine = geometrycalculator.findNearestLine(filteredRoadLinks, mousePoint[0], mousePoint[1]);
+        var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, {
+          x: mousePoint[0],
+          y: mousePoint[1]
+        });
+        moveTo(projectionOnNearestLine.x, projectionOnNearestLine.y);
+      }
     };
 
     return {
       activate: activate,
       deactivate: deactivate,
-      toggleWalkingCycling: toggleWalkingCycling
+      toggleWalkingCycling: toggleWalkingCycling,
+      excludeStateRoadLinks: excludeStateRoadLinks,
+      includeStateRoadLinks: includeStateRoadLinks
     };
   };
 })(this);

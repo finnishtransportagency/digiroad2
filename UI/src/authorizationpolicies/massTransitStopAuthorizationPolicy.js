@@ -10,8 +10,13 @@
       return (me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
     };
 
-    this.filterRoadLinks = function(roadLink){
-      var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode);
+    this.filterRoadLinks = function(roadLink, allowStateRoadLinksForMunicipality){
+      var isMunicipalityAndHaveRights;
+      if (allowStateRoadLinksForMunicipality) {
+        isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode);
+      } else {
+        isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && roadLink.administrativeClass !== 'State' && me.hasRightsInMunicipality(roadLink.municipalityCode);
+      }
       var isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode);
 
       return me.isStateExclusions(roadLink) || isMunicipalityAndHaveRights || isElyAndHaveRights || me.isOperator();
