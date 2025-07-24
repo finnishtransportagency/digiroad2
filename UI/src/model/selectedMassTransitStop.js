@@ -1,5 +1,7 @@
 (function(selectedMassTransitStop) {
   selectedMassTransitStop.initialize = function(backend, roadCollection) {
+    var enumerations = new Enumerations();
+
     var usedKeysFromFetchedAsset = [
       'bearing',
       'lat',
@@ -33,6 +35,14 @@
 
     function isAnAddToolOption(optionTool){
       return _.includes(['Add', 'AddTerminal', 'AddPointAsset'], optionTool);
+    }
+
+    function isAddTerminalTool(optionTool){
+      return _.includes(['AddTerminal'], optionTool);
+    }
+
+    function isAddServicePointTool(optionTool){
+      return _.includes(['AddPointAsset'], optionTool);
     }
 
     var close = function() {
@@ -130,7 +140,10 @@
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
-      var assetPosition = asset.stopTypes && asset.stopTypes.length > 0 ? { lon: asset.lon, lat: asset.lat } : undefined;
+      // If stopType is 6 (Terminal) or 7 (ServicePoint), pass coordinates to backend.
+      // Backend includes liitetyt_pysakit property in response for these types
+      var isTerminalOrServicePointType = (asset.stopTypes && (isServicePointType(asset.stopTypes[0]) || isTerminalType(asset.stopTypes[0])));
+      var assetPosition = isTerminalOrServicePointType ? { lon: asset.lon, lat: asset.lat } : undefined;
       backend.getAssetTypeProperties(assetPosition, function(properties) {
         _.find(properties, function (property) {
           return property.publicId === 'vaikutussuunta';
@@ -140,8 +153,21 @@
           return value;
         });
 
-        if(!_.isEmpty(currentAsset.stopTypes) && currentAsset.stopTypes[0] == '7')
+        if(!_.isEmpty(currentAsset.stopTypes) && isServicePointType(currentAsset.stopTypes[0]))
           properties =  _.filter(properties, function(prop) { return _.includes(servicePointPropertyOrdering, prop.publicId);});
+
+        if (!_.isEmpty(currentAsset.stopTypes) && isVirtualStopType(currentAsset.stopTypes[0])) {
+          var stopTypeProperty = _.find(properties, { publicId: 'pysakin_tyyppi' });
+          if (stopTypeProperty) {
+            stopTypeProperty.values = [
+              {
+                propertyValue: "5",
+                propertyDisplayValue: "Virtuaalipysäkki",
+                checked: false
+              }
+            ];
+          }
+        }
 
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
@@ -563,9 +589,17 @@
     }
 
     function isAdminClassState(properties) {
+      if (!properties) properties = getProperties();
       var adminClass = getAdministrativeClass(properties);
 
       return adminClass === '1' || adminClass === 'State';
+    }
+
+    function isAdminClassMunicipality(properties) {
+      if (!properties) properties = getProperties();
+      var adminClass = getAdministrativeClass(properties);
+
+      return adminClass === '2' || adminClass === 'Municipality';
     }
 
     function isAdministratorHSL(properties){
@@ -659,11 +693,15 @@
     }
 
     function isTerminalType(busStopType) {
-      return busStopType == 6;
+      return busStopType == enumerations.massTransitStopTypes.Terminal.value;
     }
 
     function isServicePointType(busStopType) {
-      return busStopType == 7;
+      return busStopType == enumerations.massTransitStopTypes.ServicePoint.value;
+    }
+
+    function isVirtualStopType(busStopType) {
+      return busStopType == enumerations.massTransitStopTypes.Virtual.value;
     }
 
     return {
@@ -696,6 +734,7 @@
       getRoadLink: getRoadLink,
       getAdministrativeClass: getAdministrativeClass,
       isAdminClassState: isAdminClassState,
+      isAdminClassMunicipality: isAdminClassMunicipality,
       isAdministratorELY: isAdministratorELY,
       isAdministratorHSL: isAdministratorHSL,
       validateDirectionsForSave : validateDirectionsForSave,
@@ -709,6 +748,8 @@
       setAdditionalProperty: setAdditionalProperty,
       isSuggested: isSuggested,
       isAnAddToolOption: isAnAddToolOption,
+      isAddTerminalTool: isAddTerminalTool,
+      isAddServicePointTool: isAddServicePointTool,
       isTerminalType: isTerminalType,
       isServicePointType: isServicePointType,
       getServicePointPropertyOrdering: getServicePointPropertyOrdering,

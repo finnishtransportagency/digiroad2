@@ -21,6 +21,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var clusterView;
 
   var editingRestrictions = new EditingRestrictions();
+  var enumerations = new Enumerations();
   var typeId = 10;
 
   var showOrHideServicePointLayer = function (showOrHide) {
@@ -218,7 +219,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     style : function(feature) {
       return massTransitStopLayerStyles.default.getStyle(feature, {zoomLevel: zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map))});
     },
-    walkingCycling : false
+    walkingCycling : false,
+    excludeStateRoadLinks: false
   });
 
   roadLayer.setLayerSpecificStyleProvider('massTransitStop', function() {
@@ -489,7 +491,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     var default_asset_direction = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
     var roadLinks = getCorrectRoadLinks();
-    var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadLinks), coordinate.x, coordinate.y);
+    var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadLinks, selectedControl), coordinate.x, coordinate.y);
     var lon, lat;
 
     if(nearestLine.end && nearestLine.start){
@@ -686,7 +688,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var properties = feature.getProperties();
 
     var distance;
-    if(properties.data.stopTypes[0] != 7) {
+    if(properties.data.stopTypes[0] != enumerations.massTransitStopTypes.ServicePoint.value) {
       distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(coordinates, originalCoordinates));
     }else{
       distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints({ x: event.coordinate[0], y: event.coordinate[1]}, originalCoordinates));
@@ -732,7 +734,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var feature = event.features.getArray()[0];
     var properties = feature.getProperties();
 
-    if (properties.data.stopTypes[0] != 7) {
+    if (properties.data.stopTypes[0] != enumerations.massTransitStopTypes.ServicePoint.value) {
 
     properties.data.bearing = angle;
     properties.data.roadDirection = angle;
@@ -776,8 +778,16 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     if (selectedMassTransitStopModel.isAnAddToolOption(selectedControl) && zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map)))
     {
-      if ( selectedControl !== 'AddPointAsset')
+      if ( selectedControl === 'Add') {
         pointTool.activate();
+        pointTool.includeStateRoadLinks();
+      }
+
+      if ( selectedControl === 'AddTerminal') {
+        pointTool.activate();
+        if (authorizationPolicy.isMunicipalityMaintainer()) pointTool.excludeStateRoadLinks();
+        else pointTool.includeStateRoadLinks();
+      }
     }
   };
 
@@ -835,15 +845,23 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
       selectControl.deactivate();
       var stopType = [];
+      var roadLinks = getCorrectRoadLinks();
+      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadLinks, selectedControl), coordinates.x, coordinates.y);
+      var roadLink = roadCollection.getRoadLinkByLinkId(nearestLine.linkId);
+      if (roadLink) {
+        var administrativeClass = roadLink.getData().administrativeClass;
+        var isStateAdminClass = administrativeClass == enumerations.administrativeClasses.State.value || administrativeClass === enumerations.administrativeClasses.State.stringValue;
 
-      if ( selectedControl === 'AddTerminal' ) {
-        stopType = ['6'];
-      } else if ( selectedControl === 'AddPointAsset' ) {
-        stopType = ['7'];
+        if (selectedControl === 'AddTerminal') {
+          stopType = [enumerations.massTransitStopTypes.Terminal.value];
+        } else if (selectedControl === 'AddPointAsset') {
+          stopType = [enumerations.massTransitStopTypes.ServicePoint.value];
+        } else if (selectedControl === 'Add' && isStateAdminClass && authorizationPolicy.isMunicipalityMaintainer()) {
+          stopType = [enumerations.massTransitStopTypes.Virtual.value];
+        }
+
+        createNewAsset(coordinates, false, stopType);
       }
-
-      createNewAsset(coordinates, false, stopType );
-
     } else {
 
       if (selectedMassTransitStopModel.isDirty()) {
@@ -1064,9 +1082,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       clusterFeatureSource.clear();
   };
 
-  function excludeRoadByAdminClass(roadCollection) {
+  function excludeRoadByAdminClass(roadCollection, selectedControl) {
+    var allowStateRoadLinksForMunicipality;
+    if (selectedMassTransitStopModel.isAddTerminalTool(selectedControl) || selectedMassTransitStopModel.isAddServicePointTool(selectedControl)) {
+      allowStateRoadLinksForMunicipality = false;
+    } else allowStateRoadLinksForMunicipality = true;
+
     return _.filter(roadCollection, function (road) {
-      return authorizationPolicy.filterRoadLinks(road);
+      return authorizationPolicy.filterRoadLinks(road, allowStateRoadLinksForMunicipality);
     });
   }
 

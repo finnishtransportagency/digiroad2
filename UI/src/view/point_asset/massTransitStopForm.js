@@ -171,29 +171,27 @@
       }
     }
 
-    var updateStatus = function() {
-      // If the user is a municipality maintainer, only the isOnlyVirtualStop property matters
-      if (authorizationPolicy.isMunicipalityMaintainer()) {
-        if (selectedMassTransitStopModel.isOnlyVirtualStop()) {
-          element.prop('disabled', false);
-        } else {
-          element.prop('disabled', true);
-        }
+    var updateStatus = function () {
+      var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState();
+
+      if (pointAssetToSave && !isValidServicePoint()) {
+        element.prop('disabled', true);
+      } else if (
+          selectedMassTransitStopModel.isDirty() &&
+          !selectedMassTransitStopModel.requiredPropertiesMissing() &&
+          !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
+          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink() &&
+          (!authorizationPolicy.isMunicipalityMaintainer() || !isStateAdminClass ||
+              (authorizationPolicy.isMunicipalityMaintainer() &&
+                  isStateAdminClass &&
+                  selectedMassTransitStopModel.isOnlyVirtualStop())
+          )
+      ) {
+        element.prop('disabled', false);
+      } else if (poistaSelected) {
+        element.prop('disabled', false);
       } else {
-        if (pointAssetToSave && !isValidServicePoint()) {
-          element.prop('disabled', true);
-        } else if (
-            selectedMassTransitStopModel.isDirty() &&
-            !selectedMassTransitStopModel.requiredPropertiesMissing() &&
-            !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
-            !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()
-        ) {
-          element.prop('disabled', false);
-        } else if (poistaSelected) {
-          element.prop('disabled', false);
-        } else {
-          element.prop('disabled', true);
-        }
+        element.prop('disabled', true);
       }
     };
 
@@ -407,21 +405,20 @@
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
         var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
         var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
-        var municipalityUserStateRoadRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Kuntaylläpitäjänä voit muokata valtion teillä vain virtuaalipysäkkejä.';
         var message = '';
 
-        if (selectedMassTransitStopModel.getAdministrativeClass() == 1 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+        var stateAdminClassLink = selectedMassTransitStopModel.isAdminClassState();
+        var municipalityAdminClassLink = selectedMassTransitStopModel.isAdminClassMunicipality();
+
+        if (stateAdminClassLink && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
           message = stateRoadEditingRestricted;
-        } else if(selectedMassTransitStopModel.getAdministrativeClass() == 2 && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+        } else if(municipalityAdminClassLink && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
           message = municipalityRoadEditingRestricted;
         } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
         } else if (!authorizationPolicy.assetSpecificAccess()) {
           message = noRights;
-        } else if (authorizationPolicy.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isOnlyVirtualStop()) {
-          message = municipalityUserStateRoadRights;
         }
-
 
         if(message) {
           return '' +
@@ -760,6 +757,12 @@
         return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices).append(choiceValidation.element));
       };
 
+      var allowOnlyVirtualStopChoice = function() {
+        var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState();
+
+        return authorizationPolicy.isMunicipalityMaintainer() && isStateAdminClass && selectedMassTransitStopModel.isOnlyVirtualStop();
+      };
+
       var createMultiChoiceElement = function(readOnly, property, choices) {
         var element;
         var currentValue = _.cloneDeep(property);
@@ -785,6 +788,11 @@
             return prop.propertyValue == value.propertyValue;
           });
 
+          var shouldDisable = false;
+          if (property.publicId === "pysakin_tyyppi") {
+            shouldDisable = allowOnlyVirtualStopChoice();
+          }
+
           if (readOnly) {
             if (value.checked) {
               var item = $('<li />');
@@ -795,20 +803,25 @@
           } else {
             var container = $('<div class="checkbox" />');
             var input = $('<input type="checkbox" />').change(function (evt) {
+              if (shouldDisable) return;
               value.checked = evt.currentTarget.checked;
               var values = _.chain(enumValues)
-                .filter(function (value) {
-                  return value.checked;
-                })
-                .map(function (value) {
-                  return { propertyValue: parseInt(value.propertyValue, 10), propertyDisplayValue: value.propertyDisplayValue, checked: true };
-                })
-                .value();
+                  .filter(function (value) {
+                    return value.checked;
+                  })
+                  .map(function (value) {
+                    return { propertyValue: parseInt(value.propertyValue, 10), propertyDisplayValue: value.propertyDisplayValue, checked: true };
+                  })
+                  .value();
               if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
               selectedMassTransitStopModel.setProperty(property.publicId, values, property.propertyType);
             });
 
             input.prop('checked', value.checked);
+
+            if (shouldDisable) {
+              input.prop('disabled', true);
+            }
 
             var label = $('<label />').text(value.propertyDisplayValue);
             element.append(container.append(label.append(input)));
@@ -1082,9 +1095,6 @@
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue != '2';}))) {
           isTRMassTransitStop = false;
           property.propertyType = "single_choice";
-          renderAssetForm();
-        }
-        if (property.publicId === 'pysakin_tyyppi') {
           renderAssetForm();
         }
         // Prevent getAssetForm() branching to 'Ei toteutettu'
