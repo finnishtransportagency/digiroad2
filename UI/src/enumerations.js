@@ -175,5 +175,14 @@
       {value: 99, title: 'Tuntematon'}
     ];
 
+    this.massTransitStopTypes = {
+      Tram:              { value: 1,  text: 'Raitiovaunu' },
+      Bus:               { value: 2,  text: 'Bussi' },
+      Virtual:           { value: 5,  text: 'Virtuaalipysäkki' },
+      Terminal:          { value: 6,  text: 'Terminaali' },
+      ServicePoint:      { value: 7,  text: 'Palvelupiste' },
+      Unknown:           { value: 99, text: 'Tuntematon' }
+    };
+
   };
 })(this);

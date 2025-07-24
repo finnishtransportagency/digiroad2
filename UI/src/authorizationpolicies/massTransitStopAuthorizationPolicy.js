@@ -26,19 +26,24 @@
     };
 
     /** Rules:
-    * Municipality maintainer: can update bus stops and other asset types inside own municipalities on admin class 2(municipality) and 3(private)
+    * Municipality maintainer: can update bus stops and other asset types inside own municipalities on admin class 1(state, only virtual stops) 2(municipality) and 3(private)
     * Ely maintainer: can update bus stops and other asset types inside own ELY-area on admin class 1(state) and 2(municipality) and 3(private)
     * Operator: no restrictions
     * */
 
     this.assetSpecificAccess = function(){
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
+      var isAdminClassState = selectedMassTransitStopModel.isAdminClassState();
+      var isOnlyVirtualStop = selectedMassTransitStopModel.isOnlyVirtualStop();
 
-      var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && me.hasRightsInMunicipality(municipalityCode);
+      var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() &&
+          me.hasRightsInMunicipality(municipalityCode) &&
+          (!isAdminClassState || (isAdminClassState && isOnlyVirtualStop));
       var isElyyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode);
 
-      return me.isStateExclusions(selectedMassTransitStopModel) || ( isMunicipalityAndHaveRights || isElyyAndHaveRights || me.isOperator() );
+      return me.isStateExclusions(selectedMassTransitStopModel) || (isMunicipalityAndHaveRights || isElyyAndHaveRights || me.isOperator());
     };
+
 
 
     this.formEditModeAccess = function () {

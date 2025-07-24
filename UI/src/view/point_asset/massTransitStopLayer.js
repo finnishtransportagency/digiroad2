@@ -21,6 +21,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var clusterView;
 
   var editingRestrictions = new EditingRestrictions();
+  var enumerations = new Enumerations();
   var typeId = 10;
 
   var showOrHideServicePointLayer = function (showOrHide) {
@@ -686,7 +687,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var properties = feature.getProperties();
 
     var distance;
-    if(properties.data.stopTypes[0] != 7) {
+    if(properties.data.stopTypes[0] != enumerations.massTransitStopTypes.ServicePoint.value) {
       distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(coordinates, originalCoordinates));
     }else{
       distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints({ x: event.coordinate[0], y: event.coordinate[1]}, originalCoordinates));
@@ -732,7 +733,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var feature = event.features.getArray()[0];
     var properties = feature.getProperties();
 
-    if (properties.data.stopTypes[0] != 7) {
+    if (properties.data.stopTypes[0] != enumerations.massTransitStopTypes.ServicePoint.value) {
 
     properties.data.bearing = angle;
     properties.data.roadDirection = angle;
@@ -835,11 +836,18 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
       selectControl.deactivate();
       var stopType = [];
+      var roadLinks = getCorrectRoadLinks();
+      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadLinks), coordinates.x, coordinates.y);
+      var roadLink = roadCollection.getRoadLinkByLinkId(nearestLine.linkId);
+      var administrativeClass = roadLink.getData().administrativeClass;
+      var isStateAdminClass = administrativeClass == enumerations.administrativeClasses.State.value || administrativeClass === enumerations.administrativeClasses.State.stringValue;
 
-      if ( selectedControl === 'AddTerminal' ) {
-        stopType = ['6'];
-      } else if ( selectedControl === 'AddPointAsset' ) {
-        stopType = ['7'];
+      if (selectedControl === 'AddTerminal') {
+        stopType = [enumerations.massTransitStopTypes.Terminal.value];
+      } else if (selectedControl === 'AddPointAsset') {
+        stopType = [enumerations.massTransitStopTypes.ServicePoint.value];
+      } else if (selectedControl === 'Add' && isStateAdminClass && authorizationPolicy.isMunicipalityMaintainer()) {
+        stopType = [enumerations.massTransitStopTypes.Virtual.value];
       }
 
       createNewAsset(coordinates, false, stopType );
