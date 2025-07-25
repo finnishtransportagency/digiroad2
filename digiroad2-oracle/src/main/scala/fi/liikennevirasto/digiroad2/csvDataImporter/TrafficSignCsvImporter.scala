@@ -305,22 +305,28 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case _: Throwable => (false, List("Invalid dates formats"))
       }
     }
-
-    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
-
-    val (trafficSign, isSignOk) = optTrafficSignType match {
-      case Some(signType) =>
-        val sign = TrafficSignType.applyNewLawCode(signType)
-        val isSignOk = sign != TrafficSignType.Unknown
-
-        (sign, isSignOk)
-
-      case _ => (TrafficSignType.Unknown, false)
+    def validateMainSignType(trafficSignType: Option[String]) = {
+      def isValidMainSignType(signType: TrafficSignType) = {
+        signType match {
+          case _: AdditionalPanelsType | TrafficSignType.Unknown =>
+            false
+          case _ => true
+        }
+      }
+      trafficSignType match {
+        case Some(signType) =>
+          val sign = TrafficSignType.applyNewLawCode(signType)
+          (sign, isValidMainSignType(sign))
+        case _ => (TrafficSignType.Unknown, false)
+      }
     }
 
+    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
+    val (trafficSign, isValidMainSign) = validateMainSignType(optTrafficSignType)
+
     //Validate if we get a valida sign
-    if (!isSignOk)
-      return (List("Not a valid sign!"), Seq() )
+    if (!isValidMainSign)
+      return (List("Not a valid main sign"), Seq() )
 
     /* start date validations */
     val temporaryDevices = Seq(4,5)

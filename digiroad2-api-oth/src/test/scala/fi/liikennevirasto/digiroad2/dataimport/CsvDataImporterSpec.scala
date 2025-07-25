@@ -465,6 +465,28 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("Validation for traffic sign import with additional panel sign type", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "H22.2", "suuntima" -> "40",
+      "arvo" -> "", "kunnan id" -> "408")
+
+    val inValidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+
+    runWithRollback {
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
+
+      val result = trafficSignCsvImporter.processing(inValidCsv, Set(), testUser)
+
+      result.incompleteRows.size should be(0)
+      result.malformedRows.size should be(0)
+      result.excludedRows.size should be(0)
+      result.notImportedData.size should be(1)
+      result.createdData.size should be(0)
+
+      result.notImportedData.head.reason should equal("Not a valid sign")
+    }
+  }
+
 
   test("validation for traffic light import fails if mandatory parameters are missing", Tag("db")) {
     when(trafficLightsCsvImporter.municipalityBorderClient.fetchAllMunicipalities()).thenReturn(Seq(MunicipalityBorders(99, List())))
