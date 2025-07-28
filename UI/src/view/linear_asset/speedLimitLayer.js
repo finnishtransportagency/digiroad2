@@ -160,7 +160,8 @@ window.SpeedLimitLayer = function(params) {
       if (!closestSpeedLimitLink) {
         return;
       }
-      if (authorizationPolicy.formEditModeAccess(closestSpeedLimitLink)) {
+      var nearestSpeedLimitAsset = closestSpeedLimitLink.feature.getProperties();
+      if (authorizationPolicy.formEditModeAccess(nearestSpeedLimitAsset)) {
         if (isWithinCutThreshold(closestSpeedLimitLink.distance)) {
           moveTo(closestSpeedLimitLink.point[0], closestSpeedLimitLink.point[1]);
         } else {
