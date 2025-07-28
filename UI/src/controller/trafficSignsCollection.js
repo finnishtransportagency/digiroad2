@@ -40,6 +40,10 @@
       return num.toString();
     });
 
+    this.additionalPanelsAllowedInPedestrianCyclingLinks = enumerations.additionalPanelsAllowedOnPedestrianCyclingLinks.map(function(num) {
+      return num.toString();
+    });
+
     this.isAllowedSignInPedestrianCyclingLinks = function (signType) {
       return _.includes(this.signTypesAllowedInPedestrianCyclingLinks, signType);
     };
