@@ -324,7 +324,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
     val (trafficSign, isValidMainSign) = validateMainSignType(optTrafficSignType)
 
-    //Validate if we get a valida sign
+    //Validate if we get a valid sign
     if (!isValidMainSign)
       return (List("Not a valid main sign"), Seq() )
 
