@@ -483,7 +483,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       result.notImportedData.size should be(1)
       result.createdData.size should be(0)
 
-      result.notImportedData.head.reason should equal("Not a valid sign")
+      result.notImportedData.head.reason should equal("Invalid trafficSignType for main sign")
     }
   }
 
