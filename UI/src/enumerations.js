@@ -126,7 +126,7 @@
         groupName: 'Lisakilvet', groupIndicative: 'H'}
     };
 
-    this.trafficSignsAllowedOnPedestrianCyclingLinks = [9, 13, 14, 22, 23, 26, 27, 30, 31, 32, 44, 61, 68, 70, 71, 72, 85, 89, 98, 99, 111, 112, 118,
+    this.trafficSignsAllowedOnPedestrianCyclingLinks = [7, 9, 13, 14, 22, 23, 26, 27, 30, 31, 32, 44, 61, 68, 70, 71, 72, 85, 89, 98, 99, 111, 112, 118,
       119, 130, 131, 132, 133, 136, 163, 164, 187, 188, 189, 190, 215, 235, 236, 280, 281, 282, 283, 284, 285, 298, 299, 300, 301, 302, 303, 362, 395, 398];
 
     this.additionalPanelsAllowedOnPedestrianCyclingLinks = [61, 62, 362, 140, 141, 361];
