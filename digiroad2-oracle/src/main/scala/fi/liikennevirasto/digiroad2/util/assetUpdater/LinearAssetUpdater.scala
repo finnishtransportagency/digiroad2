@@ -530,17 +530,17 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         changeSet.changes.partition(change => Seq(Add, Remove).contains(change.changeType))
       }
 
-      val (key, statusDate, targetDate) = (changeSet.key, changeSet.statusDate, changeSet.targetDate)
+      val (key, statusDate) = (changeSet.key, changeSet.statusDate)
       try {
         withDynTransaction {
           updateByRoadLinks(typeId, addAndRemoveChanges)
           updateByRoadLinks(typeId, replaceAndSplitChanges)
-          ValidateSamuutus.validate(typeId, RoadLinkChangeSet(key, statusDate, targetDate, addAndRemoveChanges ++ replaceAndSplitChanges))
-          generateAndSaveReport(typeId, targetDate)
+          ValidateSamuutus.validate(typeId, RoadLinkChangeSet(key, statusDate, addAndRemoveChanges ++ replaceAndSplitChanges))
+          generateAndSaveReport(typeId, statusDate)
         }
       } catch {
         case e:SamuutusFailed =>
-          generateAndSaveReport(typeId, targetDate)
+          generateAndSaveReport(typeId, statusDate)
           throw e
       }
     })

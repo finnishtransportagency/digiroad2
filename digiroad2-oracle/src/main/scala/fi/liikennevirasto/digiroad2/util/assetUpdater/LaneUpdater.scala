@@ -512,11 +512,11 @@ object LaneUpdater {
         PostGISDatabase.withDynTransaction {
           changes = updateByRoadLinks(roadLinkChangeSet)
           ValidateSamuutus.validate(Lanes.typeId, roadLinkChangeSet)
-          generateAndSaveReport(roadLinkChangeSet.targetDate)
+          generateAndSaveReport(roadLinkChangeSet.statusDate)
         }
       } catch {
         case e: SamuutusFailed =>
-          generateAndSaveReport(roadLinkChangeSet.targetDate)
+          generateAndSaveReport(roadLinkChangeSet.statusDate)
           throw e
       }
     })

@@ -27,12 +27,12 @@ object ValidateSamuutus {
         if (passSet.contains(false)) {
           reportInvalidAssets(typeId, result)
           throw SamuutusFailed(s"Validation error happened, see report in bucket ${s3Bucket}")
-        } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+        } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.statusDate)
       }else {
         if (passSet.contains(false)) reportInvalidAssets(typeId, result)
-        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.statusDate)
       }
-    } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+    } else Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.statusDate)
   }
 
   private def reportInvalidAssets(typeId: Int, result: Seq[ValidationResult]): Unit = {

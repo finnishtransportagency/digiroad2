@@ -71,9 +71,9 @@ class PointAssetUpdater(service: PointAssetOperations) {
     */
   private def generateAndSaveReport(typeId: Int, changeSet: RoadLinkChangeSet): Unit = {
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
-    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBody, contentRowCount)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.statusDate, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
-    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBodyWithGeom, contentRowCount, true)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.statusDate, reportBodyWithGeom, contentRowCount, true)
     reportedChanges = Set()
   }
   private def processChanges(changedAssets: Set[service.PersistedAsset], linkChanges: Seq[RoadLinkChange]): Set[Some[ChangedAsset]] = {
