@@ -28,14 +28,14 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
 
-    LinearAssetPartitioner.enrichAndPartition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(assetsWithAttributes)
   }
 
   override def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
-    LinearAssetPartitioner.enrichAndPartition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(assetsWithAttributes)
   }
 
   private def addPolygonAreaAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
@@ -47,10 +47,32 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("constructionType" -> roadLink.constructionType.value))
   }
 
+  private def addRoadNumberAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    val roadNumberLongOpt = roadLink.roadNumber.flatMap(str => scala.util.Try(str.toLong).toOption)
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNUMBER" -> roadNumberLongOpt))
+  }
+
+  private def addRoadPartNumberAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    val roadPartNumberLongOpt = roadLink.roadPartNumber.flatMap(str => scala.util.Try(str.toLong).toOption)
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADPARTNUMBER" -> roadPartNumberLongOpt))
+  }
+
+  private def addRoadNameFiAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNAME_FI" -> roadLink.roadNameIdentifier))
+  }
+
+  private def addRoadNameSeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNAME_SE" -> roadLink.roadNameIdentifier))
+  }
+
   private def enrichMaintenanceRoadAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val maintenanceRoadAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
       addPolygonAreaAttribute,
-      addConstructionTypeAttribute
+      addConstructionTypeAttribute,
+      addRoadNumberAttribute,
+      addRoadPartNumberAttribute,
+      addRoadNameFiAttribute,
+      addRoadNameSeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
@@ -169,7 +191,8 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(potentialAssets.map(_.linkId).toSet)
     val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
     val filledTopology = generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId)
-    LinearAssetPartitioner.enrichAndPartition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val enrichedFilledTopology = enrichMaintenanceRoadAttributes(filledTopology, roadLinks)
+    LinearAssetPartitioner.partition(enrichedFilledTopology.filter(_.value.isDefined))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
@@ -177,7 +200,8 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(potentialAssets.map(_.linkId).toSet)
     val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
     val filledTopology = generateUnknowns(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId)
-    LinearAssetPartitioner.enrichAndPartition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val enrichedFilledTopology = enrichMaintenanceRoadAttributes(filledTopology, roadLinks)
+    LinearAssetPartitioner.partition(enrichedFilledTopology.filter(_.value.isDefined))
   }
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String ,List[Long]]] ={

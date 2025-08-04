@@ -129,7 +129,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   def getHistory(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksHistory(bounds, municipalities)
     val filledTopology = getByRoadLinks(SpeedLimitAsset.typeId, roadLinks, true, true, {roadLinkFilter: RoadLink => roadLinkFilter.isCarTrafficRoad})
-    LinearAssetPartitioner.enrichAndPartition(filledTopology, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(filledTopology)
   }
 
   /**
