@@ -1737,7 +1737,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val lanesBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkId))
       lanesBefore.size should equal(1)
 
-      val changeSet = RoadLinkChangeSet("testi", DateTime.now().minusDays(1), DateTime.now(), relevantChange)
+      val changeSet = RoadLinkChangeSet("testi", DateTime.now().minusDays(1), relevantChange)
       LaneUpdater.updateByRoadLinks(changeSet)
 
       val autoProcessedLanesWorkListItems = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
@@ -1792,7 +1792,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val lanesBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkIdReplace, oldLinkIdSplit))
       lanesBefore.size should equal(3)
 
-      val changeSet = RoadLinkChangeSet("testi", DateTime.now().minusDays(1), DateTime.now(), replaceChange ++ splitChange)
+      val changeSet = RoadLinkChangeSet("testi", DateTime.now().minusDays(1), replaceChange ++ splitChange)
       LaneUpdater.updateByRoadLinks(changeSet)
 
       val autoProcessedLanesWorkListItems = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
@@ -1843,7 +1843,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val lanesBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLinkIdReplace1, oldLinkIdReplace2))
       lanesBefore.size should equal(3)
 
-      val changeSet = RoadLinkChangeSet("testi", DateTime.now().minusDays(1), DateTime.now(), replaceChange1 ++ replaceChange2)
+      val changeSet = RoadLinkChangeSet("testi", DateTime.now().minusDays(1), replaceChange1 ++ replaceChange2)
       LaneUpdater.updateByRoadLinks(changeSet)
 
       val autoProcessedLanesWorkListItems = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
