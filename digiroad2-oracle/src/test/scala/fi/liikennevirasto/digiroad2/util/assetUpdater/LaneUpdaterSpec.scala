@@ -1870,4 +1870,65 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       })
     }
   }
+
+  test("TrafficDirection changed on link, generate new main lanes, raise link to auto processed lanes work list," +
+    "raise link to lane work list because it has additional lanes, should not generate duplicates when run twice") {
+    runWithRollback {
+      val newLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:2"
+      val relevantChange = testChanges.find(change => change.changeType == Replace && change.newLinks.head.linkId == newLinkId).get
+      val oldLinkWithAgainstDigitizingTD = Option(relevantChange.oldLink.get.copy(trafficDirection = TrafficDirection.apply(3)))
+      val trafficDirectionChange: RoadLinkChange = relevantChange.copy(oldLink = oldLinkWithAgainstDigitizingTD)
+      val oldLink = trafficDirectionChange.oldLink.get
+
+      // Main lane against digitizing
+      val mainLane1 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane1), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      // Additional lane against digitizing
+      val additionalLane2 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, subLane2PropertiesA)
+      LaneServiceWithDao.create(Seq(additionalLane2), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      val currentItems = laneWorkListService.getLaneWorkList()
+      currentItems.size should equal(0)
+
+      LaneUpdater.updateTrafficDirectionChangesLaneWorkList(Seq(trafficDirectionChange))
+
+      val laneWorkListItemsAfterUpdate = laneWorkListService.workListDao.getAllItems
+      laneWorkListItemsAfterUpdate.size should equal(1)
+
+      val autoProcessedLanesWorkListItems = autoProcessedLanesWorkListService.getAutoProcessedLanesWorkList(false)
+      autoProcessedLanesWorkListItems.size should equal(1)
+
+      val lanesOnOldLinkBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
+      // Old link has one main lane and one additional lane
+      lanesOnOldLinkBefore.size should equal(2)
+
+      val changeSet = LaneUpdater.handleChanges(Seq(), Seq(trafficDirectionChange))
+      LaneUpdater.updateSamuutusChangeSet(changeSet, Seq(trafficDirectionChange))
+
+      val lanesOnOldLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
+      // Additional lane should stay on old link
+      lanesOnOldLinkAfter.size should equal(1)
+
+      val lanesOnNewLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
+      // Two main lanes should be generated for new link
+      lanesOnNewLinkAfter.size should equal(2)
+      lanesOnNewLinkAfter.foreach(lane => LaneNumber.isMainLane(lane.laneCode) should equal(true))
+
+      //Run samuutus again, on same change set, no changes should be made this time.
+      val changeSet2 = LaneUpdater.handleChanges(Seq(), Seq(trafficDirectionChange))
+      LaneUpdater.updateSamuutusChangeSet(changeSet2, Seq(trafficDirectionChange))
+
+      val lanesOnOldLinkAfter2 = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
+      // Additional lane should still be on old link
+      lanesOnOldLinkAfter2.size should equal(1)
+
+      val lanesOnNewLinkAfter2 = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
+      // Two generated main lanes should be on new link, duplicates should not be generated
+      lanesOnNewLinkAfter2.size should equal(2)
+      lanesOnNewLinkAfter2.foreach(lane => LaneNumber.isMainLane(lane.laneCode) should equal(true))
+
+    }
+  }
+
 }

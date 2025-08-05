@@ -481,7 +481,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
     val linkIdsWithExistingAsset = service.fetchExistingAssetsByLinksIdsString(typeId, newLinkIds.toSet, Set(), newTransaction = false).map(_.linkId)
     if (linkIdsWithExistingAsset.nonEmpty) logger.info(s"found already created assets on new links ${linkIdsWithExistingAsset.mkString(",")}")
-    changes.filterNot(c => c.changeType == Add && linkIdsWithExistingAsset.contains(c.newLinks.head.linkId))
+    changes.filterNot(c =>
+      c.newLinks.exists(nl => linkIdsWithExistingAsset.contains(nl.linkId))
+    )
   }
   /**
     * 4.2) Add logic to create assets when link is created. Default is do nothing.

@@ -705,21 +705,31 @@ object LaneUpdater {
     
     val newRoadLinks = roadLinkService.getExistingAndExpiredRoadLinksByLinkIds(newLinkIdsString, newTransaction = false)
     // when working on 1 million lanes it is better just fetch lanes multiple time
-    val linkIdsWithExistingLane = laneService.fetchAllLanesByLinkIds(newLinkIds, newTransaction = false).map(_.linkId)
     val lanesOnOldRoadLinks = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false)
     val lanesOnWorkListLinks = laneService.fetchAllLanesByLinkIds(oldWorkListLinkIds, newTransaction = false)
-    logger.info(s"End fetching lanes and links") 
-    
-    if (linkIdsWithExistingLane.nonEmpty) logger.info(s"found already created lanes on new links ${linkIdsWithExistingLane.mkString(", ")}")
+    logger.info(s"End fetching lanes and links")
+
+    val newLinkIdsWithExistingLane = laneService.fetchAllLanesByLinkIds(newLinkIds, newTransaction = false).map(_.linkId)
+    if (newLinkIdsWithExistingLane.nonEmpty) logger.info(s"found already created lanes on new links ${newLinkIdsWithExistingLane.mkString(", ")}")
     val filteredChanges = LogUtils.time(logger, s"filteredChanges") {
-      roadLinkChanges.filterNot(c => c.changeType == Add && linkIdsWithExistingLane.contains(c.newLinks.head.linkId))
+      roadLinkChanges.filterNot(c =>
+        c.newLinks.exists(nl => newLinkIdsWithExistingLane.contains(nl.linkId))
+      )
     }
-    
-    // Additional lanes can't be processed if link is on the lane work list, only handle main lanes on those links
+
+    val workListNewLinkIds = workListChanges.flatMap(_.newLinks.map(_.linkId)).toSet
+    val newLinksWithExistingLanesOnWorkList = laneService.fetchAllLanesByLinkIds(workListNewLinkIds.toSeq, newTransaction = false).map(_.linkId).toSet
+
+    val filteredWorkListChanges = workListChanges.filterNot { change =>
+      change.newLinks.exists(nl => newLinksWithExistingLanesOnWorkList.contains(nl.linkId))
+    }
+
+    // Use filteredWorkListChanges instead of workListChanges below
     val workListMainLanes = lanesOnWorkListLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
     val (trafficDirectionChangeSet, trafficDirectionCreatedMainLanes) =LogUtils.time(logger, s"handleTrafficDirectionChange ") {
-      handleTrafficDirectionChange(workListChanges, workListMainLanes,newRoadLinks)
+      handleTrafficDirectionChange(filteredWorkListChanges, workListMainLanes, newRoadLinks)
     }
+
     val lanesGroup = LogUtils.time(logger, s"groupByPropertyHashMap with ${lanesOnOldRoadLinks.size}") {
       IterableOperation.groupByPropertyHashMap(lanesOnOldRoadLinks, (elem: PersistedLane) => elem.linkId)
     }
