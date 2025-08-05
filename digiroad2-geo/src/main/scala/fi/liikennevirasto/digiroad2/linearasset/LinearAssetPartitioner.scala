@@ -5,42 +5,6 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 object LinearAssetPartitioner extends GraphPartitioner {
 
   /**
-   * Partitions a sequence of linear assets by enriching them with road link address data
-   * and delegating to a partitioning logic. It enriches each asset temporarily with additional
-   * attributes such as road number and road name if a corresponding RoadLink
-   * exists. After enrichment, it calls a secondary partitioning method on the enriched assets.
-   *
-   * @tparam T The specific subtype of PieceWiseLinearAsset.
-   * @param assetLinks              A sequence of linear assets to enrichAndPartition.
-   * @param roadAddressForPartition A map from link IDs to RoadLink objects,
-   *                                used to enrich each asset with road-specific address data.
-   * @return A sequence of partitions, where each enrichAndPartition is a sequence of assets of type T.
-   */
-  def enrichAndPartition[T <: PieceWiseLinearAsset](assetLinks: Seq[T], roadAddressForPartition: Map[String, RoadLink]): Seq[Seq[T]] = {
-
-    val enrichedLinks: Seq[PieceWiseLinearAsset] = assetLinks.map {
-      case pwla: PieceWiseLinearAsset =>
-        val roadLinkOption = roadAddressForPartition.get(pwla.linkId)
-        val additionalAttributes: Map[String, Any] = roadLinkOption match {
-          case Some(roadLink) =>
-            val attrs = roadLink.attributes
-            Map(
-              "ROADNUMBER" -> attrs.get("ROADNUMBER"),
-              "ROADNAME_FI" -> attrs.get("ROADNAME_FI"),
-              "ROADNAME_SE" -> attrs.get("ROADNAME_SE"),
-              "ROADPARTNUMBER" -> attrs.get("ROADPARTNUMBER")
-            ).collect { case (key, Some(value)) => key -> Some(value) }
-          case None => Map.empty
-        }
-
-        val mergedAttributes = pwla.attributes ++ additionalAttributes
-
-        pwla.copy(attributes = mergedAttributes)
-    }
-    partition(enrichedLinks).asInstanceOf[Seq[Seq[T]]]
-  }
-
-  /**
    * Partitions a sequence of linear assets into clusters based on shared road-related attributes.
    * Partitioned groups are activated together on the map when a link in the group is clicked.
    *

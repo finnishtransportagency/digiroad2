@@ -115,14 +115,14 @@ trait LinearAssetOperations {
     val roadLinks = roadLinkService.getRoadLinksByBoundsAndMunicipalities(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, showHistory = showSpeedLimitsHistory, roadLinkFilter = roadLinkFilter)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
-    LinearAssetPartitioner.enrichAndPartition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(assetsWithAttributes)
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
-    LinearAssetPartitioner.enrichAndPartition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(assetsWithAttributes)
   }
 
   private def addMunicipalityCodeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
@@ -141,12 +141,34 @@ trait LinearAssetOperations {
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("linkType" -> roadLink.linkType.value))
   }
 
+  private def addRoadNumberAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    val roadNumberLongOpt = roadLink.roadNumber.flatMap(str => scala.util.Try(str.toLong).toOption)
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNUMBER" -> roadNumberLongOpt))
+  }
+
+  private def addRoadPartNumberAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    val roadPartNumberLongOpt = roadLink.roadPartNumber.flatMap(str => scala.util.Try(str.toLong).toOption)
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADPARTNUMBER" -> roadPartNumberLongOpt))
+  }
+
+  private def addRoadNameFiAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNAME_FI" -> roadLink.roadNameIdentifier))
+  }
+
+  private def addRoadNameSeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNAME_SE" -> roadLink.roadNameIdentifier))
+  }
+
   private def enrichLinearAssetAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val linearAssetAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
       addMunicipalityCodeAttribute,
       addConstructionTypeAttribute,
       addFunctionalClassAttribute,
-      addLinkTypeAttribute
+      addLinkTypeAttribute,
+      addRoadNumberAttribute,
+      addRoadPartNumberAttribute,
+      addRoadNameFiAttribute,
+      addRoadNameSeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
