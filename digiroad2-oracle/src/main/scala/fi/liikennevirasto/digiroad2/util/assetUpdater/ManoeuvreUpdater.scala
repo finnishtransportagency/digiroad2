@@ -35,7 +35,7 @@ class ManoeuvreUpdater() {
         LogUtils.time(logger, s"Updating manoeuvres finished: ") {
           updateByRoadLinks(typeId, changeSet.changes)
         }
-        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.statusDate)
       }
     })
   }
