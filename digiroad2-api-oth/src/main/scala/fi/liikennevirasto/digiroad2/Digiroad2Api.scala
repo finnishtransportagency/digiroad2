@@ -1324,7 +1324,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       extractLinearAssetValue(parsedBody \ "existingValue"),
       extractLinearAssetValue(parsedBody \ "createdValue"),
       user.username,
-      validateUserAccess(user, typeId))
+      validateUserAccess(user, typeId, false))
   }
 
   post("/linearassets/:id/separate") {
@@ -1335,7 +1335,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       extractLinearAssetValue(parsedBody \ "valueTowardsDigitization"),
       extractLinearAssetValue(parsedBody \ "valueAgainstDigitization"),
       user.username,
-      validateUserAccess(user, typeId))
+      validateUserAccess(user, typeId, false))
   }
 
   get("/speedlimit/sid/") {
