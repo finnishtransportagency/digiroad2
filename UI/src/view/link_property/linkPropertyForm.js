@@ -452,10 +452,10 @@
             $(".private-road").css("display","block");
           } else $(".private-road").css("display","none");
         });
-        rootElement.find('.access-right-id').keyup(function(event) {
+        rootElement.find('.access-right-id').on('input', function(event) {
           selectedLinkProperty.setAccessRightId($(event.currentTarget).val());
         });
-        rootElement.find('.private-road-association').keyup(function(event) {
+        rootElement.find('.private-road-association').on('input', function(event) {
           selectedLinkProperty.setPrivateRoadAssociation($(event.currentTarget).val());
         });
         rootElement.find('.additional-info').change(function(event) {
