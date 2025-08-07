@@ -1789,7 +1789,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def validateUserRights(existingAssets: Seq[PersistedLinearAsset], newLinearAssets: Seq[NewLinearAsset], user: User, typeId: Int) : Unit = {
 
-    val roadLinks = roadLinkService.fetchRoadlinksAndComplementaries((existingAssets.map(_.linkId) ++ newLinearAssets.map(_.linkId)).toSet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds((existingAssets.map(_.linkId) ++ newLinearAssets.map(_.linkId)).toSet)
     if (typeId == MaintenanceRoadAsset.typeId) {
 
       val groupedRoadLinks = roadLinks.groupBy(_.linkId)
