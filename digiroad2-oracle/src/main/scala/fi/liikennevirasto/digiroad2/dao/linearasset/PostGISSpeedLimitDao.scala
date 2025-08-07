@@ -626,7 +626,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(String, Double, Double)].list
 
-    val roadLinksByLinkId = roadLinkService.fetchRoadlinksAndComplementaries(links.map(_._1).toSet)
+    val roadLinksByLinkId = roadLinkService.getRoadLinksAndComplementariesByLinkIds(links.map(_._1).toSet, false)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
       val roadLinkFetched = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
