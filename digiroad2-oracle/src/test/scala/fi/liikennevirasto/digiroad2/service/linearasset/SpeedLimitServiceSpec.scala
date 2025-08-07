@@ -57,9 +57,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     throw new IllegalArgumentException
   }
 
-  val roadLinkForSeparation = RoadLink(linkId5, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
-  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5)).thenReturn(Some(roadLinkForSeparation))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5, true)).thenReturn(Some(roadLinkForSeparation))
+  val roadLink2 = RoadLink(linkId5, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(1)))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5)).thenReturn(Some(roadLink2))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5, true)).thenReturn(Some(roadLink2))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(roadLink2.linkId))).thenReturn(Seq(roadLink2))
   val roadLinkFetched = RoadLinkFetched(linkId5, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
@@ -130,7 +131,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     "and creates new speed limit for second split") {
     runWithRollback {
       val asset = provider.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(200097)).head
-      val (createdId1, createdId2) = provider.split(asset, roadLinkFetched, 100, 120, 60, "test")
+      val (createdId1, createdId2) = provider.split(asset, roadLink2, 100, 120, 60, "test")
       val created1 = provider.getPersistedSpeedLimitById(createdId1).get
       val created2 = provider.getPersistedSpeedLimitById(createdId2).get
 
@@ -149,7 +150,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split") {
     runWithRollback {
       val asset = provider.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(200097)).head
-      val (createdId1, createdId2) = provider.split(asset, roadLinkFetched, 50, 120, 60, "test")
+      val (createdId1, createdId2) = provider.split(asset, roadLink2, 50, 120, 60, "test")
       val created1 = provider.getPersistedSpeedLimitById(createdId1).get
       val created2 = provider.getPersistedSpeedLimitById(createdId2).get
 

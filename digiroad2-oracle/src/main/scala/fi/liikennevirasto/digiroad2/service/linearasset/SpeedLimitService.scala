@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISSpeedLimitDao, UnknownLimit}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
@@ -16,9 +15,6 @@ import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.liikennevirasto.digiroad2.util.assetUpdater.SpeedLimitUpdater
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
-
-import java.util.NoSuchElementException
-import scala.util.Try
 
 case class NewSpeedLimitMassOperation(creator: String, typeId: Int, linkId: String, linkMeasures: Measures, sideCode: SideCode, 
                                       value: Option[SpeedLimitValue], timeStamp: Option[Long],
@@ -403,7 +399,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
    val speedLimits =  withDynTransaction {
       getPersistedSpeedLimitById(id, newTransaction = false) match {
         case Some(speedLimit) =>
-          val roadLink = roadLinkService.fetchRoadlinkAndComplementary(speedLimit.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+          val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(speedLimit.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
           municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
           val (newId ,idUpdated) = split(speedLimit, roadLink, splitMeasure, existingValue, createdValue, username)
@@ -431,7 +427,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     * Splits speed limit by given split measure.
     * Used by SpeedLimitService.split.
     */
-  def split(speedLimit: PersistedLinearAsset, roadLinkFetched: RoadLinkFetched, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String): (Long, Long) = {
+  def split(speedLimit: PersistedLinearAsset, roadLinkFetched: RoadLink, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String): (Long, Long) = {
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (speedLimit.startMeasure, speedLimit.endMeasure))
 
     speedLimitDao.updateExpiration(speedLimit.id)
