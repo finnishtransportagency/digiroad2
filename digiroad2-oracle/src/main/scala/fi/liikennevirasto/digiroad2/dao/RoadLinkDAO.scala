@@ -20,7 +20,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import java.sql.{Array => SqlArray}
+import java.sql.{Timestamp, Array => SqlArray}
 import org.joda.time.format.DateTimeFormat
 
 class RoadLinkDAO {
@@ -324,6 +324,12 @@ class RoadLinkDAO {
   def fetchExpiredRoadLinks(): Seq[RoadLinkWithExpiredDate] = {
     getExpiredRoadLinks()
   }
+
+  def fetchExpiredRoadLinksAfterLastSamuutus(lastSuccess: DateTime): Seq[RoadLinkWithExpiredDate] = {
+    logger.info(s"Fetching expired roadlinks after ${lastSuccess}")
+    getExpiredRoadLinksAfterLastSamuutus(lastSuccess)
+  }
+
   def fetchExpiredRoadLink(linkId: String): Seq[RoadLinkFetched] = {
     fetchExpiredByLinkIds(Set(linkId))
   }
@@ -602,6 +608,28 @@ class RoadLinkDAO {
           from kgv_roadlink
           where expired_date is not null
           """.as[RoadLinkWithExpiredDate].list
+  }
+
+  protected def getExpiredRoadLinksAfterLastSamuutus(lastSuccess: DateTime): Seq[RoadLinkWithExpiredDate] = {
+    val timestamp = new Timestamp(lastSuccess.getMillis)
+
+    val startTime = System.currentTimeMillis()
+
+    val result = sql"""
+    select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
+           roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
+           verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
+           surfacetype, geometrylength, expired_date
+    from kgv_roadlink
+    where expired_date is not null and expired_date > $timestamp
+  """.as[RoadLinkWithExpiredDate].list
+
+    val endTime = System.currentTimeMillis()
+    val duration = endTime - startTime
+
+    logger.info(s"Duration of roadLink query: $duration ms")
+
+    result
   }
 
   protected def getExpiredLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {

@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Lanes}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLinkWithMeasures, PostGISLinearAssetDao}
@@ -84,7 +85,9 @@ object ExpiredRoadLinkHandlingProcess {
   }
 
   def handleExpiredRoadLinks(cleanRoadLinkTable:Boolean = true): Unit = {
-    val expiredRoadLinksWithExpireDates = roadLinkService.getAllExpiredRoadLinksWithExpiredDates()
+    val lastSuccess = Queries.getEarliestDateOfAnySuccessfulSamuutus()
+    logger.info(s"Last Successful samuutus: ${lastSuccess}")
+    val expiredRoadLinksWithExpireDates = roadLinkService.getRoadLinksWithExpiredDatesAfterLastSamuutus(lastSuccess)
     logger.info(s"Expired road links count: ${expiredRoadLinksWithExpireDates.size}")
     val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
     val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
