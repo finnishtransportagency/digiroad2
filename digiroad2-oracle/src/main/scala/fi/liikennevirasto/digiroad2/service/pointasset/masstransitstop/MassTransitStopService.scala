@@ -348,7 +348,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   }
 
-  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, isCsvImported: Boolean = false, newTransaction: Boolean = true): MassTransitStopWithProperties = {
+  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, authorizationValidation: (Int, AdministrativeClass) => Unit, isCsvImported: Boolean = false, newTransaction: Boolean = true): MassTransitStopWithProperties = {
     def updateExistingById(isCsvImported: Boolean) = {
       val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
 
@@ -366,7 +366,7 @@ trait MassTransitStopService extends PointAssetOperations {
       if (properties.exists(property => property.publicId == "tietojen_yllapitaja" && property.values.head.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.MunicipalityPropertyValue))
         previousStrategy.undoLiviId(asset)
 
-      val (persistedAsset, publishInfo) = currentStrategy.update(asset, optionalPosition, newProperties, username, municipalityValidation, roadLink, isCsvImported)
+      val (persistedAsset, publishInfo) = currentStrategy.update(asset, optionalPosition, newProperties, username, authorizationValidation, roadLink, isCsvImported)
 
       val (enrichPersistedAsset, error) = currentStrategy.enrichBusStop(persistedAsset)
       (currentStrategy, publishInfo, withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(enrichPersistedAsset))

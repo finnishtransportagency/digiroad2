@@ -15,8 +15,8 @@
     };
 
     var obstacleTypes = {
-      1: 'Muu pysyvä esterakenne',
-      2: 'Avattava puomi',
+      1: 'Kiinteä esterakennelma',
+      2: 'Avattava esterakennelma',
       3: 'Kaivanne',
       99: 'Ei tiedossa'
     };
@@ -26,17 +26,28 @@
     this.renderValueElement = function(asset, collection, authorizationPolicy) {
       var components = me.renderComponents(asset.propertyData, propertyOrdering, authorizationPolicy);
       return '' +
+        '<div class="edit-mode"> '+
         '    <div class="form-group editable form-obstacle">' +
-        '      <label class="control-label">Esterakennelma</label>' +
+        '      <label class="control-label required">Esterakennelma</label>' +
         '      <p class="form-control-static">' + obstacleTypes[me.selectedAsset.getByProperty('esterakennelma')] + '</p>' +
-        '      <select class="form-control" style="display:none">  ' +
-        '        <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Muu pysyvä esterakennelma</option>' +
-        '        <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
-        '        <option value="3" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 3 ? 'selected' : '') +'>Kaivanne</option>' +
-        '        <option value="99" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 99 ? 'selected' : '') +'>Ei tiedossa</option>' +
+        '        <select id="esterakennelma-select" class="form-control" style="display:none">' +
+        '         <option value="" ' + (me.selectedAsset.getByProperty('esterakennelma') === null ? 'selected' : '') + '></option>' +
+        '         <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Kiinteä esterakennelma</option>' +
+        '         <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava esterakennelma</option>' +
+        '         <option value="3" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 3 ? 'selected' : '') +'>Kaivanne</option>' +
+        '         <option value="99" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 99 ? 'selected' : '') +'>Ei tiedossa</option>' +
         '      </select>' +
         '    </div>' +
-          components;
+        '</div>' +
+          components +
+          '      <div class="obstacle-info-text" style="margin-top:12px;">' +
+          '        <ul style="margin-bottom:0;">' +
+          '          <li><strong>Kiinteä esterakennelma</strong> tarkoittaa, että estettä ei voi avata eikä lihasvoimin poistaa, kuten betoniporsas, pollari tai kivi.</li>' +
+          '          <li><strong>Avattava esterakennelma</strong> on este, jonka saa auki tarvittaessa (voi olla lukittu tai lukitsematon). Avattava puomi kattaa myös portit, ketjut sekä kävelyn ja pyöräilyn väylien sulkuportit.</li>' +
+          '          <li><strong>Kaivanne</strong> tarkoittaa tien poikki kaivettua uraa, joka estää tiellä kulkemisen.</li>' +
+          '          <li><strong>Ei tiedossa</strong> tarkoittaa, että esterakennelman tarkempi tyyppi ei ole tiedossa.</li>' +
+          '        </ul>' +
+          '      </div>';
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {

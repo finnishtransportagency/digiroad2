@@ -3,6 +3,8 @@
   var poistaSelected = false;
   var authorizationPolicy;
   var pointAssetToSave = false;
+  var typeId = 10;
+  var editingRestrictions = new EditingRestrictions();
 
   var rootElement = $("#feature-attributes");
 
@@ -169,19 +171,30 @@
       }
     }
 
-    var updateStatus = function() {
-      if(pointAssetToSave && !isValidServicePoint()){
+    var updateStatus = function () {
+      var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState();
+
+      if (pointAssetToSave && !isValidServicePoint()) {
         element.prop('disabled', true);
-      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() &&
+      } else if (
+          selectedMassTransitStopModel.isDirty() &&
+          !selectedMassTransitStopModel.requiredPropertiesMissing() &&
           !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() &&
-          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink()){
+          !selectedMassTransitStopModel.wrongStopTypeOnWalkingCyclingLink() &&
+          (!authorizationPolicy.isMunicipalityMaintainer() || !isStateAdminClass ||
+              (authorizationPolicy.isMunicipalityMaintainer() &&
+                  isStateAdminClass &&
+                  selectedMassTransitStopModel.isOnlyVirtualStop())
+          )
+      ) {
         element.prop('disabled', false);
-      } else if(poistaSelected) {
+      } else if (poistaSelected) {
         element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
       }
     };
+
 
     updateStatus();
 
@@ -245,7 +258,7 @@
         poistaSelected = false;
         pointAssetToSave = false;
 
-        readOnly = authorizationPolicy.formEditModeAccess();
+        readOnly = authorizationPolicy.formEditModeAccess() || editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId);
         var wrapper;
         if(readOnly){
           wrapper = $('<div />').addClass('wrapper read-only');
@@ -390,12 +403,22 @@
 
         var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+        var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
+        var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
         var message = '';
 
-        if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
+        var stateAdminClassLink = selectedMassTransitStopModel.isAdminClassState();
+        var municipalityAdminClassLink = selectedMassTransitStopModel.isAdminClassMunicipality();
+
+        if (stateAdminClassLink && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+          message = stateRoadEditingRestricted;
+        } else if(municipalityAdminClassLink && editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+          message = municipalityRoadEditingRestricted;
+        } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
-        } else if (!authorizationPolicy.assetSpecificAccess())
+        } else if (!authorizationPolicy.assetSpecificAccess()) {
           message = noRights;
+        }
 
         if(message) {
           return '' +
@@ -734,6 +757,12 @@
         return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices).append(choiceValidation.element));
       };
 
+      var allowOnlyVirtualStopChoice = function() {
+        var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState();
+
+        return authorizationPolicy.isMunicipalityMaintainer() && isStateAdminClass && selectedMassTransitStopModel.isOnlyVirtualStop();
+      };
+
       var createMultiChoiceElement = function(readOnly, property, choices) {
         var element;
         var currentValue = _.cloneDeep(property);
@@ -759,6 +788,11 @@
             return prop.propertyValue == value.propertyValue;
           });
 
+          var shouldDisable = false;
+          if (property.publicId === "pysakin_tyyppi") {
+            shouldDisable = allowOnlyVirtualStopChoice();
+          }
+
           if (readOnly) {
             if (value.checked) {
               var item = $('<li />');
@@ -769,20 +803,25 @@
           } else {
             var container = $('<div class="checkbox" />');
             var input = $('<input type="checkbox" />').change(function (evt) {
+              if (shouldDisable) return;
               value.checked = evt.currentTarget.checked;
               var values = _.chain(enumValues)
-                .filter(function (value) {
-                  return value.checked;
-                })
-                .map(function (value) {
-                  return { propertyValue: parseInt(value.propertyValue, 10), propertyDisplayValue: value.propertyDisplayValue, checked: true };
-                })
-                .value();
+                  .filter(function (value) {
+                    return value.checked;
+                  })
+                  .map(function (value) {
+                    return { propertyValue: parseInt(value.propertyValue, 10), propertyDisplayValue: value.propertyDisplayValue, checked: true };
+                  })
+                  .value();
               if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
               selectedMassTransitStopModel.setProperty(property.publicId, values, property.propertyType);
             });
 
             input.prop('checked', value.checked);
+
+            if (shouldDisable) {
+              input.prop('disabled', true);
+            }
 
             var label = $('<label />').text(value.propertyDisplayValue);
             element.append(container.append(label.append(input)));
@@ -907,7 +946,6 @@
 
         if (!selectedMassTransitStopModel.isTerminalType(busStopTypeSelected) && !selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)) {
           setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
-          disableFormIfTRMassTransitStopHasEndDate(properties);
         }
 
         var contents = _.take(properties, 2)
@@ -958,22 +996,6 @@
         var isAdminClassState = selectedMassTransitStopModel.isAdminClassState(properties);
 
         isTRMassTransitStop = isAdministratorELY || (isAdministratorHSL && isAdminClassState);
-      }
-
-      function disableFormIfTRMassTransitStopHasEndDate(properties) {
-
-        var expiryDate = selectedMassTransitStopModel.getEndDate();
-        var todaysDate = moment().format('YYYY-MM-DD');
-
-        var isBusStopExpired = _.some(properties, function (property) {
-          return todaysDate > expiryDate && property.publicId === 'viimeinen_voimassaolopaiva' &&
-            _.some(property.values, function (value) {
-              return value.propertyValue !== "";
-            });
-        });
-
-        if(authorizationPolicy.isActiveTrStopWithoutPermission(isBusStopExpired, isTRMassTransitStop))
-          readOnly = true;
       }
 
       function streetViewTemplates(longi,lati,heading) {

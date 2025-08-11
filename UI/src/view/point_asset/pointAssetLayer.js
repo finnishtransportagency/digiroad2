@@ -9,6 +9,7 @@
       selectedAsset = params.selectedAsset,
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
+      typeId = params.typeId,
       newAsset = params.newAsset,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       assetLabel = params.assetLabel,
@@ -39,6 +40,9 @@
     me.vectorLayer.setVisible(true);
     map.addLayer(me.vectorLayer);
 
+    var editingRestrictions = new EditingRestrictions();
+    var servicePointTypeId = 250;
+
     var selectControl = new SelectToolControl(application, me.vectorLayer, map, false,{
         style : function (feature) {
           if (layerName == 'trafficLights') {
@@ -58,10 +62,16 @@
       if(feature.selected.length > 0 && feature.deselected.length === 0){
           var properties = feature.selected[0].getProperties();
           var administrativeClass = obtainAdministrativeClass(properties);
+          var municipalityCode = obtainMunicipalityCode(properties);
           var asset = _.merge({}, properties, {administrativeClass: administrativeClass});
           selectedAsset.open(asset);
-          if(authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) && !applicationModel.isReadOnly())
-            dragControl.activate();
+          if (authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) && !applicationModel.isReadOnly()) {
+            if (typeId === servicePointTypeId && !(editingRestrictions.pointAssetHasRestriction(selectedAsset.get().municipalityCode, 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.get().municipalityCode, 'Municipality', typeId))) {
+              dragControl.activate();
+            } else if (typeId !== servicePointTypeId && !editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+              dragControl.activate();
+            }
+          }
       }
       else {
         if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
@@ -282,6 +292,10 @@
       return selectedAsset.getConstructionType(asset.linkId);
     }
 
+    function obtainMunicipalityCode(asset) {
+      return selectedAsset.getMunicipalityCodeByLinkId(asset.linkId);
+    }
+
     this.removeLayerFeatures = function() {
       me.vectorLayer.getSource().clear();
     };
@@ -315,7 +329,11 @@
       if(readOnly){
         dragControl.deactivate();
       } else if(selectedAsset.exists() && authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection)) {
-        dragControl.activate();
+        if (typeId === servicePointTypeId && !(editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'Municipality', typeId))) {
+          dragControl.activate();
+        } else if (typeId !== servicePointTypeId && !editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), selectedAsset.getAdministrativeClass(), typeId)) {
+          dragControl.activate();
+        }
       }
     }
 
@@ -404,6 +422,17 @@
         var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
         var administrativeClass = obtainAdministrativeClass(nearestLine);
         var constructionType = obtainConstructionType(nearestLine);
+        var municipalityCode = obtainMunicipalityCode(nearestLine);
+
+        if (administrativeClass === 'State' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+          me.displayAssetCreationRestricted('Kohteiden lisääminen on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.');
+          return;
+        }
+
+        if (administrativeClass === 'Municipality' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+          me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+          return;
+        }
 
         var asset = me.createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing,
             administrativeClass, constructionType);

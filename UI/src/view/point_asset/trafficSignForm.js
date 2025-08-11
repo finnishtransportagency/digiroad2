@@ -3,13 +3,6 @@
     PointAssetForm.call(this);
     var me = this;
     var defaultAdditionalPanelValue = null;
-    var additionalPanelWithTextCode = '61';
-    var additionalPanelTwoWayBikePath2 = '362';
-    var additionalPanelDrivingInServicePurposesAllowed = '62';
-    var additionalPanelSignAppliesToBothDirections = '140';
-
-    var additionalPanelsAllowedOnPedestrianCycling = [additionalPanelWithTextCode, additionalPanelTwoWayBikePath2,
-      additionalPanelDrivingInServicePurposesAllowed, additionalPanelSignAppliesToBothDirections];
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
@@ -454,7 +447,7 @@
       var propertyDisplayValue;
 
       if (isPedestrianOrCyclingRoadLink()) {
-        panels = _.filter(panels, function(p) { if (additionalPanelsAllowedOnPedestrianCycling.includes(p.propertyValue)) return p;} );
+        panels = _.filter(panels, function(p) { if (collection.additionalPanelsAllowedInPedestrianCyclingLinks.includes(p.propertyValue)) return p;} );
         propertyDisplayValue = _.isUndefined(panels) || _.isEmpty(panels.length) ? "" : panels[0].propertyDisplayValue;
       }
       else {

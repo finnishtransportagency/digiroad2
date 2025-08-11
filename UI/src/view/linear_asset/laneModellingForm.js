@@ -8,6 +8,9 @@
     var isAddByRoadAddressActive = false;
     var lanesAssets;
 
+    var editingRestrictions = new EditingRestrictions();
+    var typeId = 450;
+
   self.DynamicField = function (fieldSettings, isDisabled) {
     dynamicFieldParent.call(this, fieldSettings, isDisabled);
     var me = this;
@@ -214,6 +217,40 @@
           reloadForm(rootElement);
         }
       });
+    };
+
+    this.userInformationLog = function() {
+      var selectedAsset = self._assetTypeConfiguration.selectedLinearAsset;
+      var authorizationPolicy = self._assetTypeConfiguration.authorizationPolicy;
+
+      var hasMunicipality = function(linearAsset) {
+        return _.some(linearAsset.get(), function(asset){
+          return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+        });
+      };
+
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
+      var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
+      var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
+      var message = '';
+
+      if (editingRestrictions.hasStateRestriction(selectedAsset.get(), typeId)) {
+        message = stateRoadEditingRestricted;
+      } else if(editingRestrictions.hasMunicipalityRestriction(selectedAsset.get(), typeId)) {
+        message = municipalityRoadEditingRestricted;
+      } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
+        message = limitedRights;
+      } else if(!this.checkAuthorizationPolicy(selectedAsset))
+        message = noRights;
+
+      if(message) {
+        return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info">' + message + '</p>' +
+            '</div>';
+      } else
+        return '';
     };
 
     var renderLinktoLaneWorkList = function renderLinktoWorkList() {

@@ -465,6 +465,28 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("Validation for traffic sign import when importing additional panel as main sign", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "H22.2", "suuntima" -> "40",
+      "arvo" -> "", "kunnan id" -> "408")
+
+    val inValidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+
+    runWithRollback {
+      when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
+
+      val result = trafficSignCsvImporter.processing(inValidCsv, Set(), testUser)
+
+      result.incompleteRows.size should be(0)
+      result.malformedRows.size should be(0)
+      result.excludedRows.size should be(0)
+      result.notImportedData.size should be(1)
+      result.createdData.size should be(0)
+
+      result.notImportedData.head.reason should equal("Invalid trafficSignType for main sign")
+    }
+  }
+
 
   test("validation for traffic light import fails if mandatory parameters are missing", Tag("db")) {
     when(trafficLightsCsvImporter.municipalityBorderClient.fetchAllMunicipalities()).thenReturn(Seq(MunicipalityBorders(99, List())))
@@ -485,9 +507,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val assetFields = Map("koordinaatti x" -> 52828, "koordinaatti y" -> 58285, "liikennevalo tyyppi" -> 4.2, "kaista" -> 54)
     val invalidCsv = csvToInputStream(createCsvForTrafficLights(assetFields))
     val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
-    val assets = trafficLightsCsvImporter.processing(invalidCsv, testUser)
+    runWithRollback {
+      val assets = trafficLightsCsvImporter.processing(invalidCsv, testUser)
 
-    assets.notImportedData.map(_.reason).head should be ("Invalid lane")
+      assets.notImportedData.map(_.reason).head should be("Invalid lane")
+    }
   }
 
   test("validation for traffic light import fails if lane number and lane type don't match", Tag("db")) {
@@ -495,9 +519,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val assetFields = Map("koordinaatti x" -> 52828, "koordinaatti y" -> 58285, "liikennevalo tyyppi" -> 4.2, "kaista" -> 12, "kaistan tyyppi" -> 1)
     val invalidCsv = csvToInputStream(createCsvForTrafficLights(assetFields))
     val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
-    val assets = trafficLightsCsvImporter.processing(invalidCsv, testUser)
+    runWithRollback {
+      val assets = trafficLightsCsvImporter.processing(invalidCsv, testUser)
 
-    assets.notImportedData.map(_.reason).head should be ("Invalid lane and lane type match")
+      assets.notImportedData.map(_.reason).head should be("Invalid lane and lane type match")
+    }
   }
 
 

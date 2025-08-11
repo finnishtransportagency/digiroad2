@@ -306,21 +306,20 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
     }
 
-    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
-
-    val (trafficSign, isSignOk) = optTrafficSignType match {
-      case Some(signType) =>
-        val sign = TrafficSignType.applyNewLawCode(signType)
-        val isSignOk = sign != TrafficSignType.Unknown
-
-        (sign, isSignOk)
-
-      case _ => (TrafficSignType.Unknown, false)
+    def validateMainSignType(signType: TrafficSignType) = {
+      signType match {
+        case _: AdditionalPanelsType | TrafficSignType.Unknown =>
+          false
+        case _ => true
+      }
     }
 
-    //Validate if we get a valida sign
-    if (!isSignOk)
-      return (List("Not a valid sign!"), Seq() )
+    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
+    val trafficSign = optTrafficSignType.map(TrafficSignType.applyNewLawCode).getOrElse(TrafficSignType.Unknown)
+    val isValidMainSign = validateMainSignType(trafficSign)
+
+    if (!isValidMainSign)
+      return (List("Invalid trafficSignType for main sign"), Seq() )
 
     /* start date validations */
     val temporaryDevices = Seq(4,5)
@@ -414,12 +413,14 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
           case (Some(lon), Some(lat)) =>
             val roadLinks = optTrafficSignType match {
               case Some(signType) if TrafficSignType.applyAdditionalGroup(TrafficSignTypeGroup.CycleAndWalkwaySigns).contains(signType) =>
-                roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong), forCarTraffic = false).filter(_.administrativeClass != State)
-              case _ => roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong)).filter(_.administrativeClass != State)
+                roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
+              case _ => roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong))
             }
 
             if (roadLinks.isEmpty) {
               (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+            } else if (assetHasEditingRestrictions(TrafficSigns.typeId, roadLinks)) {
+              (List("Asset type editing is restricted within municipality or admininistrative class."), Seq())
             } else {
               (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
             }

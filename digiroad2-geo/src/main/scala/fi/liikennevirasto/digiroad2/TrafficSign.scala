@@ -248,6 +248,7 @@ case object PedestrianCrossingSign extends RegulatorySignsType {
   override val TRvalue = 51 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(511)
   override val NewLawCode = "E1"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object ParkingLot extends RegulatorySignsType {
@@ -369,6 +370,7 @@ case object TramStop extends RegulatorySignsType {
   override val NewLawCode = "E7"
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(ValidMonFri, ValidSat, ValidMultiplePeriod)
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object TaxiStation extends RegulatorySignsType {
@@ -850,6 +852,7 @@ case object LevelCrossingWithoutGate extends GeneralWarningSignsType {
   override val NewLawCode = "A26"
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(HeightElectricLine)
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object LevelCrossingWithGates extends GeneralWarningSignsType {
@@ -859,6 +862,7 @@ case object LevelCrossingWithGates extends GeneralWarningSignsType {
   override val NewLawCode = "A27"
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(HeightElectricLine)
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object ApproachLevelCrossingThreeStrips extends GeneralWarningSignsType {
@@ -889,6 +893,7 @@ case object LevelCrossingWithOneTrack extends GeneralWarningSignsType {
   override val NewLawCode = "A29.1"
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(HeightElectricLine)
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object LevelCrossingWithManyTracks extends GeneralWarningSignsType {
@@ -898,6 +903,7 @@ case object LevelCrossingWithManyTracks extends GeneralWarningSignsType {
   override val NewLawCode = "A29.2"
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(HeightElectricLine)
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object FallingRocks extends GeneralWarningSignsType {
@@ -949,6 +955,7 @@ case object ClosedToAllVehicles extends ProhibitionsAndRestrictionsType {
   override val TRvalue = 31 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(311)
   override val NewLawCode = "C1"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object NoPowerDrivenVehicles extends ProhibitionsAndRestrictionsType {
@@ -1015,6 +1022,7 @@ case object NoMopeds extends ProhibitionsAndRestrictionsType {
   override val TRvalue = 310 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(321)
   override val NewLawCode = "C10"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object NoCyclists extends ProhibitionsAndRestrictionsType {
@@ -1022,6 +1030,7 @@ case object NoCyclists extends ProhibitionsAndRestrictionsType {
   override val TRvalue = 311 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = None // There is no legacy code
   override val NewLawCode = "C11"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object NoCyclesOrMopeds extends ProhibitionsAndRestrictionsType {
@@ -1029,6 +1038,7 @@ case object NoCyclesOrMopeds extends ProhibitionsAndRestrictionsType {
   override val TRvalue = 312 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(322)
   override val NewLawCode = "C12"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object NoPedestrians extends ProhibitionsAndRestrictionsType {
@@ -1057,6 +1067,7 @@ case object NoRidersOnHorseback extends ProhibitionsAndRestrictionsType {
   override val TRvalue = 316 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(325)
   override val NewLawCode = "C16"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object NoEntry extends ProhibitionsAndRestrictionsType {
@@ -1064,6 +1075,7 @@ case object NoEntry extends ProhibitionsAndRestrictionsType {
   override val TRvalue = 317 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(331)
   override val NewLawCode = "C17"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object NoLeftTurn extends ProhibitionsAndRestrictionsType {
@@ -1482,6 +1494,7 @@ case object CompulsoryTrackRidersHorseback extends MandatorySignsType {
   override val TRvalue = 49 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(427)
   override val NewLawCode = "D9"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign, ValidMonFri,	ValidSat,	ValidMultiplePeriod,
@@ -2106,6 +2119,7 @@ case object MopedRoute extends InformationSignsType {
   override val TRvalue = 65006 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(6816)
   override val NewLawCode = "F50.6"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object TractorRoute extends InformationSignsType {
@@ -2652,6 +2666,7 @@ case object SignAppliesBothDirectionsVertical extends AdditionalPanelsType {
   override val TRvalue = 8902 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(825)
   override val NewLawCode = "H9.2"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object SignAppliesArrowDirections extends AdditionalPanelsType {
@@ -2890,6 +2905,7 @@ case object TwoWayBikePath extends AdditionalPanelsType {
   override val TRvalue = 82301 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(863)
   override val NewLawCode = "H23.1"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object TwoWayBikePath2 extends AdditionalPanelsType {

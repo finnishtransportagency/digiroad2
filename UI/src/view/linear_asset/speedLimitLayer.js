@@ -12,6 +12,8 @@ window.SpeedLimitLayer = function(params) {
   var isActiveTrafficSigns = false;
   var extraEventListener = _.extend({running: false}, eventbus);
   var authorizationPolicy = new LinearAssetAuthorizationPolicy();
+  var editingRestrictions = new EditingRestrictions();
+  var typeId = 20;
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
@@ -158,7 +160,8 @@ window.SpeedLimitLayer = function(params) {
       if (!closestSpeedLimitLink) {
         return;
       }
-      if (authorizationPolicy.formEditModeAccess(closestSpeedLimitLink)) {
+      var nearestSpeedLimitAsset = closestSpeedLimitLink.feature.getProperties();
+      if (authorizationPolicy.formEditModeAccess(nearestSpeedLimitAsset)) {
         if (isWithinCutThreshold(closestSpeedLimitLink.distance)) {
           moveTo(closestSpeedLimitLink.point[0], closestSpeedLimitLink.point[1]);
         } else {
@@ -248,6 +251,16 @@ window.SpeedLimitLayer = function(params) {
     });
 
     activateSelectionStyle(speedLimits);
+
+    if (editingRestrictions.hasStateRestriction(selectedSpeedLimit.get(), typeId)) {
+      me.displayAssetCreationRestricted('Kohteiden lisääminen on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.');
+      selectedSpeedLimit.close();
+      return;
+    } else if(editingRestrictions.hasMunicipalityRestriction(selectedSpeedLimit.get(), typeId)) {
+      me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+      selectedSpeedLimit.close();
+      return;
+    }
 
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
 

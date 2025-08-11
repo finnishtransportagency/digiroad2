@@ -115,14 +115,14 @@ trait LinearAssetOperations {
     val roadLinks = roadLinkService.getRoadLinksByBoundsAndMunicipalities(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, showHistory = showSpeedLimitsHistory, roadLinkFilter = roadLinkFilter)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
-    LinearAssetPartitioner.enrichAndPartition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(assetsWithAttributes)
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
-    LinearAssetPartitioner.enrichAndPartition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(assetsWithAttributes)
   }
 
   private def addMunicipalityCodeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
@@ -141,12 +141,34 @@ trait LinearAssetOperations {
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("linkType" -> roadLink.linkType.value))
   }
 
+  private def addRoadNumberAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    val roadNumberLongOpt = roadLink.roadNumber.flatMap(str => scala.util.Try(str.toLong).toOption)
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNUMBER" -> roadNumberLongOpt))
+  }
+
+  private def addRoadPartNumberAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    val roadPartNumberLongOpt = roadLink.roadPartNumber.flatMap(str => scala.util.Try(str.toLong).toOption)
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADPARTNUMBER" -> roadPartNumberLongOpt))
+  }
+
+  private def addRoadNameFiAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNAME_FI" -> roadLink.roadNameIdentifier))
+  }
+
+  private def addRoadNameSeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("ROADNAME_SE" -> roadLink.roadNameIdentifier))
+  }
+
   private def enrichLinearAssetAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val linearAssetAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
       addMunicipalityCodeAttribute,
       addConstructionTypeAttribute,
       addFunctionalClassAttribute,
-      addLinkTypeAttribute
+      addLinkTypeAttribute,
+      addRoadNumberAttribute,
+      addRoadPartNumberAttribute,
+      addRoadNameFiAttribute,
+      addRoadNameSeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
@@ -558,7 +580,7 @@ trait LinearAssetOperations {
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit,adjust:Boolean = true): Seq[Long] = {
    val ids = withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(linearAsset.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
@@ -597,7 +619,7 @@ trait LinearAssetOperations {
   def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit,adjust:Boolean = true): Seq[Long] = {
    val ids = withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(existing.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       dao.updateExpiration(id)

@@ -36,15 +36,11 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val prohibitionAssets = Seq(
       linearAsset(1, linkId1,
         Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 2, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
-        Seq(Point(0, 0), Point(10, 0)), 190),
+        Seq(Point(0, 0), Point(10, 0)), 190, Map("ROADNUMBER" -> Some(1L))),
       linearAsset(2, linkId2,
         Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
-        Seq(Point(10, 0), Point(20, 0)), 190))
-
-    val links = Map(
-      linkId1 -> roadLinkForAsset(Left(1)),
-      linkId2 -> roadLinkForAsset(Left(1)))
-    val groupedLinks = LinearAssetPartitioner.enrichAndPartition(prohibitionAssets, links)
+        Seq(Point(10, 0), Point(20, 0)), 190, Map("ROADNUMBER" -> Some(1L))))
+    val groupedLinks = LinearAssetPartitioner.partition(prohibitionAssets)
     groupedLinks should have size 2
     groupedLinks(0) should have size 1
     groupedLinks(1) should have size 1
@@ -52,12 +48,9 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
 
   test("groups assets with equal prohibition validity periods") {
     val prohibitionAssets = Seq(
-      linearAsset(1, linkId1, Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))), Seq(Point(1.0, 0.0), Point(2.0, 0.0)),190, Map(), AdministrativeClass.apply("State")),
-      linearAsset(2, linkId2, Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))), Seq(Point(2.0, 0.0), Point(3.0, 0.0)),190, Map(), AdministrativeClass.apply("State")))
-    val links = Map(
-      linkId1 -> roadLinkForAsset(Left(1)),
-      linkId2 -> roadLinkForAsset(Left(1)))
-    val groupedLinks = LinearAssetPartitioner.enrichAndPartition(prohibitionAssets, links)
+      linearAsset(1, linkId1, Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))), Seq(Point(1.0, 0.0), Point(2.0, 0.0)),190, Map("ROADNUMBER" -> Some(1L)), AdministrativeClass.apply("State")),
+      linearAsset(2, linkId2, Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))), Seq(Point(2.0, 0.0), Point(3.0, 0.0)),190, Map("ROADNUMBER" -> Some(1L)), AdministrativeClass.apply("State")))
+    val groupedLinks = LinearAssetPartitioner.partition(prohibitionAssets)
     groupedLinks should have size 1
     groupedLinks(0) should have size 2
   }

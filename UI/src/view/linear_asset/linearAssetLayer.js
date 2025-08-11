@@ -9,6 +9,7 @@ root.LinearAssetLayer  = function(params) {
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
       layerName = params.layerName,
+      typeId = params.typeId,
       assetLabel = params.assetLabel,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       massLimitation = params.massLimitation === 'Muut massarajoitukset',
@@ -23,6 +24,7 @@ root.LinearAssetLayer  = function(params) {
   this.minZoomForContent = isExperimental && minZoomForContent ? minZoomForContent : zoomlevels.minZoomForAssets;
   var isComplementaryChecked = false;
   var extraEventListener = _.extend({running: false}, eventbus);
+  var editingRestrictions = new EditingRestrictions();
 
   this.singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
@@ -260,6 +262,16 @@ root.LinearAssetLayer  = function(params) {
         return;
 
       selectedLinearAsset.openMultiple(linearAssets);
+
+      if (editingRestrictions.hasStateRestriction(selectedLinearAsset.get(), typeId)) {
+        me.displayAssetCreationRestricted('Kohteiden lisääminen on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.');
+        selectedLinearAsset.close();
+        return;
+      } else if(editingRestrictions.hasMunicipalityRestriction(selectedLinearAsset.get(), typeId)) {
+        me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+        selectedLinearAsset.close();
+        return;
+      }
 
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)

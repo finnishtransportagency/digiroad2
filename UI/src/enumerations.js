@@ -126,7 +126,10 @@
         groupName: 'Lisakilvet', groupIndicative: 'H'}
     };
 
-    this.trafficSignsAllowedOnPedestrianCyclingLinks = [9, 14, 30, 31, 32, 61, 70, 71, 72, 85, 89, 98, 99, 111, 112, 118, 119, 163, 164, 187, 188, 189, 190, 235, 236, 280, 281, 282, 283, 284, 285, 298, 299, 300, 301, 302, 303, 362, 398];
+    this.trafficSignsAllowedOnPedestrianCyclingLinks = [7, 9, 13, 14, 22, 23, 26, 27, 30, 31, 32, 44, 61, 68, 70, 71, 72, 85, 89, 98, 99, 111, 112, 118,
+      119, 130, 131, 132, 133, 136, 163, 164, 187, 188, 189, 190, 215, 235, 236, 280, 281, 282, 283, 284, 285, 298, 299, 300, 301, 302, 303, 362, 395, 398];
+
+    this.additionalPanelsAllowedOnPedestrianCyclingLinks = [61, 62, 362, 140, 141, 361];
 
     this.trafficSignValuesReadOnly = {
       speedLimit: { values : [1, 2, 3, 4, 5, 6]},
@@ -174,6 +177,15 @@
       {value: 3, title: 'La'},
       {value: 99, title: 'Tuntematon'}
     ];
+
+    this.massTransitStopTypes = {
+      Tram:              { value: 1,  text: 'Raitiovaunu' },
+      Bus:               { value: 2,  text: 'Bussi' },
+      Virtual:           { value: 5,  text: 'Virtuaalipysäkki' },
+      Terminal:          { value: 6,  text: 'Terminaali' },
+      ServicePoint:      { value: 7,  text: 'Palvelupiste' },
+      Unknown:           { value: 99, text: 'Tuntematon' }
+    };
 
   };
 })(this);

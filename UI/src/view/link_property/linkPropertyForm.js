@@ -1,7 +1,9 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty, feedbackCollection) {
     var layer;
+    var typeId = 460;
     var authorizationPolicy = new LinkPropertyAuthorizationPolicy();
+    var editingRestrictions = new EditingRestrictions();
     var enumerations = new Enumerations();
     new FeedbackDataTool(feedbackCollection, 'linkProperty', authorizationPolicy);
 
@@ -163,9 +165,15 @@
 
       var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
+      var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
       var message = '';
 
-      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinkProperty)) {
+      if (editingRestrictions.hasStateRestriction(selectedLinkProperty.get(), typeId)) {
+        message = stateRoadEditingRestricted;
+      } else if(editingRestrictions.hasMunicipalityRestriction(selectedLinkProperty.get(), typeId)) {
+        message = municipalityRoadEditingRestricted;
+      } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinkProperty)) {
         message = limitedRights;
       } else if (!authorizationPolicy.validateMultiple(selectedLinkProperty.get()))
         message = noRights;
@@ -444,17 +452,17 @@
             $(".private-road").css("display","block");
           } else $(".private-road").css("display","none");
         });
-        rootElement.find('.access-right-id').keyup(function(event) {
+        rootElement.find('.access-right-id').on('input', function(event) {
           selectedLinkProperty.setAccessRightId($(event.currentTarget).val());
         });
-        rootElement.find('.private-road-association').keyup(function(event) {
+        rootElement.find('.private-road-association').on('input', function(event) {
           selectedLinkProperty.setPrivateRoadAssociation($(event.currentTarget).val());
         });
         rootElement.find('.additional-info').change(function(event) {
           selectedLinkProperty.setAdditionalInfo($(event.currentTarget).find(':selected').attr('value'));
         });
 
-        toggleMode(applicationModel.isReadOnly() || !authorizationPolicy.validateMultiple(selectedLinkProperty.get()));
+        toggleMode(applicationModel.isReadOnly() || editingRestrictions.hasRestrictions(selectedLinkProperty.get(), typeId) || !authorizationPolicy.validateMultiple(selectedLinkProperty.get()));
         controlAdministrativeClasses(linkProperty.administrativeClass);
       });
 
@@ -474,7 +482,7 @@
       });
 
       eventbus.on('application:readOnly', function(readOnly){
-        toggleMode(!authorizationPolicy.validateMultiple(selectedLinkProperty.get()) || readOnly);
+        toggleMode(!authorizationPolicy.validateMultiple(selectedLinkProperty.get()) || editingRestrictions.hasRestrictions(selectedLinkProperty.get(), typeId) || readOnly);
         controlAdministrativeClassesOnToggle(selectedLinkProperty);
       });
 
