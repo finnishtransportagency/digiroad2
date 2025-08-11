@@ -246,9 +246,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def getRoadLinksWithExpiredDatesAfterLastSamuutus(lastSuccess: DateTime): Seq[RoadLinkWithExpiredDate]= {
-    LogUtils.time(logger, "TEST LOG fetchExpiredRoadLinks", startLogging = true) {
-      roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccess)
+  def getRoadLinksWithExpiredDatesAfterLastSamuutus(lastSuccess: DateTime, municipalityId: Int): Seq[RoadLinkWithExpiredDate] = {
+    LogUtils.time(logger, s"Fetch expired road links for municipality $municipalityId after the last successful samuutus on $lastSuccess") {
+      roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccess, municipalityId)
     }
   }
 
