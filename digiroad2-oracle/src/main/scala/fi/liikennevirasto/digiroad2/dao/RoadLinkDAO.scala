@@ -611,10 +611,9 @@ class RoadLinkDAO {
 
   protected def getExpiredRoadLinksAfterLastSamuutus(lastSuccess: DateTime, municipality: Int): Seq[RoadLinkWithExpiredDate] = {
     val timestamp = new Timestamp(lastSuccess.getMillis)
+    val constructionTypeFilter = ConstructionType.ExpiringSoon.value
 
-    val startTime = System.currentTimeMillis()
-
-    val result = sql"""
+    sql"""
     select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
            roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
            verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
@@ -622,17 +621,10 @@ class RoadLinkDAO {
     from kgv_roadlink
     where expired_date is not null
     and expired_date > $timestamp
-    and constructiontype != 5
+    and constructiontype != $constructionTypeFilter
     and mtkclass not in (12151, 12318, 12312)
     and municipalitycode = $municipality
   """.as[RoadLinkWithExpiredDate].list
-
-    val endTime = System.currentTimeMillis()
-    val duration = endTime - startTime
-
-    logger.info(s"Duration of roadLink query: $duration ms")
-
-    result
   }
 
   protected def getExpiredLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
