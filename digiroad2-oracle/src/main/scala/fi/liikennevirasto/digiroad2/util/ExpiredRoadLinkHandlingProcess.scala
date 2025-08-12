@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Lanes}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLinkWithMeasures, PostGISLinearAssetDao}
@@ -22,6 +23,7 @@ object ExpiredRoadLinkHandlingProcess {
   lazy val laneDao: LaneDao = new LaneDao
   lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao
   lazy val assetTypeIds: Set[Int] = AssetTypeInfo.values.map(_.typeId)
+  lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val logger = LoggerFactory.getLogger(getClass)
@@ -83,31 +85,48 @@ object ExpiredRoadLinkHandlingProcess {
     }
   }
 
-  def handleExpiredRoadLinks(cleanRoadLinkTable:Boolean = true): Unit = {
-    val expiredRoadLinksWithExpireDates = roadLinkService.getAllExpiredRoadLinksWithExpiredDates()
-    logger.info(s"Expired road links count: ${expiredRoadLinksWithExpireDates.size}")
-    val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
-    val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
-    val manoeuvresOnExpiredLinks = getAllExistingManoeuvresOnExpiredRoadLinks(expiredRoadLinksWithExpireDates)
-    val emptyExpiredLinks = expiredRoadLinks.filter(rl => {
-      val linkIdsWithExistingAssets = assetsOnExpiredLinks.map(_.linkId)
-      val linkIdsWithExistingManoeuvres = manoeuvresOnExpiredLinks.flatMap(manoeuvre => Seq(manoeuvre.linkId,manoeuvre.destLinkId)).toSeq
-      !linkIdsWithExistingAssets.contains(rl.linkId) && !linkIdsWithExistingManoeuvres.contains(rl.linkId)
-    }).map(_.linkId).toSet
+  def handleExpiredRoadLinks(cleanRoadLinkTable: Boolean = true): Unit = {
+    val lastSuccess = Queries.getEarliestDateOfAnySuccessfulSamuutus()
+    logger.info(s"Last Successful samuutus: $lastSuccess")
 
-    logger.info(s"Empty expired links count: ${emptyExpiredLinks.size}")
-    logger.info(s"Assets on expired links count: ${assetsOnExpiredLinks.size}")
-    logger.info(s"Manoeuvres on expired links count: ${manoeuvresOnExpiredLinks.size}")
-    
-    if (cleanRoadLinkTable && emptyExpiredLinks.nonEmpty) {
-      LogUtils.time(logger, "Delete and expire road links and properties") {
-        roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
-      }
-    }
-    
-    if (assetsOnExpiredLinks.nonEmpty) {
-      LogUtils.time(logger, s"Insert ${assetsOnExpiredLinks.size} assets to worklist") {
-        assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
+    val municipalities = municipalityDao.getMunicipalities
+
+    municipalities.foreach { municipality =>
+      val municipalityId = municipality
+      logger.info(s"Processing municipality $municipalityId")
+
+      val expiredRoadLinksWithExpireDates = roadLinkService.getRoadLinksWithExpiredDatesAfterLastSamuutus(lastSuccess, municipalityId)
+      logger.info(s"Municipality $municipalityId expired road links count: ${expiredRoadLinksWithExpireDates.size}")
+
+      if (expiredRoadLinksWithExpireDates.nonEmpty) {
+        val expiredRoadLinks = expiredRoadLinksWithExpireDates.map(_.roadLink)
+
+        val assetsOnExpiredLinks = getAllExistingAssetsOnExpiredLinks(expiredRoadLinksWithExpireDates)
+        val manoeuvresOnExpiredLinks = getAllExistingManoeuvresOnExpiredRoadLinks(expiredRoadLinksWithExpireDates)
+
+        val emptyExpiredLinks = expiredRoadLinks.filter(rl => {
+          val linkIdsWithExistingAssets = assetsOnExpiredLinks.map(_.linkId)
+          val linkIdsWithExistingManoeuvres = manoeuvresOnExpiredLinks.flatMap(manoeuvre => Seq(manoeuvre.linkId, manoeuvre.destLinkId)).toSeq
+          !linkIdsWithExistingAssets.contains(rl.linkId) && !linkIdsWithExistingManoeuvres.contains(rl.linkId)
+        }).map(_.linkId).toSet
+
+        logger.info(s"Municipality $municipalityId - Empty expired links: ${emptyExpiredLinks.size}")
+        logger.info(s"Municipality $municipalityId - Assets on expired links: ${assetsOnExpiredLinks.size}")
+        logger.info(s"Municipality $municipalityId - Manoeuvres on expired links: ${manoeuvresOnExpiredLinks.size}")
+
+        if (cleanRoadLinkTable && emptyExpiredLinks.nonEmpty) {
+          LogUtils.time(logger, s"Delete and expire road links and properties for municipality $municipalityId") {
+            roadLinkService.deleteRoadLinksAndPropertiesByLinkIds(emptyExpiredLinks)
+          }
+        }
+
+        if (assetsOnExpiredLinks.nonEmpty) {
+          LogUtils.time(logger, s"Insert ${assetsOnExpiredLinks.size} assets to worklist for municipality $municipalityId") {
+            assetsOnExpiredLinksService.insertAssets(assetsOnExpiredLinks)
+          }
+        }
+      } else {
+        logger.info(s"No expired road links for municipality $municipalityId")
       }
     }
   }

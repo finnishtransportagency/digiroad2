@@ -459,6 +459,19 @@ object Queries {
     sqlu"""UPDATE samuutus_success SET last_succesfull_samuutus = to_timestamp($latestSuccess, 'YYYY-MM-DD"T"HH24:MI:SS.FF') WHERE asset_type_id = $typeid""".execute
   }
 
+  /**
+   * Retrieves the earliest date of all successful samuutus, regardless of the asset type.
+   * This is to ensure, that all unhandled expired roadlinks are included in the FindAssetsOnExpiredRoadLinks batch,
+   * even in cases where all asset types do not have the same last successful samuutus date.
+   * Exception on asset_type_id 1 which is used to keep track of last run of batch RoadLinkReplacementFinder
+   *
+   * @return The earliest date of successful samuutus on any asset type
+   */
+  def getEarliestDateOfAnySuccessfulSamuutus(): DateTime = {
+    sql"""SELECT MIN(last_succesfull_samuutus) FROM samuutus_success WHERE asset_type_id != 1""".as[DateTime].list.head
+  }
+
+
   // Used for performance reasons, remember to add back constraints after operation using method addLaneFKConstraints()
   def dropLaneFKConstraints(): Unit = {
     sqlu"ALTER TABLE LANE_ATTRIBUTE DROP CONSTRAINT fk_lane_attribute_lane".execute

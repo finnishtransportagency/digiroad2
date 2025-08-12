@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -50,10 +50,11 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
 
   test("Delete expired links with no assets"){
     runWithRollback{
-      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+      val lastSuccessfulSamuutus = Queries.getEarliestDateOfAnySuccessfulSamuutus()
+      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccessfulSamuutus, 49)
       expiredLinks.isEmpty should equal(false)
       ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks()
-      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
+      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccessfulSamuutus, 49)
       expiredLinksAfter.isEmpty should equal(true)
     }
   }
@@ -61,16 +62,17 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
   test("Delete expired links with floating point assets"){
     runWithRollback {
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(expiredLinkId)).thenReturn(Some(testRoadLinkFetched))
+      val lastSuccessfulSamuutus = Queries.getEarliestDateOfAnySuccessfulSamuutus()
 
       val createdObstacleId = obstacleService.create(incomingObstacle, testUser, testRoadLink, newTransaction = false)
       val createdObstacle = Obstacle(createdObstacleId, expiredLinkId, 2.0, 0.0, 0.0, floating = true, 0L, 49, Seq(),
         None, None, Some(testUser), Some(DateTime.now()), expired = false, LinkGeomSource.NormalLinkInterface)
       obstacleService.updateFloatingAsset(createdObstacle)
-      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccessfulSamuutus, 49)
       expiredLinks.isEmpty should equal(false)
 
       ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks()
-      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
+      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccessfulSamuutus, 49)
       expiredLinksAfter.isEmpty should equal(true)
 
       val assetsOnWorkList = workListService.getAllWorkListAssets(false)
@@ -82,13 +84,14 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
     runWithRollback {
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(expiredLinkId)).thenReturn(Some(testRoadLinkFetched))
       when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(testRoadLinkFetched))).thenReturn(Seq(testRoadLink))
+      val lastSuccessfulSamuutus = Queries.getEarliestDateOfAnySuccessfulSamuutus()
 
       val createdSpeedLimitId = speedLimitService.create(Seq(NewLimit(expiredLinkId, 0.0, 131.683)), SpeedLimitValue(30), "test", (_, _) => Unit).head
-      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccessfulSamuutus, 49)
       expiredLinks.isEmpty should equal(false)
 
       ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks()
-      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
+      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccessfulSamuutus, 49)
       expiredLinksAfter.size should equal(1)
 
       val assetsOnWorkList = workListService.getAllWorkListAssets(false)
@@ -103,13 +106,15 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
     runWithRollback {
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(expiredLinkId)).thenReturn(Some(testRoadLinkFetched))
       when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(testRoadLinkFetched))).thenReturn(Seq(testRoadLink))
-      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinks()
+      val lastSuccessfulSamuutus = Queries.getEarliestDateOfAnySuccessfulSamuutus()
+
+      val expiredLinks = roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccessfulSamuutus, 49)
       expiredLinks.isEmpty should equal(false)
-      val manoeuvreLinkIds = Seq("1d26dcec-ec5d-4c26-ac93-cfefaab26091:1", "5dc2e739-794e-4ba9-b635-c676d9b60e93:1")
+      val manoeuvreLinkIds = Seq("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1", "78e1984d-7dbc-4a7c-bd91-cb68f82ffccb:1")
       manoeuvreService.createManoeuvre("test", NewManoeuvre(Set.empty[ValidityPeriod], Seq.empty[Int], None, manoeuvreLinkIds, None, false))
 
       ExpiredRoadLinkHandlingProcess.handleExpiredRoadLinks()
-      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinks()
+      val expiredLinksAfter = roadLinkDAO.fetchExpiredRoadLinksAfterLastSamuutus(lastSuccessfulSamuutus, 49)
       expiredLinksAfter.size should equal(2)
       expiredLinksAfter.map(_.roadLink.linkId).toSet should be(manoeuvreLinkIds.toSet)
 
