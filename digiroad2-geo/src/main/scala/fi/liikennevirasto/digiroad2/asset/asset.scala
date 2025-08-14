@@ -108,6 +108,38 @@ case object WalkingAndCyclingPath extends FunctionalClass { def value = 8 }
 case object FunctionalClass9 extends FunctionalClass { def value = 9 }
 case object UnknownFunctionalClass extends FunctionalClass { def value = 99 }
 
+sealed trait MTKClass {
+  def value: Int
+}
+
+object MTKClass {
+  case object CarRoad_Ia_MTKClass extends MTKClass { def value = 12111 }
+  case object CarRoad_Ib_MTKClass extends MTKClass { def value = 12112 }
+  case object CarRoad_IIa_MTKClass extends MTKClass { def value = 12121 }
+  case object CarRoad_IIb_MTKClass extends MTKClass { def value = 12122 }
+  case object CarRoad_IIIa_MTKClass extends MTKClass { def value = 12131 }
+  case object CarRoad_IIIb_MTKClass extends MTKClass { def value = 12132 }
+  case object DriveWay_MTKClass    extends MTKClass { def value = 12141 }
+  case object CableFerry_MTKClass  extends MTKClass { def value = 12151 }
+  case object WinterRoads_MTKClass extends MTKClass { def value = 12312 }
+  case object HardShoulder_MTKClass extends MTKClass { def value = 12318 }
+  case object Unknown_MTKClass     extends MTKClass { def value = 0 }
+
+  val values: Set[MTKClass] = Set(
+    CarRoad_Ia_MTKClass,
+    CarRoad_Ib_MTKClass,
+    CarRoad_IIa_MTKClass,
+    CarRoad_IIb_MTKClass,
+    CarRoad_IIIa_MTKClass,
+    CarRoad_IIIb_MTKClass,
+    DriveWay_MTKClass,
+    CableFerry_MTKClass,
+    WinterRoads_MTKClass,
+    HardShoulder_MTKClass,
+    Unknown_MTKClass
+  )
+}
+
 sealed trait AdministrativeClass {
   def value: Int
 }
