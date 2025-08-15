@@ -378,6 +378,11 @@ class RoadLinkDAO {
     val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, geometryColumn)
     val municipalitiesFilter = if (municipalities.nonEmpty) s"AND municipalitycode IN (${municipalities.mkString(",")})" else ""
     val constructionFilter = Seq(ConstructionType.ExpiringSoon.value, ConstructionType.UnknownConstructionType.value).mkString(", ")
+    val MTKClassFilter = s"(${Set(
+      MTKClass.HardShoulder_MTKClass.value,
+      MTKClass.WinterRoads_MTKClass.value
+    ).mkString(", ")})"
+
     val query =
       sql"""
     WITH cte_kgv_roadlink AS (
@@ -393,7 +398,7 @@ class RoadLinkDAO {
         #$municipalitiesFilter
         AND kgv.expired_date IS NULL
         AND kgv.constructiontype NOT IN (#$constructionFilter)
-        AND kgv.mtkclass NOT IN (12318, 12312) -- HardShoulder and WinterRoad
+        AND kgv.mtkclass NOT IN #$MTKClassFilter -- HardShoulder and WinterRoad
     ),
 
     cte_combined AS (
@@ -612,11 +617,11 @@ class RoadLinkDAO {
   protected def getExpiredRoadLinksAfterLastSamuutus(lastSuccess: DateTime, municipality: Int): Seq[RoadLinkWithExpiredDate] = {
     val timestamp = new Timestamp(lastSuccess.getMillis)
     val constructionTypeFilter = ConstructionType.ExpiringSoon.value
-    val MTKClassFilter = s"(${Set(
+    val MTKClassFilter = Set(
       MTKClass.CableFerry_MTKClass.value,
       MTKClass.HardShoulder_MTKClass.value,
       MTKClass.WinterRoads_MTKClass.value
-    ).mkString(", ")})"
+    ).mkString(", ")
 
     sql"""
     select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
@@ -627,7 +632,7 @@ class RoadLinkDAO {
     where expired_date is not null
     and expired_date > $timestamp
     and constructiontype != $constructionTypeFilter
-    and mtkclass not in #$MTKClassFilter
+    and mtkclass not in (#$MTKClassFilter)
     and municipalitycode = $municipality
   """.as[RoadLinkWithExpiredDate].list
   }
