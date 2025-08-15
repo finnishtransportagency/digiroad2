@@ -627,7 +627,7 @@ class RoadLinkDAO {
     where expired_date is not null
     and expired_date > $timestamp
     and constructiontype != $constructionTypeFilter
-    and mtkclass not in $MTKClassFilter
+    and mtkclass not in #$MTKClassFilter
     and municipalitycode = $municipality
   """.as[RoadLinkWithExpiredDate].list
   }
