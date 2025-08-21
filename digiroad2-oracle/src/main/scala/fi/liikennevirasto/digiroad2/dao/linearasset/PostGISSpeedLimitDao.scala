@@ -130,6 +130,9 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       FunctionalClass5.value,
       AnotherPrivateRoad.value,
       FunctionalClass9.value).mkString(", ")
+    val MTKClassFilter = Seq(
+      MTKClass.HardShoulder_MTKClass.value,
+      MTKClass.WinterRoads_MTKClass.value).mkString(", ")
 
     // Add queries for complementary roadlinks
     val complementaryLinksQuery = if (withComplementary) {
@@ -155,7 +158,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           LEFT JOIN traffic_direction td ON qgis.linkid = td.link_id
           WHERE $bboxFilter
             AND qgis.lifecyclestatus NOT IN ($constructionFilter)
-            AND qgis.roadclass NOT IN (12318, 12312)
+            AND qgis.roadclass NOT IN ($MTKClassFilter)
             AND lt.link_type NOT IN ($linkTypeFilter)
             AND fc.functional_class IN ($functionalClassFilter)
         )
@@ -264,7 +267,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           WHERE #${bboxFilter}
             AND kgv.expired_date IS NULL
             AND kgv.constructiontype NOT IN (#${constructionFilter})
-            AND kgv.mtkclass NOT IN (12318, 12312)
+            AND kgv.mtkclass NOT IN (#${MTKClassFilter})
             AND lt.link_type NOT IN (#${linkTypeFilter})
             AND fc.functional_class IN (#${functionalClassFilter})
         ) #${complementaryLinksQuery}
