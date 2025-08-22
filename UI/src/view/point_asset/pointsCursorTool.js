@@ -44,6 +44,15 @@
       settings.excludeStateRoadLinks = false;
     };
 
+
+    var excludeMunicipalityRoadLinks = function () {
+      settings.excludeMunicipalityRoadLinks = true;
+    };
+
+    var includeMunicipalityRoadLinks = function () {
+      settings.excludeMunicipalityRoadLinks = false;
+    };
+
     var updateByPosition = function (mousePoint) {
       var roadLinks;
       if (settings.walkingCycling === true) {
@@ -54,8 +63,12 @@
 
       var filteredRoadLinks;
       if( settings.excludeStateRoadLinks === true) {
-        filteredRoadLinks = _.filter(roadLinks, function(link) {
+        filteredRoadLinks = _.filter(roadLinks, function (link) {
           return link.administrativeClass !== "State";
+        });
+      } else if (settings.excludeMunicipalityRoadLinks === true) {
+        filteredRoadLinks = _.filter(roadLinks, function(link) {
+          return link.administrativeClass !== "Municipality";
         });
       } else {
         filteredRoadLinks = roadLinks;
@@ -76,7 +89,9 @@
       deactivate: deactivate,
       toggleWalkingCycling: toggleWalkingCycling,
       excludeStateRoadLinks: excludeStateRoadLinks,
-      includeStateRoadLinks: includeStateRoadLinks
+      includeStateRoadLinks: includeStateRoadLinks,
+      excludeMunicipalityRoadLinks: excludeMunicipalityRoadLinks,
+      includeMunicipalityRoadLinks: includeMunicipalityRoadLinks
     };
   };
 })(this);

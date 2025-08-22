@@ -829,7 +829,7 @@
             return field.hasValue() && (fieldPropertyType === "integer" || fieldPropertyType === "single_choice" && field.getValue() !== '999');
           });
         },
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isVerifiable: false,
         showValidationErrorLabel: false,
         form: new DynamicAssetForm({
@@ -863,7 +863,7 @@
           disabled: 'Ei tietyötä',
           additionalInfo: 'Tuleva/mennyt tietyö'
         },
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isVerifiable: false,
         showValidationErrorLabel: false,
         style: new RoadWorkStyle(),
@@ -902,7 +902,7 @@
           enabled: 'Pysäköintikielto',
           disabled: 'Ei pysäköintikieltoa'
         },
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isVerifiable: false,
         showValidationErrorLabel: false,
         style: new ParkingProhibitionStyle(),

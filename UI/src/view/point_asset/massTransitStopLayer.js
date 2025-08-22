@@ -181,7 +181,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     var translateSelectedAsset = function(event) {
       var roadLinks = getCorrectRoadLinks();
-      var nearestLine = geometrycalculator.findNearestLine(roadLinks, event.coordinate[0], event.coordinate[1]);
+      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadLinks, selectedControl), event.coordinate[0], event.coordinate[1]);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: event.coordinate[0], y: event.coordinate[1]});
 
@@ -191,7 +191,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     var translateEndedAsset = function(event){
       var roadLinks = getCorrectRoadLinks();
-      var nearestLine = geometrycalculator.findNearestLine(roadLinks, event.coordinate[0], event.coordinate[1]);
+      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadLinks, selectedControl), event.coordinate[0], event.coordinate[1]);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: event.coordinate[0], y: event.coordinate[1]});
 
@@ -220,7 +220,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       return massTransitStopLayerStyles.default.getStyle(feature, {zoomLevel: zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map))});
     },
     walkingCycling : false,
-    excludeStateRoadLinks: false
+    excludeStateRoadLinks: false,
+    excludeMunicipalityRoadLinks: false
   });
 
   roadLayer.setLayerSpecificStyleProvider('massTransitStop', function() {
@@ -615,7 +616,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       return null;
     }), null);
 
-    if(!authorizationPolicy.formEditModeAccess() && !applicationModel.isReadOnly() && !editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+    if(!authorizationPolicy.formEditModeAccess() && !applicationModel.isReadOnly() && !editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId) &&
+        (!authorizationPolicy.isElyMaintainer() || selectedMassTransitStopModel.getAdministrativeClass !== 'Municipality' || selectedMassTransitStopModel.isOnlyVirtualStop())) {
       dragControl.activate();
     } else {
       dragControl.deactivate();
@@ -781,12 +783,32 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       if ( selectedControl === 'Add') {
         pointTool.activate();
         pointTool.includeStateRoadLinks();
+        pointTool.includeMunicipalityRoadLinks();
       }
 
       if ( selectedControl === 'AddTerminal') {
         pointTool.activate();
-        if (authorizationPolicy.isMunicipalityMaintainer()) pointTool.excludeStateRoadLinks();
-        else pointTool.includeStateRoadLinks();
+        if (authorizationPolicy.isMunicipalityMaintainer()) {
+          pointTool.excludeStateRoadLinks();
+          pointTool.includeMunicipalityRoadLinks();
+        } else if (authorizationPolicy.isElyMaintainer()) {
+          pointTool.includeStateRoadLinks();
+          pointTool.excludeMunicipalityRoadLinks();
+        } else {
+          pointTool.includeStateRoadLinks();
+          pointTool.includeMunicipalityRoadLinks();
+        }
+      }
+
+      if ( selectedControl === 'AddPointAsset') {
+        pointTool.activate();
+        if (authorizationPolicy.isElyMaintainer()) {
+          pointTool.includeStateRoadLinks();
+          pointTool.excludeMunicipalityRoadLinks();
+        } else {
+          pointTool.includeStateRoadLinks();
+          pointTool.includeMunicipalityRoadLinks();
+        }
       }
     }
   };
@@ -851,12 +873,13 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       if (roadLink) {
         var administrativeClass = roadLink.getData().administrativeClass;
         var isStateAdminClass = administrativeClass == enumerations.administrativeClasses.State.value || administrativeClass === enumerations.administrativeClasses.State.stringValue;
+        var isMunicipalityAdminClass = administrativeClass == enumerations.administrativeClasses.Municipality.value || administrativeClass === enumerations.administrativeClasses.Municipality.stringValue;
 
         if (selectedControl === 'AddTerminal') {
           stopType = [enumerations.massTransitStopTypes.Terminal.value];
         } else if (selectedControl === 'AddPointAsset') {
           stopType = [enumerations.massTransitStopTypes.ServicePoint.value];
-        } else if (selectedControl === 'Add' && isStateAdminClass && authorizationPolicy.isMunicipalityMaintainer()) {
+        } else if (selectedControl === 'Add' && ((isStateAdminClass && authorizationPolicy.isMunicipalityMaintainer()) || (isMunicipalityAdminClass && authorizationPolicy.isElyMaintainer()))) {
           stopType = [enumerations.massTransitStopTypes.Virtual.value];
         }
 
@@ -918,7 +941,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   function toggleMode(readOnly) {
     if(applicationModel.isReadOnly() || readOnly){
       dragControl.deactivate();
-    } else if(selectedMassTransitStopModel.exists() && !authorizationPolicy.formEditModeAccess() && !editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId)) {
+    } else if(selectedMassTransitStopModel.exists() && !authorizationPolicy.formEditModeAccess() && !editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId) &&
+        (!authorizationPolicy.isElyMaintainer() || selectedMassTransitStopModel.getAdministrativeClass() !== 'Municipality' || selectedMassTransitStopModel.isOnlyVirtualStop())) {
       dragControl.activate();
     }
   }
@@ -1084,12 +1108,16 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   function excludeRoadByAdminClass(roadCollection, selectedControl) {
     var allowStateRoadLinksForMunicipality;
+    var allowMunicipalityRoadLinks;
     if (selectedMassTransitStopModel.isAddTerminalTool(selectedControl) || selectedMassTransitStopModel.isAddServicePointTool(selectedControl)) {
       allowStateRoadLinksForMunicipality = false;
-    } else allowStateRoadLinksForMunicipality = true;
-
+      allowMunicipalityRoadLinks = false;
+    } else {
+      allowStateRoadLinksForMunicipality = true;
+      allowMunicipalityRoadLinks = true;
+    }
     return _.filter(roadCollection, function (road) {
-      return authorizationPolicy.filterRoadLinks(road, allowStateRoadLinksForMunicipality);
+      return authorizationPolicy.filterRoadLinks(road, allowStateRoadLinksForMunicipality, allowMunicipalityRoadLinks);
     });
   }
 

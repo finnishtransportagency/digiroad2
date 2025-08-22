@@ -10,14 +10,19 @@
       return (me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
     };
 
-    this.filterRoadLinks = function(roadLink, allowStateRoadLinksForMunicipality){
+    this.filterRoadLinks = function(roadLink, allowStateRoadLinksForMunicipality, allowMunicipalityRoadLinks){
       var isMunicipalityAndHaveRights;
       if (allowStateRoadLinksForMunicipality) {
         isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode);
       } else {
         isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && roadLink.administrativeClass !== 'State' && me.hasRightsInMunicipality(roadLink.municipalityCode);
       }
-      var isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode);
+      var isElyAndHaveRights;
+      if (allowMunicipalityRoadLinks) {
+        isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode) && (roadLink.administrativeClass !== 'Municipality' || selectedMassTransitStopModel.isOnlyVirtualStop());
+      } else {
+        isElyAndHaveRights = me.isElyMaintainer() && roadLink.administrativeClass !== 'Municipality' && me.hasRightsInMunicipality(roadLink.municipalityCode);
+      }
 
       return me.isStateExclusions(roadLink) || isMunicipalityAndHaveRights || isElyAndHaveRights || me.isOperator();
     };
@@ -32,19 +37,22 @@
 
     /** Rules:
     * Municipality maintainer: can update bus stops and other asset types inside own municipalities on admin class 1(state, only virtual stops) 2(municipality) and 3(private)
-    * Ely maintainer: can update bus stops and other asset types inside own ELY-area on admin class 1(state) and 2(municipality) and 3(private)
+    * Ely maintainer: can update bus stops and other asset types inside own ELY-area on admin class 1(state) and 2(municipality, only virtual stops) and 3(private)
     * Operator: no restrictions
     * */
 
     this.assetSpecificAccess = function(){
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
       var isAdminClassState = selectedMassTransitStopModel.isAdminClassState();
+      var isAdminClassMunicipality = selectedMassTransitStopModel.isAdminClassMunicipality();
       var isOnlyVirtualStop = selectedMassTransitStopModel.isOnlyVirtualStop();
 
       var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() &&
           me.hasRightsInMunicipality(municipalityCode) &&
           (!isAdminClassState || (isAdminClassState && isOnlyVirtualStop));
-      var isElyyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode);
+      var isElyyAndHaveRights = me.isElyMaintainer() &&
+          me.hasRightsInMunicipality(municipalityCode) &&
+          (!isAdminClassMunicipality || (isAdminClassMunicipality && isOnlyVirtualStop));
 
       return me.isStateExclusions(selectedMassTransitStopModel) || (isMunicipalityAndHaveRights || isElyyAndHaveRights || me.isOperator());
     };
