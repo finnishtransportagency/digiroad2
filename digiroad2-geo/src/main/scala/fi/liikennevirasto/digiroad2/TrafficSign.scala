@@ -3071,6 +3071,13 @@ case object CountryBorder extends OtherSigns {
   override val NewLawCode = "I19"
 }
 
+case object TextualSign extends OtherSigns {
+  override val OTHvalue = 401
+  override val TRvalue = 0
+  override val OldLawCode: Option[Int] = None
+  override val NewLawCode = "TM"
+}
+
 
 
 sealed trait UrgencyOfRepair {
