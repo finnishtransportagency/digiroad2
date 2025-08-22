@@ -41,14 +41,14 @@ root.PointAssetForm = function() {
 
     eventbus.on('application:readOnly', function(readOnly) {
       if(me.applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), selectedAsset.getAdministrativeClass(), me.pointAsset.typeId) || readOnly);
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), selectedAsset.getAdministrativeClass(), me.pointAsset.typeId) || (authorizationPolicy.isElyMaintainer() && selectedAsset.getAdministrativeClass() === 'Municipality') || readOnly);
       }
     });
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
       if (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection, collection);
-        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), selectedAsset.getAdministrativeClass(), me.pointAsset.typeId) || me.applicationModel.isReadOnly());
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), selectedAsset.getAdministrativeClass(), me.pointAsset.typeId) || (authorizationPolicy.isElyMaintainer() && selectedAsset.getAdministrativeClass() === 'Municipality') || me.applicationModel.isReadOnly());
         rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
         rootElement.find('button#cancel-button').prop('disabled', false);
       }
@@ -191,6 +191,7 @@ root.PointAssetForm = function() {
     var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
     var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
     var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
+    var elyUserRestriction = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. ELY-ylläpitäjänä et voi muokata kohteita kunnan omistamalla katuverkolla.';
     var message = '';
 
     if (adminClass === 'State' && editingRestrictions.pointAssetHasRestriction(asset.getMunicipalityCode(), adminClass, me.pointAsset.typeId)) {
@@ -199,6 +200,8 @@ root.PointAssetForm = function() {
       message = municipalityRoadEditingRestricted;
     } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(asset.getMunicipalityCode())) {
       message = limitedRights;
+    } else if(authorizationPolicy.isElyMaintainer() && adminClass === 'Municipality') {
+      message = elyUserRestriction;
     } else if(!authorizationPolicy.formEditModeAccess(asset, me.roadCollection))
       message = noRights;
 

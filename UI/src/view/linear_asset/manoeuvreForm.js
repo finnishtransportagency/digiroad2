@@ -42,6 +42,7 @@
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
       var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
       var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
+      var elyUserRestriction = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. ELY-ylläpitäjänä et voi muokata kohteita kunnan omistamalla katuverkolla.';
       var message = '';
 
       if (selectedManoeuvreSource.get() && editingRestrictions.hasStateRestriction([selectedManoeuvreSource.get()], typeId)) {
@@ -50,6 +51,8 @@
         message = municipalityRoadEditingRestricted;
       } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedManoeuvreSource)) {
         message = limitedRights;
+      } else if (editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, [selectedManoeuvreSource.get()])) {
+        message = elyUserRestriction;
       } else if (!authorizationPolicy.formEditModeAccess(selectedManoeuvreSource))
         message = noRights;
 
@@ -217,7 +220,7 @@
       // Listen to view/edit mode button
       eventbus.on('application:readOnly', function(readOnly){
         if('manoeuvre' ===  applicationModel.getSelectedLayer()) {
-          toggleMode(readOnly || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId));
+          toggleMode(readOnly || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId) || editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, [selectedManoeuvreSource.get()]));
         }
       });
 
@@ -326,7 +329,7 @@
           })));
         });
 
-        toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId));
+        toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId) || editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, [selectedManoeuvreSource.get()]));
 
         var manoeuvreData = function(formGroupElement) {
           var firstTargetLinkId = formGroupElement.attr('linkId');
@@ -557,7 +560,7 @@
             selectedManoeuvreSource.setExceptions(manoeuvre.manoeuvreId, manoeuvre.exceptions);
           }
         };
-        toggleMode(validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || applicationModel.isReadOnly() || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId));
+        toggleMode(validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy) || applicationModel.isReadOnly() || editingRestrictions.hasRestrictions([selectedManoeuvreSource.get()], typeId) || editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, [selectedManoeuvreSource.get()]));
       });
 
       eventbus.on('manoeuvres:unselected', function() {

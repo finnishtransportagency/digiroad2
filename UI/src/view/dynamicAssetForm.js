@@ -958,7 +958,7 @@
         };
 
         this._isReadOnly = function(selectedAsset){
-            return applicationModel.isReadOnly() || editingRestrictions.hasRestrictions(selectedAsset.get(), self._assetTypeConfiguration.typeId) || !this.checkAuthorizationPolicy(selectedAsset);
+            return applicationModel.isReadOnly() || editingRestrictions.hasRestrictions(selectedAsset.get(), self._assetTypeConfiguration.typeId) || editingRestrictions.elyUserRestrictionOnMunicipalityAsset(self._assetTypeConfiguration.authorizationPolicy, selectedAsset.get()) || !this.checkAuthorizationPolicy(selectedAsset);
         };
 
         this.createHeaderElement = function(selectedAsset) {
@@ -1161,15 +1161,17 @@
             var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
             var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
             var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
+            var elyUserRestriction = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. ELY-ylläpitäjänä et voi muokata kohteita kunnan omistamalla katuverkolla.';
             var message = '';
 
             if (editingRestrictions.hasStateRestriction(selectedAsset.get(), self._assetTypeConfiguration.typeId)) {
                 message = stateRoadEditingRestricted;
             } else if(editingRestrictions.hasMunicipalityRestriction(selectedAsset.get(), self._assetTypeConfiguration.typeId)) {
                 message = municipalityRoadEditingRestricted;
-            }
-            else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
+            } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
                 message = limitedRights;
+            } else if (editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, selectedAsset.get())) {
+                message = elyUserRestriction;
             } else if(!this.checkAuthorizationPolicy(selectedAsset))
                 message = noRights;
 

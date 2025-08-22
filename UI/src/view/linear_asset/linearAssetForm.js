@@ -41,7 +41,7 @@
       });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
-      toggleMode(applicationModel.isReadOnly() || !validateAccess(selectedLinearAsset, authorizationPolicy) || editingRestrictions.hasRestrictions(selectedLinearAsset.get(), typeId));
+      toggleMode(applicationModel.isReadOnly() || !validateAccess(selectedLinearAsset, authorizationPolicy) || editingRestrictions.hasRestrictions(selectedLinearAsset.get(), typeId) || editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, selectedLinearAsset.get()));
     });
 
     eventbus.on(events('unselect'), function() {
@@ -58,7 +58,7 @@
 
     eventbus.on('application:readOnly', function(readOnly){
       if(layerName ===  applicationModel.getSelectedLayer()) {
-        toggleMode(!validateAccess(selectedLinearAsset, authorizationPolicy) || readOnly || editingRestrictions.hasRestrictions(selectedLinearAsset.get(), typeId));
+        toggleMode(!validateAccess(selectedLinearAsset, authorizationPolicy) || readOnly || editingRestrictions.hasRestrictions(selectedLinearAsset.get(), typeId) || editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, selectedLinearAsset.get()));
       }
     });
     eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
@@ -182,6 +182,7 @@
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
       var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
       var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
+      var elyUserRestriction = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. ELY-ylläpitäjänä et voi muokata kohteita kunnan omistamalla katuverkolla.';
       var message = '';
 
       if (editingRestrictions.hasStateRestriction(selectedLinearAsset.get(), typeId)) {
@@ -190,6 +191,8 @@
         message = municipalityRoadEditingRestricted;
       } else if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinearAsset)) {
         message = limitedRights;
+      } else if (editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, selectedLinearAsset.get())) {
+        message = elyUserRestriction;
       } else if (!authorizationPolicy.validateMultiple(selectedLinearAsset.get()))
         message = noRights;
 

@@ -53,7 +53,7 @@
 
     this.filterRoadLinks = function(roadLink){
       var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && roadLink.administrativeClass !== 'State' && me.hasRightsInMunicipality(roadLink.municipalityCode);
-      var isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode);
+      var isElyAndHaveRights = me.isElyMaintainer() && roadLink.administrativeClass !== 'Municipality' && me.hasRightsInMunicipality(roadLink.municipalityCode);
 
       return me.isStateExclusions(roadLink) || isMunicipalityAndHaveRights || isElyAndHaveRights || me.isOperator();
     };
