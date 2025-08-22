@@ -65,7 +65,7 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
   private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean = {
     val isElyException = isAnElyException(municipalityCode)
     val isMunicipalityMaintainerAndIsAuthorized = isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)
-    val isElyMaintainerAndIsAuthorized = isELYMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)
+    val isElyMaintainerAndIsAuthorized = isELYMaintainer() && administrativeClass != Municipality && configuration.authorizedMunicipalities.contains(municipalityCode)
 
     isElyException || isMunicipalityMaintainerAndIsAuthorized  || isElyMaintainerAndIsAuthorized  || isLaneMaintainer() || isOperator()
   }
