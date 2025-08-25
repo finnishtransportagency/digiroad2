@@ -19,7 +19,7 @@
       }
       var isElyAndHaveRights;
       if (allowMunicipalityRoadLinks) {
-        isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode) && (roadLink.administrativeClass !== 'Municipality' || selectedMassTransitStopModel.isOnlyVirtualStop());
+        isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode) && (roadLink.administrativeClass !== 'Municipality' || !selectedMassTransitStopModel.get() || selectedMassTransitStopModel.isOnlyVirtualStop());
       } else {
         isElyAndHaveRights = me.isElyMaintainer() && roadLink.administrativeClass !== 'Municipality' && me.hasRightsInMunicipality(roadLink.municipalityCode);
       }
