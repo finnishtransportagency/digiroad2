@@ -108,7 +108,7 @@ object TrafficSignType {
     ChargingSite, DirectionOfPriorityRoad2, DirectionOfPriorityRoad3, TwoWayBikePath, TwoWayBikePath2, EmergencyPhoneAndExtinguisher,
     DirectionToAvoidObstacle, CurveDirectionSign, BorderMarkOnTheLeft, BorderMarkOnTheRight, HeightBorder, UnderpassHeight, TrafficSignColumn,
     TrafficSignColumn2, DivergingRoadSign, TowAwayZone, SOSInformationBoard, AutomaticTrafficControl, SurveillanceCamera, ReindeerHerdingArea,
-    ReindeerHerdingAreaWithoutText, SpeedLimitInformation, CountryBorder
+    ReindeerHerdingAreaWithoutText, SpeedLimitInformation, CountryBorder, TextualSign
   )
 
   def applyOTHValue(intValue: Int): TrafficSignType = {
