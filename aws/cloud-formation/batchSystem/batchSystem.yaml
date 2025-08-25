@@ -46,12 +46,6 @@ Parameters:
   LambdaInputRefreshCache:
     Description: Input for adding refresh_roadlinks job to queue
     Type: String
-  LambdaInputStartSamuutus:
-    Description: Input for adding samuutus job to queue
-    Type: String
-  SamuutusBucketName:
-    Description: Name of the samuutus bucket
-    Type: String
 
 Resources:
   JobQueueAdHoc:
@@ -300,27 +294,6 @@ Resources:
           Input: !Ref LambdaInputRefreshCache
           Id: !Join [ '-' , [ !Ref EnvironmentName, 'DailyLambda' ] ]
 
-  #Samuutus batch is started when change set is uploaded to s3
-  RunSamuutusBatch:
-    Type: AWS::Events::Rule
-    Properties:
-      Name: !Join [ '-', [ !Ref EnvironmentName, 'ChangeSetCreatedEventRule' ] ]
-      Description: "Event triggered by change set upload to S3"
-      State: "ENABLED"
-      EventPattern:
-        source:
-          - aws.s3
-        detail-type:
-          - "Object Created"
-        detail:
-          bucket:
-            name:
-              - !Ref SamuutusBucketName
-      Targets:
-        - Arn: !ImportValue 'BatchLambdaID'
-          Input: !Ref LambdaInputStartSamuutus
-          Id: !Join [ '-' , [ !Ref EnvironmentName, 'SamuutusLambda' ] ]
-
   #Lambda permissions for events
 
   RefreshCachePermission:
@@ -363,13 +336,6 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunDailyBatch.Arn
 
-  SamuutusLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !ImportValue 'BatchLambdaID'
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt RunSamuutusBatch.Arn
 
 Outputs:
   BatchTaskRoleARN:

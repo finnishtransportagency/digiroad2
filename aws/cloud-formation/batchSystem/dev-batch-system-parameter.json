@@ -58,13 +58,5 @@
   {
     "ParameterKey": "LambdaInputRefreshCache",
     "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"refresh_cache\" }"
-  },
-  {
-    "ParameterKey": "LambdaInputStartSamuutus",
-    "ParameterValue": "{\"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\":\"samuutus\"}"
-  },
-  {
-    "ParameterKey": "SamuutusBucketName",
-    "ParameterValue": "dev-vaylapilvi-digiroad2-road-link-change-bucket"
   }
 ]
