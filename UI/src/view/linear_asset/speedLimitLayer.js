@@ -260,6 +260,9 @@ window.SpeedLimitLayer = function(params) {
       me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
       selectedSpeedLimit.close();
       return;
+    } else if (editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, selectedSpeedLimit.get())) {
+      me.displayAssetCreationRestricted('Käyttöoikeudet eivät riitä kohteen lisäämiseen. ELY-ylläpitäjänä et voi lisätä kohteita kunnan omistamalle katuverkolle.');
+      return;
     }
 
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));

@@ -10,6 +10,7 @@
             selectedAsset = params.selectedAsset,
             layerName = params.layerName,
             typeId = params.typeId,
+            authorizationPolicy = params.authorizationPolicy,
             collection = params.collection;
 
          this.handleMapClick = function (coordinates) {
@@ -39,6 +40,11 @@
 
                 if (administrativeClass === 'Municipality' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
                     me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+                    return;
+                }
+
+                if (administrativeClass === 'Municipality' && authorizationPolicy.isElyMaintainer()) {
+                    me.displayAssetCreationRestricted('Käyttöoikeudet eivät riitä kohteen lisäämiseen. ELY-ylläpitäjänä et voi lisätä kohteita kunnan omistamalle katuverkolle.');
                     return;
                 }
 

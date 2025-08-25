@@ -62,6 +62,13 @@
             return false;
         };
 
+        me.elyUserRestrictionOnMunicipalityAsset = function (authorizationPolicy, linearAsset) {
+            if (!authorizationPolicy.isElyMaintainer()) return false;
+            return _.some(linearAsset, function (asset) {
+                return asset.administrativeClass === 2 || asset.administrativeClass === 'Municipality';
+            });
+        };
+
     };
 })(this);
 
