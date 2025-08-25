@@ -1,0 +1,2 @@
+INSERT INTO enumerated_value (id,property_id,value,name_fi,name_sv,image_id,created_date,created_by,modified_date,modified_by)
+VALUES (nextval('primary_key_seq'), (select id from property where public_id = 'trafficSigns_type'),401,'Tekstillinen merkki',NULL,NULL,current_timestamp,'db_migration_v1_57',NULL,NULL)

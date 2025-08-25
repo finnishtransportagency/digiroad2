@@ -37,6 +37,9 @@
         '   <div class="checkbox">' +
         '     <label><input name="otherSigns" type="checkbox" checked="checked" /> Muut merkit</label>' +
         '   </div>' +
+        '   <div class="checkbox">' +
+        '     <label><input name="textualSign" type="checkbox" checked="checked" /> Tekstillinen merkki</label>' +
+        '   </div>' +
         '</div>'].join(''));
     };
 

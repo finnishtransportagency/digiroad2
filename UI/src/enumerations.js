@@ -118,7 +118,8 @@
         groupName: 'Opastusmerkit', groupIndicative: 'F'},
       serviceSigns: { values: [120, 121, 122, 123, 124, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344],
         groupName: 'Palvelukohteet', groupIndicative: 'G'},
-      otherSigns: { values: [371, 372, 373, 374, 375, 376, 377, 378, 379, 382, 383, 384, 385, 386, 387, 388, 389], groupName: 'Muut merkit', groupIndicative: 'I'}
+      otherSigns: { values: [371, 372, 373, 374, 375, 376, 377, 378, 379, 382, 383, 384, 385, 386, 387, 388, 389], groupName: 'Muut merkit', groupIndicative: 'I'},
+      textualSign: { values: [401], groupName: 'Tekstillinen merkki', groupIndicative: 'TM'},
     };
 
     this.additionalValues = {

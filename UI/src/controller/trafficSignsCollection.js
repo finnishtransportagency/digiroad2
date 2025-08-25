@@ -15,7 +15,8 @@
       informationSigns: true,
       serviceSigns: true,
       otherSigns: true,
-      additionalPanels: false
+      additionalPanels: false,
+      textualSign: true
       };
 
     var trafficSignValues = enumerations.trafficSignValues;

@@ -108,7 +108,7 @@ object TrafficSignType {
     ChargingSite, DirectionOfPriorityRoad2, DirectionOfPriorityRoad3, TwoWayBikePath, TwoWayBikePath2, EmergencyPhoneAndExtinguisher,
     DirectionToAvoidObstacle, CurveDirectionSign, BorderMarkOnTheLeft, BorderMarkOnTheRight, HeightBorder, UnderpassHeight, TrafficSignColumn,
     TrafficSignColumn2, DivergingRoadSign, TowAwayZone, SOSInformationBoard, AutomaticTrafficControl, SurveillanceCamera, ReindeerHerdingArea,
-    ReindeerHerdingAreaWithoutText, SpeedLimitInformation, CountryBorder
+    ReindeerHerdingAreaWithoutText, SpeedLimitInformation, CountryBorder, TextualSign
   )
 
   def applyOTHValue(intValue: Int): TrafficSignType = {
@@ -3069,6 +3069,13 @@ case object CountryBorder extends OtherSigns {
   override val TRvalue = 919 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(9512)
   override val NewLawCode = "I19"
+}
+
+case object TextualSign extends OtherSigns {
+  override val OTHvalue = 401
+  override val TRvalue = 0
+  override val OldLawCode: Option[Int] = None
+  override val NewLawCode = "TM"
 }
 
 
