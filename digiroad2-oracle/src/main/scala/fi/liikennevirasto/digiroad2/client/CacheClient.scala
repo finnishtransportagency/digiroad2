@@ -12,8 +12,8 @@ class CacheClient {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   //in second
   val defaultTTL: Int = Digiroad2Properties.cacheTTL.toInt
-
-  lazy val transcoder = new SerializingTranscoder(50 * 1024 * 1024)
+  // Remember also check memcache max_item_size configuration.
+  lazy val transcoder = new SerializingTranscoder(128 * 1024 * 1024) 
   lazy val connectionFactory: ConnectionFactory = new ConnectionFactoryBuilder()
     .setOpTimeout(1000000L) 
     .setTranscoder(transcoder).build()
