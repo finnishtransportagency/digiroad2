@@ -19,7 +19,8 @@
       }
       var isElyAndHaveRights;
       if (allowMunicipalityRoadLinks) {
-        isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode) && (roadLink.administrativeClass !== 'Municipality' || !selectedMassTransitStopModel.get() || selectedMassTransitStopModel.isOnlyVirtualStop());
+        var isNewMassTransitStop = !selectedMassTransitStopModel.get(); // a new stop doesn't have a stop type, so we can't have virtual stop check for those
+        isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode) && (roadLink.administrativeClass !== 'Municipality' || isNewMassTransitStop || selectedMassTransitStopModel.isOnlyVirtualStop());
       } else {
         isElyAndHaveRights = me.isElyMaintainer() && roadLink.administrativeClass !== 'Municipality' && me.hasRightsInMunicipality(roadLink.municipalityCode);
       }
