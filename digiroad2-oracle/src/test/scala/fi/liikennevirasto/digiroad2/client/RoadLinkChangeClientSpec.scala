@@ -6,6 +6,8 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, B
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Remove, Replace, Split}
 import fi.liikennevirasto.digiroad2.linearasset.SurfaceType
+import org.joda.time.DateTime
+
 import scala.io.Source
 
 class RoadLinkChangeClientSpec extends FunSuite with Matchers {
@@ -17,7 +19,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
   test("test json convert with whole set and filter changes missing municipality") {
-    changes.size should be(108)
+    changes.size should be(109)
   }
 
   test("RoadLinkChange for 'add' contains correct info") {
@@ -169,7 +171,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
 
   // ignored by default, used to test locally that the fetch and convert process works
   ignore("fetch changes from S3 and convert to RoadLinkChange") {
-    val roadlinkChanges_all = roadLinkChangeClient.getRoadLinkChanges()
+    val roadlinkChanges_all = roadLinkChangeClient.getRoadLinkChanges(DateTime.parse("2022-05-10"))
     roadlinkChanges_all.size should not be(0)
     roadlinkChanges_all.foreach(
       _.changes.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true)))

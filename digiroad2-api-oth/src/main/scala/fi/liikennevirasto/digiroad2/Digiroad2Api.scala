@@ -281,16 +281,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/masstransitstopgapiurl"){
-    val lat =params.get("latitude").getOrElse(halt(BadRequest("Bad coordinates")))
-    val lon =params.get("longitude").getOrElse(halt(BadRequest("Bad coordinates")))
-    val heading =params.get("heading").getOrElse(halt(BadRequest("Bad coordinates")))
-    val oldapikeyurl=s"//maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location=$lat,$lon&fov=110&heading=$heading&pitch=-10&sensor=false'"
+    val lat = params.get("latitude").getOrElse(halt(BadRequest("Bad coordinates")))
+    val lon = params.get("longitude").getOrElse(halt(BadRequest("Bad coordinates")))
+    val heading = params.get("heading").getOrElse(halt(BadRequest("Bad coordinates")))
     try {
       val urlsigner = new GMapUrlSigner()
       Map("gmapiurl" -> urlsigner.signRequest(lat,lon,heading))
     } catch
       {
-        case e: Exception => Map("gmapiurl" -> oldapikeyurl)
+        case illegalArgument: IllegalArgumentException => logger.error(illegalArgument.getMessage)
+        case e: Exception => logger.error("Url signature failed." + e.getMessage)
       }
   }
 
@@ -1769,7 +1769,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         ((administrativeClass != State && user.configuration.authorizedMunicipalities.contains(municipality)) ||
           (administrativeClass == State && isVirtualStop(properties) && user.configuration.authorizedMunicipalities.contains(municipality)))
     }
-    val isElyMaintainerAndIsAuthorized = user.isELYMaintainer() && user.configuration.authorizedMunicipalities.contains(municipality)
+    val isElyMaintainerAndIsAuthorized = user.isELYMaintainer() && ((administrativeClass != Municipality && user.configuration.authorizedMunicipalities.contains(municipality)) ||
+      administrativeClass == Municipality && isVirtualStop(properties) && user.configuration.authorizedMunicipalities.contains(municipality))
 
     val authorizedToWrite = ahvenanmaaElyException || isMunicipalityMaintainerAndIsAuthorized || isElyMaintainerAndIsAuthorized || user.isOperator()
     if (!authorizedToWrite) {
@@ -1787,6 +1788,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def validateMunicipalityAccessByLinkId(user: User, linkId: String): Unit = {
     val road = roadLinkService.getRoadLinkAndComplementaryByLinkId(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
     validateUserMunicipalityAccessByMunicipality(user)(road.municipalityCode)
+  }
+
+  private def validateMunicipalityAndAdminClassAccessByLinkId(user: User, linkId: String): Unit = {
+    val road = roadLinkService.getRoadLinkAndComplementaryByLinkId(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
+    if (!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
+      halt(Unauthorized("User not authorized"))
   }
 
   private def validateUserMunicipalityAccessByLinkId(user: User, linkId: String, municipality: Int): Unit = {
@@ -1901,7 +1908,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
       roadLinks.foreach{rl =>
         validateAssetTypeAccess(Manoeuvres.typeId, rl.municipalityCode, rl.administrativeClass)
-        validateUserMunicipalityAccessByMunicipality(user)(rl.municipalityCode)
+        validateMunicipalityAndAdminClassAccessByLinkId(user, rl.linkId)
       }
 
       try {
@@ -1919,7 +1926,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     manoeuvreIds.map { manoeuvreId =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
-      validateMunicipalityAccessByLinkId(user, sourceRoadLinkId)
+      validateMunicipalityAndAdminClassAccessByLinkId(user, sourceRoadLinkId)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
@@ -1932,7 +1939,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     manoeuvreUpdates.map { case (id, updates) =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
-      validateMunicipalityAccessByLinkId(user, sourceRoadLinkId)
+      validateMunicipalityAndAdminClassAccessByLinkId(user, sourceRoadLinkId)
       manoeuvreService.updateManoeuvre(user.username, id, updates, None)
     }
   }

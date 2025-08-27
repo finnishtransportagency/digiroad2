@@ -271,6 +271,9 @@ root.LinearAssetLayer  = function(params) {
         me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
         selectedLinearAsset.close();
         return;
+      } else if (editingRestrictions.elyUserRestrictionOnMunicipalityAsset(authorizationPolicy, selectedLinearAsset.get())) {
+        me.displayAssetCreationRestricted('Käyttöoikeudet eivät riitä kohteen lisäämiseen. ELY-ylläpitäjänä et voi lisätä kohteita kunnan omistamalle katuverkolle.');
+        return;
       }
 
       var features = style.renderFeatures(selectedLinearAsset.get());

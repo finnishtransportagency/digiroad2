@@ -41,8 +41,8 @@ case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point
 case class ReplaceInfo(oldLinkId: Option[String], newLinkId: Option[String], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class ReplaceInfoWithGeometry(oldLinkId: Option[String], oldGeometry: List[Point], newLinkId: Option[String], newGeometry: List[Point], oldFromMValue: Option[Double], oldToMValue: Option[Double], newFromMValue: Option[Double], newToMValue: Option[Double], digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
-case class ChangeSetId(key: String, statusDate: DateTime, targetDate: DateTime)
-case class RoadLinkChangeSet(key: String, statusDate: DateTime, targetDate: DateTime, changes: Seq[RoadLinkChange])
+case class ChangeSetId(key: String, statusDate: DateTime)
+case class RoadLinkChangeSet(key: String, statusDate: DateTime, changes: Seq[RoadLinkChange])
 
 class RoadLinkChangeClient {
   lazy val awsService = new AwsService
@@ -190,32 +190,26 @@ class RoadLinkChangeClient {
   implicit val formats = DefaultFormats + changeItemSerializer + RoadLinkChangeTypeSerializer + GeometrySerializer +
     AdminClassSerializer + TrafficDirectionSerializer + SurfaceTypeSerializer + ConstructionTypeSerializer
 
-  def fetchLatestSuccessfulUpdateDate(): DateTime = {
-    // placeholder value as long as fetching this date from db is possible
-    DateTime.parse("2022-05-10")
+  def isValidKey(key: String, since: DateTime): Option[ChangeSetId] = {
+    try {
+      val dateString = key.replace(".json", "")
+      val keyStatusDate = DateTime.parse(dateString)
+      if (!keyStatusDate.isBefore(since)) {
+        Some(ChangeSetId(key, keyStatusDate))
+      } else None
+    } catch {
+      case _: IllegalArgumentException =>
+        logger.error(s"Key ($key) provides no valid dates.")
+        None
+      case e: Throwable =>
+        logger.error(e.getMessage)
+        None
+    }
   }
 
   def listFilesAccordingToDates(since: DateTime): List[ChangeSetId] = {
-    def isValidKey(key: String): Option[ChangeSetId] = {
-      try {
-        val keyParts = key.replace(".json", "").split("_")
-        val keyStatusDate = DateTime.parse(keyParts.head)
-        val keyTargetDate = DateTime.parse(keyParts.last)
-        if (!(keyStatusDate.isBefore(since) || keyTargetDate.isAfterNow)) {
-          Some(ChangeSetId(key, keyStatusDate, keyTargetDate))
-        } else None
-      } catch {
-        case _: IllegalArgumentException =>
-          logger.error(s"Key ($key) provides no valid dates.")
-          None
-        case e: Throwable =>
-          logger.error(e.getMessage)
-          None
-      }
-    }
-
     val objects = s3Service.listObjects(s3Bucket)
-    objects.flatMap(s3Object => isValidKey(s3Object.key())).sortBy(_.statusDate)
+    objects.flatMap(s3Object => isValidKey(s3Object.key(), since)).sortBy(_.statusDate)
   }
 
   def fetchChangeSetFromS3(filename: String): String = {
@@ -254,11 +248,17 @@ class RoadLinkChangeClient {
     }
   }
 
-  def getRoadLinkChanges(since: DateTime = fetchLatestSuccessfulUpdateDate()): Seq[RoadLinkChangeSet] = {
+  /**
+    * Get road link change sets from S3 according to latest successful samuutus
+    * @param lastSuccess Date representing last succesful samuutus status date
+    * @return ChangeSets (one per day) for days after the latest succesful samuutus date
+    */
+  def getRoadLinkChanges(lastSuccess: DateTime): Seq[RoadLinkChangeSet] = {
+    val since = lastSuccess.plusDays(1) // Fetch changes starting from the next day after last successful samuutus
     val keys = listFilesAccordingToDates(since)
     keys.map(key => {
       val changes = fetchChangeSetFromS3(key.key)
-      RoadLinkChangeSet(key.key, key.statusDate, key.targetDate, convertToRoadLinkChange(changes))
+      RoadLinkChangeSet(key.key, key.statusDate, convertToRoadLinkChange(changes))
     })
   }
 }

@@ -450,8 +450,8 @@ class RoadLinkPropertyUpdater {
       logger.info(s"Started processing change set ${changeSet.key}")
       val changeReport = runProcess(changeSet.changes)
       val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
-      ChangeReporter.saveReportToS3("roadLinkProperties", changeSet.targetDate, reportBody, contentRowCount)
-      Queries.updateLatestSuccessfulSamuutus(RoadLinkProperties.typeId, changeSet.targetDate)
+      ChangeReporter.saveReportToS3("roadLinkProperties", changeSet.statusDate, reportBody, contentRowCount)
+      Queries.updateLatestSuccessfulSamuutus(RoadLinkProperties.typeId, changeSet.statusDate)
     }
 
     })

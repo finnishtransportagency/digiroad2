@@ -27,15 +27,6 @@ object LinearAssetUpdateProcess {
   lazy val speedLimitService = new SpeedLimitService(eventbus, roadLinkService)
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  //TODO remove this tester when LinearAssetUpdaters work with new change sets
-  private def testFetchChangesFromS3() = {
-    val roadLinkChangeClient = new RoadLinkChangeClient
-    val logger = LoggerFactory.getLogger(getClass)
-    val changes = roadLinkChangeClient.getRoadLinkChanges()
-    logger.info(s"fetched ${changes.size} changes")
-    changes.foreach(c => logger.info(c.toString))
-  }
-
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
       case EuropeanRoads.typeId | ExitNumbers.typeId => new TextValueLinearAssetService(roadLinkService, eventbus)
@@ -135,7 +126,6 @@ object LinearAssetUpdateProcess {
         //special case       
         case "lanes" => LaneUpdater.updateLanes()
         case "manoeuvres" => new ManoeuvreUpdater().updateLinearAssets()
-        case "test" => testFetchChangesFromS3()
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
       logger.info(s"Ending samuutus with parameter: $assetName")

@@ -1,0 +1,1 @@
+delete from samuutus_success where asset_type_id = 440;

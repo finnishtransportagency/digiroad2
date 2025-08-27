@@ -173,6 +173,7 @@
 
     var updateStatus = function () {
       var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState();
+      var isMunicipalityAdminClass = selectedMassTransitStopModel.isAdminClassMunicipality();
 
       if (pointAssetToSave && !isValidServicePoint()) {
         element.prop('disabled', true);
@@ -184,6 +185,11 @@
           (!authorizationPolicy.isMunicipalityMaintainer() || !isStateAdminClass ||
               (authorizationPolicy.isMunicipalityMaintainer() &&
                   isStateAdminClass &&
+                  selectedMassTransitStopModel.isOnlyVirtualStop())
+          ) &&
+          (!authorizationPolicy.isElyMaintainer() || !isMunicipalityAdminClass ||
+              (authorizationPolicy.isElyMaintainer() &&
+                  isMunicipalityAdminClass &&
                   selectedMassTransitStopModel.isOnlyVirtualStop())
           )
       ) {
@@ -759,8 +765,10 @@
 
       var allowOnlyVirtualStopChoice = function() {
         var isStateAdminClass = selectedMassTransitStopModel.isAdminClassState();
+        var isMunicipalityAdminClass = selectedMassTransitStopModel.isAdminClassMunicipality();
 
-        return authorizationPolicy.isMunicipalityMaintainer() && isStateAdminClass && selectedMassTransitStopModel.isOnlyVirtualStop();
+        return (authorizationPolicy.isMunicipalityMaintainer() && isStateAdminClass && selectedMassTransitStopModel.isOnlyVirtualStop()) ||
+            (authorizationPolicy.isElyMaintainer() && isMunicipalityAdminClass && selectedMassTransitStopModel.isOnlyVirtualStop());
       };
 
       var createMultiChoiceElement = function(readOnly, property, choices) {

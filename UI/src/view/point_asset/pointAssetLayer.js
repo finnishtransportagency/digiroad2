@@ -68,7 +68,8 @@
           if (authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) && !applicationModel.isReadOnly()) {
             if (typeId === servicePointTypeId && !(editingRestrictions.pointAssetHasRestriction(selectedAsset.get().municipalityCode, 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.get().municipalityCode, 'Municipality', typeId))) {
               dragControl.activate();
-            } else if (typeId !== servicePointTypeId && !editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
+            } else if (typeId !== servicePointTypeId && !editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId) &&
+                !(authorizationPolicy.isElyMaintainer() && administrativeClass === 'Municipality')) {
               dragControl.activate();
             }
           }
@@ -329,9 +330,11 @@
       if(readOnly){
         dragControl.deactivate();
       } else if(selectedAsset.exists() && authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection)) {
-        if (typeId === servicePointTypeId && !(editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'State', typeId) || editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'Municipality', typeId))) {
+        if (typeId === servicePointTypeId && !(editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'State', typeId) ||
+            editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), 'Municipality', typeId))) {
           dragControl.activate();
-        } else if (typeId !== servicePointTypeId && !editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), selectedAsset.getAdministrativeClass(), typeId)) {
+        } else if (typeId !== servicePointTypeId && !editingRestrictions.pointAssetHasRestriction(selectedAsset.getMunicipalityCode(), selectedAsset.getAdministrativeClass(), typeId) &&
+            !(authorizationPolicy.isElyMaintainer() && selectedAsset.getAdministrativeClass() === 'Municipality')) {
           dragControl.activate();
         }
       }
@@ -431,6 +434,11 @@
 
         if (administrativeClass === 'Municipality' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
           me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+          return;
+        }
+
+        if (administrativeClass === 'Municipality' && authorizationPolicy.isElyMaintainer()) {
+          me.displayAssetCreationRestricted('Käyttöoikeudet eivät riitä kohteen lisäämiseen. ELY-ylläpitäjänä et voi lisätä kohteita kunnan omistamalle katuverkolle.');
           return;
         }
 
