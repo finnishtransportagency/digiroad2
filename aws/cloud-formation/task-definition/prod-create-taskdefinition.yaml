@@ -138,7 +138,7 @@ Resources:
             - Name: env
               Value: 'prod'
             - Name: caching
-              Value: 'true'
+              Value: 'false'
             - Name: cacheHostname
               Value: !Sub '${CacheHost}'
             - Name: cacheHostPort
