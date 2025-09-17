@@ -79,11 +79,11 @@
       },
       {
         "name": "batchMode",
-        "value": "false"
+        "value": "true"
       },
       {
         "name": "caching",
-        "value": "true"
+        "value": "false"
       },
       {
         "name": "cacheHostname",
