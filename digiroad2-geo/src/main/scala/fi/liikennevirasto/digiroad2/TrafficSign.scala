@@ -104,8 +104,8 @@ object TrafficSignType {
     SkiLift, CrossCountrySkiing, GolfCourse, PleasureOrThemePark, CottageAccommodation, BedAndBreakfast, DirectSale, Handicrafts,
     FarmPark, HorsebackRiding, TouristRouteTextOnly, TouristRoute, TemporaryGuidanceSign, SignAppliesToCrossingRoad, SignAppliesDirectionOfTheArrow,
     SignAppliesDirectionOfTheArrowWithDistance, SignAppliesDirectionOfTheArrowWithDistance2, Motorhome, MotorSledges, Tractor,
-    LowEmissionVehicle, ParkingOnTopOfCurb, ParkingOnTheEdgeOfTheCurb, TunnelCategory, ObligatoryUseOfParkingDisc2, ParkingAgainstFee2,
-    ChargingSite, DirectionOfPriorityRoad2, DirectionOfPriorityRoad3, TwoWayBikePath, TwoWayBikePath2, EmergencyPhoneAndExtinguisher,
+    LowEmissionVehicle, LightElectricVehicle, ParkingOnTopOfCurb, ParkingOnTheEdgeOfTheCurb, TunnelCategory, ObligatoryUseOfParkingDisc2, ParkingAgainstFee2,
+    ChargingSite, DirectionOfPriorityRoad2, DirectionOfPriorityRoad3, TwoWayBikePath, TwoWayBikePath2, EmergencyPhoneAndExtinguisher, TwoWaySidewalk,
     DirectionToAvoidObstacle, CurveDirectionSign, BorderMarkOnTheLeft, BorderMarkOnTheRight, HeightBorder, UnderpassHeight, TrafficSignColumn,
     TrafficSignColumn2, DivergingRoadSign, TowAwayZone, SOSInformationBoard, AutomaticTrafficControl, SurveillanceCamera, ReindeerHerdingArea,
     ReindeerHerdingAreaWithoutText, SpeedLimitInformation, CountryBorder, TextualSign
@@ -2781,6 +2781,13 @@ case object LowEmissionVehicle extends AdditionalPanelsType {
   override val NewLawCode = "H12.13"
 }
 
+case object LightElectricVehicle extends AdditionalPanelsType {
+  override val OTHvalue = 402
+  override val TRvalue = 99 // No TR value
+  override val OldLawCode: Option[Int] = None // There is no legacy code
+  override val NewLawCode = "H12.14"
+}
+
 case object ParkingOnTopOfCurb extends AdditionalPanelsType {
   override val OTHvalue = 353
   override val TRvalue = 81301 // UUSIASNR Value in TR
@@ -2937,6 +2944,13 @@ case object EmergencyPhoneAndExtinguisher  extends AdditionalPanelsType {
   override val TRvalue = 826 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(880)
   override val NewLawCode = "H26"
+}
+
+case object TwoWaySidewalk  extends AdditionalPanelsType {
+  override val OTHvalue = 403
+  override val TRvalue = 99 // UUSIASNR Value in TR
+  override val OldLawCode: Option[Int] = Some(880)
+  override val NewLawCode = "H27"
 }
 
 case object CrossingLogTransportRoad extends AdditionalPanelsType {
