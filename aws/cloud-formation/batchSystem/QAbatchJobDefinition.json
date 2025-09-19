@@ -79,7 +79,7 @@
       },
       {
         "name": "batchMode",
-        "value": "true"
+        "value": "false"
       },
       {
         "name": "caching",

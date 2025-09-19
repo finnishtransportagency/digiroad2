@@ -389,7 +389,9 @@
           {signValue: [398], image: 'images/traffic-signs/information-signs/bicycleRoute.png'}, /* should be bicycleRoute */
           {signValue: [399], image: 'images/traffic-signs/information-signs/endOfLane2.png' },
           {signValue: [400], image: 'images/traffic-signs/information-signs/regionalRoadNumber.png', validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo},
-          {signValue: [401], image: 'images/traffic-signs/other-signs/textualMainSign.png', validation: validateAdditionalInfo, maxLabelLength: 19, additionalInfo: showAdditionalInfo, offsetX: 3, height: 25, textColor: '#ffffff'}
+          {signValue: [401], image: 'images/traffic-signs/other-signs/textualMainSign.png', validation: validateAdditionalInfo, maxLabelLength: 19, additionalInfo: showAdditionalInfo, offsetX: 3, height: 25, textColor: '#ffffff'},
+          {signValue: [402], image: 'images/traffic-signs/additional-panels/lightElectricVehicle.png'},
+          {signValue: [403], image: 'images/traffic-signs/additional-panels/twoWaySidewalk.png'},
         ];
       };
 
