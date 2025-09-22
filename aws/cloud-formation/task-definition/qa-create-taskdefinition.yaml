@@ -140,7 +140,7 @@ Resources:
             - Name: env
               Value: 'qa'
             - Name: caching
-              Value: 'true'
+              Value: 'false'
             - Name: cacheHostname
               Value: !Sub '${CacheHost}'
             - Name: cacheHostPort
