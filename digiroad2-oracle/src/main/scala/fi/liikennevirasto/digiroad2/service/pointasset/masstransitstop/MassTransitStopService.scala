@@ -363,7 +363,11 @@ trait MassTransitStopService extends PointAssetOperations {
       val roadLink = currentStrategy.pickRoadLink(optRoadLink, optHistoric)
       val newProperties = excludeProperties(properties.toSeq)
 
-      if (properties.exists(property => property.publicId == "tietojen_yllapitaja" && property.values.head.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.MunicipalityPropertyValue))
+      if (properties.exists(property =>
+          property.publicId == "tietojen_yllapitaja" &&
+          property.values.nonEmpty &&
+          property.values.head.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.MunicipalityPropertyValue)
+      )
         previousStrategy.undoLiviId(asset)
 
       val (persistedAsset, publishInfo) = currentStrategy.update(asset, optionalPosition, newProperties, username, authorizationValidation, roadLink, isCsvImported)
