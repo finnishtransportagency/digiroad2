@@ -503,7 +503,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     */
   def getRoadLinksWithComplementary(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction:Boolean = true, asyncMode: Boolean = true): (Seq[RoadLink])= {
     val  (complementaryLinks, links) = withDbConnection {
-      (complementaryLinkDAO.fetchWalkwaysByBoundsAndMunicipalities(bounds, municipalities),
+      (complementaryLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities),
         roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities))
     }
     if(newTransaction){
