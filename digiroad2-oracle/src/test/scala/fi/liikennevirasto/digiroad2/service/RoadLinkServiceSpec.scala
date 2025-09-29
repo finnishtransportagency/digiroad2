@@ -260,7 +260,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     PostGISDatabase.withDynTransaction {
       
       
-      when(mockRoadLinkComplimentaryDao.fetchWalkwaysByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(complRoadLink1, complRoadLink2, complRoadLink3, complRoadLink4))
+      when(mockRoadLinkComplimentaryDao.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(complRoadLink1, complRoadLink2, complRoadLink3, complRoadLink4))
       when(mockRoadLinkDao.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
 
       val roadlinks = service.getRoadLinksWithComplementaryByBoundsAndMunicipalities(boundingBox, Set(91))
