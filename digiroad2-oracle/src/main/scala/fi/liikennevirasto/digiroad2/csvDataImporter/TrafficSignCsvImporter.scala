@@ -584,7 +584,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
     } catch {
       case e: Exception =>
-        logger.error(s"Latauksessa tapahtui odottamaton virhe: ${e.toString}")
+        logger.error(s"Unexpected error during import: ${e.toString}")
         update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString)) //error when saving log
     } finally {
       inputStream.close()
@@ -597,7 +597,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       override val delimiter: Char = ';'
     })
     withDynTransaction{
-      trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire, user)
+      trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire, user.username)
       val result = csvReader.allWithHeaders().foldLeft(ImportResultPointAsset()) { (result, row) =>
         val csvRow = row.map(r => (r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)

@@ -403,7 +403,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def expireAssetsByMunicipalities(municipalityCodes: Set[Int], user: User) : Unit = {
+  def expireAssetsByMunicipalities(municipalityCodes: Set[Int], user: String) : Unit = {
     PostGISTrafficSignDao.expireAssetsByMunicipality(municipalityCodes, user)
   }
 

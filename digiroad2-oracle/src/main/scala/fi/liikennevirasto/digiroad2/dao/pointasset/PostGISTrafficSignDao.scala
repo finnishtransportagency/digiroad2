@@ -494,13 +494,13 @@ object PostGISTrafficSignDao {
     }
   }
 
-  def expireAssetsByMunicipality(municipalities: Set[Int], user: User) : Unit = {
+  def expireAssetsByMunicipality(municipalities: Set[Int], user: String) : Unit = {
     if (municipalities.nonEmpty) {
       sqlu"""
         UPDATE asset a
-        SET valid_to = current_timestamp - INTERVAL '1 second',
-        modified_by = ${user.username},
-        modified_date = current_timestamp - INTERVAL '1 second'
+        SET valid_to = current_timestamp,
+        modified_by = ${user},
+        modified_date = current_timestamp'
         FROM asset_link al
         JOIN lrm_position lp ON lp.id = al.position_id
         LEFT JOIN kgv_roadlink kr ON kr.linkid = lp.link_id
