@@ -499,19 +499,19 @@ object PostGISTrafficSignDao {
       sqlu"""
         UPDATE asset a
         SET valid_to = current_timestamp,
-        modified_by = ${user},
-        modified_date = current_timestamp'
+            modified_by = ${user},
+            modified_date = current_timestamp
         FROM asset_link al
         JOIN lrm_position lp ON lp.id = al.position_id
-        LEFT JOIN kgv_roadlink kr ON kr.linkid = lp.link_id
         LEFT JOIN administrative_class ac ON ac.link_id = lp.link_id
+        LEFT JOIN kgv_roadlink kr ON kr.linkid = lp.link_id
         WHERE a.id = al.asset_id
           AND a.asset_type_id = ${TrafficSigns.typeId}
           AND a.created_by != 'batch_process_trafficSigns'
           AND a.municipality_code IN (#${municipalities.mkString(",")})
           AND (
-                (kr.adminclass = 2)                -- prefer kgv_roadlink tables' adminclass
-             OR (kr.linkid IS NULL AND ac.administrative_class = 2) -- fallback to administrative_class tables' administrative_class
+                (ac.administrative_class = 2)               -- prefer administrative_class tables' administrative_class
+             OR (ac.link_id IS NULL AND kr.adminclass = 2)  -- fallback to kgv_roadlink tables' adminclass
   )""".execute
     }
   }
