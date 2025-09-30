@@ -403,8 +403,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) : Unit = {
-    PostGISTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
+  def expireAssetsByMunicipalities(municipalityCodes: Set[Int], user: String) : Unit = {
+    PostGISTrafficSignDao.expireAssetsByMunicipality(municipalityCodes, user)
   }
 
   def verifyDatesOnTemporarySigns(asset: IncomingTrafficSign): Boolean = {
