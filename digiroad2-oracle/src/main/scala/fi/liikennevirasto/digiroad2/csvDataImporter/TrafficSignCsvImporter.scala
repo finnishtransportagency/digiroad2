@@ -14,8 +14,11 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService}
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.slf4j.LoggerFactory
 
 class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter {
+  val logger = LoggerFactory.getLogger(getClass)
+
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -581,6 +584,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
     } catch {
       case e: Exception =>
+        logger.error(s"Latauksessa tapahtui odottamaton virhe: ${e.toString}")
         update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString)) //error when saving log
     } finally {
       inputStream.close()
@@ -593,7 +597,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       override val delimiter: Char = ';'
     })
     withDynTransaction{
-      trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire)
+      trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire, user)
       val result = csvReader.allWithHeaders().foldLeft(ImportResultPointAsset()) { (result, row) =>
         val csvRow = row.map(r => (r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)

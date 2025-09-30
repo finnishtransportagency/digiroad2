@@ -11,6 +11,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
+import fi.liikennevirasto.digiroad2.user.User
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import scala.util.Try
@@ -493,13 +494,25 @@ object PostGISTrafficSignDao {
     }
   }
 
-  def expireAssetsByMunicipality(municipalities: Set[Int]) : Unit = {
+  def expireAssetsByMunicipality(municipalities: Set[Int], user: User) : Unit = {
     if (municipalities.nonEmpty) {
       sqlu"""
-        update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
-        where asset_type_id = ${TrafficSigns.typeId}
-        and created_by != 'batch_process_trafficSigns'
-        and municipality_code in (#${municipalities.mkString(",")})""".execute
+        UPDATE asset a
+        SET valid_to = current_timestamp - INTERVAL '1 second',
+        modified_by = ${user.username},
+        modified_date = current_timestamp - INTERVAL '1 second'
+        FROM asset_link al
+        JOIN lrm_position lp ON lp.id = al.position_id
+        LEFT JOIN kgv_roadlink kr ON kr.linkid = lp.link_id
+        LEFT JOIN administrative_class ac ON ac.link_id = lp.link_id
+        WHERE a.id = al.asset_id
+          AND a.asset_type_id = ${TrafficSigns.typeId}
+          AND a.created_by != 'batch_process_trafficSigns'
+          AND a.municipality_code IN (#${municipalities.mkString(",")})
+          AND (
+                (kr.adminclass = 2)                -- prefer kgv_roadlink tables' adminclass
+             OR (kr.linkid IS NULL AND ac.administrative_class = 2) -- fallback to administrative_class tables' administrative_class
+  )""".execute
     }
   }
 
