@@ -63,7 +63,7 @@ $(function() {
 
     if ($('#deleteCheckbox').is(':checked')) {
       var optionValues = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option');
-      var confirmMsg = "Haluatko varmasti poistaa kaikki jo aiemmin kunnan alueelle lisätyt liikennemerkit?";
+      var confirmMsg = "Haluatko varmasti poistaa kaikki jo aiemmin kunnan omistamalle katuverkolle lisätyt liikennemerkit?";
       if(optionValues.length > 1) {
         confirmMsg = "Olet valitsemassa useita kuntia. Haluatko jatkaa?";
       }
