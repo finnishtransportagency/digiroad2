@@ -21,7 +21,7 @@
       return  _.map(speedLimits, function(speedLimit) {
         return '<div class="legend-entry">' +
           '<div class="label">' + speedLimit + '</div>' +
-          '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
+          '<div class="symbol linear speed-limit-' + speedLimit + '" ></div>' +
           '</div>';
       }).join('') + '</div>';
     };
@@ -65,7 +65,7 @@
 
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
-    var element = $('<div class="panel-group speed-limits"/>');
+    var element = $('<div class="panel-group speed-limits"></div>');
 
     this.template = function () {
       this.expanded = me.elements().expanded;

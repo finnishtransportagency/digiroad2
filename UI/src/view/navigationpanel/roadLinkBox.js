@@ -43,7 +43,7 @@
     var administrativeClassLegendEntries = _.map(enumerations.administrativeClasses, function(administrativeClass) {
       return '<div class="legend-entry">' +
         '<div class="label">'+ administrativeClass.text +'</div>' +
-        '<div class="symbol linear administrative-class-' + administrativeClass.value + '" />' +
+        '<div class="symbol linear administrative-class-' + administrativeClass.value + '" ></div>' +
         '</div>';
     }).join('');
     administrativeClassLegend.append(administrativeClassLegendEntries);
@@ -52,7 +52,7 @@
     var functionalClassLegendEntries = _.map(enumerations.functionalClasses, function(functionalClass) {
       return '<div class="legend-entry">' +
         '<div class="label">' + functionalClass.text + '</div>' +
-        '<div class="symbol linear linear-asset-' + functionalClass.value + '" />' +
+        '<div class="symbol linear linear-asset-' + functionalClass.value + '" ></div>' +
         '</div>';
     }).join('');
     functionalClassLegend.append(functionalClassLegendEntries);
@@ -63,12 +63,12 @@
       return linkType.specialLegendRendering ? '':
         '<div class="legend-entry">' +
         '<div class="label">' + linkType.text + '</div>' +
-        '<div class="symbol linear linear-asset-' + linkType.value + '" />' +
+        '<div class="symbol linear linear-asset-' + linkType.value + '" ></div>' +
         '</div>';
       }).concat([
         '<div class="legend-entry">' +
         '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>' +
-        '<div class="symbol linear linear-asset-11" />'
+        '<div class="symbol linear linear-asset-11" ></div>'
       ]).join('');
     linkTypeLegend.append(linkTypeLegendEntries);
 
@@ -87,7 +87,7 @@
     var verticalLevelLegendEntries = _.map(verticalLevels, function(verticalLevel) {
       return '<div class="legend-entry">' +
         '<div class="label">' + verticalLevel[1] + '</div>' +
-        '<div class="symbol linear linear-asset-' + verticalLevel[0] + '" />' +
+        '<div class="symbol linear linear-asset-' + verticalLevel[0] + '" ></div>' +
         '</div>';
     }).join('');
     verticalLevelLegend.append(verticalLevelLegendEntries);
@@ -111,7 +111,7 @@
       return !constructionType.visibleInLegend ? '' :
         '<div class="legend-entry">' +
           '<div class="label">' + constructionType.legendText + '</div>' +
-          '<div class="symbol linear construction-type-' + constructionType.value + '" />' +
+          '<div class="symbol linear construction-type-' + constructionType.value + '" ></div>' +
           '</div>';
     }).join('');
     constructionTypeLegend.append(constructionTypeLegendEntries);
@@ -203,7 +203,7 @@
     initialLegendContainer.append(functionalClassLegend);
     initialLegendContainer.append(constructionTypeLegend);
     elements.expanded.append(roadLinkCheckBoxs);
-    var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
+    var element = $('<div class="panel-group ' + className + 's"></div>').append(elements.expanded).hide();
 
     bindEventHandlers(elements.expanded);
 

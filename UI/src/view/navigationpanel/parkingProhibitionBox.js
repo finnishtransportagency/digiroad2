@@ -21,12 +21,12 @@
         return _.map(parkingProhibitionValues, function (parkingProhibitionValue) {
            return '<div class="legend-entry">' +
             '<div class="label">' + parkingProhibitionValue[1] + '</div>' +
-            '<div class="symbol linear parking-prohibition-' + parkingProhibitionValue[0] + '" />' +
+            '<div class="symbol linear parking-prohibition-' + parkingProhibitionValue[0] + '" ></div>' +
             '</div>';
         }).join('') + '</div>';
       };
 
-      var element = $('<div class="panel-group parking-prohibition"/>');
+      var element = $('<div class="panel-group parking-prohibition"></div>');
 
       function show() {
           if(!assetConfig.authorizationPolicy.editModeAccess()) {

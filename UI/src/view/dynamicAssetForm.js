@@ -1287,7 +1287,7 @@
 
         this.validationErrorLabel = function(assetTypeConfiguration) {
             var element = assetTypeConfiguration.showValidationErrorLabel ?
-                $('<span />').addClass('validation-error').text('Pakollisia tietoja puuttuu') : '';
+                $('<span></span>').addClass('validation-error').text('Pakollisia tietoja puuttuu') : '';
 
             var updateVisibility = function() {
                 if(!_.isEmpty(element)) {
@@ -1310,7 +1310,7 @@
         };
 
         this.saveButton = function(assetTypeConfiguration) {
-            var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
+            var element = $('<button></button>').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
                 assetTypeConfiguration.selectedLinearAsset.save();
             });
 
@@ -1338,7 +1338,7 @@
 
         this.cancelButton = function(assetTypeConfiguration) {
 
-            var element = $('<button />').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+            var element = $('<button></button>').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
                 assetTypeConfiguration.selectedLinearAsset.cancel();
             });
 
@@ -1354,7 +1354,7 @@
         this.verificationButton = function(assetTypeConfiguration) {
             var visible = (assetTypeConfiguration.isVerifiable && !_.isNull(assetTypeConfiguration.selectedLinearAsset.getId()) && assetTypeConfiguration.selectedLinearAsset.count() === 1);
 
-            var element = visible ? $('<button />').prop('disabled', self.isSaveable()).addClass('verify btn btn-primary').text('Merkitse tarkistetuksi').click(function() {
+            var element = visible ? $('<button></button>').prop('disabled', self.isSaveable()).addClass('verify btn btn-primary').text('Merkitse tarkistetuksi').click(function() {
                 assetTypeConfiguration.selectedLinearAsset.verify();
             }) : '';
 
