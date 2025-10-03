@@ -25,7 +25,7 @@
       var responsibilityLegend = '<div class="responsibility-legend">' + _.map(responsibilityValues, function(responsibilityValue) {
         return '<div class="legend-entry">' +
             '<div class="label">' + responsibilityValue[1] + '</div>' +
-            '<div class="symbol linear service-road-' + responsibilityValue[0] + '" />' +
+            '<div class="symbol linear service-road-' + responsibilityValue[0] + '" ></div>' +
             '</div>';
       }).join('')+ '</div>';
 
@@ -38,7 +38,7 @@
       var rightOfUseLegend = '<div class="right-use-legend">' + _.map(rightOfUseValues, function(rightOfUseValue) {
         return '<div class="legend-entry right-use-legend">' +
             '<div class="label">' + rightOfUseValue[1] + '</div>' +
-            '<div class="symbol linear service-road-' + rightOfUseValue[0] + '" />' +
+            '<div class="symbol linear service-road-' + rightOfUseValue[0] + '" ></div>' +
             '</div>';
       }).join('') + '</div>';
 
@@ -104,7 +104,7 @@
       return assetConfig.authorizationPolicy.editModeAccess();
     };
 
-    var element = $('<div class="panel-group service-road"/>');
+    var element = $('<div class="panel-group service-road"></div>');
 
     this.getElement = function () {
       return element;

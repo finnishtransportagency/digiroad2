@@ -24,19 +24,19 @@
     this.workListItemTable = function(workListItems) {
 
       var assetHeader = function(items) {
-        return $('<h2/>').html(items.assetName);
+        return $('<h2></h2>').html(items.assetName);
       };
 
       var tableContentRows = function(values) {
         return _.map(values.assetIds, function(item) {
-          return $('<tr/>').append($('<td/>').append(assetLink(item, values.assetTypeId)));
+          return $('<tr></tr>').append($('<td></td>').append(assetLink(item, values.assetTypeId)));
         });
       };
 
       var assetLink = function(item, assetTypeId) {
         var layerName = _.find(assetConfig.pointAssetsConfig.concat(assetConfig.linearAssetsConfig).concat(assetConfig.assetTypeInfo), function(info){ return info.typeId === assetTypeId;}).layerName;
         var link = '#' + layerName  + '/' + item;
-        return $('<a class="work-list-item"/>').attr('href', link).html(link);
+        return $('<a class="work-list-item"></a>').attr('href', link).html(link);
       };
 
       var tableForGroupingValues = function(values) {
@@ -46,7 +46,7 @@
           .append('</tbody></table>');
       };
 
-      return $('<div/>').append(assetHeader(workListItems))
+      return $('<div></div>').append(assetHeader(workListItems))
         .append(tableForGroupingValues(workListItems));
     };
 

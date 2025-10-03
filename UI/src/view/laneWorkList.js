@@ -23,14 +23,14 @@
         this.workListItemTable = function (layerName, showDeleteCheckboxes, workListItems) {
             var selectedToDelete = [];
 
-            var trafficDirectionHeader = $('<h2/>').html("Tielinkin liikennevirran suuntaa muutettu");
-            var linkTypeHeader = $('<h2/>').html("<br>Tielinkin tyypin muutos vaikuttaa kaistojen lukumäärään");
+            var trafficDirectionHeader = $('<h2></h2>').html("Tielinkin liikennevirran suuntaa muutettu");
+            var linkTypeHeader = $('<h2></h2>').html("<br>Tielinkin tyypin muutos vaikuttaa kaistojen lukumäärään");
             var tableContentRows = function (items) {
                 var itemsSorted = _.sortBy(items, ["linkId", "createdAt"]);
                 return _.map(itemsSorted, function (item) {
-                    return $('<tr/>')
+                    return $('<tr></tr>')
                         .append(checkbox(item.id))
-                        .append($('<th/>')
+                        .append($('<th></th>')
                         .append(assetLink(item))
                         .append(changeToLinkInfo(item)));
                 });
@@ -42,7 +42,7 @@
                 var newValueLegend = _.isObject(newValueObject) ? newValueObject.text : 'Tuntematon';
                 var oldValueObject = _.find(collectionToSearch, {value: item.oldValue});
                 var oldValueLegend = _.isObject(oldValueObject) ? oldValueObject.text : 'Tuntematon';
-                return $('<dd class="laneWorkListTextSize"/>')
+                return $('<dd class="laneWorkListTextSize"></dd>')
                     .html("Vanha arvo: " + oldValueLegend + " (" + item.oldValue + ")" +
                         "<br> Uusi arvo: " + newValueLegend + " (" + item.newValue + ")" +
                         "<br> Muokkauksen ajankohta: " + item.createdAt +
@@ -51,7 +51,7 @@
 
             var assetLink = function (item) {
                 var link = '#' + "linkProperty" + '/' + item.linkId;
-                return $('<a class="work-list-item"/>').attr('href', link).html("Link ID: " + item.linkId);
+                return $('<a class="work-list-item"></a>').attr('href', link).html("Link ID: " + item.linkId);
             };
 
             var tableForGroupingValues = function (items) {
@@ -62,11 +62,11 @@
             };
 
             var checkbox = function (itemId) {
-                return $('<td class="laneWorkListCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+                return $('<td class="laneWorkListCheckboxWidth"></td>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
             };
 
             var deleteBtn = function () {
-                return $('<button disabled/>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
+                return $('<button disabled></button>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
                     new GenericConfirmPopup("Haluatko varmasti poistaa valitut tielinkin muutokset työlistasta?", {
                         container: '#work-list',
                         successCallback: function () {
@@ -96,7 +96,7 @@
 
             };
 
-            return $('<div/>')
+            return $('<div></div>')
                 .append(deleteBtn())
                 .append(linkTypeHeader)
                 .append(tableForGroupingValues(workListItems.link_type))

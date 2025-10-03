@@ -39,7 +39,7 @@
         return'<div class="' + legendName + '-legend">' + _.map(values, function(value) {
           return '<div class="legend-entry">' +
             '<div class="label">' + value[1] + '</div>' +
-            '<div class="symbol linear ' + me.className() + '-' + value[0] + '" />' +
+            '<div class="symbol linear ' + me.className() + '-' + value[0] + '" ></div>' +
             '</div>';
         }).join('')+ '</div>';
       };
@@ -97,7 +97,7 @@
       return assetConfig.authorizationPolicy.editModeAccess();
     };
 
-    var element = $('<div class="panel-group ' + me.className()+ '"/>');
+    var element = $('<div class="panel-group ' + me.className()+ '"></div>');
 
     this.getElement = function () {
       return element;

@@ -16,7 +16,7 @@
         var manoeuvreLegendTemplate = _.map(values, function(value, idx) {
             return '<div class="pop-up-legend-entry">' +
                 '<div class="pop-up-label">' + value + '</div>' +
-                '<div class="pop-up-symbol linear-' + idx + '" />' +
+                '<div class="pop-up-symbol linear-' + idx + '" ></div>' +
                 '</div>';
         }).join('');
 
@@ -24,7 +24,7 @@
             '  <div id="pop-up-construction-type-legend" class="panel-section panel-legend linear-asset-legend construction-type-legend">',
             '    <div class="legend-entry">',
             '      <div class="pop-up-label">Väliaikaisesti poissa käytöstä (haalennettu linkki)</div>',
-            '      <div class="symbol linear construction-type-4"/>',
+            '      <div class="symbol linear construction-type-4"></div>',
             '    </div>',
             '  </div>'
         ].join('');

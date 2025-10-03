@@ -46,11 +46,11 @@
 
       var tableContentRows = function (municipalities) {
         return _.map(municipalities, function (municipality) {
-          return $('<tr/>').append($('<td/>').append(idLink(municipality)));
+          return $('<tr></tr>').append($('<td></td>').append(idLink(municipality)));
         });
       };
       var idLink = function (municipality) {
-        return $('<a class="work-list-item"/>').attr('href', me.hrefDir +'/'+municipality.id).html(municipality.name).click(function(){
+        return $('<a class="work-list-item"></a>').attr('href', me.hrefDir +'/'+municipality.id).html(municipality.name).click(function(){
           me.createVerificationForm(municipality);
         });
 
@@ -61,14 +61,14 @@
     this.workListItemTable = function(workListItems, layerName, municipalityId) {
       var municipalityHeader = function(municipalityName, totalCount) {
         var countString = totalCount && layerName !== 'speedLimitUnknown' ? ' (yhteensä ' + totalCount + ' kpl)' : '';
-        return $('<h2/>').html(municipalityName + countString);
+        return $('<h2></h2>').html(municipalityName + countString);
       };
       var tableHeaderRow = function(headerName) {
-        return $('<caption/>').html(headerName);
+        return $('<caption></caption>').html(headerName);
       };
       var tableContentRows = function(ids) {
         return _.map(ids, function(item, index) {
-          return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item, index) : idLink(item, index)));
+          return $('<tr></tr>').append($('<td></td>').append(typeof item.id !== 'undefined' ? assetLink(item, index) : idLink(item, index)));
         });
       };
       var tableBodyRows = function (values) {
@@ -76,14 +76,14 @@
       };
       var idLink = function(id, index) {
         var link = '#' + layerName + '/' + id  ;
-        return $('<a class="work-list-item"/>').attr('href', link + '/municipality/' +municipalityId +'/'+ index).attr('id', index).html(link);
+        return $('<a class="work-list-item"></a>').attr('href', link + '/municipality/' +municipalityId +'/'+ index).attr('id', index).html(link);
       };
       var floatingValidator = function() {
         return $('<span class="work-list-item"> &nbsp; *</span>');
       };
       var assetLink = function(asset, index) {
         var link = '#' + layerName + '/' + asset.id;
-        var workListItem = $('<a class="work-list-item"/>').attr('href', link + '/' +municipalityId +'/'+ index).attr('id', index).html(link);
+        var workListItem = $('<a class="work-list-item"></a>').attr('href', link + '/' +municipalityId +'/'+ index).attr('id', index).html(link);
         if(asset.floatingReason === 1) //floating reason equal to RoadOwnerChanged
           workListItem.append(floatingValidator);
         return workListItem;
@@ -91,12 +91,12 @@
       var tableForGroupingValues = function(values, ids, count) {
         if (!ids || ids.length === 0) return '';
         var countString = count ? ' (' + count + ' kpl)' : '';
-        return $('<table/>').addClass('table')
+        return $('<table></table>').addClass('table')
           .append(tableHeaderRow(values + countString))
           .append(tableBodyRows(ids));
       };
 
-      return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
+      return $('<div></div>').append(municipalityHeader(municipalityName, workListItems.totalCount))
         .append(tableForGroupingValues('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
         .append(tableForGroupingValues('Valtion omistama', workListItems.State, workListItems.stateCount))
         .append(tableForGroupingValues('Yksityisen omistama', workListItems.Private, workListItems.privateCount))

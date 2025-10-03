@@ -39,11 +39,11 @@
 
       var tableContentRows = function (municipalities) {
         return _.map(municipalities, function (municipality) {
-          return $('<tr/>').append($('<td/>').append(idLink(municipality)));
+          return $('<tr></tr>').append($('<td></td>').append(idLink(municipality)));
         });
       };
       var idLink = function (municipality) {
-        return $('<a class="work-list-item"/>').attr('href', me.hrefDir).html(municipality.name).click(function(){
+        return $('<a class="work-list-item"></a>').attr('href', me.hrefDir).html(municipality.name).click(function(){
           fromMunicipalityTabel = true;
           me.createVerificationForm(municipality);
         });
@@ -85,7 +85,7 @@
 
     var unknownLimitsTable = function (workListItems, municipalityName, municipalityId) {
       var selected = [];
-      var refreshButton = $('<button />').addClass('btn btn-quinary btn-refresh')
+      var refreshButton = $('<button></button>').addClass('btn btn-quinary btn-refresh')
         .text('Tiedot viimeksi päivitetty: ' + workListItems.refreshDate)
         .append("<img src='images/icons/refresh-icon.png'/>")
         .click(function(){
@@ -150,10 +150,10 @@
           });
       };
 
-      var pdf = $('<div id="pdf"/>');
+      var pdf = $('<div id="pdf"></div>');
 
       var municipalityHeader = function (municipalityName) {
-        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton).append(printReportButton).append(privateRoadInfoListButton);
+        return $('<div class="municipality-header"></div>').append($('<h2></h2>').html(municipalityName)).append(refreshButton).append(printReportButton).append(privateRoadInfoListButton);
       };
 
       var tableHeaderRow = function () {
@@ -239,14 +239,14 @@
           '</tr>';
       };
 
-      var saveBtn = $('<button />').addClass('save btn btn-municipality').text('Merkitse tarkistetuksi').click(function () {
+      var saveBtn = $('<button></button>').addClass('save btn btn-municipality').text('Merkitse tarkistetuksi').click(function () {
         $("input:checkbox[class=verificationCheckbox]:checked").each(function () {
           selected.push(parseInt(($(this).attr('value'))));
         });
         backend.verifyMunicipalityAssets(selected, municipalityId);
       });
 
-      var deleteBtn = $('<button />').addClass('delete btn btn-municipality').text('Nollaa').click(function () {
+      var deleteBtn = $('<button></button>').addClass('delete btn btn-municipality').text('Nollaa').click(function () {
         new GenericConfirmPopup("Haluatko varmasti nollata tietolajin tarkistuksen?", {
           container: '#work-list',
           successCallback: function () {
@@ -265,7 +265,7 @@
           .append(tableBodyRows(values));
       };
 
-      return $('<div id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems.properties)).append(deleteBtn).append(saveBtn).append(pdf);
+      return $('<div id="formTable"></div>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems.properties)).append(deleteBtn).append(saveBtn).append(pdf);
     };
 
     this.generateWorkList = function (listP) {

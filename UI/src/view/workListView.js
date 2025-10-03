@@ -36,15 +36,15 @@
 
       var municipalityHeader = function(municipalityName, totalCount) {
         var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
-        return $('<h2/>').html(municipalityName + countString);
+        return $('<h2></h2>').html(municipalityName + countString);
       };
       var tableHeaderRow = function(headerName) {
-        return $('<caption/>').html(headerName);
+        return $('<caption></caption>').html(headerName);
       };
 
       var checkbox = function(itemId) {
         if(showDeleteCheckboxes) {
-          return $('<td class="unknownSpeedLimitCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+          return $('<td class="unknownSpeedLimitCheckboxWidth"></td>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
         }
       };
 
@@ -62,20 +62,20 @@
             idToShow = idLink(item);
           }
 
-          return $('<tr/>').append(checkboxFunction).append($('<td/>').append(idToShow)).append($('<td/>').append(image));
+          return $('<tr></tr>').append(checkboxFunction).append($('<td></td>').append(idToShow)).append($('<td></td>').append(image));
         });
       };
 
       var idLink = function(id) {
         var link = '#' + layerName + '/' + id;
-        return $('<a class="work-list-item"/>').attr('href', link).html(link);
+        return $('<a class="work-list-item"></a>').attr('href', link).html(link);
       };
       var floatingValidator = function() {
         return $('<span class="work-list-item"> &nbsp; *</span>');
       };
       var assetLink = function(asset) {
         var link = '#' + layerName + '/' + asset.id;
-        var workListItem = $('<a class="work-list-item"/>').attr('href', link).html(link);
+        var workListItem = $('<a class="work-list-item"></a>').attr('href', link).html(link);
         if(asset.floatingReason === 1) //floating reason equal to RoadOwnerChanged
           workListItem.append(floatingValidator);
         return workListItem;
@@ -92,7 +92,7 @@
       var deleteBtn = function(){
       if(showDeleteCheckboxes && numberOfLimits === 0) {
         numberOfLimits++;
-          return $('<button disabled/>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
+          return $('<button disabled></button>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
             new GenericConfirmPopup("Haluatko varmasti poistaa valitut tuntemattomat nopeusrajoitukset?", {
               container: '#work-list',
               successCallback: function () {
@@ -113,7 +113,7 @@
       };
 
       if(layerName === 'maintenanceRoad') {
-        var table = $('<div/>');
+        var table = $('<div></div>');
         table.append(tableForGroupingValues('Tuntematon', workListItems.Unknown));
         for(var i=1; i<=12; i++) {
           table.append(tableForGroupingValues(i, workListItems[i]));
@@ -121,7 +121,7 @@
         return table;
       } else
 
-        return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount).append(deleteBtn()))
+        return $('<div></div>').append(municipalityHeader(municipalityName, workListItems.totalCount).append(deleteBtn()))
           .append(tableForGroupingValues('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
           .append(tableForGroupingValues('Valtion omistama', workListItems.State, workListItems.stateCount))
           .append(tableForGroupingValues('Yksityisen omistama', workListItems.Private, workListItems.privateCount))

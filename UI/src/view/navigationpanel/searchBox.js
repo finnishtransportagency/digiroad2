@@ -1,8 +1,8 @@
 (function(root) {
   root.SearchBox = function(instructionsPopup, locationSearch) {
     var tooltip ="Hae katuosoitteella, tieosoitteella, koordinaateilla tai kohteen ID:llä (esim. link_ID tai pysäkin valtakunnallinen_ID)";
-    var groupDiv = $('<div class="panel-group search-box"/>');
-    var coordinatesDiv = $('<div class="panel"/>');
+    var groupDiv = $('<div class="panel-group search-box"></div>');
+    var coordinatesDiv = $('<div class="panel"></div>');
     var coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" title="' + tooltip + '"/>');
     var moveButton = $('<button class="btn btn-sm btn-primary">Hae</button>');
     var panelHeader = $('<div class="panel-header"></div>').append(coordinatesText).append(moveButton);

@@ -124,7 +124,7 @@
     else if (selectedMassTransitStopModel.isServicePointType(busStopTypeSelected))
       deleteMessage = 'palvelupiste';
 
-    var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
+    var element = $('<button ></button>').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
         new GenericConfirmPopup('Haluatko varmasti poistaa ' + deleteMessage + '?', {
           successCallback: function () {
@@ -218,7 +218,7 @@
   };
 
   var CancelButton = function() {
-    var element = $('<button />').prop('disabled', !selectedMassTransitStopModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+    var element = $('<button ></button>').prop('disabled', !selectedMassTransitStopModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
       rootElement.find("#feature-attributes-header").empty();
       rootElement.find("#feature-attributes-form").empty();
       rootElement.find("#feature-attributes-footer").empty();
@@ -267,9 +267,9 @@
         readOnly = authorizationPolicy.formEditModeAccess() || editingRestrictions.pointAssetHasRestriction(selectedMassTransitStopModel.getMunicipalityCode(), selectedMassTransitStopModel.getAdministrativeClass(), typeId);
         var wrapper;
         if(readOnly){
-          wrapper = $('<div />').addClass('wrapper read-only');
+          wrapper = $('<div ></div>').addClass('wrapper read-only');
         } else {
-          wrapper = $('<div />').addClass('wrapper edit-mode');
+          wrapper = $('<div ></div>').addClass('wrapper edit-mode');
         }
         streetViewHandler = getStreetView();
 
@@ -281,10 +281,10 @@
         }
 
         wrapper.append(streetViewHandler.render())
-            .append($('<div />').addClass('form form-horizontal form-dark form-masstransitstop').attr('role', 'form').append(userInformationLog()).append(components));
+            .append($('<div ></div>').addClass('form form-horizontal form-dark form-masstransitstop').attr('role', 'form').append(userInformationLog()).append(components));
 
         var buttons = function (busStopTypeSelected) {
-          return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
+          return $('<div></div>').addClass('mass-transit-stop').addClass('form-controls')
               .append(new walkingCyclingErrorLabel().element)
               .append($('<br>'))
               .append(new missingInfoLabel().element)
@@ -307,7 +307,7 @@
 
         rootElement.find("#feature-attributes-header").html(busStopHeader());
         rootElement.find("#feature-attributes-form").html(wrapper);
-        rootElement.find("#feature-attributes-footer").html($('<div />').addClass('mass-transit-stop form-controls').append(buttons(busStopTypeSelected)));
+        rootElement.find("#feature-attributes-footer").html($('<div ></div>').addClass('mass-transit-stop form-controls').append(buttons(busStopTypeSelected)));
         addDatePickers();
 
         /*After added the form to the html, validate if tarkenne is to show or not */
@@ -371,7 +371,7 @@
       };
 
       var createTerminalLabelElement = function(property) {
-        var label = $('<label />').addClass('control-terminal-label').text(property.localizedName);
+        var label = $('<label ></label>').addClass('control-terminal-label').text(property.localizedName);
         if (property.required) {
           label.addClass('required');
         }
@@ -385,11 +385,11 @@
       };
 
       var createFormRowDiv = function() {
-        return $('<div />').addClass('form-group');
+        return $('<div ></div>').addClass('form-group');
       };
 
       var createLabelElement = function(property) {
-        var label = $('<label />').addClass('control-label').text(property.localizedName);
+        var label = $('<label ></label>').addClass('control-label').text(property.localizedName);
         if (property.required) {
           label.addClass('required');
         }
@@ -439,23 +439,23 @@
         var outer = createFormRowDiv();
         var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
         if (property.propertyType === 'read_only_text' && !_.includes(['yllapitajan_koodi','liitetty_terminaaliin'], property.publicId)) {
-          outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + informationLog(propertyVal) ));
+          outer.append($('<p ></p>').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + informationLog(propertyVal) ));
         } else {
           outer.append(createLabelElement(property));
-          outer.append($('<p />').addClass('form-control-static').text(propertyVal));
+          outer.append($('<p ></p>').addClass('form-control-static').text(propertyVal));
         }
         return outer;
       };
 
       var createRoadAddressInfoLabel = function(property){
-        roadAddressInfoLabel = $('<div />').addClass('form-list').append($('<label />').addClass('control-label control-label-list').text('TIEOSOITE'));
+        roadAddressInfoLabel = $('<div ></div>').addClass('form-list').append($('<label ></label>').addClass('control-label control-label-list').text('TIEOSOITE'));
         roadAddressInfoLabel.append(addRoadAddressAttribute(property));
       };
 
       var addRoadAddressAttribute = function(property) {
-        return ($('<ul />').addClass('label-list')
-          .append($('<li />').append($('<label />').text(property.publicId)))
-          .append($('<li />').append($('<label />').text(_.isEmpty(property.values) ? '' :  property.values[0].propertyDisplayValue))));
+        return ($('<ul ></ul>').addClass('label-list')
+          .append($('<li ></li>').append($('<label ></label>').text(property.publicId)))
+          .append($('<li ></li>').append($('<label ></label>').text(_.isEmpty(property.values) ? '' :  property.values[0].propertyDisplayValue))));
       };
 
       var isRoadAddressProperty = function(property){
@@ -489,7 +489,7 @@
         var elementType;
 
         if (readOnly) {
-          elementType = $('<p />').addClass('form-control-static');
+          elementType = $('<p ></p>').addClass('form-control-static');
           element = elementType;
 
           if (property.values[0]) {
@@ -500,13 +500,13 @@
         } else {
 
           if (property.publicId === 'palvelun_lisätieto')
-            elementType = $('<textarea />').addClass('form-control large-input').attr('id', property.publicId);
+            elementType = $('<textarea ></textarea>').addClass('form-control large-input').attr('id', property.publicId);
 
           /*special case
           we want to send and receive the value of viranomaisdataa from/to server
            */
           else if (property.publicId === 'viranomaisdataa') {
-            elementType = $('<p />').addClass('form-control-static').attr('id', property.publicId);
+            elementType = $('<p ></p>').addClass('form-control-static').attr('id', property.publicId);
 
             if(property.values[0]) {
               elementType.text(property.values[0].propertyDisplayValue);
@@ -514,7 +514,7 @@
 
           }else
             elementType = property.propertyType === 'long_text' ?
-             $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
+             $('<textarea ></textarea>').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
 
           element = elementType.bind('input', function(target){
             if(property.numCharacterMax)
@@ -560,7 +560,7 @@
         var isTRReadOnlyEquipment = isTRMassTransitStop && isReadOnlyEquipment(property);
 
         if (readOnly || isTRReadOnlyEquipment) {
-          element = $('<p />').addClass('form-control-static').addClass(property.publicId +'-select');
+          element = $('<p ></p>').addClass('form-control-static').addClass(property.publicId +'-select');
 
           if (property.values && property.values[0]) {
             element.text(property.values[0].propertyDisplayValue);
@@ -568,7 +568,7 @@
             element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
-          element = $('<select />').addClass('form-control')
+          element = $('<select ></select>').addClass('form-control')
               .addClass(property.publicId +'-select')
               .change(function(x){
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value}], property.propertyType, property.required);
@@ -596,7 +596,7 @@
 
       var createSuggestedCheckBoxElement = function (readOnly, property) {
         if(readOnly) {
-            var item = $('<p />');
+            var item = $('<p ></p>');
             item.addClass('form-control-static');
             item.text('Kyllä');
             return item;
@@ -631,7 +631,7 @@
       };
 
       var createDirectionChoiceElement = function(property) {
-        var element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
+        var element = $('<button ></button>').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
           selectedMassTransitStopModel.switchDirection();
           streetViewHandler.update();
         });
@@ -655,7 +655,7 @@
       var notificationHandler = function(property) {
         if (property.enabled) {
           var row = createFormRowDiv().addClass('form-notification');
-          row.append($('<p />').text(property.text));
+          row.append($('<p ></p>').text(property.text));
           return row;
         } else {
           return [];
@@ -665,7 +665,7 @@
       var createDateElement = function(readOnly, property) {
         var element;
         if (readOnly) {
-          element = $('<p />').addClass('form-control-static');
+          element = $('<p ></p>').addClass('form-control-static');
 
           if (property.values[0]) {
             element.text(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
@@ -700,9 +700,9 @@
         var enumValues = property.values;
 
         if (readOnly) {
-          element = $('<ul />');
+          element = $('<ul ></ul>');
         } else {
-          element = $('<div />');
+          element = $('<div ></div>');
         }
 
         element.addClass('choice-terminal-group');
@@ -710,12 +710,12 @@
         element = _.reduce(enumValues, function (element, value) {
           if (readOnly) {
             if (value.checked) {
-              var item = $('<li />');
+              var item = $('<li ></li>');
               item.text(value.propertyDisplayValue);
               element.append(item);
             }
           } else {
-            var container = $('<div class="checkbox" />');
+            var container = $('<div class="checkbox" ></div>');
             var input = $('<input type="checkbox" />').change(function (evt) {
               value.checked = evt.currentTarget.checked;
               var values = _.chain(enumValues)
@@ -738,7 +738,7 @@
 
             input.prop('checked', value.checked);
 
-            var label = $('<label />').text(value.propertyDisplayValue);
+            var label = $('<label ></label>').text(value.propertyDisplayValue);
             element.append(container.append(label.append(input)));
           }
 
@@ -784,9 +784,9 @@
           .value();
 
         if (readOnly) {
-          element = $('<ul />');
+          element = $('<ul ></ul>');
         } else {
-          element = $('<div />');
+          element = $('<div ></div>');
         }
 
         element.addClass('choice-group');
@@ -803,13 +803,13 @@
 
           if (readOnly) {
             if (value.checked) {
-              var item = $('<li />');
+              var item = $('<li ></li>');
               item.text(value.propertyDisplayValue);
 
               element.append(item);
             }
           } else {
-            var container = $('<div class="checkbox" />');
+            var container = $('<div class="checkbox" ></div>');
             var input = $('<input type="checkbox" />').change(function (evt) {
               if (shouldDisable) return;
               value.checked = evt.currentTarget.checked;
@@ -831,7 +831,7 @@
               input.prop('disabled', true);
             }
 
-            var label = $('<label />').text(value.propertyDisplayValue);
+            var label = $('<label ></label>').text(value.propertyDisplayValue);
             element.append(container.append(label.append(input)));
           }
 
@@ -988,7 +988,7 @@
           }
         });
 
-        var assetForm = $('<div />').append(components);
+        var assetForm = $('<div ></div>').append(components);
 
         if(selectedMassTransitStopModel.getId() && !readOnly) {
           var stopDeleteButton = MStopDeletebutton(readOnly);
@@ -1150,14 +1150,14 @@
                            return choice.publicId === 'palvelu';
                       }).values;
 
-        var result = $('<div />').addClass('form-group new-service');
+        var result = $('<div ></div>').addClass('form-group new-service');
 
         result = result.append(infoLabels)
-                        .append($('<label />').text('Palvelu').addClass('control-label'))
-                        .append($('<select />').addClass('form-control select').change(newServiceSelectOnChange)
-                        .append($('<option />').text('Lisää uusi palvelu').addClass('empty').attr('disabled', true).attr('selected', true))
+                        .append($('<label ></label>').text('Palvelu').addClass('control-label'))
+                        .append($('<select ></select>').addClass('form-control select').change(newServiceSelectOnChange)
+                        .append($('<option ></option>').text('Lisää uusi palvelu').addClass('empty').attr('disabled', true).attr('selected', true))
                         .append(enumVals.map(function (enumVal) {
-                            return $('<option>').text(enumVal.propertyDisplayValue).attr('value', enumVal.propertyValue);
+                            return $('<option></option>').text(enumVal.propertyDisplayValue).attr('value', enumVal.propertyValue);
                           })));
 
         return result;

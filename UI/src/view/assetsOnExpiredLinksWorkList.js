@@ -92,11 +92,11 @@
             };
 
             var checkbox = function (itemId) {
-                return $('<td class="laneWorkListCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+                return $('<td class="laneWorkListCheckboxWidth"></td>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
             };
 
             var deleteBtn = function () {
-                return $('<button disabled/>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
+                return $('<button disabled></button>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
                     new GenericConfirmPopup("Haluatko varmasti poistaa valitut kohteet työlistasta?", {
                         container: '#work-list',
                         successCallback: function () {
@@ -126,7 +126,7 @@
 
             };
 
-            return $('<div/>')
+            return $('<div></div>')
                 .append(deleteBtn())
                 .append(tableForGroupingValues(workListItems));
         };
