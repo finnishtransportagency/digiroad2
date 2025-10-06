@@ -23,10 +23,10 @@
             var selectedToDelete = [];
             var tableContentRows = function (items) {
                 return items.map(function (item) {
-                    return $('<tr/>')
+                    return $('<tr></tr>')
                         .append(checkbox(item.assetId))
-                        .append($('<td/>').html(changeRow(item)))
-                        .append($('<td/>').append(openMapButton(item)));
+                        .append($('<td></td>').html(changeRow(item)))
+                        .append($('<td></td>').append(openMapButton(item)));
                 });
             };
 
@@ -56,15 +56,15 @@
                 var additionalInfoRow = "<p><strong>Muu tarkenne:</strong> " + item.additionalInfo + "</p>";
                 var createdDateRow = "<p><strong>Työlistakohteen luontipäivänmäärä:</strong> " + item.createdDate + "</p>";
 
-                return $('<div/>').html(idRow + linksRow + validityPeriodsRow + exceptionTypesRow + additionalInfoRow + createdDateRow);
+                return $('<div></div>').html(idRow + linksRow + validityPeriodsRow + exceptionTypesRow + additionalInfoRow + createdDateRow);
             };
 
             var checkbox = function (itemId) {
-                return $('<td class="manoeuvreWorkListCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+                return $('<td class="manoeuvreWorkListCheckboxWidth"></td>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
             };
 
             var openMapButton = function (item) {
-                return $('<button/>')
+                return $('<button></button>')
                     .addClass('btn btn-municipality')
                     .text('Avaa kartalla')
                     .click(function () {
@@ -74,7 +74,7 @@
 
 
             var deleteBtn = function () {
-                return $('<button disabled/>')
+                return $('<button disabled></button>')
                     .attr('id', 'deleteWorkListItems')
                     .addClass('delete btn btn-municipality')
                     .text('Päätä valitut kohteet')
@@ -129,7 +129,7 @@
                     .append('</tbody></table>');
             };
 
-            return $('<div/>')
+            return $('<div></div>')
                 .append(deleteBtn())
                 .append(addTable(workListItems));
         };

@@ -39,8 +39,8 @@
         var someValue = _.head(fieldValue, function(values) { return values.value ; });
         var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
 
-        me.element = $('<div class="form-group" />');
-        me.element.append($('<label class="control-label" />').addClass(me.required() ? 'required' : '').text(field.label));
+        me.element = $('<div class="form-group"></div>');
+        me.element.append($('<label class="control-label"></label>').addClass(me.required() ? 'required' : '').text(field.label));
 
         var inputLabel = $('<input type="text" ' + me.disabled() + '/>').addClass('form-control')
           .attr('id', field.publicId + sideCode)
@@ -762,7 +762,7 @@
       var selectedLinearAsset = assetTypeConfiguration.selectedLinearAsset;
       var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
-      var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
+      var element = $('<button></button>').addClass('save btn btn-primary').prop('disabled', !selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
         var confirmationPopUpOptions = {
           type: "confirm",
           yesButtonLbl: 'Tallenna',
@@ -797,7 +797,7 @@
       var selectedLinearAsset = assetTypeConfiguration.selectedLinearAsset;
       var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
-      var element = $('<button />').prop('disabled', !selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+      var element = $('<button></button>').prop('disabled', !selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
         selectedLinearAsset.setCurrentLane(parseInt(laneNumber)+1);
         currentFormStructure = mainLaneFormStructure;
         selectedLinearAsset.cancel();

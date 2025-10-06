@@ -6,7 +6,7 @@
     var manoeuvreLegendTemplate = _.map(values, function(value, idx) {
       return '<div class="legend-entry">' +
         '<div class="label">' + value + '</div>' +
-        '<div class="symbol linear limit-' + idx + '" />' +
+        '<div class="symbol linear limit-' + idx + '" ></div>' +
         '</div>';
     }).join('');
 
@@ -14,7 +14,7 @@
         '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
         '    <div class="legend-entry">',
         '      <div class="label">Väliaikaisesti poissa käytöstä (haalennettu linkki)</div>',
-        '      <div class="symbol linear construction-type-4"/>',
+        '      <div class="symbol linear construction-type-4"></div>',
         '    </div>',
         '  </div>'
       ].join('');
@@ -70,7 +70,7 @@
 
     bindExternalEventHandlers();
 
-    var element = $('<div class="panel-group manoeuvres-limit manoeuvres"/>')
+    var element = $('<div class="panel-group manoeuvres-limit manoeuvres"></div>')
       .append(elements.expanded)
       .hide();
 

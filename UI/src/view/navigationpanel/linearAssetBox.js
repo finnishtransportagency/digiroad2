@@ -19,7 +19,7 @@
       return _.map(legendValues, function(value, idx) {
         return value ? '<div class="legend-entry">' +
           '<div class="label">' + value + '</div>' +
-          '<div class="symbol linear limit-' + idx + '" />' +
+          '<div class="symbol linear limit-' + idx + '" ></div>' +
           '</div>' : '';
       }).join('') + '</div>';
     };
@@ -75,7 +75,7 @@
 
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
-    var element = $('<div class="panel-group simple-limit ' + assetConfig.className + 's"/>');
+    var element = $('<div class="panel-group simple-limit ' + assetConfig.className + 's"></div>');
 
     this.template = function () {
       this.expanded = me.elements().expanded;

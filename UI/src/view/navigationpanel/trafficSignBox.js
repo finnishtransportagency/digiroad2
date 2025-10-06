@@ -43,7 +43,7 @@
         '</div>'].join(''));
     };
 
-    var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"/>');
+    var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"></div>');
 
     this.checkboxPanel = function () {
 

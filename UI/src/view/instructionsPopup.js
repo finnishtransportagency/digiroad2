@@ -2,7 +2,7 @@
   root.InstructionsPopup = function(container) {
     var element =
       '<div class="instructions-popup">' +
-        '<header/>' +
+        '<header></header>' +
       '</div>';
     container.append(element);
 

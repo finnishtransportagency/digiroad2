@@ -18,25 +18,25 @@
     this.workListItemTable = function(layerName, showDeleteCheckboxes, workListItems, municipalityName) {
 
       var municipalityHeader = function(municipalityName) {
-        return $('<h2/>').html(municipalityName);
+        return $('<h2></h2>').html(municipalityName);
       };
       var tableHeaderRow = function(headerName) {
-        return $('<caption/>').html(headerName);
+        return $('<caption></caption>').html(headerName);
       };
       var tableContentRows = function(Ids) {
         return _.map(Ids, function(item) {
-          return $('<tr/>').append($('<td/>').append(item.assetId ? assetLink(item) : idLink(item)));
+          return $('<tr></tr>').append($('<td></td>').append(item.assetId ? assetLink(item) : idLink(item)));
         });
       };
       var idLink = function(item) {
         var href =  '#' + layerName + '/linkId/' + item.linkId;
         var link =  '#' + layerName + '/' + item.linkId;
-        return $('<a class="work-list-item"/>').attr('href', href).html(link);
+        return $('<a class="work-list-item"></a>').attr('href', href).html(link);
       };
 
       var assetLink = function(item) {
         var link = '#' + layerName + '/' + item.assetId;
-        return $('<a class="work-list-item"/>').attr('href', link).html(link);
+        return $('<a class="work-list-item"></a>').attr('href', link).html(link);
       };
 
       var tableForGroupingValues = function(values, Ids) {
@@ -47,7 +47,7 @@
           .append('</tbody></table>');
       };
 
-      return $('<div/>').append(municipalityHeader(municipalityName))
+      return $('<div></div>').append(municipalityHeader(municipalityName))
           .append(tableForGroupingValues('Kunnan omistama', workListItems.Municipality))
           .append(tableForGroupingValues('Valtion omistama', workListItems.State))
           .append(tableForGroupingValues('Yksityisen omistama', workListItems.Private))

@@ -314,7 +314,7 @@
       backend.getCsvReport(id).then(function(info){
         var csvFile = new Blob(["\ufeff", info.content], {type: "text/csv;charset=ANSI"});
 
-        var auxElem = $('<a />').attr("id","tmp_csv_dwn").attr("href",window.URL.createObjectURL(csvFile)).attr("download", info.fileName);
+        var auxElem = $('<a></a>').attr("id","tmp_csv_dwn").attr("href",window.URL.createObjectURL(csvFile)).attr("download", info.fileName);
         auxElem[0].click(); /*trigger href*/
       });
     }
