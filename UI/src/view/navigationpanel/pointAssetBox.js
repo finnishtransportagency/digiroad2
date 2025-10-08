@@ -51,7 +51,7 @@
       var administrativeClassLegendEntries = _.map(enumerations.administrativeClasses, function(administrativeClass) {
         return '<div class="legend-entry">' +
           '<div class="label">'+ administrativeClass.text +'</div>' +
-          '<div class="symbol linear administrative-class-' + administrativeClass.value + '" />' +
+          '<div class="symbol linear administrative-class-' + administrativeClass.value + '" ></div>' +
           '</div>';
       });
 
@@ -61,15 +61,15 @@
         '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
         '    <div class="legend-entry">',
         '      <div class="label">Suunnitteilla</div>',
-        '      <div class="symbol linear construction-type-1"/>',
+        '      <div class="symbol linear construction-type-1"></div>',
         '    </div>',
         '    <div class="legend-entry">',
         '      <div class="label">Rakenteilla</div>',
-        '      <div class="symbol linear construction-type-2"/>',
+        '      <div class="symbol linear construction-type-2"></div>',
         '    </div>',
         '    <div class="legend-entry">',
         '      <div class="label">Väliaikaisesti poissa käytöstä (haalennettu linkki)</div>',
-        '      <div class="symbol linear construction-type-4"/>',
+        '      <div class="symbol linear construction-type-4"></div>',
         '    </div>',
         '  </div>'
         ].join('');
@@ -104,7 +104,7 @@
     ]);
 
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
-    var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"/>');
+    var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"></div>');
 
     function show() {
       if (!assetConfig.authorizationPolicy.editModeAccess()) {

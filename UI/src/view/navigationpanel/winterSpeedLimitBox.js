@@ -12,7 +12,7 @@
       return  _.map(speedLimits, function(speedLimit) {
         return '<div class="legend-entry">' +
           '<div class="label">' + speedLimit + '</div>' +
-          '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
+          '<div class="symbol linear speed-limit-' + speedLimit + '" ></div>' +
           '</div>';
       }).join('') + '</div>';
     };
@@ -21,7 +21,7 @@
       return assetConfig.authorizationPolicy.editModeAccess();
     };
 
-    var element = $('<div class="panel-group winter-speed-limits"/>');
+    var element = $('<div class="panel-group winter-speed-limits"></div>');
 
     this.getElement = function () {
       return element;

@@ -23,25 +23,25 @@
             var tableContentRows = function (items) {
                 var itemsSorted = _.sortBy(items, ["linkId", "createdAt"]);
                 return _.map(itemsSorted, function (item) {
-                    return $('<tr/>')
+                    return $('<tr></tr>')
                         .append(checkbox(item.id))
-                        .append($('<th/>')
+                        .append($('<th></th>')
                         .append(removedAndAddedLinkIds(item)));
                 });
             };
 
             var removedAndAddedLinkIds = function (item) {
-                return $('<dd class="roadLinkReplacementWorkListTextSize"/>')
+                return $('<dd class="roadLinkReplacementWorkListTextSize"></dd>')
                     .html("Poistetun tielinkin ID: " + item.removedLinkId +
                         "<br> Lisätyn tielinkin ID: " + item.addedLinkId);
             };
 
             var checkbox = function (itemId) {
-                return $('<td class="roadLinkReplacementCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+                return $('<td class="roadLinkReplacementCheckboxWidth"></td>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
             };
 
             var deleteBtn = function () {
-                return $('<button disabled/>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
+                return $('<button disabled></button>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
                     new GenericConfirmPopup("Haluatko varmasti poistaa valitut tielinkki parit työlistasta?", {
                         container: '#work-list',
                         successCallback: function () {
@@ -71,7 +71,7 @@
 
             };
 
-            return $('<div/>')
+            return $('<div></div>')
                 .append(deleteBtn())
                 .append(tableContentRows(workListItems));
         };

@@ -14,7 +14,7 @@
 
     this.Tool = function (toolName, icon) {
       var className = toolName.toLowerCase();
-      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function () {
+      var element = $('<div class="action"></div>').addClass(className).attr('action', toolName).append(icon).click(function () {
         me.executeOrShowConfirmDialog(function () {
           applicationModel.setSelectedTool(toolName);
         });
@@ -34,7 +34,7 @@
       };
     };
     this.ToolSelection = function (tools) {
-      var element = $('<div class="panel-section panel-actions" />');
+      var element = $('<div class="panel-section panel-actions"></div>');
       _.each(tools, function (tool) {
         element.append(tool.element);
       });
@@ -99,7 +99,7 @@
         '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
         '    <div class="legend-entry">',
         '      <div class="label">Väliaikaisesti poissa käytöstä (haalennettu linkki)</div>',
-        '      <div class="symbol linear construction-type-4"/>',
+        '      <div class="symbol linear construction-type-4"></div>',
         '    </div>',
         '  </div>'
       ].join('');

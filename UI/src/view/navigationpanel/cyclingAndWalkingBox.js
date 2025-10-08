@@ -35,7 +35,7 @@
             var legend =  _.map(auxLegend, function(legend) {
                 return '<div class="legend-entry">' +
                     '<div class="label">' + legend.text + '</div>' +
-                    '<div class="symbol linear cycling-and-walking-' + legend.index + '" />' +
+                    '<div class="symbol linear cycling-and-walking-' + legend.index + '" ></div>' +
                     '</div>';
             }).join('')+' </div>';
 
@@ -44,7 +44,7 @@
                 return !constructionType.visibleInLegend ? '' :
                   '<div class="legend-entry">' +
                     '<div class="label">' + constructionType.legendText + '</div>' +
-                    '<div class="symbol linear construction-type-' + constructionType.value + '" />' +
+                    '<div class="symbol linear construction-type-' + constructionType.value + '" ></div>' +
                     '</div>';
             }).join('')+ '</div>';
 
@@ -61,7 +61,7 @@
 
         this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
-        var element = $('<div class="panel-group cycling-and-walking"/>');
+        var element = $('<div class="panel-group cycling-and-walking"></div>');
 
         function show() {
             if (assetConfig.authorizationPolicy.editModeAccess()) {

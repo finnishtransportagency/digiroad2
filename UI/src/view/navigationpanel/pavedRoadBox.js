@@ -23,12 +23,12 @@
       return _.map(pavementClassValues, function (pavementClassValue) {
         return '<div class="legend-entry">' +
           '<div class="label">' + pavementClassValue[1] + '</div>' +
-          '<div class="symbol linear paved-road-' + pavementClassValue[0] + '" />' +
+          '<div class="symbol linear paved-road-' + pavementClassValue[0] + '" ></div>' +
           '</div>';
       }).join('') + '</div>';
     };
 
-    var element = $('<div class="panel-group paved-roads"/>');
+    var element = $('<div class="panel-group paved-roads"></div>');
 
     this.getElement = function () {
       return element;

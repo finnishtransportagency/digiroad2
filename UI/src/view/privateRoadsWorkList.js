@@ -57,7 +57,7 @@
         99: 'Ei toimitettu'
       };
 
-      var downloadCsvButton = $('<a />').addClass('btn btn-primary btn-download')
+      var downloadCsvButton = $('<a></a>').addClass('btn btn-primary btn-download')
         .text('Lataa CSV')
         .append("<img src='images/icons/export-icon.png'/>")
         .click(function() {
@@ -68,7 +68,7 @@
         });
 
       var municipalityHeader = function(municipalityName) {
-        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(downloadCsvButton);
+        return $('<div class="municipality-header"></div>').append($('<h2></h2>').html(municipalityName)).append(downloadCsvButton);
       };
 
       var tableHeaderRow = function() {
@@ -94,7 +94,7 @@
           .append($('<tbody>').append(tableBodyRows(values.results))).append('</tbody>');
       };
 
-      return $('<div id="formTable"/>').append(municipalityHeader(result.municipalityName)).append(tableForGroupingValues(result));
+      return $('<div id="formTable"></div>').append(municipalityHeader(result.municipalityName)).append(tableForGroupingValues(result));
     };
 
     this.generateWorkList = function(listP) {

@@ -93,7 +93,7 @@
       return '<div class="' + className + '-legend ' + _additionalClass + '">' + label + _.map(values, function(value) {
         return '<div class="legend-entry">' +
           '<div class="label">' + value[1] + '</div>' +
-          '<div class="symbol linear care-class-' + value[0] + '" />' +
+          '<div class="symbol linear care-class-' + value[0] + '" ></div>' +
           '</div>';
       }).join('') + '</div>';
     };
@@ -167,7 +167,7 @@
       return assetConfig.authorizationPolicy.editModeAccess();
     };
 
-    var element = $('<div class="panel-group care-class"/>');
+    var element = $('<div class="panel-group care-class"></div>');
 
     this.hideEditModeButton = function() {
       me.toolSelection.reset();

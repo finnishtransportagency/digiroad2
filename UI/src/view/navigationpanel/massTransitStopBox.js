@@ -77,7 +77,7 @@
       var administrativeClassLegendEntries = _.map(enumerations.administrativeClasses, function(administrativeClass) {
         return '<div class="legend-entry">' +
           '<div class="label">'+ administrativeClass.text +'</div>' +
-          '<div class="symbol linear administrative-class-' + administrativeClass.value + '" />' +
+          '<div class="symbol linear administrative-class-' + administrativeClass.value + '" ></div>' +
           '</div>';
       });
 
@@ -88,7 +88,7 @@
         return !constructionType.visibleInLegend ? '' :
           '<div class="legend-entry">' +
           '<div class="label">' + constructionType.legendText + '</div>' +
-          '<div class="symbol linear construction-type-' + constructionType.value + '" />' +
+          '<div class="symbol linear construction-type-' + constructionType.value + '" ></div>' +
           '</div>';
       }).join('')+ '</div>';
 
@@ -135,7 +135,7 @@
 
     this.editModeToggle = new EditModeToggleButton(me.toolSelection);
 
-    var element = $('<div class="panel-group mass-transit-stops"/>');
+    var element = $('<div class="panel-group mass-transit-stops"></div>');
 
     function show() {
       me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
