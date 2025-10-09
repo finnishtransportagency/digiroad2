@@ -39,13 +39,17 @@ class PostGISAssetDao {
   }
 
   /**
-    * When invoked will expire assets by Id.
+    * When invoked will expire given assets by Id.
     * It is required that the invoker takes care of the transaction.
     *
     * @param id Represets the id of the asset
     */
-  def expireAssetsById (id: Long): Unit = {
-    sqlu"update asset set valid_to = INTERVAL'1 SECOND' where id = $id".execute
+  def expireAssetsById (ids: Set[Long], userName: String): Unit = {
+    sqlu""" update asset
+            set valid_to = now(),
+            modified_by = ${userName}
+            where id in(#${ids.mkString(",")})""".execute
+
   }
 
   /**

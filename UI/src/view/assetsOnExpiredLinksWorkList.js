@@ -96,15 +96,15 @@
             };
 
             var deleteBtn = function () {
-                return $('<button disabled></button>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
-                    new GenericConfirmPopup("Haluatko varmasti poistaa valitut kohteet työlistasta?", {
+                return $('<button disabled></button>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Päätä valitut kohteet').click(function () {
+                    new GenericConfirmPopup("Haluatko varmasti päättää valitut kohteet ja poistaa ne työlistalta?", {
                         container: '#work-list',
                         successCallback: function () {
                             $(".verificationCheckbox:checkbox:checked").each(function () {
                                 selectedToDelete.push(parseInt(($(this).attr('value'))));
                             });
                             backend.deleteAssetsOnExpiredLinksWorkListItems(selectedToDelete, function () {
-                                new GenericConfirmPopup("Valitut kohteet poistettu!", {
+                                new GenericConfirmPopup("Valitut kohteet päätetty ja poistettu työlistalta!", {
                                     container: '#work-list',
                                     type: "alert",
                                     okCallback: function () {
@@ -112,7 +112,7 @@
                                     }
                                 });
                             }, function () {
-                                new GenericConfirmPopup("Valittuja kohteita ei voitu poistaa. Yritä myöhemmin uudelleen!", {
+                                new GenericConfirmPopup("Valittuja kohteita ei voitu päättää ja poistaa työlistalta. Yritä myöhemmin uudelleen!", {
                                     container: '#work-list',
                                     type: "alert"
                                 });

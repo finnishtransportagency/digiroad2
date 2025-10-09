@@ -1628,7 +1628,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     assetIdsToDeleteFromList match {
       case Some(assetIds) =>
-        assetsOnExpiredLinksService.deleteFromWorkList(assetIds, newTransaction = true)
+        assetsOnExpiredLinksService.expireAssetsByIdAndDeleteFromWorkList(assetIds, user.username, newTransaction = true)
       case None => halt(BadRequest("No ids to delete provided"))
     }
   }
