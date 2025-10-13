@@ -662,9 +662,9 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       LaneUpdater.updateSamuutusChangeSet(changeSet, Seq(trafficDirectionChange))
 
       val lanesOnOldLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
-      // Additional lane should stay on old link
-      lanesOnOldLinkAfter.size should equal(1)
-
+      // Additional lane should be expired and moved into history table
+      lanesOnOldLinkAfter.size should equal(0)
+      
       val lanesOnNewLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
       // Two main lanes should be generated for new link
       lanesOnNewLinkAfter.size should equal(2)
@@ -707,8 +707,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       LaneUpdater.updateSamuutusChangeSet(changeSet, Seq(trafficDirectionChange))
 
       val lanesOnOldLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
-      // Additional lane should stay on old link
-      lanesOnOldLinkAfter.size should equal(1)
+      // Additional lane should be expired and moved into history table
+      lanesOnOldLinkAfter.size should equal(0)
 
       val lanesOnNewLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
       // Two main lanes should be generated for new link

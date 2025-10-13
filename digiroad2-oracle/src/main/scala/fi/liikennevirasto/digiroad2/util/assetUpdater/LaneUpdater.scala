@@ -725,7 +725,7 @@ object LaneUpdater {
     }
 
     // Use filteredWorkListChanges instead of workListChanges below
-    val workListMainLanes = lanesOnWorkListLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
+    val workListMainLanes = lanesOnWorkListLinks
     val (trafficDirectionChangeSet, trafficDirectionCreatedMainLanes) =LogUtils.time(logger, s"handleTrafficDirectionChange ") {
       handleTrafficDirectionChange(filteredWorkListChanges, workListMainLanes, newRoadLinks)
     }
