@@ -82,7 +82,6 @@ class RoadAddressService() {
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     if (linkIds.nonEmpty) {
-      // TODO remove this call and try to use all ready fetched links or add support for long id list 
       val links = LogUtils.time(logger, s"TEST LOG Retrieve ${linkIds.size} linkId") {
         withDynTransaction { roadLinkService.getRoadLinksByLinkIds(linkIds.toSet)}
       }
@@ -92,8 +91,6 @@ class RoadAddressService() {
       Seq.empty[RoadAddressForLink]
     }
   }
-
-
   def getAllByRoadLinks(linkIds: Seq[RoadLink]): Seq[RoadAddressForLink] = {
     if (linkIds.nonEmpty) {
       logger.info(s"Start fetching road address for total of ${linkIds.size} link.")
