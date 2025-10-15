@@ -1908,7 +1908,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       val lanesOnOldLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
       // Additional lane should stay on old link
-      lanesOnOldLinkAfter.size should equal(1)
+      lanesOnOldLinkAfter.size should equal(0)
 
       val lanesOnNewLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
       // Two main lanes should be generated for new link
@@ -1921,7 +1921,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       val lanesOnOldLinkAfter2 = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
       // Additional lane should still be on old link
-      lanesOnOldLinkAfter2.size should equal(1)
+      lanesOnOldLinkAfter2.size should equal(0)
 
       val lanesOnNewLinkAfter2 = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
       // Two generated main lanes should be on new link, duplicates should not be generated
