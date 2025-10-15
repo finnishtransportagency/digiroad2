@@ -56,8 +56,7 @@ class RoadAddressService() {
   val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-// TODO This for adding lane by road address ?
+  
   def getRoadAddressesByRoadAddressRange(roadAddressRange: RoadAddressRange): Seq[RoadAddressForLink] = {
     val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
     val startLinkId = startAndEndLinkIdsForAllSegments._1
