@@ -3,18 +3,18 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
 import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, Parallel, RoadAddressRange}
-import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, RoadAddressException, Track, client}
+import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, Parallel, ResolvingFrozenRoadLinks, RoadAddressRange}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, MassLimitationAsset, Point, RoadAddressException, Track, client}
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import scala.collection.parallel.ParSeq
 
+import scala.collection.parallel.ParSeq
 import scala.compat.Platform.EOL
 
 case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
@@ -52,10 +52,12 @@ class RoadAddressService() {
   val vkmClient = new VKMClient
   val roadAddressTempDAO = new RoadAddressTempDAO
   val logger = LoggerFactory.getLogger(getClass)
+  val roadLinkClient: RoadLinkClient = new RoadLinkClient()
+  val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-
+// TODO This for adding lane by road address ?
   def getRoadAddressesByRoadAddressRange(roadAddressRange: RoadAddressRange): Seq[RoadAddressForLink] = {
     val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
     val startLinkId = startAndEndLinkIdsForAllSegments._1
@@ -81,37 +83,22 @@ class RoadAddressService() {
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     if (linkIds.nonEmpty) {
-      // VKM has a limit of 100 linear transformations per POST request
-      val linkIdChunks: Seq[Seq[String]] = linkIds.grouped(100).toSeq
-      val parallelChunks: ParSeq[Seq[String]] = linkIdChunks.par
-      val parallel = new Parallel()
-      val parallelismLevel = Math.min(linkIdChunks.size, 10)
-      logger.info(s"Start fetching road address for total of ${linkIds.size} link ids in ${linkIdChunks.size} chunks. Parallelism level: $parallelismLevel")
-      parallel.operation(parallelChunks, parallelismLevel) { parChunk =>
-        parChunk.flatMap { chunk =>
-          LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${chunk.size} linkIds") {
-            vkmClient.fetchRoadAddressesByLinkIds(chunk)
-          }
-        }
-      }.seq.toSeq
-    } else {
-      Seq.empty[RoadAddressForLink]
-    }
-  }
-  
-  def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = {
-    withDynTransaction {
-      val tempAddresses = roadAddressTempDAO.getByLinkIds(linkIds)
-      tempAddresses.map(temp => {
+      val links = withDynTransaction { roadLinkService.getRoadLinksByLinkIds(linkIds.toSet)}
+      val resolved = ResolvingFrozenRoadLinks.resolveByRoadLinks(links)._1.map(_.roadAddress)
+      resolved.map(temp => {
         val sideCode = temp.sideCode.getOrElse(SideCode.Unknown)
         RoadAddressForLink(id = 0, roadNumber = temp.road, roadPartNumber = temp.roadPart, track = temp.track,
           startAddrMValue = temp.startAddressM, endAddrMValue = temp.endAddressM,
           linkId = temp.linkId, startMValue = temp.startMValue, endMValue = temp.endMValue, sideCode = sideCode, geom = temp.geom, expired = false,
           createdBy = None, createdDate = None, modifiedDate = None)
       })
+    } else {
+      Seq.empty[RoadAddressForLink]
     }
   }
-
+  
+  def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = { Seq() }
+  
   /**
     * Returns the given road links with road address attributes
     *

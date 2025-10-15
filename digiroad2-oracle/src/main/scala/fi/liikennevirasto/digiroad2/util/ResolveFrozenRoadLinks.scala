@@ -202,15 +202,49 @@ trait ResolvingFrozenRoadLinks {
       roadLinkTempDao.deleteInfoByLinkIds(tempAddressLinkIdsToDelete.toSet)
     }
 
+    // !! TODO Simplify VKM calling, now system call at least three seperate intance VKM !!
     val roadAddressesByLinkIds = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
     val roadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
-      val linkIdsWithTempAddress = existingTempRoadAddress.map(_.linkId)
+      val linkIdsWithTempAddress = Seq()
       val linkIdsWithRoadAddress = roadAddressesByLinkIds.map(_.linkId)
       val hasAddressInfo = linkIdsWithRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
 
       !hasAddressInfo
     })
 
+    resolveByRoadLinks(roadLinksMissingAddress)
+  }
+  
+  def recalculateTracksRecursively(resolvedAddresses: Seq[RoadAddressTEMPwithPoint], tempAddressesUnresolved: Seq[RoadAddressTEMPwithPoint],
+                                   result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+    val newResult = calculateTrack(resolvedAddresses, tempAddressesUnresolved).filterNot(x => x.roadAddress.track == Track.Unknown)
+
+    if (newResult.isEmpty) {
+      result
+    } else {
+      val newResultLinkIds = newResult.map(_.roadAddress.linkId)
+      recalculateTracksRecursively(newResult ++ resolvedAddresses, tempAddressesUnresolved.filterNot(x => newResultLinkIds.contains(x.roadAddress.linkId)), result ++ newResult)
+    }
+  }
+
+  // Try to calculate temp road address Track using adjacent road address info
+  def calculateTrack(resolvedAddresses: Seq[RoadAddressTEMPwithPoint], tempAddressesUnresolved: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+
+    tempAddressesUnresolved.flatMap { tempAddressToCalculate =>
+      val otherTempAddressesUnresolved = tempAddressesUnresolved.filterNot(x => x.roadAddress.linkId == tempAddressToCalculate.roadAddress.linkId)
+      val resolvedAddressesOnSameRoadPart = resolvedAddresses.filter(resolvedAddress => resolvedAddress.roadAddress.road == tempAddressToCalculate.roadAddress.road &&
+        resolvedAddress.roadAddress.roadPart == tempAddressToCalculate.roadAddress.roadPart)
+
+      val frozenAddrFirst = calculateTrackUsingFirstPoint(tempAddressToCalculate, resolvedAddressesOnSameRoadPart, otherTempAddressesUnresolved)
+
+      if (frozenAddrFirst.nonEmpty) {
+        frozenAddrFirst
+      } else
+        calculateTrackUsingLastPoint(tempAddressToCalculate, resolvedAddressesOnSameRoadPart, tempAddressesUnresolved)
+    }
+  }
+// TODO move this into road address service
+  def resolveByRoadLinks(roadLinksMissingAddress: Seq[RoadLink]): (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
     val massQueryParams: Seq[MassQueryParamsCoord] = roadLinksMissingAddress.flatMap { roadLinkMissingAddress =>
       val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
       val roadNumberOpt = Try(roadLinkMissingAddress.roadNumber.map(_.toInt).head).toOption
@@ -265,36 +299,6 @@ trait ResolvingFrozenRoadLinks {
     val roadLinksAddressUnresolved = roadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
     (resolvedAddresses, roadLinksAddressUnresolved)
   }
-
-  def recalculateTracksRecursively(resolvedAddresses: Seq[RoadAddressTEMPwithPoint], tempAddressesUnresolved: Seq[RoadAddressTEMPwithPoint],
-                                   result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
-    val newResult = calculateTrack(resolvedAddresses, tempAddressesUnresolved).filterNot(x => x.roadAddress.track == Track.Unknown)
-
-    if (newResult.isEmpty) {
-      result
-    } else {
-      val newResultLinkIds = newResult.map(_.roadAddress.linkId)
-      recalculateTracksRecursively(newResult ++ resolvedAddresses, tempAddressesUnresolved.filterNot(x => newResultLinkIds.contains(x.roadAddress.linkId)), result ++ newResult)
-    }
-  }
-
-  // Try to calculate temp road address Track using adjacent road address info
-  def calculateTrack(resolvedAddresses: Seq[RoadAddressTEMPwithPoint], tempAddressesUnresolved: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
-
-    tempAddressesUnresolved.flatMap { tempAddressToCalculate =>
-      val otherTempAddressesUnresolved = tempAddressesUnresolved.filterNot(x => x.roadAddress.linkId == tempAddressToCalculate.roadAddress.linkId)
-      val resolvedAddressesOnSameRoadPart = resolvedAddresses.filter(resolvedAddress => resolvedAddress.roadAddress.road == tempAddressToCalculate.roadAddress.road &&
-        resolvedAddress.roadAddress.roadPart == tempAddressToCalculate.roadAddress.roadPart)
-
-      val frozenAddrFirst = calculateTrackUsingFirstPoint(tempAddressToCalculate, resolvedAddressesOnSameRoadPart, otherTempAddressesUnresolved)
-
-      if (frozenAddrFirst.nonEmpty) {
-        frozenAddrFirst
-      } else
-        calculateTrackUsingLastPoint(tempAddressToCalculate, resolvedAddressesOnSameRoadPart, tempAddressesUnresolved)
-    }
-  }
-
   def process(): Unit = {
 
     //Get All Municipalities
