@@ -87,22 +87,35 @@ class RoadAddressService() {
         withDynTransaction { roadLinkService.getRoadLinksByLinkIds(linkIds.toSet)}
       }
       logger.info(s"Start fetching road address for total of ${linkIds.size} link ids.")
-
-      val resolved = LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${linkIds.size} linkIds") {
-        ResolvingFrozenRoadLinks.resolveByRoadLinks(links)._1.map(_.roadAddress)
-      }
-      resolved.map(temp => {
-        val sideCode = temp.sideCode.getOrElse(SideCode.Unknown)
-        RoadAddressForLink(id = 0, roadNumber = temp.road, roadPartNumber = temp.roadPart, track = temp.track,
-          startAddrMValue = temp.startAddressM, endAddrMValue = temp.endAddressM,
-          linkId = temp.linkId, startMValue = temp.startMValue, endMValue = temp.endMValue, sideCode = sideCode, geom = temp.geom, expired = false,
-          createdBy = None, createdDate = None, modifiedDate = None)
-      })
+      resolver(links)
     } else {
       Seq.empty[RoadAddressForLink]
     }
   }
-  
+
+
+  def getAllByRoadLinks(linkIds: Seq[RoadLink]): Seq[RoadAddressForLink] = {
+    if (linkIds.nonEmpty) {
+      logger.info(s"Start fetching road address for total of ${linkIds.size} link.")
+      resolver(linkIds)
+    } else {
+      Seq.empty[RoadAddressForLink]
+    }
+  }
+
+
+  private def resolver(linkIds: Seq[RoadLink]) = {
+    val resolved = LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${linkIds.size} linkIds") {
+      ResolvingFrozenRoadLinks.resolveByRoadLinks(linkIds)._1.map(_.roadAddress)
+    }
+    resolved.map(temp => {
+      val sideCode = temp.sideCode.getOrElse(SideCode.Unknown)
+      RoadAddressForLink(id = 0, roadNumber = temp.road, roadPartNumber = temp.roadPart, track = temp.track,
+        startAddrMValue = temp.startAddressM, endAddrMValue = temp.endAddressM,
+        linkId = temp.linkId, startMValue = temp.startMValue, endMValue = temp.endMValue, sideCode = sideCode, geom = temp.geom, expired = false,
+        createdBy = None, createdDate = None, modifiedDate = None)
+    })
+  }
   def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = { Seq() }
   
   /**
@@ -114,7 +127,7 @@ class RoadAddressService() {
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink], logComment: String = ""): Seq[RoadLink] = {
     try {
       val linkIds = roadLinks.map(_.linkId)
-      val vkmRoadAddressesForLinks = getAllByLinkIds(linkIds)
+      val vkmRoadAddressesForLinks = getAllByRoadLinks(roadLinks)
       val vkmAddressData = vkmRoadAddressesForLinks.map(a => (a.linkId, a)).toMap
       val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
       val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap

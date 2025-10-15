@@ -42,7 +42,9 @@ case class RoadAddressRange(roadNumber: Long, track: Option[Track], startRoadPar
 /**
   * A class to transform ETRS89-FI coordinates to road network addresses
   */
-
+// TODO Remove roadAddressService: RoadAddressService, this create circular dependency and calls.
+// TODO Merger GeometryTransform and RoadAddressService
+// TODO GeometryTransform logic into RoadAddressService
 class GeometryTransform(roadAddressService: RoadAddressService) {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
 
@@ -55,7 +57,7 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
     val roadAddress =
-      try {
+      try { // TODO this method call also vkm by by linkID , Simplify to default resolveAddressAndLocation
         roadAddressService.getByLrmPosition(linkId, mValue)
       } catch {
         case rae: RoadAddressException =>
