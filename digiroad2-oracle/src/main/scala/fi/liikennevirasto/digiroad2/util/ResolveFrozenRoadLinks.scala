@@ -205,7 +205,7 @@ trait ResolvingFrozenRoadLinks {
     // !! TODO Simplify VKM calling, now system call at least three seperate intance VKM !!
     val roadAddressesByLinkIds = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
     val roadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
-      val linkIdsWithTempAddress = Seq()
+      val linkIdsWithTempAddress = existingTempRoadAddress.map(_.linkId)
       val linkIdsWithRoadAddress = roadAddressesByLinkIds.map(_.linkId)
       val hasAddressInfo = linkIdsWithRoadAddress.contains(roadLink.linkId) || linkIdsWithTempAddress.contains(roadLink.linkId)
 
