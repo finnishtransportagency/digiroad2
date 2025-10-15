@@ -82,8 +82,15 @@ class RoadAddressService() {
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     if (linkIds.nonEmpty) {
-      val links = withDynTransaction { roadLinkService.getRoadLinksByLinkIds(linkIds.toSet)}
-      val resolved = ResolvingFrozenRoadLinks.resolveByRoadLinks(links)._1.map(_.roadAddress)
+      // TODO remove this call and try to use all ready fetched links or add support for long id list 
+      val links = LogUtils.time(logger, s"TEST LOG Retrieve ${linkIds.size} linkId") {
+        withDynTransaction { roadLinkService.getRoadLinksByLinkIds(linkIds.toSet)}
+      }
+      logger.info(s"Start fetching road address for total of ${linkIds.size} link ids.")
+
+      val resolved = LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${linkIds.size} linkIds") {
+        ResolvingFrozenRoadLinks.resolveByRoadLinks(links)._1.map(_.roadAddress)
+      }
       resolved.map(temp => {
         val sideCode = temp.sideCode.getOrElse(SideCode.Unknown)
         RoadAddressForLink(id = 0, roadNumber = temp.road, roadPartNumber = temp.roadPart, track = temp.track,
