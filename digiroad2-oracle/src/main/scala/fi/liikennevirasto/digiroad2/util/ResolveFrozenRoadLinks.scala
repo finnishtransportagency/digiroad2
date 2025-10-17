@@ -201,8 +201,7 @@ trait ResolvingFrozenRoadLinks {
       logger.info("Deleting temp road address info on old link ids: " + tempAddressLinkIdsToDelete.mkString(", "))
       roadLinkTempDao.deleteInfoByLinkIds(tempAddressLinkIdsToDelete.toSet)
     }
-
-    // !! TODO Simplify VKM calling, now system call at least three seperate intance VKM !!
+    
     val roadAddressesByLinkIds = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
     val roadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
       val linkIdsWithTempAddress = existingTempRoadAddress.map(_.linkId)
@@ -215,7 +214,6 @@ trait ResolvingFrozenRoadLinks {
     resolveByRoadLinks(roadLinksMissingAddress)
   }
   
-// TODO move this into road address service
   def resolveByRoadLinks(roadLinksMissingAddress: Seq[RoadLink]): (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
     val massQueryParams: Seq[MassQueryParamsCoord] = roadLinksMissingAddress.flatMap { roadLinkMissingAddress =>
       val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
