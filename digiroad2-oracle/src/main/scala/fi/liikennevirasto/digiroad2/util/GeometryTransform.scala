@@ -57,7 +57,7 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
     val roadAddress =
-      try { // TODO this method call also vkm by by linkID , Simplify to default resolveAddressAndLocation
+      try { 
         roadAddressService.getByLrmPosition(linkId, mValue)
       } catch {
         case rae: RoadAddressException =>
