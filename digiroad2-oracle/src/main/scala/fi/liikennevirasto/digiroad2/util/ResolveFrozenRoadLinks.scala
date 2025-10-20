@@ -201,7 +201,7 @@ trait ResolvingFrozenRoadLinks {
       logger.info("Deleting temp road address info on old link ids: " + tempAddressLinkIdsToDelete.mkString(", "))
       roadLinkTempDao.deleteInfoByLinkIds(tempAddressLinkIdsToDelete.toSet)
     }
-
+    
     val roadAddressesByLinkIds = roadAddressService.groupRoadAddress(roadAddressService.getAllByLinkIds(roadLinksInMunicipality.map(_.linkId)))
     val roadLinksMissingAddress = roadLinksInMunicipality.filter(roadLink => {
       val linkIdsWithTempAddress = existingTempRoadAddress.map(_.linkId)
@@ -211,6 +211,10 @@ trait ResolvingFrozenRoadLinks {
       !hasAddressInfo
     })
 
+    resolveByRoadLinks(roadLinksMissingAddress)
+  }
+  
+  def resolveByRoadLinks(roadLinksMissingAddress: Seq[RoadLink]): (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
     val massQueryParams: Seq[MassQueryParamsCoord] = roadLinksMissingAddress.flatMap { roadLinkMissingAddress =>
       val (first, last) = GeometryUtils.geometryEndpoints(roadLinkMissingAddress.geometry)
       val roadNumberOpt = Try(roadLinkMissingAddress.roadNumber.map(_.toInt).head).toOption
@@ -265,7 +269,6 @@ trait ResolvingFrozenRoadLinks {
     val roadLinksAddressUnresolved = roadLinksMissingAddress.filterNot(missing => resolvedAddresses.map(_.roadAddress.linkId).contains(missing.linkId))
     (resolvedAddresses, roadLinksAddressUnresolved)
   }
-
   def recalculateTracksRecursively(resolvedAddresses: Seq[RoadAddressTEMPwithPoint], tempAddressesUnresolved: Seq[RoadAddressTEMPwithPoint],
                                    result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
     val newResult = calculateTrack(resolvedAddresses, tempAddressesUnresolved).filterNot(x => x.roadAddress.track == Track.Unknown)
@@ -294,7 +297,6 @@ trait ResolvingFrozenRoadLinks {
         calculateTrackUsingLastPoint(tempAddressToCalculate, resolvedAddressesOnSameRoadPart, tempAddressesUnresolved)
     }
   }
-
   def process(): Unit = {
 
     //Get All Municipalities

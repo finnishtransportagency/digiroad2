@@ -1,19 +1,18 @@
 package fi.liikennevirasto.digiroad2.service
 
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.asset.{Municipality, SideCode, State}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
 import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, Parallel, RoadAddressRange}
-import fi.liikennevirasto.digiroad2.{MassLimitationAsset, Point, RoadAddressException, Track, client}
+import fi.liikennevirasto.digiroad2.util.{LogUtils, ResolvingFrozenRoadLinks, RoadAddressRange, RoadAddressTEMP}
+import fi.liikennevirasto.digiroad2._
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import scala.collection.parallel.ParSeq
 
 import scala.compat.Platform.EOL
 
@@ -52,10 +51,11 @@ class RoadAddressService() {
   val vkmClient = new VKMClient
   val roadAddressTempDAO = new RoadAddressTempDAO
   val logger = LoggerFactory.getLogger(getClass)
+  val roadLinkClient: RoadLinkClient = new RoadLinkClient()
+  val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-
+  
   def getRoadAddressesByRoadAddressRange(roadAddressRange: RoadAddressRange): Seq[RoadAddressForLink] = {
     val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
     val startLinkId = startAndEndLinkIdsForAllSegments._1
@@ -80,38 +80,48 @@ class RoadAddressService() {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    if (linkIds.nonEmpty) {
-      // VKM has a limit of 100 linear transformations per POST request
-      val linkIdChunks: Seq[Seq[String]] = linkIds.grouped(100).toSeq
-      val parallelChunks: ParSeq[Seq[String]] = linkIdChunks.par
-      val parallel = new Parallel()
-      val parallelismLevel = Math.min(linkIdChunks.size, 10)
-      logger.info(s"Start fetching road address for total of ${linkIds.size} link ids in ${linkIdChunks.size} chunks. Parallelism level: $parallelismLevel")
-      parallel.operation(parallelChunks, parallelismLevel) { parChunk =>
-        parChunk.flatMap { chunk =>
-          LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${chunk.size} linkIds") {
-            vkmClient.fetchRoadAddressesByLinkIds(chunk)
-          }
-        }
-      }.seq.toSeq
-    } else {
-      Seq.empty[RoadAddressForLink]
-    }
+    if (linkIds.nonEmpty) vkmClient.fetchRoadAddressesByLinkIdsMassQuery(linkIds) else Seq.empty[RoadAddressForLink]
   }
-  
+
+
+  private def resolver(linkIds: Seq[RoadLink]) = {
+    val resolved = LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${linkIds.size} linkIds") {
+      val roadLinksMissingAddress= linkIds.filter(rl => rl.administrativeClass == State || rl.administrativeClass == Municipality)
+      ResolvingFrozenRoadLinks.resolveByRoadLinks(roadLinksMissingAddress)._1.map(_.roadAddress)
+    }
+    roadAddressTEMPIntoRoadAddressForLink(resolved)
+  }
+  private def getAddressByCoordinate(linkIds: Set[String]): Seq[RoadAddressForLink] = {
+    val links = LogUtils.time(logger, s"TEST LOG Retrieve ${linkIds.size} linkId") {
+      withDynTransaction {
+        roadLinkService.getRoadLinksByLinkIds(linkIds)
+      }
+    }
+    logger.info(s"Start fetching road address for total of ${linkIds.size} link ids.")
+    resolver(links)
+  }
+
+  private def getAddressByCoordinate(linkIds: Seq[RoadLink]): Seq[RoadAddressForLink] = {
+    logger.info(s"Start fetching road address for total of ${linkIds.size} link ids by using coordinates.")
+    resolver(linkIds)
+  }
+
   def getTempAddressesByLinkIdsAsRoadAddressForLink(linkIds: Set[String]): Seq[RoadAddressForLink] = {
     withDynTransaction {
       val tempAddresses = roadAddressTempDAO.getByLinkIds(linkIds)
-      tempAddresses.map(temp => {
-        val sideCode = temp.sideCode.getOrElse(SideCode.Unknown)
-        RoadAddressForLink(id = 0, roadNumber = temp.road, roadPartNumber = temp.roadPart, track = temp.track,
-          startAddrMValue = temp.startAddressM, endAddrMValue = temp.endAddressM,
-          linkId = temp.linkId, startMValue = temp.startMValue, endMValue = temp.endMValue, sideCode = sideCode, geom = temp.geom, expired = false,
-          createdBy = None, createdDate = None, modifiedDate = None)
-      })
+      roadAddressTEMPIntoRoadAddressForLink(tempAddresses)
     }
   }
 
+  private def roadAddressTEMPIntoRoadAddressForLink(tempAddresses: Seq[RoadAddressTEMP]) = {
+    tempAddresses.map(temp => {
+      val sideCode = temp.sideCode.getOrElse(SideCode.Unknown)
+      RoadAddressForLink(id = 0, roadNumber = temp.road, roadPartNumber = temp.roadPart, track = temp.track,
+        startAddrMValue = temp.startAddressM, endAddrMValue = temp.endAddressM,
+        linkId = temp.linkId, startMValue = temp.startMValue, endMValue = temp.endMValue, sideCode = sideCode, geom = temp.geom, expired = false,
+        createdBy = None, createdDate = None, modifiedDate = None)
+    })
+  }
   /**
     * Returns the given road links with road address attributes
     *
@@ -124,10 +134,11 @@ class RoadAddressService() {
       val vkmRoadAddressesForLinks = getAllByLinkIds(linkIds)
       val vkmAddressData = vkmRoadAddressesForLinks.map(a => (a.linkId, a)).toMap
       val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
-      val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
-      val addressData = vkmAddressData ++ tempAddressData
+      val neededLinks = roadLinks.filter(a=>linkIdsMissingAddress.contains(a.linkId))
+      val addressByCoordinatesData = getAddressByCoordinate(neededLinks).map(a => (a.linkId, a)).toMap
+      val addressData = vkmAddressData ++ addressByCoordinatesData
       logger.info(s"Fetched ${vkmAddressData.values.size} road address of ${roadLinks.size} road links. ${logComment}")
-      logger.info(s"Fetched ${tempAddressData.values.size} temp road address of ${linkIdsMissingAddress.size} road links. ${logComment}")
+      logger.info(s"Fetched ${addressByCoordinatesData.values.size} road address of ${linkIdsMissingAddress.size} road links by coordinate. ${logComment}")
       roadLinks.map(rl =>
         if (addressData.contains(rl.linkId))
           rl.copy(attributes = rl.attributes ++ roadAddressAttributes(addressData(rl.linkId)))
@@ -156,8 +167,8 @@ class RoadAddressService() {
       val linkIds = massLimitationAsset.flatMap(_.map(_.linkId))
       val vkmAddressData = getAllByLinkIds(linkIds).map(a => (a.linkId, a)).toMap
       val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
-      val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
-      val addressData = vkmAddressData ++ tempAddressData
+      val addressByCoordinatesData = getAddressByCoordinate(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
+      val addressData = vkmAddressData ++ addressByCoordinatesData
       massLimitationAsset.map(
         _.map(pwa =>
           if (addressData.contains(pwa.linkId))
@@ -186,8 +197,8 @@ class RoadAddressService() {
       val linkIds = pieceWiseLinearAssets.flatMap(_.map(_.linkId))
       val vkmAddressData = groupRoadAddress(getAllByLinkIds(linkIds)).map(a => (a.linkId, a)).toMap
       val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
-      val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
-      val addressData = vkmAddressData ++ tempAddressData
+      val addressByCoordinatesData = getAddressByCoordinate(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
+      val addressData = vkmAddressData ++ addressByCoordinatesData
       pieceWiseLinearAssets.map(
         _.map(pwa =>
           if (addressData.contains(pwa.linkId))
@@ -217,8 +228,8 @@ class RoadAddressService() {
       val linkIds = pieceWiseLanes.map(_.linkId)
       val vkmAddressData = getAllByLinkIds(linkIds).map(a => (a.linkId, a)).toMap
       val linkIdsMissingAddress = linkIds.diff(vkmAddressData.keys.toSeq).toSet
-      val tempAddressData = getTempAddressesByLinkIdsAsRoadAddressForLink(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
-      val addressData = vkmAddressData ++ tempAddressData
+      val addressByCoordinatesData = getAddressByCoordinate(linkIdsMissingAddress).map(a => (a.linkId, a)).toMap
+      val addressData = vkmAddressData ++ addressByCoordinatesData
       pieceWiseLanes.map( pwl =>
           if (addressData.contains(pwl.linkId))
             pwl.copy(attributes = pwl.attributes ++ roadAddressAttributes(addressData(pwl.linkId)))
