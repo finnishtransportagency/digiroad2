@@ -94,7 +94,7 @@ class RoadAddressService() {
   private def getAddressByCoordinate(linkIds: Set[String]): Seq[RoadAddressForLink] = {
     val links = LogUtils.time(logger, s"TEST LOG Retrieve ${linkIds.size} linkId") {
       withDynTransaction {
-        roadLinkService.getRoadLinksByLinkIds(linkIds)
+        roadLinkService.getRoadLinksByLinkIds(linkIds,newTransaction=false)
       }
     }
     logger.info(s"Start fetching road address for total of ${linkIds.size} link ids.")
