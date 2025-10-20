@@ -2,14 +2,24 @@ package fi.liikennevirasto.digiroad2.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.TrafficSigns
-import fi.liikennevirasto.digiroad2.postgis.MassQuery
+import fi.liikennevirasto.digiroad2.asset.{SideCode}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class AssetLink(id: Long, linkId: String, startMeasure: Double, endMeasure: Double)
+case class AssetOnExpiredRoadLink(
+                              id: Long,
+                              linkId: String,
+                              startMeasure: Double,
+                              endMeasure: Double,
+                              point: Option[Seq[Point]],
+                              geometry: Option[Seq[Point]],
+                              sideCode: SideCode,
+                              bearing: Int
+                            )
 
 class PostGISAssetDao {
 
@@ -23,6 +33,47 @@ class PostGISAssetDao {
       AssetLink(id, linkId, startMeasure, endMeasure)
     }
   }
+
+  implicit val getAssetOnExpiredRoadLink = new GetResult[AssetOnExpiredRoadLink] {
+    def apply(r: PositionedResult): AssetOnExpiredRoadLink = {
+      val id = r.nextLong()
+      val linkId = r.nextString()
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+
+      val pointObj = r.nextObjectOption()
+      val geomObj = r.nextObjectOption()
+
+      // make sure result is Option[Seq[Point]], not plain Iterable
+      val point: Option[Seq[Point]] = pointObj match {
+        case Some(obj) =>
+          val path = PostGISDatabase.extractGeometry(obj)
+          if (path.nonEmpty)
+            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
+          else
+            None
+        case None => None
+      }
+
+      // make sure result is Option[Seq[Point]], not plain Iterable
+      val geometry: Option[Seq[Point]] = geomObj match {
+        case Some(obj) =>
+          val path = PostGISDatabase.extractGeometry(obj)
+          if (path.nonEmpty)
+            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
+          else
+            None
+        case None => None
+      }
+
+      val sideCode = r.nextInt()
+      val bearing = r.nextInt()
+
+      AssetOnExpiredRoadLink(id, linkId, startMeasure, endMeasure, point, geometry, SideCode(sideCode), bearing)
+    }
+  }
+
+  implicit
 
   def getLastExecutionDate(typeId: Int, createdBy: String): Option[DateTime] = {
 
@@ -50,6 +101,19 @@ class PostGISAssetDao {
             modified_by = ${userName}
             where id in(#${ids.mkString(",")})""".execute
 
+  }
+
+  def getAssetsOnExpiredRoadLinksById(ids: Set[Long]):Seq[AssetOnExpiredRoadLink] = {
+    MassQuery.withIds(ids) { idTableName =>
+      sql"""
+      SELECT a.id, lp.link_id, lp.start_measure, lp.end_measure, a.geometry, kr.shape, lp.side_code, a.bearing
+      FROM asset a
+      JOIN asset_link al ON al.asset_id = a.id
+      JOIN lrm_position lp ON al.position_id = lp.id
+      JOIN kgv_roadlink kr ON lp.link_id = kr.linkid
+      JOIN #$idTableName i ON i.id = a.id
+    """.as[AssetOnExpiredRoadLink].list
+    }
   }
 
   /**

@@ -73,6 +73,16 @@
           });
     }, 1000);
 
+    this.getPointAssetsOnExpiredLinks = _.throttle(function(assetId, callback) {
+        $.getJSON('api/assetOnExpiredRoadLink?assetId=' + assetId)
+            .done(function(data) {
+                callback(null, data);
+            })
+            .fail(function(error) {
+                callback(error);
+            });
+    }, 1000);
+
 
     this.getRoadLinkHistoryByLinkId = _.throttle(function(linkIds, callback) {
       $.getJSON('api/roadlinks/history/' + linkIds)

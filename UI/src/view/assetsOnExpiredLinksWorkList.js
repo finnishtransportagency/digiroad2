@@ -35,7 +35,7 @@
                         return assetType.typeId === parseInt(assetTypeId, 10);
                     }).nameFI;
                     var headerRow = $('<tr>').addClass('group-header');
-                    var headerCell = $('<th>').attr('colspan', '8').text(assetTypeName);
+                    var headerCell = $('<th>').attr('colspan', '9').text(assetTypeName);
                     headerRow.append(headerCell);
                     tbody.append(headerRow);
 
@@ -48,7 +48,8 @@
                         $('<td>').text("StartM"),
                         $('<td>').text("EndM"),
                         $('<td>').text("Kohteen päätepisteet (Itäkoord., Pohjoiskoord.)"),
-                        $('<td>').text("Tielinkin päättymispvm.")
+                        $('<td>').text("Tielinkin päättymispvm."),
+                        $('<td>').text("")
                     ];
 
                     legendRow.append(legendCells);
@@ -79,7 +80,8 @@
                             $('<td>').text(item.startMeasure),
                             $('<td>').text(item.endMeasure),
                             $('<td>').text(geomString),
-                            $('<td>').text(item.roadLinkExpiredDate)
+                            $('<td>').text(item.roadLinkExpiredDate),
+                            $('<td>').append(openMapButton(item)),
                         ];
 
                         row.append(cells);
@@ -124,6 +126,15 @@
                     });
                 });
 
+            };
+
+            var openMapButton = function (item) {
+                return $('<button/>')
+                    .addClass('btn btn-municipality')
+                    .text('Avaa kartalla')
+                    .click(function () {
+                        new WorkListPopUpMap(backend, item, "assetsOnExpiredLinksWorkList");
+                    });
             };
 
             return $('<div></div>')
