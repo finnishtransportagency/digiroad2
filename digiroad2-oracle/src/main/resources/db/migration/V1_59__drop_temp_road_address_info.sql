@@ -1,0 +1,1 @@
+drop table temp_road_address_info;
