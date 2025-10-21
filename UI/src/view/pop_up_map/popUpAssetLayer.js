@@ -6,15 +6,15 @@
         // Create the assets and store them in the features array
         // There are PointAssets and LinearAssets
         // They can be identified from the data they hold
-        // PointAsset has a point + geometry where the point lies
-        // LinearAsset has only the geometry
+        // PointAsset has a point + linkGeometry where the point lies
+        // LinearAsset has only the linkGeometry
         _.each(assets, function(asset) {
             var hasPoint = asset.point && asset.point.length > 0;
-            var hasGeometry = asset.geometry && asset.geometry.length > 0;
+            var hasLinkGeometry = asset.linkGeometry && asset.linkGeometry.length > 0;
 
-            // Draw the underlying link line if geometry exists
-            if (hasGeometry) {
-                var linkCoords = asset.geometry.map(function(p) {
+            // Draw the underlying link line if linkGeometry exists
+            if (hasLinkGeometry) {
+                var linkCoords = asset.linkGeometry.map(function(p) {
                     return [p.x, p.y];
                 });
                 var optionalLineFeature = new ol.Feature({
@@ -39,8 +39,8 @@
                 features.push(pointFeature);
 
                 // Linear asset
-            } else if (hasGeometry) {
-                var coords = asset.geometry.map(function(p) {
+            } else if (hasLinkGeometry) {
+                var coords = asset.linkGeometry.map(function(p) {
                    return [p.x, p.y];
                 });
                 var lineFeature = new ol.Feature({
@@ -51,7 +51,7 @@
                 features.push(lineFeature);
 
             } else {
-                console.warn('Asset missing geometry or point:', asset);
+                console.warn('Asset missing linkGeometry or point:', asset);
             }
         });
 

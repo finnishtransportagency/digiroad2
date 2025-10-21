@@ -11,14 +11,14 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class AssetLink(id: Long, linkId: String, startMeasure: Double, endMeasure: Double)
 case class AssetOnExpiredRoadLink(
-                              id: Long,
-                              linkId: String,
-                              startMeasure: Double,
-                              endMeasure: Double,
-                              point: Option[Seq[Point]],
-                              geometry: Option[Seq[Point]],
-                              sideCode: SideCode,
-                              bearing: Int
+                                   id: Long,
+                                   linkId: String,
+                                   startMeasure: Double,
+                                   endMeasure: Double,
+                                   point: Option[Seq[Point]],
+                                   linkGeometry: Option[Seq[Point]],
+                                   sideCode: SideCode,
+                                   bearing: Int
                             )
 
 class PostGISAssetDao {
@@ -56,7 +56,7 @@ class PostGISAssetDao {
       }
 
       // make sure result is Option[Seq[Point]], not plain Iterable
-      val geometry: Option[Seq[Point]] = geomObj match {
+      val linkGeometry: Option[Seq[Point]] = geomObj match {
         case Some(obj) =>
           val path = PostGISDatabase.extractGeometry(obj)
           if (path.nonEmpty)
@@ -69,7 +69,7 @@ class PostGISAssetDao {
       val sideCode = r.nextInt()
       val bearing = r.nextInt()
 
-      AssetOnExpiredRoadLink(id, linkId, startMeasure, endMeasure, point, geometry, SideCode(sideCode), bearing)
+      AssetOnExpiredRoadLink(id, linkId, startMeasure, endMeasure, point, linkGeometry, SideCode(sideCode), bearing)
     }
   }
 

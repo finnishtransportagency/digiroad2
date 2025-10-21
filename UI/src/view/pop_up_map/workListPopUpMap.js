@@ -58,7 +58,7 @@
                                 callback(err);
                             } else {
                                 // open map and render points
-                                var geometry = data[0].geometry[0];
+                                var geometry = data[0].linkGeometry[0];
                                 openMapPopup(data);
                                 eventbus.trigger('linearAssetsOnExpiredLinks:fetched', geometry);
                             }
