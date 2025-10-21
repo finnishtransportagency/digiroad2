@@ -73,7 +73,7 @@
           });
     }, 1000);
 
-    this.getPointAssetsOnExpiredLinks = _.throttle(function(assetId, callback) {
+    this.getAssetsOnExpiredLinks = _.throttle(function(assetId, callback) {
         $.getJSON('api/assetOnExpiredRoadLink?assetId=' + assetId)
             .done(function(data) {
                 callback(null, data);

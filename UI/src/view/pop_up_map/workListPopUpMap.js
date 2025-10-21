@@ -35,10 +35,10 @@
 
         } else if (workListSource === "assetsOnExpiredLinksWorkList") {
             if (assetTypeEnum) {
-                var popUpCollection = new PopUpCollection(backend);
+                var assetsOnExpiredRoadLinksCollection = new AssetsOnExpiredRoadLinksCollection(backend);
                 switch (assetTypeEnum.geometryType) {
                     case ('point'): {
-                        popUpCollection.fetch(item.id, function (err, data) {
+                        assetsOnExpiredRoadLinksCollection.fetch(item.id, function (err, data) {
                             if (err) {
                                 console.error('Error fetching data:', err);
                                 callback(err);
@@ -52,7 +52,7 @@
                         return;
                     }
                     case ('linear'): {
-                        popUpCollection.fetch(item.id, function (err, data) {
+                        assetsOnExpiredRoadLinksCollection.fetch(item.id, function (err, data) {
                             if (err) {
                                 console.error('Error fetching data:', err);
                                 callback(err);
