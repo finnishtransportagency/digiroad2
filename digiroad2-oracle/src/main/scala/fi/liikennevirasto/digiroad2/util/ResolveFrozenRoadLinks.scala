@@ -1,3 +1,4 @@
+/*
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2._
@@ -381,4 +382,4 @@ trait ResolvingFrozenRoadLinks {
       result.map(_.roadAddress)
 
   }
-}
+}*/

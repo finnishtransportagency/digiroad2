@@ -1,3 +1,4 @@
+/*
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.Track
@@ -56,4 +57,4 @@ class RoadAddressTempDAO {
     sqlu"""delete from temp_road_address_info
            where link_id in ($linkIdList)""".execute
   }
-}
+}*/
