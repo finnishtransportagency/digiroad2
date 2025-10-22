@@ -18,7 +18,8 @@ case class AssetOnExpiredRoadLink(
                                    point: Option[Seq[Point]],
                                    linkGeometry: Option[Seq[Point]],
                                    sideCode: SideCode,
-                                   bearing: Int
+                                   bearing: Int,
+                                   assetGeometry: Option[Seq[Point]]
                             )
 
 class PostGISAssetDao {
@@ -42,7 +43,7 @@ class PostGISAssetDao {
       val endMeasure = r.nextDouble()
 
       val pointObj = r.nextObjectOption()
-      val geomObj = r.nextObjectOption()
+      val linkGeomObj = r.nextObjectOption()
 
       // make sure result is Option[Seq[Point]], not plain Iterable
       val point: Option[Seq[Point]] = pointObj match {
@@ -56,7 +57,7 @@ class PostGISAssetDao {
       }
 
       // make sure result is Option[Seq[Point]], not plain Iterable
-      val linkGeometry: Option[Seq[Point]] = geomObj match {
+      val linkGeometry: Option[Seq[Point]] = linkGeomObj match {
         case Some(obj) =>
           val path = PostGISDatabase.extractGeometry(obj)
           if (path.nonEmpty)
@@ -69,7 +70,19 @@ class PostGISAssetDao {
       val sideCode = r.nextInt()
       val bearing = r.nextInt()
 
-      AssetOnExpiredRoadLink(id, linkId, startMeasure, endMeasure, point, linkGeometry, SideCode(sideCode), bearing)
+      val assetGeomObj = r.nextObjectOption()
+
+      val assetGeometry: Option[Seq[Point]] = assetGeomObj match {
+        case Some(obj) =>
+          val path = PostGISDatabase.extractGeometry(obj)
+          if (path.nonEmpty)
+            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
+          else
+            None
+        case None => None
+      }
+
+      AssetOnExpiredRoadLink(id, linkId, startMeasure, endMeasure, point, linkGeometry, SideCode(sideCode), bearing, assetGeometry)
     }
   }
 
@@ -106,7 +119,27 @@ class PostGISAssetDao {
   def getAssetsOnExpiredRoadLinksById(ids: Set[Long]):Seq[AssetOnExpiredRoadLink] = {
     MassQuery.withIds(ids) { idTableName =>
       sql"""
-      SELECT a.id, lp.link_id, lp.start_measure, lp.end_measure, a.geometry, kr.shape, lp.side_code, a.bearing
+       SELECT
+        a.id,
+        lp.link_id,
+        lp.start_measure,
+        lp.end_measure,
+        a.geometry,
+        kr.shape AS line_geometry,
+        lp.side_code,
+        a.bearing,
+        CASE
+          WHEN lp.start_measure IS NOT NULL
+            AND lp.end_measure IS NOT NULL
+          THEN ST_LineMerge(
+            ST_LocateBetween(
+              kr.shape,
+              lp.start_measure / ST_Length(kr.shape),
+              lp.end_measure / ST_Length(kr.shape)
+            )
+          )
+          ELSE NULL
+        END AS asset_geometry
       FROM asset a
       JOIN asset_link al ON al.asset_id = a.id
       JOIN lrm_position lp ON al.position_id = lp.id

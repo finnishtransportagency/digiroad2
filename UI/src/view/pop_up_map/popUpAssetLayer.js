@@ -40,7 +40,7 @@
 
                 // Linear asset
             } else if (hasLinkGeometry) {
-                var coords = asset.linkGeometry.map(function(p) {
+                var coords = asset.assetGeometry.map(function(p) {
                    return [p.x, p.y];
                 });
                 var lineFeature = new ol.Feature({
@@ -92,7 +92,7 @@
                     });
                 } else if (geomType === 'LineString') {
                     // Highlight the tied link differently if it's just for a point asset
-                    var color = feature.get('isLinkLine') ? '#7f7f7c99' : '#ff000099';
+                    var color = feature.get('isLinkLine') ? '#8c8c88' : '#ff000099';
                     var zIndex = feature.get('isLinkLine') ? 0 : 1;
                     return new ol.style.Style({
                         stroke: new ol.style.Stroke({
