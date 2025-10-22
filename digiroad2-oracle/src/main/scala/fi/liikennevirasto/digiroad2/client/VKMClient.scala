@@ -1,31 +1,25 @@
 package fi.liikennevirasto.digiroad2.client
 
-import fi.liikennevirasto.digiroad2
-
-import java.net.URLEncoder
-import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.service.RoadAddressForLink
 import fi.liikennevirasto.digiroad2.util._
-import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, Track, Vector3d}
-import org.apache.http.{HttpStatus, NameValuePair}
-import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import fi.liikennevirasto.digiroad2._
 import org.apache.http.client.entity.UrlEncodedFormEntity
-
-import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 import org.apache.http.client.methods.{HttpGet, HttpPost}
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.{CloseableHttpClient, DefaultHttpClient, HttpClientBuilder}
 import org.apache.http.message.BasicNameValuePair
-import org.apache.http.params.HttpParams
 import org.apache.http.util.EntityUtils
+import org.apache.http.{HttpStatus, NameValuePair}
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.slf4j.LoggerFactory
 
+import java.net.URLEncoder
 import java.nio.charset.Charset
+import java.security.cert.X509Certificate
 import java.util.ArrayList
+import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
+import scala.collection.parallel.ParSeq
 
 
 case class MassQueryParamsCoord(identifier: String, point: Point, roadNumber: Option[Int], roadPartNumber: Option[Int], track: Option[Track] = None)
@@ -66,8 +60,10 @@ class VKMClient {
   private def roadAddressFrameWorkValue = 2
   private def linearLocationFrameWorkValue = 6
 
-
-  private def VkmMaxBatchSize =1000
+  val roadAddressPoint = Seq(VkmRoad, VkmRoadPart, VkmTrackCode, VkmDistance)
+  private def VkmMaxBatchPointSize = 1000
+  private def VkmMaxLinearBatchSize = 100
+  private def VkmParallelismLevel = 200
 
   private val logger = LoggerFactory.getLogger(getClass)
   private def vkmBaseUrl = Digiroad2Properties.vkmUrl + "/viitekehysmuunnin/"
@@ -162,7 +158,7 @@ class VKMClient {
     def verify(s: String, sslSession: SSLSession) = true
   }
 
-  def fetchRoadAddressesByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
+  private def fetchRoadAddressesByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
     val params = linkIds.map(linkId =>
       Map(
         VkmLinkId -> linkId,
@@ -177,6 +173,74 @@ class VKMClient {
     result
   }
 
+  def fetchRoadAddressesByLinkIdsMassQuery(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
+    if (linkIds.nonEmpty) {
+      val linkIdChunks: Seq[Seq[String]] = linkIds.grouped(VkmMaxLinearBatchSize).toSeq
+      val parallelChunks: ParSeq[Seq[String]] = linkIdChunks.par
+      val parallel = new Parallel()
+      val parallelismLevel = Math.min(linkIdChunks.size, VkmParallelismLevel)
+      logger.info(s"Start fetching road address for total of ${linkIds.size} link ids in ${linkIdChunks.size} chunks. Parallelism level: $parallelismLevel")
+      LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${linkIds.size} linkIds total duration") {
+        parallel.operation(parallelChunks, parallelismLevel) { parChunk =>
+          parChunk.flatMap { chunk =>
+            LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${chunk.size} linkIds") {
+            fetchRoadAddressesByLinkIds(chunk)
+            }
+          }
+        }.seq.toSeq
+      }
+    } else Seq.empty[RoadAddressForLink]
+  }
+
+  /**
+    *
+    * @param coords
+    * @param searchDistance Default in new VKM is 100
+    * @return
+    */
+  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord], searchDistance: Option[Double] = None): Map[String, RoadAddress] = {
+    def validateRange(params: Seq[Map[String, Any]]): Map[String, RoadAddress] = {
+      val response = baseRequest(params)
+      val result = response match {
+        case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
+        case Right(error) => throw new RoadAddressException(error.toString)
+      }
+
+      result.filter(_.isDefined).flatMap(_.get).groupBy(_._1)
+        .map(a => {
+          val id = a._1
+          val address = a._2.map(_._2)
+          //TODO this is wrong way to select values, there can be two or more value dependent on how many track road has.
+          (id, address.head)
+        })
+    }
+    
+    if (coords.nonEmpty) {
+      val params = coords.map(coord => Map(
+        VkmQueryIdentifier -> coord.identifier,
+        VkmRoad -> coord.roadNumber,
+        VkmRoadPart -> coord.roadPartNumber,
+        VkmTrackCodes -> coord.track.map(_.value),
+        "x" -> coord.point.x,
+        "y" -> coord.point.y,
+        VkmSearchRadius -> searchDistance
+      ))
+      val linkIdChunks = params.grouped(VkmMaxBatchPointSize).toSeq
+      val parallelChunks = linkIdChunks.par
+      val parallelismLevel = Math.min(linkIdChunks.size, VkmParallelismLevel)
+      logger.info(s"Start fetching road address for total of ${coords.size} coords in ${linkIdChunks.size} chunks. Parallelism level: $parallelismLevel")
+      LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${coords.size} coords total duration") {
+        new Parallel().operation(parallelChunks, parallelismLevel) { p =>
+          p.flatMap(chunk => {
+            LogUtils.time(logger, s"TEST LOG Retrieve VKM road address for ${chunk.size} coords") {
+              validateRange(chunk)
+            }
+          }).toList
+        }.toMap
+      }
+    } else Map.empty[String, RoadAddress]
+  }
+  
   def fetchRoadAddressByLrmPosition(linkId: String, mValue: Double): Seq[RoadAddressForLink] = {
     val params = Seq(Map(
       VkmLinkId -> linkId,
@@ -228,45 +292,6 @@ class VKMClient {
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
-  /**
-    * 
-    * @param coords
-    * @param searchDistance Default in new VKM is 100
-    * @return
-    */
-  def coordToAddressMassQuery(coords: Seq[MassQueryParamsCoord], searchDistance: Option[Double] = None): Map[String, RoadAddress] = {
-    val params = coords.map(coord => Map(
-      VkmQueryIdentifier -> coord.identifier,
-      VkmRoad -> coord.roadNumber,
-      VkmRoadPart -> coord.roadPartNumber,
-      VkmTrackCodes -> coord.track.map(_.value),
-      "x" -> coord.point.x,
-      "y" -> coord.point.y,
-      VkmSearchRadius -> searchDistance
-    ))
-      new Parallel().operation(params.grouped(VkmMaxBatchSize).toList.par,3){
-        _.flatMap(validateRange).toList
-      }.toMap
-  }
-  
-  private def validateRange(params: Seq[Map[String, Any]]): Map[String, RoadAddress] ={
-   val response = baseRequest(params)
-    val result = response match {
-      case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
-      case Right(error) => throw new RoadAddressException(error.toString)
-    }
-
-    result.filter(_.isDefined).flatMap(_.get).groupBy(_._1)
-      .map(a => {
-        val id = a._1
-        val address = a._2.map(_._2)
-        if (address.size >= 2) {
-          // TODO fix this logic same time you fix coordToAddress method.
-          logger.info(s"Search distance was too big to identify single response, identifier was $id and result: ${address.mkString(",")}")
-        }
-        (id, address.head)
-      })
-  }
 
   private def baseRequest(params: Seq[Map[String, Any]]): Either[FeatureCollection, VKMError] = {
     val jsonValue = Serialization.write(params)
@@ -291,8 +316,6 @@ class VKMClient {
 
     request(vkmBaseUrl + parameterString) match {
       case Left(address) =>
-        if (address.features.length >= 2)
-          logger.info(s"Search distance was too big to identify single response, request parameters: $parameterString and result: ${address.features.map(mapFields).mkString(",")}")
         //TODO this is wrong way to select values, there can be two or more value dependent on how many track road has.
         mapFields(address.features.head)
       case Right(error) => throw new RoadAddressException(error.toString)
@@ -420,6 +443,16 @@ class VKMClient {
 
   private def mapRoadAddressForLinkFields(data: Feature): Option[RoadAddressForLink] = {
     try {
+
+ 
+      // --- Validate presence of all required properties ---
+      val missingFields = roadAddressPoint.filterNot(data.properties.contains)
+      if (missingFields.nonEmpty) {
+        throw new MissingRoadAddressInformation(
+          s"Cannot form RoadAddress: missing required fields ${missingFields.mkString(", ")}"
+        )
+      }
+      
       val roadNumber = validateAndConvertToInt(VkmRoad, data.properties)
       val roadPartNumber = validateAndConvertToInt(VkmRoadPart, data.properties)
       val trackCode = Track.apply(validateAndConvertToInt(VkmTrackCode, data.properties))
@@ -435,13 +468,22 @@ class VKMClient {
 
       Some(RoadAddressForLink(0, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, sideCode, Seq(), expired = false, None, None, None))
     } catch {
-      case _: RoadAddressException => None
+      case rae: MissingRoadAddressInformation => None
+      case rae: RoadAddressException =>
+        None // It is not error if we do not get always road address.
     }
 
   }
 
   private def mapMassQueryFields(data: Feature): Option[Map[String, RoadAddress]] = {
     try{
+      // --- Validate presence of all required properties ---
+      val missingFields = roadAddressPoint.filterNot(data.properties.contains)
+      if (missingFields.nonEmpty) {
+        throw new MissingRoadAddressInformation(
+          s"Cannot form RoadAddress: missing required fields ${missingFields.mkString(", ")}"
+        )
+      }
       val municipalityCode = data.properties.get(VkmMunicipalityCode).asInstanceOf[Option[String]]
       val road = validateAndConvertToInt(VkmRoad, data.properties)
       val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)
@@ -454,9 +496,11 @@ class VKMClient {
       Some(Map(queryIdentifier -> RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)))
     }
     catch {
-      case rae: RoadAddressException =>
-        logger.error("Error mapping to VKM data to road address: " + rae.getMessage)
+      case rae: MissingRoadAddressInformation =>
+        //logger.error(rae.getMessage)
         None
+      case rae: RoadAddressException =>
+        None // It is not error if we do not get always road address.
     }
   }
 
