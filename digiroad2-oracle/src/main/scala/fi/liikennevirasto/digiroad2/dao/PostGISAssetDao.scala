@@ -134,8 +134,8 @@ class PostGISAssetDao {
           THEN ST_LineMerge(
             ST_LocateBetween(
               kr.shape,
-              lp.start_measure / ST_Length(kr.shape),
-              lp.end_measure / ST_Length(kr.shape)
+              lp.start_measure / kr.geometrylength,
+              lp.end_measure / kr.geometrylength
             )
           )
           ELSE NULL

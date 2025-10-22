@@ -4,9 +4,9 @@
         // Helper for getting the asset type
         function getAssetTypeByTypeId(typeId) {
             var enumerations = new Enumerations();
-            const assetTypes = enumerations.assetTypes;
+            var assetTypes = enumerations.assetTypes;
             // Iterate over values and find the matching typeId
-            for (const key in assetTypes) {
+            for (var key in assetTypes) {
                 if (assetTypes[key].typeId === typeId) {
                     return assetTypes[key];
                 }
