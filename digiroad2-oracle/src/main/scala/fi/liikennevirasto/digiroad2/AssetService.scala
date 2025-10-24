@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{AssetOnExpiredRoadLink, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 trait AssetOperations {
@@ -12,6 +12,12 @@ trait AssetOperations {
   def getMunicipalityById(id: Int): Seq[Int] = {
     withDynTransaction {
       municipalityDao.getMunicipalityById(id)
+    }
+  }
+
+  def getAssetsOnExpiredRoadLinksById(ids: Set[Long]): Seq[AssetOnExpiredRoadLink] = {
+    withDynTransaction {
+      assetDao.getAssetsOnExpiredRoadLinksById(ids)
     }
   }
 }

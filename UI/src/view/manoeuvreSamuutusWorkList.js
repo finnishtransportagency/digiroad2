@@ -68,7 +68,7 @@
                     .addClass('btn btn-municipality')
                     .text('Avaa kartalla')
                     .click(function () {
-                        new WorkListPopUpMap(backend, item);
+                        new WorkListPopUpMap(backend, item, "manoeuvreSamuutusWorkList");
                     });
             };
 

@@ -48,7 +48,7 @@ object ExpiredRoadLinkHandlingProcess {
         }
       }
       val roadLinkExpiredDate = roadLinkWithExpiredDate.expiredDate
-      AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate)
+      AssetOnExpiredLink(assetLink.id, assetLink.assetTypeId, assetLink.linkId, assetLink.sideCode, assetLink.startMeasure, assetLink.endMeasure, geometry, roadLinkExpiredDate, None)
     }
 
     val roadLinkIds = expiredRoadLinks.map(_.roadLink.linkId)

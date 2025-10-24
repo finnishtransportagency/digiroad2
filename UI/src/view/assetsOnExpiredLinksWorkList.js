@@ -35,20 +35,21 @@
                         return assetType.typeId === parseInt(assetTypeId, 10);
                     }).nameFI;
                     var headerRow = $('<tr>').addClass('group-header');
-                    var headerCell = $('<th>').attr('colspan', '8').text(assetTypeName);
+                    var headerCell = $('<th>').attr('colspan', '9').text(assetTypeName);
                     headerRow.append(headerCell);
                     tbody.append(headerRow);
 
                     var legendRow = $('<tr>').addClass('group-legend');
                     var legendCells = [
                         $('<td>'),
-                        $('<td>').text("ID"),
+                        $('<td>').text(assetTypeName === enumerations.assetTypes.MassTransitStopAsset.nameFI ? "National ID" : "ID"),
                         $('<td>').text("LinkID"),
                         $('<td>').text("SideCode"),
                         $('<td>').text("StartM"),
                         $('<td>').text("EndM"),
-                        $('<td>').text("Kohteen päätepisteet (Itäkoord., Pohjoiskoord.)"),
-                        $('<td>').text("Tielinkin päättymispvm.")
+                        $('<td>').text("Kohteen päätepisteet (Pohjoiskoord., Itäkoord.)"),
+                        $('<td>').text("Tielinkin päättymispvm."),
+                        $('<td>').text("")
                     ];
 
                     legendRow.append(legendCells);
@@ -69,17 +70,18 @@
                             lastPoint = _.last(item.geometry);
                             divider = ", ";
                         }
-                        var geomString = firstPoint.x + " " + firstPoint.y + divider + lastPoint.x + " " + lastPoint.y;
+                        var geomString = Math.floor(firstPoint.y) + " " + Math.floor(firstPoint.x) + divider + Math.floor(lastPoint.y) + " " + Math.floor(lastPoint.x);
 
                         var cells = [
                             $('<td>').append(checkbox(item.id)),
-                            $('<td>').text(item.id),
+                            $('<td>').text(item.nationalId ? item.nationalId : item.id),
                             $('<td>').text(item.linkId),
                             $('<td>').text(item.sideCode),
                             $('<td>').text(item.startMeasure),
                             $('<td>').text(item.endMeasure),
                             $('<td>').text(geomString),
-                            $('<td>').text(item.roadLinkExpiredDate)
+                            $('<td>').text(item.roadLinkExpiredDate),
+                            $('<td>').append(openMapButton(item)),
                         ];
 
                         row.append(cells);
@@ -96,15 +98,15 @@
             };
 
             var deleteBtn = function () {
-                return $('<button disabled></button>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
-                    new GenericConfirmPopup("Haluatko varmasti poistaa valitut kohteet työlistasta?", {
+                return $('<button disabled></button>').attr('id', 'deleteWorkListItems').addClass('delete btn btn-municipality').text('Päätä valitut kohteet').click(function () {
+                    new GenericConfirmPopup("Haluatko varmasti päättää valitut kohteet ja poistaa ne työlistalta?", {
                         container: '#work-list',
                         successCallback: function () {
                             $(".verificationCheckbox:checkbox:checked").each(function () {
                                 selectedToDelete.push(parseInt(($(this).attr('value'))));
                             });
                             backend.deleteAssetsOnExpiredLinksWorkListItems(selectedToDelete, function () {
-                                new GenericConfirmPopup("Valitut kohteet poistettu!", {
+                                new GenericConfirmPopup("Valitut kohteet päätetty ja poistettu työlistalta!", {
                                     container: '#work-list',
                                     type: "alert",
                                     okCallback: function () {
@@ -112,7 +114,7 @@
                                     }
                                 });
                             }, function () {
-                                new GenericConfirmPopup("Valittuja kohteita ei voitu poistaa. Yritä myöhemmin uudelleen!", {
+                                new GenericConfirmPopup("Valittuja kohteita ei voitu päättää ja poistaa työlistalta. Yritä myöhemmin uudelleen!", {
                                     container: '#work-list',
                                     type: "alert"
                                 });
@@ -124,6 +126,15 @@
                     });
                 });
 
+            };
+
+            var openMapButton = function (item) {
+                return $('<button/>')
+                    .addClass('btn btn-municipality')
+                    .text('Avaa kartalla')
+                    .click(function () {
+                        new WorkListPopUpMap(backend, item, "assetsOnExpiredLinksWorkList");
+                    });
             };
 
             return $('<div></div>')

@@ -43,13 +43,16 @@ class AssetsOnExpiredLinksDAO {
       val roadLinkExpiredDate = new DateTime(roadLinkExpired)
       val assetGeometry = pgAssetGeometry.map(point => Point(point(0), point(1), point(2)))
 
-      AssetOnExpiredLink(id, assetTypeId, linkId, sideCode, startMeasure, endMeasure, assetGeometry, roadLinkExpiredDate)
+      val nationalId = r.nextIntOption()
+
+      AssetOnExpiredLink(id, assetTypeId, linkId, sideCode, startMeasure, endMeasure, assetGeometry, roadLinkExpiredDate, nationalId)
     }
   }
 
   def fetchWorkListAssets(): Seq[AssetOnExpiredLink] = {
-    sql"""SELECT asset_id, asset_type_id, link_id, side_code, start_measure, end_measure, road_link_expired_date, asset_geometry
-          FROM assets_on_expired_road_links
+    sql"""SELECT ael.asset_id, ael.asset_type_id, ael.link_id, ael.side_code, ael.start_measure, ael.end_measure, ael.road_link_expired_date, ael.asset_geometry, a.national_id
+          FROM assets_on_expired_road_links ael
+          JOIN asset a ON a.id = ael.asset_id
        """.as[AssetOnExpiredLink].list
   }
 

@@ -1,17 +1,18 @@
 package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.dao.AssetsOnExpiredLinksDAO
+import fi.liikennevirasto.digiroad2.dao.{AssetsOnExpiredLinksDAO, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 
 
 case class AssetOnExpiredLink(id: Long, assetTypeId: Int, linkId: String, sideCode: Int, startMeasure: Double,
-                              endMeasure: Double, geometry: Seq[Point], roadLinkExpiredDate: DateTime)
+                              endMeasure: Double, geometry: Seq[Point], roadLinkExpiredDate: DateTime, nationalId: Option[Int])
 
 class AssetsOnExpiredLinksService {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   protected def dao: AssetsOnExpiredLinksDAO = new AssetsOnExpiredLinksDAO
+  protected def assetDao: PostGISAssetDao = new PostGISAssetDao
 
   def getAllWorkListAssets(newTransaction: Boolean = true): Seq[AssetOnExpiredLink] = {
     if(newTransaction) withDynTransaction{
@@ -27,11 +28,15 @@ class AssetsOnExpiredLinksService {
     else assets.foreach(asset => dao.insertToWorkList(asset))
   }
 
-  def deleteFromWorkList(assetIds: Set[Long], newTransaction: Boolean = false): Set[Long]  = {
+  def expireAssetsByIdAndDeleteFromWorkList(assetIds: Set[Long], userName: String, newTransaction: Boolean = false): Set[Long] = {
     if(newTransaction) withDynTransaction{
+      assetDao.expireAssetsById(assetIds, userName)
       dao.deleteFromWorkList(assetIds)
     }
-    else dao.deleteFromWorkList(assetIds)
+    else {
+      assetDao.expireAssetsById(assetIds, userName)
+      dao.deleteFromWorkList(assetIds)
+    }
 
     assetIds
   }

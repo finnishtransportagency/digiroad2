@@ -1614,7 +1614,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "startMeasure" -> item.startMeasure,
           "endMeasure" -> item.endMeasure,
           "geometry" -> item.geometry,
-          "roadLinkExpiredDate" -> item.roadLinkExpiredDate)
+          "roadLinkExpiredDate" -> item.roadLinkExpiredDate,
+          "nationalId" -> item.nationalId)
       })
     )
   }
@@ -1628,7 +1629,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     assetIdsToDeleteFromList match {
       case Some(assetIds) =>
-        assetsOnExpiredLinksService.deleteFromWorkList(assetIds, newTransaction = true)
+        assetsOnExpiredLinksService.expireAssetsByIdAndDeleteFromWorkList(assetIds, user.username, newTransaction = true)
       case None => halt(BadRequest("No ids to delete provided"))
     }
   }
@@ -1894,6 +1895,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       Seq(manoeuvre)
     } getOrElse {
       BadRequest("Could not fetch manoeuvre")
+    }
+  }
+
+  get("/assetOnExpiredRoadLink") {
+    logger.info(s"Fetching asset with id ${params.get("assetId")}")
+    params.get("assetId").map { assetId =>
+      val assetOnExpiredRoadLink = assetService.getAssetsOnExpiredRoadLinksById(Set(assetId.toLong))
+      assetOnExpiredRoadLink
+    } getOrElse {
+      BadRequest("Could not fetch asset on expired road link.")
     }
   }
 
