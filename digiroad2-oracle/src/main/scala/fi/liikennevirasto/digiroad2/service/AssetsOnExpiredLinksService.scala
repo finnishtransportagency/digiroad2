@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 
 
 case class AssetOnExpiredLink(id: Long, assetTypeId: Int, linkId: String, sideCode: Int, startMeasure: Double,
-                              endMeasure: Double, geometry: Seq[Point], roadLinkExpiredDate: DateTime)
+                              endMeasure: Double, geometry: Seq[Point], roadLinkExpiredDate: DateTime, nationalId: Option[Int])
 
 class AssetsOnExpiredLinksService {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)

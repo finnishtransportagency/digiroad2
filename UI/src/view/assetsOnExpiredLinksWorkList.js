@@ -42,7 +42,7 @@
                     var legendRow = $('<tr>').addClass('group-legend');
                     var legendCells = [
                         $('<td>'),
-                        $('<td>').text("ID"),
+                        $('<td>').text(assetTypeName === enumerations.assetTypes.MassTransitStopAsset.nameFI ? "National ID" : "ID"),
                         $('<td>').text("LinkID"),
                         $('<td>').text("SideCode"),
                         $('<td>').text("StartM"),
@@ -74,7 +74,7 @@
 
                         var cells = [
                             $('<td>').append(checkbox(item.id)),
-                            $('<td>').text(item.id),
+                            $('<td>').text(item.nationalId ? item.nationalId : item.id),
                             $('<td>').text(item.linkId),
                             $('<td>').text(item.sideCode),
                             $('<td>').text(item.startMeasure),

@@ -1614,7 +1614,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "startMeasure" -> item.startMeasure,
           "endMeasure" -> item.endMeasure,
           "geometry" -> item.geometry,
-          "roadLinkExpiredDate" -> item.roadLinkExpiredDate)
+          "roadLinkExpiredDate" -> item.roadLinkExpiredDate,
+          "nationalId" -> item.nationalId)
       })
     )
   }
