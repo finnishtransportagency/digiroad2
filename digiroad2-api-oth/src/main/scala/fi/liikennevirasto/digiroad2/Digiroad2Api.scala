@@ -838,6 +838,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
+  get("/roadlinks/complementaryIds") {
+    val municipalityParam = request.getParameter("municipalities")
+    val municipalityIds = municipalityParam.split(",").map(_.toInt).toSeq
+
+    roadLinkService.getComplementaryRoadLinkIdsByMunicipalities(municipalityIds)
+  }
+
+  delete("/roadlinks/complementaryLinksToDelete") {
+    val linkIdsToDelete: Set[String] = Option(request.getParameterValues("linkIds"))
+      .map(_.flatMap(_.split(",")).toSet)
+      .getOrElse(Set.empty)
+
+    val username = userProvider.getCurrentUser().username
+
+    roadLinkService.deleteComplementaryRoadLinksAndPropertiesByLinkIds(linkIdsToDelete)
+    assetService.handleAssetsOnDeletedComplementaryRoadLinks(linkIdsToDelete, username)
+  }
+
   get("/roadLinks/incomplete") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {

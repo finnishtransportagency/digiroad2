@@ -22,68 +22,126 @@ $(function() {
     $('#uploaded-file').val(this.value);
   });
 
-  rootElement.find('#asset-selection').on('change', function () {
-    clear();
-    $('.btn.btn-primary.btn-lg').prop('disabled', !$(this).val());
-    $('#deleteCheckbox').prop('disabled', !$(this).val());
-    $('#csvImportPoistaCheckbox').toggle($(this).val() === 'trafficSigns');
-    $('.mass-transit-stop-limit').toggle($(this).val() === 'massTransitStop');
-  }).trigger('change');
+    rootElement.find('#asset-selection').on('change', function () {
+        clear();
+        var selectedValue = $(this).val();
+        $('.btn.btn-primary.btn-lg').prop('disabled', !selectedValue);
+        $('#deleteCheckbox').prop('disabled', !selectedValue);
+        $('#csvImportPoistaCheckbox').toggle(['trafficSigns', 'roadLinks'].includes(selectedValue));
+        $('.mass-transit-stop-limit').toggle(selectedValue === 'massTransitStop');
+        toggleRoadLinkListVisibility();
+    }).trigger('change');
 
-  rootElement.find('#deleteCheckbox').on('change', function () {
-    $(".municipalities").toggle();
-    var emptySearch = _.isEmpty($('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option'));
-    $('.btn.btn-primary.btn-lg').prop('disabled', $(this).prop('checked') && emptySearch);
-  });
+    rootElement.find('#deleteCheckbox').on('change', function () {
+        resetMunicipalities()
+        $(".municipalities").toggle();
+        var emptySearch = _.isEmpty($('.municipalities').find("#municipalities_search_to").find('option'));
+        $('.btn.btn-primary.btn-lg').prop('disabled', $(this).prop('checked') && emptySearch);
+        toggleRoadLinkListVisibility();
+    });
 
   rootElement.find('.form-group .municipalities .row').on('dblclick', function () {
     var disableStatus = _.isEmpty($('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option'));
     $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
+    fetchAndRenderRoadLinks();
   });
 
-  $('#csvImport').on('submit', (function(e) {
-    e.preventDefault();
-    var formData = new FormData(this);
-    formData.delete('municipalityNumbers');
-    var assetType = $('#asset-selection').find(":selected").val();
+    $('#csvImport').on('submit', function (e) {
+        e.preventDefault();
 
-    function uploadFile() {
-      backend.uploadFile(formData, assetType,
-        function(data) {
-          spinnerOff();
-          addNewRow(data);
-        },
-        function(xhr) {
-          spinnerOff();
-          if(xhr.status === 403)
-            alert("Vain operaattori voi suorittaa Excel-ajon");
-          addNewRow(xhr.responseText);
-        });
-    }
+        var assetType = $('#asset-selection').find(":selected").val();
+        var isDeleteChecked = $('#deleteCheckbox').is(':checked');
 
-    if ($('#deleteCheckbox').is(':checked')) {
-      var optionValues = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option');
-      var confirmMsg = "Haluatko varmasti poistaa kaikki jo aiemmin kunnan omistamalle katuverkolle lisätyt liikennemerkit?";
-      if(optionValues.length > 1) {
-        confirmMsg = "Olet valitsemassa useita kuntia. Haluatko jatkaa?";
-      }
-      new GenericConfirmPopup(confirmMsg, {
-        container: '.csv-content',
-        successCallback: function () {
-          _.each(optionValues, function (opt) {
-            formData.append('municipalityNumbers', opt.value);
-          });
-          uploadFile();
-          spinnerOn();
+        function uploadFile() {
+            var formData = new FormData($('#csvImport')[0]);
+            formData.delete('municipalityNumbers');
+
+            backend.uploadFile(formData, assetType,
+                function (data) {
+                    spinnerOff();
+                    addNewRow(data);
+                },
+                function (xhr) {
+                    spinnerOff();
+                    if (xhr.status === 403)
+                        alert("Vain operaattori voi suorittaa Excel-ajon");
+                    addNewRow(xhr.responseText);
+                });
         }
-      });
 
+        function deleteRoadLinks(linkIds) {
+            backend.deleteRoadLinks(linkIds, function(data) {
+                spinnerOff();
+                resetMunicipalities();
+                resetRoadLinks();
+                $('.btn.btn-primary.btn-lg').prop('disabled', true);
+                alert("Tielinkit poistettiin onnistuneesti.");
+            }, function(xhr) {
+                spinnerOff();
+                if (xhr.status === 403)
+                    alert("Vain operaattori voi poistaa tielinkkejä");
+            });
+        }
+
+        if (isDeleteChecked && assetType === 'trafficSigns') {
+            var optionValues = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option');
+            var confirmMsg = "Haluatko varmasti poistaa kaikki jo aiemmin kunnan alueelle lisätyt liikennemerkit?";
+            if (optionValues.length > 1) {
+                confirmMsg = "Olet valitsemassa useita kuntia. Haluatko jatkaa?";
+            }
+
+            new GenericConfirmPopup(confirmMsg, {
+                container: '.csv-content',
+                successCallback: function () {
+                    var formData = new FormData($('#csvImport')[0]);
+                    optionValues.each(function () {
+                        formData.append('municipalityNumbers', this.value);
+                    });
+                    spinnerOn();
+                    backend.uploadFile(formData, assetType,
+                        function (data) {
+                            spinnerOff();
+                            addNewRow(data);
+                        },
+                        function (xhr) {
+                            spinnerOff();
+                            if (xhr.status === 403)
+                                alert("Vain operaattori voi suorittaa Excel-ajon");
+                            addNewRow(xhr.responseText);
+                        });
+                }
+            });
+        }
+        else if (isDeleteChecked && assetType === 'roadLinks') {
+            var optionRoadLinks = $("#roadlinks_search_to option, select[name*='linkIds']").find('option');
+            var linkIds = _.uniq(optionRoadLinks.map(function () {
+                return $(this).val();
+            }).get());
+            if (linkIds.length === 0) {
+                alert("Ei valittuja tielinkkejä poistettavaksi.");
+                return;
+            }
+            var confirmMessage = "Haluatko varmasti poistaa valitut tielinkit (" + linkIds.length + " kpl)?";
+
+            new GenericConfirmPopup(confirmMessage, {
+                container: '.csv-content',
+                successCallback: function () {
+                    spinnerOn();
+                    deleteRoadLinks(linkIds);
+                }
+            });
+        }
+        else {
+            spinnerOn();
+            uploadFile();
+        }
+    });
+
+    function toggleRoadLinkListVisibility() {
+        var isRoadLinks = $('#asset-selection').val() === 'roadLinks';
+        var isChecked = $('#deleteCheckbox').is(':checked');
+        $('#roadLinkListContainer').toggle(isRoadLinks && isChecked);
     }
-    else {
-      uploadFile();
-      spinnerOn();
-    }
-  }));
 
   function clear() {
     var municipalityBox = $(".municipalities");
@@ -91,6 +149,12 @@ $(function() {
     municipalityBox.hide();
     municipalityBox.find("#municipalities_search, select[name*='municipalityNumbers']").find('option').remove();
     getMunicipalities();
+  }
+
+  function resetMunicipalities() {
+      $('#municipalities_search_to').empty();
+      $('#municipalities_search').empty();
+      getMunicipalities();
   }
 
   function getMunicipalities() {
@@ -118,7 +182,142 @@ $(function() {
       }));
     });
   }
-  
+
+    $('#municipalities_search').multiselect({
+        search: {
+            left:
+                '<label class="control-label labelBoxLeft">Kaikki kunnat</label>' +
+                '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" />',
+            right:
+                '<label class="control-label labelBoxRight">Valitut Kunnat</label>' +
+                '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" />'
+        },
+        fireSearch: function(value) {
+            return value.length >= 1;
+        }
+    });
+    $('#municipalities_search_rightSelected').on('click', function () {
+        setTimeout(function () {
+            var disableStatus = _.isEmpty($('#municipalities_search_to option'));
+            $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
+
+            fetchAndRenderRoadLinks();
+        }, 100);
+    });
+
+    $('#municipalities_search_leftSelected').on('click', function () {
+        setTimeout(function () {
+            fetchAndRenderRoadLinks();
+        }, 100);
+    });
+
+    $('#roadlinks_search').multiselect({
+        search: {
+            left:
+                '<label class="control-label labelBoxLeft">Kaikki tielinkit</label>' +
+                '<input type="text" id = "left_roadlinks" class="form-control" placeholder="Linkin ID" />',
+            right:
+                '<label class="control-label labelBoxRight">Poistettavat tielinkit</label>' +
+                '<input type="text" id = "right_roadlinks" class="form-control" placeholder="Linkin ID" />'
+        },
+        fireSearch: function(value) {
+            return value.length >= 1;
+        }
+    });
+
+    $('#roadlinks_search_leftSelected').off('click').on('click', function () {
+        var $right = $('#roadlinks_search_to');
+        var $left = $('#roadlinks_search');
+
+        $left.find('option').each(function () {
+            if ($(this).text() === 'Valitse kunta nähdäksesi tielinkit') {
+                $(this).remove();
+            }
+        });
+
+        $right.find('option:selected').each(function () {
+            var val = $(this).val();
+            var text = $(this).text();
+
+            if ($left.find('option[value="' + val + '"]').length === 0) {
+                $('<option>', { value: val, text: text }).appendTo($left);
+                $(this).remove();
+            }
+        });
+
+        if (_.isEmpty($('#municipalities_search_to option')) && $right.find('option').length === 0) {
+            $left.empty().append('<option>Valitse kunta nähdäksesi tielinkit</option>');
+        }
+
+        updateSubmitButtonState();
+    });
+
+
+    $('#roadlinks_search_rightSelected').off('click').on('click', function () {
+        var $left = $('#roadlinks_search');
+        var $right = $('#roadlinks_search_to');
+
+        $left.find('option:selected').each(function () {
+            var val = $(this).val();
+            var text = $(this).text();
+
+            if ($right.find('option[value="' + val + '"]').length === 0) {
+                $('<option>', { value: val, text: text }).appendTo($right);
+                $(this).remove();
+            }
+        });
+        updateSubmitButtonState();
+    });
+
+    function updateSubmitButtonState() {
+        var disableStatus = _.isEmpty($('#roadlinks_search_to option'));
+        $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
+    }
+
+    rootElement.find('#roadLinkListContainer').on('dblclick', function () {
+        var disableStatus = _.isEmpty($('#roadLinkListContainer').find("#roadlinks_search_to, select[name*='linkIds']").find('option'));
+        $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
+    });
+
+    function fetchAndRenderRoadLinks() {
+        var selectedMunicipalities = $('#municipalities_search_to option').map(function () {
+            return $(this).val();
+        }).get();
+
+        if (_.isEmpty(selectedMunicipalities)) {
+            $('#roadlinks_search').empty().append('<option>Valitse kunta nähdäksesi tielinkit</option>');
+            return;
+        }
+
+        backend.getComplementaryRoadLinksByMunicipality(selectedMunicipalities, function(roadLinkIds) {
+            renderRoadLinkSelect(roadLinkIds);
+        }, function(error) {
+            console.error('Failed to get road links:', error);
+            $('#roadlinks_search').empty().append('<option>Tielinkkien haku epäonnistui</option>');
+        });
+    }
+
+
+    function renderRoadLinkSelect(roadLinks) {
+        var $list = $('#roadlinks_search');
+        $list.empty();
+
+        if (!roadLinks || roadLinks.length === 0) {
+            $list.append('<option>Tielinkkejä ei löytynyt</option>');
+            return;
+        }
+
+        for (var i = 0; i < roadLinks.length; i++) {
+            var id = roadLinks[i];
+            $list.append('<option value="' + id + '">' + id + '</option>');
+        }
+    }
+
+    function resetRoadLinks() {
+        $('#roadlinks_search_to').empty();
+        fetchAndRenderRoadLinks();
+    }
+
   function getJobs() {
     backend.getJobs().then(function(jobs){
       if(!_.isEmpty(jobs))

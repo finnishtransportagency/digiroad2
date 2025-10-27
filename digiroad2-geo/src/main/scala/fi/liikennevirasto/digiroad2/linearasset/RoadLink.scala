@@ -121,6 +121,25 @@ object SurfaceType {
   case object Paved extends SurfaceType { def value = 2}
 }
 
+sealed trait SurfaceRelation {
+  def value: Int
+}
+
+object SurfaceRelation {
+  val values = Set(Tunnel, BelowSurfaceLevel1, BelowSurfaceLevel2, BelowSurfaceLevel3, OnTheSurface, AboveSurfaceLevel1, AboveSurfaceLevel2, AboveSurfaceLevel3, AboveSurfaceLevel4, AboveSurfaceLevel5)
+
+  case object Tunnel extends SurfaceRelation { def value = -11 }
+  case object BelowSurfaceLevel3 extends SurfaceRelation { def value = -3 }
+  case object BelowSurfaceLevel2 extends SurfaceRelation { def value = -2 }
+  case object BelowSurfaceLevel1 extends SurfaceRelation { def value = -1 }
+  case object OnTheSurface extends SurfaceRelation { def value = 0 }
+  case object AboveSurfaceLevel1 extends SurfaceRelation { def value = 1 }
+  case object AboveSurfaceLevel2 extends SurfaceRelation { def value = 2 }
+  case object AboveSurfaceLevel3 extends SurfaceRelation { def value = 3 }
+  case object AboveSurfaceLevel4 extends SurfaceRelation { def value = 4 }
+  case object AboveSurfaceLevel5 extends SurfaceRelation { def value = 5 }
+}
+
 sealed trait MTKClassWidth {
   def value: Int
   def width: Int
@@ -142,3 +161,17 @@ object MTKClassWidth {
   case object DriveWay	extends MTKClassWidth { def value = 12141; def width = 250}
   case object Unknown extends MTKClassWidth {def value=0; def width = 0}
 }
+
+// Reason of creation of a complementary road link (cust_owner)
+sealed trait ReasonOfCreation {
+  def value: Int
+}
+
+object ReasonOfCreation {
+  val values = Set(MassTransitStopReason, RailwayServiceRoadReason, RoadAddressNetworkReason, DigiroadTemporaryReason)
+}
+
+case object MassTransitStopReason extends ReasonOfCreation { def value = 1 }
+case object RailwayServiceRoadReason extends ReasonOfCreation { def value = 2 }
+case object RoadAddressNetworkReason extends ReasonOfCreation { def value = 3 }
+case object DigiroadTemporaryReason extends ReasonOfCreation { def value = 4 }
