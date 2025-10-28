@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
-
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormatMs
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, DigiroadEventBus, ExcludedRow, ImportResult, IncompleteRow, MalformedRow, Status, Track}
@@ -14,6 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.KgvUtil.extractTrafficDirection
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporterOperations {
@@ -32,6 +32,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   case class CsvRoadLinkRow(properties: Seq[AssetProperty])
 
   val complementaryLinkDAO = new ComplementaryLinkDAO
+  val logger = LoggerFactory.getLogger(getClass)
 
   type ImportResultData = ImportResultRoadLink
 
@@ -205,7 +206,9 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
       None
     } catch {
       case ex: Exception =>
-        roadLinkAttribute.properties.find(_.columnName == "link_id").map(_.value.toString)
+        val linkId = roadLinkAttribute.properties.find(_.columnName == "link_id").map(_.value.toString).getOrElse("Unknown")
+        logger.error(s"Error updating road link OTH for link_id=$linkId", ex)
+        Some(linkId)
     }
   }
 
