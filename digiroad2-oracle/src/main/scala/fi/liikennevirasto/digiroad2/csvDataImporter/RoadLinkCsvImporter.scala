@@ -227,7 +227,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
 
   def verifyDateType(parameterName: String, parameterValue: String): ParsedRow = {
     try {
-      val normalizedValue = DateParser.normalizeToLegacyFormat(parameterValue)
+      val normalizedValue = DateParser.normalizeDateFormat(parameterValue)
       (Nil, List(AssetProperty(columnName = dateFieldMappings(parameterName), value = normalizedValue)))
     } catch {
       case _: Throwable => (List(parameterName), Nil)

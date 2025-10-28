@@ -823,7 +823,7 @@ object DateParser {
   }
 
   // Always outputs as the Digiroad DB format (dd.MM.yyyy HH:mm:ss,SSS)
-  def normalizeToLegacyFormat(date: String): String = {
+  def normalizeDateFormat(date: String): String = {
     val parsed = stringToDateFlexible(date)
     parsed.toString(DateTimePropertyFormatMs)
   }
@@ -1071,10 +1071,7 @@ object AssetTypeInfo {
     LitRoad, CarryingCapacity, CareClass, PavedRoad
   )
 
-  val pointAssets: Seq[AssetTypeInfo] = Seq(
-    MassTransitStopAsset, PedestrianCrossings, Obstacles, RailwayCrossings, DirectionalTrafficSigns, ServicePoints,
-    TrafficLights, TrafficSigns
-  )
+  val pointAssets: Seq[AssetTypeInfo] = values.filter(a=>a.geometryType =="point").toSeq
 
   val assetsWithValidityDirectionExcludingSpeedLimits = Seq(MassTransitLane.typeId, NumberOfLanes.typeId,
     CyclingAndWalking.typeId, HazmatTransportProhibition.typeId, ParkingProhibition.typeId, Prohibition.typeId)

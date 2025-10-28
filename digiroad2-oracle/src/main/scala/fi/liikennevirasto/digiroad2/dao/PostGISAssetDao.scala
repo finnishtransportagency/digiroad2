@@ -48,18 +48,6 @@ class PostGISAssetDao {
     sqlu"update asset set valid_to = INTERVAL'1 SECOND' where id = $id".execute
   }
 
-  def expireAssetsByIds(ids: Seq[Long], username: String): Unit = {
-    if (ids.nonEmpty) {
-      val idList = ids.mkString(",")
-      sqlu"""
-      UPDATE asset
-      SET valid_to = current_timestamp,
-          modified_by = $username
-      WHERE id IN (#$idList)
-    """.execute
-    }
-  }
-
   /**
     * When invoked will expire assets by type id and link ids.
     * It is required that the invoker takes care of the transaction.
@@ -112,24 +100,6 @@ class PostGISAssetDao {
     }
   }
 
-  def getAssetIdsByTypesAndLinkId(assetTypeId: Set[Int], linkIds: Seq[String]): Seq[Long] = {
-    if (linkIds.isEmpty || assetTypeId.isEmpty) Seq.empty
-    else {
-      val linkIdParams = linkIds.map("'" + _.trim.toLowerCase + "'").mkString(",")
-      val assetTypeParams = assetTypeId.mkString(",")
-
-      sql"""
-      SELECT a.id
-      FROM asset a
-      JOIN asset_link al ON al.asset_id = a.id
-      JOIN lrm_position lp ON lp.id = al.position_id
-      WHERE a.asset_type_id IN (#$assetTypeParams)
-        AND lp.link_id IN (#$linkIdParams)
-        AND (a.valid_to IS NULL OR a.valid_to > current_timestamp)
-    """.as[Long].list
-    }
-  }
-
   def getAssetsByTypesAndLinkId(assetTypeId: Set[Int], linkIds: Seq[String]): Seq[AssetLink]  = {
     MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""select a.id, lp.link_id, lp.start_measure, lp.end_measure
@@ -147,13 +117,6 @@ class PostGISAssetDao {
     sqlu"""UPDATE asset SET geometry = ST_GeomFromText($line, 3067)
           WHERE id = ${asset.id}
       """.execute
-  }
-
-  def updateFloating(ids: Seq[Long], floating: Boolean, username: String): Unit = {
-    if (ids.nonEmpty) {
-      val idList = ids.mkString(",")
-      sqlu"UPDATE asset SET floating = $floating, modified_by = $username, modified_date = current_timestamp WHERE id IN (#$idList)".execute
-    }
   }
 
   def expireWithoutTransaction(id: Long, username: String) = {

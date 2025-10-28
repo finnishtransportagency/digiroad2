@@ -70,20 +70,35 @@
               return;
           }
 
-          var query = linkIdsToDelete.join(',');
+          var chunkSize = 100;
+          var chunks = [];
+          for (var i = 0; i < linkIdsToDelete.length; i += chunkSize) {
+              chunks.push(linkIdsToDelete.slice(i, i + chunkSize));
+          }
 
-          $.ajax({
-              url: 'api/roadlinks/complementaryLinksToDelete?linkIds=' + encodeURIComponent(query),
-              type: 'DELETE',
-              dataType: 'text',
-              success: function(data, status, xhr) {
-                  if (typeof success === 'function') success(data, status, xhr);
-              },
-              error: function(xhr, status, err) {
-                  console.error("AJAX error:", status, err);
-                  if (typeof failure === 'function') failure(xhr, status, err);
+          function processNextChunk(index) {
+              if (index >= chunks.length) {
+                  if (typeof success === 'function') success("All road links deleted successfully");
+                  return;
               }
-          });
+
+              var query = chunks[index].join(',');
+              $.ajax({
+                  url: 'api/roadlinks/complementaryLinksToDelete?linkIds=' + encodeURIComponent(query),
+                  type: 'DELETE',
+                  dataType: 'text',
+                  success: function(data, status, xhr) {
+                      processNextChunk(index + 1);
+                  },
+                  error: function(xhr, status, err) {
+                      console.error("AJAX error:", status, err);
+                      if (typeof failure === 'function') failure(xhr, status, err);
+                  }
+              });
+          }
+          processNextChunk(0);
       };
+
+
   };
 }(this));

@@ -33,7 +33,7 @@ $(function() {
     }).trigger('change');
 
     rootElement.find('#deleteCheckbox').on('change', function () {
-        resetMunicipalities()
+        resetMunicipalities();
         $(".municipalities").toggle();
         var emptySearch = _.isEmpty($('.municipalities').find("#municipalities_search_to").find('option'));
         $('.btn.btn-primary.btn-lg').prop('disabled', $(this).prop('checked') && emptySearch);
@@ -225,49 +225,42 @@ $(function() {
         }
     });
 
-    $('#roadlinks_search_leftSelected').off('click').on('click', function () {
-        var $right = $('#roadlinks_search_to');
-        var $left = $('#roadlinks_search');
-
-        $left.find('option').each(function () {
-            if ($(this).text() === 'Valitse kunta nähdäksesi tielinkit') {
-                $(this).remove();
-            }
-        });
-
-        $right.find('option:selected').each(function () {
-            var val = $(this).val();
-            var text = $(this).text();
-
-            if ($left.find('option[value="' + val + '"]').length === 0) {
-                $('<option>', { value: val, text: text }).appendTo($left);
-                $(this).remove();
-            }
-        });
-
-        if (_.isEmpty($('#municipalities_search_to option')) && $right.find('option').length === 0) {
-            $left.empty().append('<option>Valitse kunta nähdäksesi tielinkit</option>');
+    function moveLinksBetweenAllLinksAndLinksToDelete($source, $target, removePlaceholder) {
+        if (removePlaceholder) {
+            $target.find('option').each(function () {
+                if ($(this).text() === 'Valitse kunta nähdäksesi tielinkit') {
+                    $(this).remove();
+                }
+            });
         }
 
-        updateSubmitButtonState();
-    });
-
-
-    $('#roadlinks_search_rightSelected').off('click').on('click', function () {
-        var $left = $('#roadlinks_search');
-        var $right = $('#roadlinks_search_to');
-
-        $left.find('option:selected').each(function () {
+        $source.find('option:selected').each(function () {
             var val = $(this).val();
             var text = $(this).text();
 
-            if ($right.find('option[value="' + val + '"]').length === 0) {
-                $('<option>', { value: val, text: text }).appendTo($right);
+            if ($target.find('option[value="' + val + '"]').length === 0) {
+                $('<option>', { value: val, text: text }).appendTo($target);
                 $(this).remove();
             }
         });
+
+        if (
+            removePlaceholder &&
+            _.isEmpty($('#municipalities_search_to option')) &&
+            $source.find('option').length === 0
+        ) {
+            $target.empty().append('<option>Valitse kunta nähdäksesi tielinkit</option>');
+        }
         updateSubmitButtonState();
-    });
+    }
+
+    $('#roadlinks_search_leftSelected').off('click').on('click', function () {
+            moveLinksBetweenAllLinksAndLinksToDelete($('#roadlinks_search_to'), $('#roadlinks_search'), true);
+        });
+
+    $('#roadlinks_search_rightSelected').off('click').on('click', function () {
+            moveLinksBetweenAllLinksAndLinksToDelete($('#roadlinks_search'), $('#roadlinks_search_to'), false);
+        });
 
     function updateSubmitButtonState() {
         var disableStatus = _.isEmpty($('#roadlinks_search_to option'));
