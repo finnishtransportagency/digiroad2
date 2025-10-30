@@ -96,9 +96,9 @@ class ExpiredRoadLinkHandlingProcessSpec extends FunSuite with Matchers {
 
       val assetsOnWorkList = workListService.getAllWorkListAssets(false)
       assetsOnWorkList.size should equal(1)
-      assetsOnWorkList.head.id should equal(createdSpeedLimitId)
-      assetsOnWorkList.head.linkId should equal(expiredLinkId)
-      assetsOnWorkList.head.assetTypeId should equal(SpeedLimitAsset.typeId)
+      assetsOnWorkList.head._1.id should equal(createdSpeedLimitId)
+      assetsOnWorkList.head._1.linkId should equal(expiredLinkId)
+      assetsOnWorkList.head._1.assetTypeId should equal(SpeedLimitAsset.typeId)
     }
   }
 

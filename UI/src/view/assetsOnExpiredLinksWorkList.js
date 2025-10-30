@@ -47,8 +47,8 @@
                         $('<td>').text("SideCode"),
                         $('<td>').text("StartM"),
                         $('<td>').text("EndM"),
-                        $('<td>').text("Kohteen päätepisteet (Pohjoiskoord., Itäkoord.)"),
                         $('<td>').text("Tielinkin päättymispvm."),
+                        $('<td>').text(""),
                         $('<td>').text("")
                     ];
 
@@ -70,7 +70,6 @@
                             lastPoint = _.last(item.geometry);
                             divider = ", ";
                         }
-                        var geomString = Math.floor(firstPoint.y) + " " + Math.floor(firstPoint.x) + divider + Math.floor(lastPoint.y) + " " + Math.floor(lastPoint.x);
 
                         var cells = [
                             $('<td>').append(checkbox(item.id)),
@@ -79,9 +78,8 @@
                             $('<td>').text(item.sideCode),
                             $('<td>').text(item.startMeasure),
                             $('<td>').text(item.endMeasure),
-                            $('<td>').text(geomString),
                             $('<td>').text(item.roadLinkExpiredDate),
-                            $('<td>').append(openMapButton(item)),
+                            $('<td>').append(openMapButton(item),copyAdditionalInfoButton(item)),
                         ];
 
                         row.append(cells);
@@ -132,10 +130,53 @@
                 return $('<button/>')
                     .addClass('btn btn-municipality')
                     .text('Avaa kartalla')
+                    .css('margin', '5px')
                     .click(function () {
                         new WorkListPopUpMap(backend, item, "assetsOnExpiredLinksWorkList");
                     });
             };
+
+            var copyAdditionalInfoButton = function (item) {
+                return $('<button/>')
+                    .addClass('btn btn-municipality')
+                    .text('Kopioi ominaisuustiedot')
+                    .css('margin', '5px')
+                    .click(function () {
+                        var button = $(this);
+                        var textToCopy = JSON.stringify(item.additionalData, null, 2);
+
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(textToCopy)
+                                .then(function() {
+                                showNotification('success', 'Ominaisuustiedot kopioitu leikepöydälle!', button);
+                            })
+                                .catch(function(err) {
+                                    showNotification('failure', 'Kopiointi epäonnistui!', button);
+                                });
+                        } else {
+                            alert('Kopiointia leikepöydälle ei tueta tässä selaimessa.');
+                        }
+                    });
+            };
+
+            function showNotification(type, message, button) {
+                var notification = $('<div class="pop-up-copy-notification ' + type + '">')
+                    .text(message)
+                    .css({
+                        top: button.offset().top - 3 + 'px',
+                        left: button.offset().left + 140 + 'px'
+                    });
+
+                $('body').append(notification);
+                setTimeout(function() {
+                    notification.css('opacity', '1');
+                }, 10);
+                setTimeout(function() {
+                    notification.fadeOut(300, function() {
+                        notification.remove();
+                    });
+                }, 2000);
+            }
 
             return $('<div></div>')
                 .append(deleteBtn())

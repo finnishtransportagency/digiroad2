@@ -1605,18 +1605,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false => halt(Forbidden("User not authorized for assetsOnExpiredLinksWorkList"))
     }
 
-    Map("items" -> workListItems.groupBy(_.assetTypeId)
-      .mapValues(_.map { item =>
-        Map("id" -> item.id,
-          "assetType" -> item.assetTypeId,
-          "linkId" -> item.linkId,
-          "sideCode" -> item.sideCode,
-          "startMeasure" -> item.startMeasure,
-          "endMeasure" -> item.endMeasure,
-          "geometry" -> item.geometry,
-          "roadLinkExpiredDate" -> item.roadLinkExpiredDate,
-          "nationalId" -> item.nationalId)
-      })
+    Map(
+      "items" -> workListItems.groupBy { case (asset, _) => asset.assetTypeId }
+        .mapValues(_.map { case (item, extraJsonString) =>
+          val parsedExtraData =
+            if (extraJsonString.nonEmpty) parse(extraJsonString)
+            else JObject() // empty JSON object
+
+          Map(
+            "id" -> item.id,
+            "assetType" -> item.assetTypeId,
+            "linkId" -> item.linkId,
+            "sideCode" -> item.sideCode,
+            "startMeasure" -> item.startMeasure,
+            "endMeasure" -> item.endMeasure,
+            "geometry" -> item.geometry,
+            "roadLinkExpiredDate" -> item.roadLinkExpiredDate,
+            "nationalId" -> item.nationalId,
+            "additionalData" -> parsedExtraData
+          )
+        })
     )
   }
 
