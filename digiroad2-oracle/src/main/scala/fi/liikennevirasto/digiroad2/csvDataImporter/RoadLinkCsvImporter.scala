@@ -87,7 +87,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     "linkin id",
     "hallinnollinen luokka",
     "kuntakoodi",
-    "mtk luoukka",
+    "mtk luokka",
     "päällystetieto",
     "elinkaaren tila",
     "yksisuuntaisuus",
