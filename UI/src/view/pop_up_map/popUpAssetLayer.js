@@ -10,6 +10,7 @@
         // LinearAsset has only the linkGeometry
         _.each(assets, function(asset) {
             var hasPoint = asset.point && asset.point.length > 0;
+            var hasAssetGeometry = asset.assetGeometry && asset.assetGeometry.length > 0;
             var hasLinkGeometry = asset.linkGeometry && asset.linkGeometry.length > 0;
 
             // Draw the underlying link line if linkGeometry exists
@@ -26,8 +27,19 @@
                 features.push(optionalLineFeature);
             }
 
-            // Point asset
-            if (hasPoint) {
+            // Linear asset
+            if (hasAssetGeometry) {
+                var coords = asset.assetGeometry.map(function(p) {
+                    return [p.x, p.y];
+                });
+                var lineFeature = new ol.Feature({
+                    geometry: new ol.geom.LineString(coords),
+                    assetId: asset.id,
+                    linkId: asset.linkId
+                });
+                features.push(lineFeature);
+
+            } else if (hasPoint) { // Point Asset
                 var pointCoords = [asset.point[0].x, asset.point[0].y];
                 var pointFeature = new ol.Feature({
                     geometry: new ol.geom.Point(pointCoords),
@@ -37,19 +49,6 @@
                     bearing: asset.bearing
                 });
                 features.push(pointFeature);
-
-                // Linear asset
-            } else if (hasLinkGeometry) {
-                var coords = asset.assetGeometry.map(function(p) {
-                   return [p.x, p.y];
-                });
-                var lineFeature = new ol.Feature({
-                    geometry: new ol.geom.LineString(coords),
-                    assetId: asset.id,
-                    linkId: asset.linkId
-                });
-                features.push(lineFeature);
-
             } else {
                 console.warn('Asset missing linkGeometry or point:', asset);
             }
