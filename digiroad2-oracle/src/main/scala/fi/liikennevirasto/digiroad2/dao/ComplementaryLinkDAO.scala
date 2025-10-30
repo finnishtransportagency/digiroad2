@@ -13,6 +13,32 @@ import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult}
 
+case class ComplementaryLink(vvhid: Option[Int],
+                             linkid: String,
+                             datasource: Option[Int],
+                             adminclass: Int,
+                             municipalitycode: Int,
+                             roadclass: Int,
+                             roadnamefin: Option[String],
+                             roadnameswe: Option[String],
+                             roadnamesme: Option[String],
+                             roadnamesmn: Option[String],
+                             roadnamesms: Option[String],
+                             roadnumber: Option[Int],
+                             roadpartnumber: Option[Int],
+                             surfacetype: Int,
+                             lifecyclestatus: Int,
+                             directiontype: Int,
+                             surfacerelation: Int,
+                             horizontallength: Float,
+                             starttime: DateTime,
+                             created_user: String,
+                             versionstarttime: Option[DateTime],
+                             shape: String,
+                             trackcode: Option[Int],
+                             cust_owner: Int
+                                  )
+
 class ComplementaryLinkDAO extends RoadLinkDAO {
 
   protected override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
@@ -112,18 +138,10 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
     }
   }
 
-  def insertComplementaryLinks(
-                                vvhid: Option[Int], linkid: String, datasource: Option[Int], adminclass: Int, municipalitycode: Int, roadclass: Int,
-                                roadnamefin: Option[String], roadnameswe: Option[String], roadnamesme: Option[String], roadnamesmn: Option[String], roadnamesms: Option[String],
-                                roadnumber: Option[Int], roadpartnumber: Option[Int], surfacetype: Int, lifecyclestatus: Int, directiontype: Int,
-                                surfacerelation: Int, horizontallength: Float, starttime: DateTime, created_user: String, versionstarttime: Option[DateTime],
-                                shape: String, trackcode: Option[Int], cust_owner: Int
-                              ): Unit = {
-
-    val sqlStartTime: java.sql.Timestamp = new java.sql.Timestamp(starttime.getMillis)
-    val sqlVersionStartTime: Option[java.sql.Timestamp] = versionstarttime.map(dt => new java.sql.Timestamp(dt.getMillis))
-
-    val geometrySql = s"ST_SetSRID(ST_GeomFromText('$shape'), 3067)"
+  def insertComplementaryLink(link: ComplementaryLink): Unit = {
+    val sqlStartTime = new java.sql.Timestamp(link.starttime.getMillis)
+    val sqlVersionStartTime = link.versionstarttime.map(dt => new java.sql.Timestamp(dt.getMillis))
+    val geometrySql = s"ST_SetSRID(ST_GeomFromText('${link.shape}'), 3067)"
 
     sqlu"""
     INSERT INTO qgis_roadlinkex (
@@ -133,11 +151,11 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
       surfacerelation, horizontallength, starttime, created_user, versionstarttime,
       shape, track_code, cust_owner
     ) VALUES (
-      ${vvhid}, ${linkid}, ${datasource}, ${adminclass}, ${municipalitycode}, ${roadclass},
-      ${roadnamefin}, ${roadnameswe}, ${roadnamesme}, ${roadnamesmn}, ${roadnamesms},
-      ${roadnumber}, ${roadpartnumber}, ${surfacetype}, ${lifecyclestatus}, ${directiontype},
-      ${surfacerelation}, ${horizontallength}, ${sqlStartTime}, ${created_user}, ${sqlVersionStartTime},
-      #${geometrySql}, ${trackcode}, ${cust_owner}
+      ${link.vvhid}, ${link.linkid}, ${link.datasource}, ${link.adminclass}, ${link.municipalitycode}, ${link.roadclass},
+      ${link.roadnamefin}, ${link.roadnameswe}, ${link.roadnamesme}, ${link.roadnamesmn}, ${link.roadnamesms},
+      ${link.roadnumber}, ${link.roadpartnumber}, ${link.surfacetype}, ${link.lifecyclestatus}, ${link.directiontype},
+      ${link.surfacerelation}, ${link.horizontallength}, ${sqlStartTime}, ${link.created_user}, ${sqlVersionStartTime},
+      #${geometrySql}, ${link.trackcode}, ${link.cust_owner}
     )
   """.execute
   }

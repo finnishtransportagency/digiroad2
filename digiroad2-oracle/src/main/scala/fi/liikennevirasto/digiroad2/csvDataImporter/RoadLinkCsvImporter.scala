@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormatMs
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, DigiroadEventBus, ExcludedRow, ImportResult, IncompleteRow, MalformedRow, Status, Track}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, DateParser, MTKClass, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
+import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, ComplementaryLink}
 import fi.liikennevirasto.digiroad2.linearasset.{ReasonOfCreation, SurfaceRelation, SurfaceType}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -22,6 +22,8 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def eventBus: DigiroadEventBus = eventBusImpl
+
+  private case class RoadLinkCsvValueConversionError(message: String) extends Exception(message)
 
   case class NotImportedData(linkId: String, csvRow: String)
   case class ImportResultRoadLink(notImportedData: List[NotImportedData] = Nil,
@@ -109,51 +111,24 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     (mandatoryKeys -- keysInRow).toList
   }
 
-  case class ComplementaryLinkParams(
-                                      vvhid: Option[Int],
-                                      linkid: String,
-                                      datasource: Option[Int],
-                                      adminclass: Int,
-                                      municipalitycode: Int,
-                                      roadclass: Int,
-                                      roadnamefin: Option[String],
-                                      roadnameswe: Option[String],
-                                      roadnamesme: Option[String],
-                                      roadnamesmn: Option[String],
-                                      roadnamesms: Option[String],
-                                      roadnumber: Option[Int],
-                                      roadpartnumber: Option[Int],
-                                      surfacetype: Int,
-                                      lifecyclestatus: Int,
-                                      directiontype: Int,
-                                      surfacerelation: Int,
-                                      horizontallength: Float,
-                                      starttime: DateTime,
-                                      created_user: String,
-                                      versionstarttime: Option[DateTime],
-                                      shape: String,
-                                      trackcode: Option[Int],
-                                      cust_owner: Int
-                                    )
-
-  def mapPropertiesToParams(props: Seq[AssetProperty]): ComplementaryLinkParams = {
+  def mapPropertiesToParams(props: Seq[AssetProperty]): ComplementaryLink = {
     def getOptString(key: String): Option[String] =
       props.find(_.columnName == key).map(_.value.toString).filter(_.nonEmpty)
 
     def getString(key: String): String =
-      getOptString(key).getOrElse(throw new Exception(s"Missing required field $key"))
+      getOptString(key).getOrElse(throw new RoadLinkCsvValueConversionError(s"Missing required field $key"))
 
     def getOptInt(key: String): Option[Int] =
       getOptString(key).flatMap(s => scala.util.Try(s.toInt).toOption)
 
     def getInt(key: String): Int =
-      getOptInt(key).getOrElse(throw new Exception(s"Missing or invalid int for $key"))
+      getOptInt(key).getOrElse(throw new RoadLinkCsvValueConversionError(s"Missing or invalid int for $key"))
 
     def getOptFloat(key: String): Option[Float] =
       getOptString(key).flatMap(s => scala.util.Try(s.toFloat).toOption)
 
     def getFloat(key: String): Float =
-      getOptFloat(key).getOrElse(throw new Exception(s"Missing or invalid float for $key"))
+      getOptFloat(key).getOrElse(throw new RoadLinkCsvValueConversionError(s"Missing or invalid float for $key"))
 
     def getOptDateTime(key: String): Option[DateTime] =
       getOptString(key).flatMap { s =>
@@ -162,9 +137,9 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
       }
 
     def getDateTime(key: String): DateTime =
-      getOptDateTime(key).getOrElse(throw new Exception(s"Missing or invalid DateTime for $key"))
+      getOptDateTime(key).getOrElse(throw new RoadLinkCsvValueConversionError(s"Missing or invalid DateTime for $key"))
 
-    ComplementaryLinkParams(
+    ComplementaryLink(
       vvhid = getOptInt("vvh_id"),
       linkid = getString("link_id"),
       datasource = getOptInt("datasource"),
@@ -192,17 +167,10 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     )
   }
 
-  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow): Option[String] = {
+  def insertComplementaryLinks(roadLinkAttribute: CsvRoadLinkRow): Option[String] = {
     try {
       val params = mapPropertiesToParams(roadLinkAttribute.properties)
-
-      complementaryLinkDAO.insertComplementaryLinks(
-        params.vvhid, params.linkid, params.datasource, params.adminclass, params.municipalitycode, params.roadclass,
-        params.roadnamefin, params.roadnameswe, params.roadnamesme, params.roadnamesmn, params.roadnamesms,
-        params.roadnumber, params.roadpartnumber, params.surfacetype, params.lifecyclestatus, params.directiontype,
-        params.surfacerelation, params.horizontallength, params.starttime, params.created_user, params.versionstarttime,
-        params.shape, params.trackcode, params.cust_owner
-      )
+      complementaryLinkDAO.insertComplementaryLink(params)
       None
     } catch {
       case ex: Exception =>
@@ -365,7 +333,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
             })
         } else {
           val parsedRow = CsvRoadLinkRow(properties = properties)
-          updateRoadLinkOTH(parsedRow)
+          insertComplementaryLinks(parsedRow)
           result
         }
       }
