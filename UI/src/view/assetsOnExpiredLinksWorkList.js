@@ -79,7 +79,7 @@
                             $('<td>').text(item.startMeasure),
                             $('<td>').text(item.endMeasure),
                             $('<td>').text(item.roadLinkExpiredDate),
-                            $('<td>').append(openMapButton(item),copyAdditionalInfoButton(item)),
+                            $('<td>').append(openMapButton(item),copyPropertiesButton(item)),
                         ];
 
                         row.append(cells);
@@ -136,7 +136,7 @@
                     });
             };
 
-            var copyAdditionalInfoButton = function (item) {
+            var copyPropertiesButton = function (item) {
                 return $('<button/>')
                     .addClass('btn btn-municipality')
                     .text('Kopioi ominaisuustiedot')

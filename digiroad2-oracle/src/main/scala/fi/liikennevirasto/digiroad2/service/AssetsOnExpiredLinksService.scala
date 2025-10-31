@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, PointAssetOperations}
-import fi.liikennevirasto.digiroad2.asset.{AxleWeightLimit, BogieWeightLimit, CareClass, CarryingCapacity, CyclingAndWalking, DamagedByThaw, DirectionalTrafficSigns, EuropeanRoads, ExitNumbers, HazmatTransportProhibition, HeightLimit, LengthLimit, LitRoad, MassTransitLane, MassTransitStopAsset, NumberOfLanes, Obstacles, ParkingProhibition, PavedRoad, PedestrianCrossings, Prohibition, RailwayCrossings, RoadWidth, RoadWorksAsset, SpeedLimitAsset, TotalWeightLimit, TrafficLights, TrafficSigns, TrafficVolume, TrailerTruckWeightLimit, WidthLimit, WinterSpeedLimit}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, AxleWeightLimit, BogieWeightLimit, CyclingAndWalking, DamagedByThaw, DirectionalTrafficSigns, HeightLimit, LengthLimit, MassTransitLane, MassTransitStopAsset, NumberOfLanes, Obstacles, ParkingProhibition, PedestrianCrossings, RailwayCrossings, RoadWorksAsset, TotalWeightLimit, TrafficLights, TrafficSigns, TrafficVolume, TrailerTruckWeightLimit, WidthLimit, WinterSpeedLimit}
 import fi.liikennevirasto.digiroad2.dao.{AssetsOnExpiredLinksDAO, MassTransitStopDao, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.{DirectionalTrafficSignService, ObstacleService, PedestrianCrossingService, RailwayCrossingService, TrafficLightService, TrafficSignService}
@@ -9,10 +9,10 @@ import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.linearasset.{CyclingAndWalkingService, DamagedByThawService, LinearAssetOperations, LinearAssetService, LinearAxleWeightLimitService, LinearBogieWeightLimitService, LinearHeightLimitService, LinearLengthLimitService, LinearTotalWeightLimitService, LinearTrailerTruckWeightLimitService, LinearWidthLimitService, MassTransitLaneService, NumberOfLanesService, ParkingProhibitionService, RoadWorkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
-import fi.liikennevirasto.digiroad2.util.DataFixture.{roadAddressService}
+import fi.liikennevirasto.digiroad2.util.DataFixture.roadAddressService
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{dynamicLinearAssetService}
-import fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset.PointAssetUpdateProcess.{eventBus}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.dynamicLinearAssetService
+import fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset.PointAssetUpdateProcess.eventBus
 import org.slf4j.LoggerFactory
 import org.json4s._
 import org.json4s.jackson.Serialization
@@ -98,58 +98,20 @@ class AssetsOnExpiredLinksService {
     json
   }
 
-  private val pointAssetTypeIds: Set[Int] = Set(
-    PedestrianCrossings.typeId,
-    Obstacles.typeId,
-    RailwayCrossings.typeId,
-    DirectionalTrafficSigns.typeId,
-    TrafficSigns.typeId,
-    TrafficLights.typeId,
-    MassTransitStopAsset.typeId
-  )
-
-  private val linearAssetTypeIds: Set[Int] = Set(
-    SpeedLimitAsset.typeId,
-    Prohibition.typeId,
-    ParkingProhibition.typeId,
-    HazmatTransportProhibition.typeId,
-    CyclingAndWalking.typeId,
-    TotalWeightLimit.typeId,
-    TrailerTruckWeightLimit.typeId,
-    AxleWeightLimit.typeId,
-    BogieWeightLimit.typeId,
-    HeightLimit.typeId,
-    LengthLimit.typeId,
-    WidthLimit.typeId,
-    PavedRoad.typeId,
-    RoadWidth.typeId,
-    LitRoad.typeId,
-    CarryingCapacity.typeId,
-    DamagedByThaw.typeId,
-    RoadWorksAsset.typeId,
-    EuropeanRoads.typeId,
-    ExitNumbers.typeId,
-    CareClass.typeId,
-    NumberOfLanes.typeId,
-    MassTransitLane.typeId,
-    WinterSpeedLimit.typeId,
-    TrafficVolume.typeId
-  )
-
   def getAllWorkListAssets(newTransaction: Boolean = true): Seq[(AssetOnExpiredLink, String)] = {
     if (newTransaction) withDynTransaction {
       val workListAssets = dao.fetchWorkListAssets()
       val enrichedAssets = workListAssets.map { asset =>
+        val assetType = AssetTypeInfo.apply(asset.assetTypeId)
         val additionalJson =
-          if (pointAssetTypeIds.contains(asset.assetTypeId))
+          if (assetType.geometryType == "point")
             getPersistedPointAssetAsJson(asset)
-          else if (linearAssetTypeIds.contains(asset.assetTypeId))
+          else if (assetType.geometryType == "linear")
             getPersistedLinearAssetAsJson(asset)
           else {
             logger.warn(s"Unknown asset type ${asset.assetTypeId} for ${asset.id}")
             write(Map.empty[String, String])
           }
-        // Return a tuple (asset, extra JSON)
         (asset, additionalJson)
       }
 
