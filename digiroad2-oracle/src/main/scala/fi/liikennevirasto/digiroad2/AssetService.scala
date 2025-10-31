@@ -14,12 +14,6 @@ trait AssetOperations {
       municipalityDao.getMunicipalityById(id)
     }
   }
-
-  def getAssetsOnExpiredRoadLinksById(ids: Set[Long]): Seq[AssetOnExpiredRoadLink] = {
-    withDynTransaction {
-      assetDao.getAssetsOnExpiredRoadLinksById(ids)
-    }
-  }
 }
 
 class AssetService(eventbus: DigiroadEventBus) extends AssetOperations {

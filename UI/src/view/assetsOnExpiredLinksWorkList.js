@@ -143,7 +143,7 @@
                     .css('margin', '5px')
                     .click(function () {
                         var button = $(this);
-                        var textToCopy = JSON.stringify(item.additionalData, null, 2);
+                        var textToCopy = JSON.stringify(item.properties, null, 2);
 
                         if (navigator.clipboard && navigator.clipboard.writeText) {
                             navigator.clipboard.writeText(textToCopy)

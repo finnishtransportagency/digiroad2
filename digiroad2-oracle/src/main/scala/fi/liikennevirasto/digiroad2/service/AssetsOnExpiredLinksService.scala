@@ -2,17 +2,14 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, PointAssetOperations}
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, AxleWeightLimit, BogieWeightLimit, CyclingAndWalking, DamagedByThaw, DirectionalTrafficSigns, HeightLimit, LengthLimit, MassTransitLane, MassTransitStopAsset, NumberOfLanes, Obstacles, ParkingProhibition, PedestrianCrossings, RailwayCrossings, RoadWorksAsset, TotalWeightLimit, TrafficLights, TrafficSigns, TrafficVolume, TrailerTruckWeightLimit, WidthLimit, WinterSpeedLimit}
-import fi.liikennevirasto.digiroad2.dao.{AssetsOnExpiredLinksDAO, MassTransitStopDao, MunicipalityDao, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{AssetOnExpiredRoadLink, AssetsOnExpiredLinksDAO, MassTransitStopDao, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.{DirectionalTrafficSignService, ObstacleService, PedestrianCrossingService, RailwayCrossingService, TrafficLightService, TrafficSignService}
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.service.linearasset.{CyclingAndWalkingService, DamagedByThawService, LinearAssetOperations, LinearAssetService, LinearAxleWeightLimitService, LinearBogieWeightLimitService, LinearHeightLimitService, LinearLengthLimitService, LinearTotalWeightLimitService, LinearTrailerTruckWeightLimitService, LinearWidthLimitService, MassTransitLaneService, NumberOfLanesService, ParkingProhibitionService, RoadWorkService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{CyclingAndWalkingService, DamagedByThawService, DynamicLinearAssetService, LinearAssetOperations, LinearAssetService, LinearAxleWeightLimitService, LinearBogieWeightLimitService, LinearHeightLimitService, LinearLengthLimitService, LinearTotalWeightLimitService, LinearTrailerTruckWeightLimitService, LinearWidthLimitService, MassTransitLaneService, NumberOfLanesService, ParkingProhibitionService, RoadWorkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
-import fi.liikennevirasto.digiroad2.util.DataFixture.roadAddressService
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.dynamicLinearAssetService
-import fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset.PointAssetUpdateProcess.eventBus
 import org.slf4j.LoggerFactory
 import org.json4s._
 import org.json4s.jackson.Serialization
@@ -22,13 +19,15 @@ import org.json4s.jackson.Serialization.write
 case class AssetOnExpiredLink(id: Long, assetTypeId: Int, linkId: String, sideCode: Int, startMeasure: Double,
                               endMeasure: Double, geometry: Seq[Point], roadLinkExpiredDate: DateTime, nationalId: Option[Int])
 
+case class AssetOnExpiredLinkWithAssetProperties(asset: AssetOnExpiredLink, properties: String)
+
 class AssetsOnExpiredLinksService {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   protected def dao: AssetsOnExpiredLinksDAO = new AssetsOnExpiredLinksDAO
   protected def assetDao: PostGISAssetDao = new PostGISAssetDao
 
   implicit val formats = Serialization.formats(NoTypeHints)
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   lazy val eventbus: DigiroadEventBus = {
     new DigiroadEventBus
@@ -38,7 +37,19 @@ class AssetsOnExpiredLinksService {
     new RoadLinkClient
   }
 
-  val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
+  private val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
+
+  private val roadAddressService: RoadAddressService = new RoadAddressService
+
+  private val dynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService,eventbus)
+
+  private class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
+    override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+    override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val municipalityDao: MunicipalityDao = new MunicipalityDao
+    override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
+  }
 
   private def getDynamicLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
@@ -63,21 +74,13 @@ class AssetsOnExpiredLinksService {
 
   private def getDynamicPointAssetService(typeId: Int): PointAssetOperations = {
     typeId match {
-      case PedestrianCrossings.typeId => new PedestrianCrossingService(roadLinkService, eventBus)
+      case PedestrianCrossings.typeId => new PedestrianCrossingService(roadLinkService, eventbus)
       case Obstacles.typeId => new ObstacleService(roadLinkService)
       case RailwayCrossings.typeId => new RailwayCrossingService(roadLinkService)
       case DirectionalTrafficSigns.typeId => new DirectionalTrafficSignService(roadLinkService)
-      case TrafficSigns.typeId => new TrafficSignService(roadLinkService, eventBus)
+      case TrafficSigns.typeId => new TrafficSignService(roadLinkService, eventbus)
       case TrafficLights.typeId => new TrafficLightService(roadLinkService)
-      case MassTransitStopAsset.typeId =>
-        class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
-          override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-          override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-          override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-          override val municipalityDao: MunicipalityDao = new MunicipalityDao
-          override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
-        }
-        new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService, roadAddressService)
+      case MassTransitStopAsset.typeId => new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService, roadAddressService)
       case _ => throw new IllegalArgumentException("Invalid asset id")
     }
   }
@@ -98,7 +101,7 @@ class AssetsOnExpiredLinksService {
     json
   }
 
-  def getAllWorkListAssets(newTransaction: Boolean = true): Seq[(AssetOnExpiredLink, String)] = {
+  def getAllWorkListAssets(newTransaction: Boolean = true): Seq[AssetOnExpiredLinkWithAssetProperties] = {
     if (newTransaction) withDynTransaction {
       val workListAssets = dao.fetchWorkListAssets()
       val enrichedAssets = workListAssets.map { asset =>
@@ -112,12 +115,12 @@ class AssetsOnExpiredLinksService {
             logger.warn(s"Unknown asset type ${asset.assetTypeId} for ${asset.id}")
             write(Map.empty[String, String])
           }
-        (asset, additionalJson)
+        AssetOnExpiredLinkWithAssetProperties(asset, additionalJson)
       }
 
       enrichedAssets
     } else {
-      dao.fetchWorkListAssets().map(asset => (asset, write(Map.empty[String, String])))
+      dao.fetchWorkListAssets().map(asset => AssetOnExpiredLinkWithAssetProperties(asset, write(Map.empty[String, String])))
     }
   }
 
@@ -130,14 +133,20 @@ class AssetsOnExpiredLinksService {
 
   def expireAssetsByIdAndDeleteFromWorkList(assetIds: Set[Long], userName: String, newTransaction: Boolean = false): Set[Long] = {
     if(newTransaction) withDynTransaction{
-      assetDao.expireAssetsById(assetIds, userName)
+      dao.expireAssetsById(assetIds, userName)
       dao.deleteFromWorkList(assetIds)
     }
     else {
-      assetDao.expireAssetsById(assetIds, userName)
+      dao.expireAssetsById(assetIds, userName)
       dao.deleteFromWorkList(assetIds)
     }
 
     assetIds
+  }
+
+  def getAssetsOnExpiredRoadLinksById(ids: Set[Long]): Seq[AssetOnExpiredRoadLink] = {
+    withDynTransaction {
+      dao.getAssetsOnExpiredRoadLinksById(ids)
+    }
   }
 }

@@ -10,17 +10,6 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class AssetLink(id: Long, linkId: String, startMeasure: Double, endMeasure: Double)
-case class AssetOnExpiredRoadLink(
-                                   id: Long,
-                                   linkId: String,
-                                   startMeasure: Double,
-                                   endMeasure: Double,
-                                   point: Option[Seq[Point]],
-                                   linkGeometry: Option[Seq[Point]],
-                                   sideCode: SideCode,
-                                   bearing: Int,
-                                   assetGeometry: Option[Seq[Point]]
-                            )
 
 class PostGISAssetDao {
 
@@ -32,57 +21,6 @@ class PostGISAssetDao {
       val endMeasure = r.nextDouble()
 
       AssetLink(id, linkId, startMeasure, endMeasure)
-    }
-  }
-
-  implicit val getAssetOnExpiredRoadLink = new GetResult[AssetOnExpiredRoadLink] {
-    def apply(r: PositionedResult): AssetOnExpiredRoadLink = {
-      val id = r.nextLong()
-      val linkId = r.nextString()
-      val startMeasure = r.nextDouble()
-      val endMeasure = r.nextDouble()
-
-      val pointObj = r.nextObjectOption()
-      val linkGeomObj = r.nextObjectOption()
-
-      // make sure result is Option[Seq[Point]], not plain Iterable
-      val point: Option[Seq[Point]] = pointObj match {
-        case Some(obj) =>
-          val path = PostGISDatabase.extractGeometry(obj)
-          if (path.nonEmpty)
-            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
-          else
-            None
-        case None => None
-      }
-
-      // make sure result is Option[Seq[Point]], not plain Iterable
-      val linkGeometry: Option[Seq[Point]] = linkGeomObj match {
-        case Some(obj) =>
-          val path = PostGISDatabase.extractGeometry(obj)
-          if (path.nonEmpty)
-            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
-          else
-            None
-        case None => None
-      }
-
-      val sideCode = r.nextInt()
-      val bearing = r.nextInt()
-
-      val assetGeomObj = r.nextObjectOption()
-
-      val assetGeometry: Option[Seq[Point]] = assetGeomObj match {
-        case Some(obj) =>
-          val path = PostGISDatabase.extractGeometry(obj)
-          if (path.nonEmpty)
-            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
-          else
-            None
-        case None => None
-      }
-
-      AssetOnExpiredRoadLink(id, linkId, startMeasure, endMeasure, point, linkGeometry, SideCode(sideCode), bearing, assetGeometry)
     }
   }
 
@@ -100,53 +38,6 @@ class PostGISAssetDao {
   def getGeometryType(typeId: Int): String = {
     val geometryType = sql""" select GEOMETRY_TYPE from asset_type where id = $typeId""".as[String].firstOption.get
     geometryType
-  }
-
-  /**
-    * When invoked will expire given assets by Id.
-    * It is required that the invoker takes care of the transaction.
-    *
-    * @param id Represets the id of the asset
-    */
-  def expireAssetsById (ids: Set[Long], userName: String): Unit = {
-    sqlu""" update asset
-            set valid_to = now(),
-            modified_by = ${userName}
-            where id in(#${ids.mkString(",")})""".execute
-
-  }
-
-  def getAssetsOnExpiredRoadLinksById(ids: Set[Long]):Seq[AssetOnExpiredRoadLink] = {
-    MassQuery.withIds(ids) { idTableName =>
-      sql"""
-       SELECT
-        a.id,
-        lp.link_id,
-        lp.start_measure,
-        lp.end_measure,
-        a.geometry,
-        kr.shape AS line_geometry,
-        lp.side_code,
-        a.bearing,
-        CASE
-          WHEN lp.start_measure IS NOT NULL
-            AND lp.end_measure IS NOT NULL
-          THEN ST_LineMerge(
-            ST_LocateBetween(
-              kr.shape,
-              lp.start_measure / kr.geometrylength,
-              lp.end_measure / kr.geometrylength
-            )
-          )
-          ELSE NULL
-        END AS asset_geometry
-      FROM asset a
-      JOIN asset_link al ON al.asset_id = a.id
-      JOIN lrm_position lp ON al.position_id = lp.id
-      JOIN kgv_roadlink kr ON lp.link_id = kr.linkid
-      JOIN #$idTableName i ON i.id = a.id
-    """.as[AssetOnExpiredRoadLink].list
-    }
   }
 
   /**
