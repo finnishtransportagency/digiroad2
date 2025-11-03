@@ -40,7 +40,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
 
   val allowedAdminClasses = AdministrativeClass.values.map(_.value)
   val allowedMTKClasses = MTKClass.values.map(_.value)
-  val allowedSurfaceTypes = SurfaceType.values.filter(st => st.value == 1 || st.value == 2).map(_.value)
+  val allowedSurfaceTypes = SurfaceType.values.filter(st => st == SurfaceType.None || st == SurfaceType.Paved).map(_.value)
   val allowedConstructionTypes = ConstructionType.values.map(_.value)
   val allowedSurfaceRelations = SurfaceRelation.values.map(_.value)
   val allowedTrackCodes = Track.values.map(_.value)
