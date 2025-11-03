@@ -67,7 +67,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
                    val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService,
-                   val assetService: AssetService = Digiroad2Context.assetService,
+                   val complimentaryRoadLinkExpiringProcess: ComplimentaryRoadLinkExpiringProcess = Digiroad2Context.complimentaryRoadLinkExpiringProcess,
                    val verificationService: VerificationService = Digiroad2Context.verificationService,
                    val municipalityService: MunicipalityService = Digiroad2Context.municipalityService,
                    val applicationFeedback: FeedbackApplicationService = Digiroad2Context.applicationFeedback,
@@ -836,6 +836,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox")
       .map(getRoadlinksWithComplementaryFromDB(Set(),withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
+  get("/roadlinks/complementaryIds") {
+    val municipalityParam = request.getParameter("municipalities")
+    val municipalityIds = municipalityParam.split(",").map(_.toInt).toSeq
+
+    roadLinkService.getComplementaryRoadLinkIdsByMunicipalities(municipalityIds)
+  }
+
+  delete("/roadlinks/complementaryLinksToDelete") {
+    val user = userProvider.getCurrentUser()
+    if (!user.isOperator()) {
+      halt(Unauthorized("User not authorized"))
+    }
+    val linkIdsToDelete: Set[String] = Option(request.getParameterValues("linkIds"))
+      .map(_.flatMap(_.split(",")).toSet)
+      .getOrElse(Set.empty)
+
+    roadLinkService.deleteComplementaryRoadLinksAndPropertiesByLinkIds(linkIdsToDelete)
+    complimentaryRoadLinkExpiringProcess.handleAssetsOnDeletedComplementaryRoadLinks(linkIdsToDelete, user.username)
   }
 
   get("/roadLinks/incomplete") {
