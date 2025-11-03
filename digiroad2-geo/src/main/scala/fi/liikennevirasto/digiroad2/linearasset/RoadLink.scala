@@ -119,17 +119,17 @@ case class ComplementaryLink(vvhid: Option[Int],
                              roadnamesms: Option[String],
                              roadnumber: Option[Int],
                              roadpartnumber: Option[Int],
-                             surfacetype: Int,
-                             lifecyclestatus: Int,
+                             surfacetype: SurfaceType,
+                             lifecyclestatus: ConstructionType,
                              directiontype: Int,
-                             surfacerelation: Int,
+                             surfacerelation: SurfaceRelation,
                              horizontallength: Float,
                              starttime: DateTime,
                              created_user: String,
                              versionstarttime: Option[DateTime],
                              shape: String,
                              trackcode: Option[Int],
-                             cust_owner: Int
+                             cust_owner: ReasonOfCreation
                             )
 
 sealed trait SurfaceType {

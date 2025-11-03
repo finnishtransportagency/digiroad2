@@ -128,9 +128,9 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
     ) VALUES (
       ${link.vvhid}, ${link.linkid}, ${link.datasource}, ${link.adminclass}, ${link.municipalitycode}, ${link.roadclass},
       ${link.roadnamefin}, ${link.roadnameswe}, ${link.roadnamesme}, ${link.roadnamesmn}, ${link.roadnamesms},
-      ${link.roadnumber}, ${link.roadpartnumber}, ${link.surfacetype}, ${link.lifecyclestatus}, ${link.directiontype},
-      ${link.surfacerelation}, ${link.horizontallength}, ${sqlStartTime}, ${link.created_user}, ${sqlVersionStartTime},
-      #${geometrySql}, ${link.trackcode}, ${link.cust_owner}
+      ${link.roadnumber}, ${link.roadpartnumber}, ${link.surfacetype.value}, ${link.lifecyclestatus.value}, ${link.directiontype},
+      ${link.surfacerelation.value}, ${link.horizontallength}, ${sqlStartTime}, ${link.created_user}, ${sqlVersionStartTime},
+      #${geometrySql}, ${link.trackcode}, ${link.cust_owner.value}
     )
   """.execute
   }

@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, D
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, DateParser, MTKClass, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
-import fi.liikennevirasto.digiroad2.linearasset.{ComplementaryLink, ReasonOfCreation, SurfaceRelation, SurfaceType}
+import fi.liikennevirasto.digiroad2.linearasset.{ComplementaryLink, DigiroadTemporaryReason, ReasonOfCreation, SurfaceRelation, SurfaceType}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.KgvUtil.extractTrafficDirection
@@ -153,17 +153,17 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
       roadnamesms = getOptString("roadnamesms"),
       roadnumber = getOptInt("roadnumber"),
       roadpartnumber = getOptInt("roadpartnumber"),
-      surfacetype = getInt("surfacetype"),
-      lifecyclestatus = getInt("lifecyclestatus"),
+      surfacetype = SurfaceType(getInt("surfacetype")),
+      lifecyclestatus = ConstructionType(getInt("lifecyclestatus")),
       directiontype = getInt("directiontype"),
-      surfacerelation = getInt("surfacerelation"),
+      surfacerelation = SurfaceRelation.values.find(_.value == getInt("surfacerelation")).getOrElse(SurfaceRelation.OnTheSurface),
       horizontallength = getFloat("horizontallength"),
       starttime = getDateTime("starttime"),
       created_user = getString("created_user"),
       versionstarttime = getOptDateTime("versionstarttime"),
       shape = getString("shape"),
       trackcode = getOptInt("trackcode"),
-      cust_owner = getInt("cust_owner")
+      cust_owner = ReasonOfCreation.values.find(_.value == getInt("cust_owner")).getOrElse(DigiroadTemporaryReason)
     )
   }
 
