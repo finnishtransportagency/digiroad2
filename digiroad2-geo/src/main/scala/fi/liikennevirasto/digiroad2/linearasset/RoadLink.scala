@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.lane.PersistedLane
+import org.joda.time.DateTime
 
 import scala.util.Try
 
@@ -104,6 +105,32 @@ object LinkId {
     id == null || id == Unknown.value
   }
 }
+
+case class ComplementaryLink(vvhid: Option[Int],
+                             linkid: String,
+                             datasource: Option[Int],
+                             adminclass: Int,
+                             municipalitycode: Int,
+                             roadclass: Int,
+                             roadnamefin: Option[String],
+                             roadnameswe: Option[String],
+                             roadnamesme: Option[String],
+                             roadnamesmn: Option[String],
+                             roadnamesms: Option[String],
+                             roadnumber: Option[Int],
+                             roadpartnumber: Option[Int],
+                             surfacetype: Int,
+                             lifecyclestatus: Int,
+                             directiontype: Int,
+                             surfacerelation: Int,
+                             horizontallength: Float,
+                             starttime: DateTime,
+                             created_user: String,
+                             versionstarttime: Option[DateTime],
+                             shape: String,
+                             trackcode: Option[Int],
+                             cust_owner: Int
+                            )
 
 sealed trait SurfaceType {
   def value: Int

@@ -6,8 +6,8 @@ import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormatMs
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, DigiroadEventBus, ExcludedRow, ImportResult, IncompleteRow, MalformedRow, Status, Track}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, DateParser, MTKClass, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, ComplementaryLink}
-import fi.liikennevirasto.digiroad2.linearasset.{ReasonOfCreation, SurfaceRelation, SurfaceType}
+import fi.liikennevirasto.digiroad2.dao.ComplementaryLinkDAO
+import fi.liikennevirasto.digiroad2.linearasset.{ComplementaryLink, ReasonOfCreation, SurfaceRelation, SurfaceType}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.KgvUtil.extractTrafficDirection
