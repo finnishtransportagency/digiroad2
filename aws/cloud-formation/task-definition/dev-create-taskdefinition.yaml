@@ -71,13 +71,13 @@ Resources:
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
       TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${ECSTaskRoleName}'
-      Memory: '2048'
+      Memory: '8192'
       Family: digiroad2-dev
-      Cpu: '1024'
+      Cpu: '4096'
       ContainerDefinitions:
         -
-          Cpu: 0
-          memory: 2048
+          Cpu: 4096
+          memory: 8192
           Image: !Sub '${RepositoryURL}:latest'
           Name: digiroad2
           LogConfiguration:
@@ -93,7 +93,7 @@ Resources:
               Protocol: tcp
           Environment:
             - Name: containerCPU
-              Value: -XX:ActiveProcessorCount=1
+              Value: -XX:ActiveProcessorCount=4
             - Name: REGION
               Value: eu-west-1
             - Name: speedLimitProvider
