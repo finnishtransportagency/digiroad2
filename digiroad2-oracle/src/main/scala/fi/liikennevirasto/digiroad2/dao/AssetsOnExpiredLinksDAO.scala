@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.dao
 
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.service.AssetOnExpiredLink
 import org.joda.time.DateTime
-import net.postgis.jdbc.PGgeometry
 import net.postgis.jdbc.geometry.GeometryBuilder
 import org.postgresql.util.PGobject
 import slick.jdbc.StaticQuery.interpolation
@@ -12,7 +13,71 @@ import slick.jdbc.{GetResult, PositionedResult}
 
 import scala.collection.mutable.ListBuffer
 
+case class AssetOnExpiredRoadLink(
+                                   id: Long,
+                                   linkId: String,
+                                   startMeasure: Double,
+                                   endMeasure: Double,
+                                   point: Option[Seq[Point]],
+                                   linkGeometry: Option[Seq[Point]],
+                                   sideCode: SideCode,
+                                   bearing: Int,
+                                   assetGeometry: Option[Seq[Point]]
+                                 )
+
 class AssetsOnExpiredLinksDAO {
+
+
+  implicit val getAssetOnExpiredRoadLink = new GetResult[AssetOnExpiredRoadLink] {
+    def apply(r: PositionedResult): AssetOnExpiredRoadLink = {
+      val id = r.nextLong()
+      val linkId = r.nextString()
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+
+      val pointObj = r.nextObjectOption()
+      val linkGeomObj = r.nextObjectOption()
+
+      // make sure result is Option[Seq[Point]], not plain Iterable
+      val point: Option[Seq[Point]] = pointObj match {
+        case Some(obj) =>
+          val path = PostGISDatabase.extractGeometry(obj)
+          if (path.nonEmpty)
+            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
+          else
+            None
+        case None => None
+      }
+
+      // make sure result is Option[Seq[Point]], not plain Iterable
+      val linkGeometry: Option[Seq[Point]] = linkGeomObj match {
+        case Some(obj) =>
+          val path = PostGISDatabase.extractGeometry(obj)
+          if (path.nonEmpty)
+            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
+          else
+            None
+        case None => None
+      }
+
+      val sideCode = r.nextInt()
+      val bearing = r.nextInt()
+
+      val assetGeomObj = r.nextObjectOption()
+
+      val assetGeometry: Option[Seq[Point]] = assetGeomObj match {
+        case Some(obj) =>
+          val path = PostGISDatabase.extractGeometry(obj)
+          if (path.nonEmpty)
+            Some(path.map(p => Point(p(0), p(1), p(2))).toSeq)
+          else
+            None
+        case None => None
+      }
+
+      AssetOnExpiredRoadLink(id, linkId, startMeasure, endMeasure, point, linkGeometry, SideCode(sideCode), bearing, assetGeometry)
+    }
+  }
 
   protected def extractGeometry(data: Object): List[List[Double]] = {
     val geometry = data.asInstanceOf[PGobject]
@@ -43,13 +108,16 @@ class AssetsOnExpiredLinksDAO {
       val roadLinkExpiredDate = new DateTime(roadLinkExpired)
       val assetGeometry = pgAssetGeometry.map(point => Point(point(0), point(1), point(2)))
 
-      AssetOnExpiredLink(id, assetTypeId, linkId, sideCode, startMeasure, endMeasure, assetGeometry, roadLinkExpiredDate)
+      val nationalId = r.nextIntOption()
+
+      AssetOnExpiredLink(id, assetTypeId, linkId, sideCode, startMeasure, endMeasure, assetGeometry, roadLinkExpiredDate, nationalId)
     }
   }
 
   def fetchWorkListAssets(): Seq[AssetOnExpiredLink] = {
-    sql"""SELECT asset_id, asset_type_id, link_id, side_code, start_measure, end_measure, road_link_expired_date, asset_geometry
-          FROM assets_on_expired_road_links
+    sql"""SELECT ael.asset_id, ael.asset_type_id, ael.link_id, ael.side_code, ael.start_measure, ael.end_measure, ael.road_link_expired_date, ael.asset_geometry, a.national_id
+          FROM assets_on_expired_road_links ael
+          JOIN asset a ON a.id = ael.asset_id
        """.as[AssetOnExpiredLink].list
   }
 
@@ -76,6 +144,39 @@ class AssetsOnExpiredLinksDAO {
                   to_timestamp($roadLinkExpiredDate, 'YYYY-MM-DD"T"HH24:MI:SS.FF3'),
                   ST_GeomFromText($geometryWKT))
         """.execute
+  }
+
+  def getAssetsOnExpiredRoadLinksById(ids: Set[Long]):Seq[AssetOnExpiredRoadLink] = {
+    MassQuery.withIds(ids) { idTableName =>
+      sql"""
+       SELECT
+        a.id,
+        lp.link_id,
+        lp.start_measure,
+        lp.end_measure,
+        a.geometry,
+        kr.shape AS line_geometry,
+        lp.side_code,
+        a.bearing,
+        CASE
+          WHEN lp.start_measure IS NOT NULL
+            AND lp.end_measure IS NOT NULL
+          THEN ST_LineMerge(
+            ST_LocateBetween(
+              kr.shape,
+              lp.start_measure / kr.geometrylength,
+              lp.end_measure / kr.geometrylength
+            )
+          )
+          ELSE NULL
+        END AS asset_geometry
+      FROM asset a
+      JOIN asset_link al ON al.asset_id = a.id
+      JOIN lrm_position lp ON al.position_id = lp.id
+      JOIN kgv_roadlink kr ON lp.link_id = kr.linkid
+      JOIN #$idTableName i ON i.id = a.id
+    """.as[AssetOnExpiredRoadLink].list
+    }
   }
 
   def deleteFromWorkList(assetIdsToDelete: Set[Long]): Unit = {

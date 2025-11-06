@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.TrafficSigns
-import fi.liikennevirasto.digiroad2.postgis.MassQuery
+import fi.liikennevirasto.digiroad2.asset.{SideCode}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -36,16 +36,6 @@ class PostGISAssetDao {
   def getGeometryType(typeId: Int): String = {
     val geometryType = sql""" select GEOMETRY_TYPE from asset_type where id = $typeId""".as[String].firstOption.get
     geometryType
-  }
-
-  /**
-    * When invoked will expire assets by Id.
-    * It is required that the invoker takes care of the transaction.
-    *
-    * @param id Represets the id of the asset
-    */
-  def expireAssetsById (id: Long): Unit = {
-    sqlu"update asset set valid_to = INTERVAL'1 SECOND' where id = $id".execute
   }
 
   /**
