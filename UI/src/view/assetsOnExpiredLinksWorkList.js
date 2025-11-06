@@ -163,8 +163,8 @@
                 var notification = $('<div class="pop-up-copy-notification ' + type + '">')
                     .text(message)
                     .css({
-                        top: button.offset().top - 3 + 'px',
-                        left: button.offset().left + 140 + 'px'
+                        top: button.offset().top - 2 + 'px',
+                        left: button.offset().left - 270 + 'px'
                     });
 
                 $('body').append(notification);
