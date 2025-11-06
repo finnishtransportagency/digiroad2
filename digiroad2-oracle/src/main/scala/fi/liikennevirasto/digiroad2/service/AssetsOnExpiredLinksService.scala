@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, PointAssetOperations}
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, AxleWeightLimit, BogieWeightLimit, CyclingAndWalking, DamagedByThaw, DirectionalTrafficSigns, HeightLimit, LengthLimit, MassTransitLane, MassTransitStopAsset, NumberOfLanes, Obstacles, ParkingProhibition, PedestrianCrossings, RailwayCrossings, RoadWorksAsset, TotalWeightLimit, TrafficLights, TrafficSigns, TrafficVolume, TrailerTruckWeightLimit, WidthLimit, WinterSpeedLimit}
 import fi.liikennevirasto.digiroad2.dao.{AssetOnExpiredRoadLink, AssetsOnExpiredLinksDAO, MassTransitStopDao, MunicipalityDao, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.{DirectionalTrafficSignService, ObstacleService, PedestrianCrossingService, RailwayCrossingService, TrafficLightService, TrafficSignService}
 import org.joda.time.DateTime
@@ -24,7 +25,6 @@ case class AssetOnExpiredLinkWithAssetProperties(asset: AssetOnExpiredLink, prop
 class AssetsOnExpiredLinksService {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   protected def dao: AssetsOnExpiredLinksDAO = new AssetsOnExpiredLinksDAO
-  protected def assetDao: PostGISAssetDao = new PostGISAssetDao
 
   implicit val formats = Serialization.formats(NoTypeHints)
   private val logger = LoggerFactory.getLogger(getClass)
@@ -133,11 +133,11 @@ class AssetsOnExpiredLinksService {
 
   def expireAssetsByIdAndDeleteFromWorkList(assetIds: Set[Long], userName: String, newTransaction: Boolean = false): Set[Long] = {
     if(newTransaction) withDynTransaction{
-      dao.expireAssetsById(assetIds, userName)
+      Queries.expireAssetsById(assetIds, userName)
       dao.deleteFromWorkList(assetIds)
     }
     else {
-      dao.expireAssetsById(assetIds, userName)
+      Queries.expireAssetsById(assetIds, userName)
       dao.deleteFromWorkList(assetIds)
     }
 

@@ -131,6 +131,20 @@ object Queries {
     sqlu"""update ASSET set VALID_TO = current_timestamp, MODIFIED_BY = $username, modified_date = current_timestamp where id = $id""".execute
   }
 
+  /**
+   * When invoked will expire given assets by Id.
+   * It is required that the invoker takes care of the transaction.
+   *
+   * @param id Represets the id of the asset
+   */
+  def expireAssetsById (ids: Set[Long], userName: String): Unit = {
+    sqlu""" update asset
+            set valid_to = now(),
+            modified_by = ${userName}
+            where id in(#${ids.mkString(",")})""".execute
+
+  }
+
   def propertyIdByPublicIdAndTypeId = "select id from property where public_id = ? and asset_type_id = ?"
   def propertyIdByPublicId = "select id from property where public_id = ?"
   def getPropertyIdByPublicId(id: String) = sql"select id from property where public_id = $id".as[Long].first

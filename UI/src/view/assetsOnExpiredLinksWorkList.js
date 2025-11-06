@@ -148,7 +148,7 @@
                         if (navigator.clipboard && navigator.clipboard.writeText) {
                             navigator.clipboard.writeText(textToCopy)
                                 .then(function() {
-                                showNotification('success', 'Ominaisuustiedot kopioitu leikepöydälle!', button);
+                                showNotification('success', 'Ominaisuustiedot kopioitu leikepöydälle', button);
                             })
                                 .catch(function(err) {
                                     showNotification('failure', 'Kopiointi epäonnistui!', button);

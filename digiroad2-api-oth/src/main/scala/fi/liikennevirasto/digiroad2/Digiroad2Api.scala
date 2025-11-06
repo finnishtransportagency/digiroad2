@@ -1907,12 +1907,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/assetOnExpiredRoadLink") {
-    logger.info(s"Fetching asset with id ${params.get("assetId")}")
     params.get("assetId").map { assetId =>
       val assetOnExpiredRoadLink = assetsOnExpiredLinksService.getAssetsOnExpiredRoadLinksById(Set(assetId.toLong))
       assetOnExpiredRoadLink
     } getOrElse {
-      BadRequest("Could not fetch asset on expired road link.")
+      BadRequest("Could not fetch asset on expired road link due to a missing assetId parameter.")
     }
   }
 

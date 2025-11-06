@@ -186,18 +186,4 @@ class AssetsOnExpiredLinksDAO {
            WHERE asset_id IN #$assetIdFilter
         """.execute
   }
-
-  /**
-   * When invoked will expire given assets by Id.
-   * It is required that the invoker takes care of the transaction.
-   *
-   * @param id Represets the id of the asset
-   */
-  def expireAssetsById (ids: Set[Long], userName: String): Unit = {
-    sqlu""" update asset
-            set valid_to = now(),
-            modified_by = ${userName}
-            where id in(#${ids.mkString(",")})""".execute
-
-  }
 }
