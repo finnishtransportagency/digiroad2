@@ -133,11 +133,11 @@ class AssetsOnExpiredLinksService {
 
   def expireAssetsByIdAndDeleteFromWorkList(assetIds: Set[Long], userName: String, newTransaction: Boolean = false): Set[Long] = {
     if(newTransaction) withDynTransaction{
-      Queries.expireAssetsById(assetIds, userName)
+      Queries.expireAssetsByIds(assetIds.toSeq, userName)
       dao.deleteFromWorkList(assetIds)
     }
     else {
-      Queries.expireAssetsById(assetIds, userName)
+      Queries.expireAssetsByIds(assetIds.toSeq, userName)
       dao.deleteFromWorkList(assetIds)
     }
 
