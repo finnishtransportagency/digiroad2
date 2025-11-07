@@ -145,9 +145,13 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
       }
     }
 
-    val query = assets.map(mapToQuery(links, _)).filter(_.isDefined).map(_.get)
+    // Separate terminals from other bus stops because terminals do not need a road address and do not have a bearing.
+    val (terminals, assetsWithoutTerminals) = assets.partition { asset =>
+      MassTransitStopOperations.extractStopType(asset).contains(BusStopType.Terminal)
+    }
+    val query = assetsWithoutTerminals.map(mapToQuery(links, _)).filter(_.isDefined).map(_.get)
     val roadAddress = geometryTransform.resolveMultipleAddressAndLocations(query)
-    assets.map(mapAssetToRoadAddress(roadAddress, _))
+    assetsWithoutTerminals.map(mapAssetToRoadAddress(roadAddress, _)) ++ terminals
   }
 
   private def extractRoadNumber(link: RoadLinkLike) = {
