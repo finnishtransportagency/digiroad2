@@ -377,8 +377,8 @@ object Digiroad2Context {
     new RoadAddressService()
   }
 
-  lazy val assetService: AssetService = {
-    new AssetService(eventbus)
+  lazy val complimentaryRoadLinkExpiringProcess: ComplimentaryRoadLinkExpiringProcess = {
+    new ComplimentaryRoadLinkExpiringProcess(eventbus)
   }
 
   lazy val verificationService: VerificationService = {

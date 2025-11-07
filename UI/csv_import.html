@@ -10,27 +10,6 @@
     <script type="text/javascript" src="src/view/genericConfirmPopup.js"></script>
     <script type="text/javascript" src="src/utils/data-import-backend.js"></script>
     <script type="text/javascript" src="src/csvImporter.js"></script>
-    <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            $('#municipalities_search').multiselect({
-                search: {
-                    left:
-                        '<label class="control-label labelBoxLeft">Kaikki kunnat</label>' +
-                        '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" />',
-                    right:
-                        '<label class="control-label labelBoxRight">Valitut Kunnat</label>' +
-                        '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" />'
-                },
-                fireSearch: function(value) {
-                    return value.length >= 1;
-                }
-            });
-            $('#municipalities_search_rightSelected, #municipalities_search_leftSelected').on('click', function(event) {
-                var disableStatus = _.isEmpty($('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option'));
-                $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
-            });
-        });
-    </script>
     <!-- Google Analytics loaded asynchronously -->
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -82,7 +61,21 @@
                             </div>
                         </div>
                     </div>
-
+                    <div id="roadLinkListContainer" style="display: none;">
+                        <div class="row">
+                            <div class="col-xs-5">
+                                <select id="roadlinks_search" class="form-control" multiple="multiple"></select>
+                            </div>
+                            <div class="col-xs-2">
+                                <button type="button" id="roadlinks_search_rightSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary"> &gt; </button>
+                                <button type="button" id="roadlinks_search_leftSelected" class="action-mode-btn btn btn-block edit-mode-btn btn-primary"> &lt; </button>
+                            </div>
+                            <div class="col-xs-5">
+                                <select name="linkIds" id="roadlinks_search_to" class="form-control" multiple="multiple"></select>
+                            </div>
+                        </div>
+                        <p>Yhdellä latauksella voi ainoastaan tuoda TAI poistaa linkkejä</p>
+                    </div>
                 </div>
 
                 <div class="form-group mass-transit-stop-limit">

@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 
 
 class RoadAddressException(response: String) extends RuntimeException(response)
+class MissingRoadAddressInformation(response: String) extends RuntimeException(response)
 class RoadPartReservedException(response: String) extends RoadAddressException(response)
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.

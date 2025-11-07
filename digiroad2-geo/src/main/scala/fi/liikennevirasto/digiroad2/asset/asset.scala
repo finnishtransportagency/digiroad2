@@ -120,8 +120,16 @@ object MTKClass {
   case object CarRoad_IIIa_MTKClass extends MTKClass { def value = 12131 }
   case object CarRoad_IIIb_MTKClass extends MTKClass { def value = 12132 }
   case object DriveWay_MTKClass    extends MTKClass { def value = 12141 }
-  case object CableFerry_MTKClass  extends MTKClass { def value = 12151 }
+  case object Ferry_MTKClass  extends MTKClass { def value = 12151 }
+  case object CableFerry_MTKClass  extends MTKClass { def value = 12152 }
+  case object ServiceAccessWithoutGate_MTKClass  extends MTKClass { def value = 12153 }
+  case object ServiceAccessWithGate_MTKClass  extends MTKClass { def value = 12154 }
+  case object SpecialTransportWithoutGate_MTKClass  extends MTKClass { def value = 12155 }
+  case object SpecialTransportWithGate_MTKClass  extends MTKClass { def value = 12156 }
   case object WinterRoads_MTKClass extends MTKClass { def value = 12312 }
+  case object WalkingAndCyclingPath_MTKClass extends MTKClass { def value = 12314 }
+  case object TractorRoadA extends MTKClass { def value = 12316 }
+  case object TractorRoadB extends MTKClass { def value = 12317 }
   case object HardShoulder_MTKClass extends MTKClass { def value = 12318 }
   case object Unknown_MTKClass     extends MTKClass { def value = 0 }
 
@@ -133,8 +141,16 @@ object MTKClass {
     CarRoad_IIIa_MTKClass,
     CarRoad_IIIb_MTKClass,
     DriveWay_MTKClass,
+    Ferry_MTKClass,
     CableFerry_MTKClass,
+    ServiceAccessWithoutGate_MTKClass,
+    ServiceAccessWithGate_MTKClass,
+    SpecialTransportWithoutGate_MTKClass,
+    SpecialTransportWithGate_MTKClass,
     WinterRoads_MTKClass,
+    WalkingAndCyclingPath_MTKClass,
+    TractorRoadA,
+    TractorRoadB,
     HardShoulder_MTKClass,
     Unknown_MTKClass
   )
@@ -796,6 +812,22 @@ object DateParser {
   val DateTimeSimplifiedFormat = DateTimeFormat.forPattern("yyyyMMddHHmm")
   val DateTimePropertyFormatMsTimeZone = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSZZ")
   val DateTimePropertyFormatMsTimeZoneWithT = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
+  val DateTimePropertyFormatMsRoadLinkCSV = DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss.SSS")
+
+  /// Parse date from both Digiroad DB and QGIS export formats
+  def stringToDateFlexible(date: String): DateTime = {
+    Try(DateTimePropertyFormatMsRoadLinkCSV.parseDateTime(date))
+      .orElse(Try(DateTimePropertyFormatMs.parseDateTime(date)))
+      .orElse(Try(DateTimePropertyFormat.parseDateTime(date))) // fallback: no milliseconds
+      .getOrElse(throw new IllegalArgumentException(s"Unrecognized date format: $date"))
+  }
+
+  // Always outputs as the Digiroad DB format (dd.MM.yyyy HH:mm:ss,SSS)
+  def normalizeDateFormat(date: String): String = {
+    val parsed = stringToDateFlexible(date)
+    parsed.toString(DateTimePropertyFormatMs)
+  }
+
 
   def dateToString(date: DateTime, dateFormatter: DateTimeFormatter): String = {
     date.toString(dateFormatter)
@@ -1038,6 +1070,8 @@ object AssetTypeInfo {
     Prohibition, CyclingAndWalking, TrafficVolume, EuropeanRoads, ExitNumbers, RoadWidth, DamagedByThaw, MassTransitLane,
     LitRoad, CarryingCapacity, CareClass, PavedRoad
   )
+
+  val pointAssets: Seq[AssetTypeInfo] = values.filter(a=>a.geometryType =="point").toSeq
 
   val assetsWithValidityDirectionExcludingSpeedLimits = Seq(MassTransitLane.typeId, NumberOfLanes.typeId,
     CyclingAndWalking.typeId, HazmatTransportProhibition.typeId, ParkingProhibition.typeId, Prohibition.typeId)

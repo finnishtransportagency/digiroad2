@@ -131,6 +131,43 @@ object Queries {
     sqlu"""update ASSET set VALID_TO = current_timestamp, MODIFIED_BY = $username, modified_date = current_timestamp where id = $id""".execute
   }
 
+  def expireAssetsByIds(ids: Seq[Long], username: String): Unit = {
+    if (ids.nonEmpty) {
+      val idList = ids.mkString(",")
+      sqlu"""
+      UPDATE asset
+      SET valid_to = current_timestamp,
+          modified_by = $username
+      WHERE id IN (#$idList)
+    """.execute
+    }
+  }
+
+  def getAssetIdsByTypesAndLinkId(assetTypeId: Set[Int], linkIds: Seq[String]): Seq[Long] = {
+    if (linkIds.isEmpty || assetTypeId.isEmpty) Seq.empty
+    else {
+      val linkIdParams = linkIds.map("'" + _.trim.toLowerCase + "'").mkString(",")
+      val assetTypeParams = assetTypeId.mkString(",")
+
+      sql"""
+      SELECT a.id
+      FROM asset a
+      JOIN asset_link al ON al.asset_id = a.id
+      JOIN lrm_position lp ON lp.id = al.position_id
+      WHERE a.asset_type_id IN (#$assetTypeParams)
+        AND lp.link_id IN (#$linkIdParams)
+        AND (a.valid_to IS NULL OR a.valid_to > current_timestamp)
+    """.as[Long].list
+    }
+  }
+
+  def updateFloating(ids: Seq[Long], floating: Boolean, username: String): Unit = {
+    if (ids.nonEmpty) {
+      val idList = ids.mkString(",")
+      sqlu"UPDATE asset SET floating = $floating, modified_by = $username, modified_date = current_timestamp WHERE id IN (#$idList)".execute
+    }
+  }
+
   def propertyIdByPublicIdAndTypeId = "select id from property where public_id = ? and asset_type_id = ?"
   def propertyIdByPublicId = "select id from property where public_id = ?"
   def getPropertyIdByPublicId(id: String) = sql"select id from property where public_id = $id".as[Long].first

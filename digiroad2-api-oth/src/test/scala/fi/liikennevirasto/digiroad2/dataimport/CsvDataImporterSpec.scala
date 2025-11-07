@@ -81,7 +81,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def eventBus: DigiroadEventBus = mockEventBus
     override def withDynTransaction[T](f: => T): T = f
 
-    private val defaultKeys = "linkin id" :: mappings.keys.toList
+    private val defaultKeys = mappings.keys.toList
     val defaultValues = defaultKeys.map { key => key -> "" }.toMap
 
     def createCSV(assets: Map[String, Any]*): String = {
@@ -122,12 +122,12 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     headers + rows
   }
 
-  test("validation fails if field type \"Linkin ID\" is not filled", Tag("db")) {
-    val roadLinkFields = Map("tien nimi (suomi)" -> "nimi", "liikennevirran suunta" -> "5")
+  test("validation fails if mandatory fields are not filled", Tag("db")) {
+    val roadLinkFields = Map("tiennimi (suomi)" -> "nimi", "tienumero" -> "5")
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(roadLinkFields))
     roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
       malformedRows = List(MalformedRow(
-        malformedParameters = List("linkin id"),
+        malformedParameters = List("linkin id", "tielinkin pituus", "mtk luokka", "yksisuuntaisuus", "päällystetieto", "elinkaaren tila", "hallinnollinen luokka", "tasosijainti", "käyttäjä", "geometria", "kuntakoodi", "alkupäivämäärä", "luontisyy"),
         csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ roadLinkFields)))))
   }
 
@@ -142,172 +142,18 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     
     when(mockComplementaryLinkDAO.fetchByLinkId(any[String])).thenReturn(Some(newRoadLink1))
 
-    val assetFields = Map("linkin id" -> 1, "liikennevirran suunta" -> "a")
+    val assetFields = Map("linkin id" -> 1, "tasosijainti" -> "a")
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
     roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
       malformedRows = List(MalformedRow(
-        malformedParameters = List("liikennevirran suunta"),
+        malformedParameters = List("tielinkin pituus", "mtk luokka", "yksisuuntaisuus", "päällystetieto", "elinkaaren tila", "hallinnollinen luokka", "tasosijainti", "käyttäjä", "geometria", "kuntakoodi", "alkupäivämäärä", "luontisyy"),
         csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ assetFields)))))
-  }
-
-  test("validation fails if administrative class is 1 on database", Tag("db")) {
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 564
-    val administrativeClass = State
-    val trafficDirection = TrafficDirection.BothDirections
-    val attributes1 = Map("OBJECTID" -> BigInt(99))
-
-    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-    
-    when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
-
-    val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 2)
-    val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
-    roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
-      excludedRows = List(ExcludedRow(affectedRows = "AdminClass value State found on Database", csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ assetFields)))))
-  }
-
-  test("validation fails if administrative class = 1 on CSV", Tag("db")) {
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 564
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val attributes1 = Map("OBJECTID" -> BigInt(99))
-
-    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-    when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
-
-    val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 1)
-    val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
-    roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
-      excludedRows = List(ExcludedRow(affectedRows = "AdminClass value State found on CSV", csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ assetFields)))))
-  }
-
-  test("validation fails if administrative class = 1 on CSV and database", Tag("db")) {
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 564
-    val administrativeClass = State
-    val trafficDirection = TrafficDirection.BothDirections
-    val attributes1 = Map("OBJECTID" -> BigInt(99))
-
-    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-    
-    when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
-
-    val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 1)
-    val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
-    roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
-      excludedRows = List(ExcludedRow(affectedRows = "AdminClass value State found on Database/AdminClass value State found on CSV", csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ assetFields)))))
-  }
-
-  test("update functionalClass by CSV import", Tag("db")) {
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 564
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val attributes1 = Map("OBJECTID" -> BigInt(99))
-
-    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-    
-    runWithRollback {
-      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
-
-      val link_id = LinkIdGenerator.generateRandom()
-      val functionalClassValue = 3
-      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.FunctionalClass, link_id, Some("unit_test"), 2)
-
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "toiminnallinen luokka" -> functionalClassValue)))
-      roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.FunctionalClass, link_id) should equal (Some(functionalClassValue))
-    }
-  }
-
-  test("insert functionalClass by CSV import", Tag("db")) {
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 564
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val attributes1 = Map("OBJECTID" -> BigInt(99))
-
-    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-
-    runWithRollback {
-      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
-
-      val link_id = LinkIdGenerator.generateRandom()
-      val functionalClassValue = 3
-
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "toiminnallinen luokka" -> functionalClassValue)))
-      roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.FunctionalClass, link_id) should equal (Some(functionalClassValue))
-    }
-  }
-
-  test("update linkType by CSV import", Tag("db")) {
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 564
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val attributes1 = Map("OBJECTID" -> BigInt(99))
-
-    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-
-    runWithRollback {
-      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
-      val link_id = LinkIdGenerator.generateRandom()
-      val linkTypeValue = 3
-      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.LinkType, link_id, Some("unit_test"), 2)
-
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" ->linkTypeValue)))
-      roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.LinkType, link_id) should equal (Some(linkTypeValue))
-    }
-  }
-
-  test("insert linkType by CSV import", Tag("db")) {
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 564
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val attributes1 = Map("OBJECTID" -> BigInt(99))
-
-    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-
-    runWithRollback {
-      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
-      val link_id = LinkIdGenerator.generateRandom()
-      val linkTypeValue = 3
-
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" -> linkTypeValue)))
-      roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.LinkType, link_id) should equal (Some(linkTypeValue))
-    }
-  }
-
-  test("delete trafficDirection (when already exist in db) by CSV import", Tag("db")) {
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 564
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val attributes1 = Map("OBJECTID" -> BigInt(99))
-
-    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-    
-    runWithRollback {
-      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
-      val link_id = "4d146477-876b-4ab5-ad11-f29d16a9b300:1"
-      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.TrafficDirection, link_id, Some("unit_test"), 1)
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "liikennevirran suunta" -> 3)))
-
-      roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.TrafficDirection, link_id) should equal (None)
-    }
   }
 
   test("update OTH by CSV import", Tag("db")) {
     val newLinkId1 = LinkIdGenerator.generateRandom()
     val municipalityCode = 564
-    val administrativeClass = Municipality
+    val administrativeClass = Private
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
@@ -316,13 +162,16 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     runWithRollback {
       when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
       val link_id = LinkIdGenerator.generateRandom()
-      val linkTypeValue = 3
       RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.LinkType, link_id, Some("unit_test"), 2)
 
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" -> linkTypeValue, "kuntanumero" -> 2,
-        "liikennevirran suunta" -> 1, "hallinnollinen luokka" -> 2)))
+      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "hallinnollinen luokka" -> administrativeClass.value, "kuntakoodi" -> municipalityCode.intValue(),
+        "mtk luokka" -> 12141, "päällystetieto" -> 1,
+        "elinkaaren tila" -> 3, "yksisuuntaisuus" -> 0,
+        "tasosijainti" -> 0, "tielinkin pituus" -> 10.2,
+        "alkupäivämäärä" -> "2025/02/17 14:55:53.933", "käyttäjä" -> "testuser",
+        "geometria" -> "LINESTRING ZM(343210.456 7124796.387 0 0, 343212.5679481924 7124806.59174967 0 0)",
+        "luontisyy" -> 3)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.LinkType, link_id) should equal(Some(linkTypeValue))
     }
   }
 
