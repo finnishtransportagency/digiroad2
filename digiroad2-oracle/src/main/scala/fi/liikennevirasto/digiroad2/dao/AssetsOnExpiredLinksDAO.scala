@@ -164,8 +164,8 @@ class AssetsOnExpiredLinksDAO {
           THEN ST_LineMerge(
             ST_LocateBetween(
               kr.shape,
-              lp.start_measure / kr.geometrylength,
-              lp.end_measure / kr.geometrylength
+              lp.start_measure,
+              lp.end_measure
             )
           )
           ELSE NULL
