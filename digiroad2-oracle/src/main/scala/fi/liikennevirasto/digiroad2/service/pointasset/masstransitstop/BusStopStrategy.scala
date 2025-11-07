@@ -146,8 +146,9 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     }
 
     // Separate terminals from other bus stops because terminals do not need a road address and do not have a bearing.
-    val assetsWithoutTerminals = assets.filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
-    val terminals = assets.filter(a => MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
+    val (terminals, assetsWithoutTerminals) = assets.partition { asset =>
+      MassTransitStopOperations.extractStopType(asset).contains(BusStopType.Terminal)
+    }
     val query = assetsWithoutTerminals.map(mapToQuery(links, _)).filter(_.isDefined).map(_.get)
     val roadAddress = geometryTransform.resolveMultipleAddressAndLocations(query)
     assetsWithoutTerminals.map(mapAssetToRoadAddress(roadAddress, _)) ++ terminals
