@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType}
 import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
+import fi.liikennevirasto.digiroad2.linearasset.ComplementaryLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
 import org.joda.time.DateTime
@@ -111,4 +112,48 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
        """.as[String].list
     }
   }
+
+  def insertComplementaryLink(link: ComplementaryLink): Unit = {
+    val sqlStartTime = new java.sql.Timestamp(link.starttime.getMillis)
+    val sqlVersionStartTime = link.versionstarttime.map(dt => new java.sql.Timestamp(dt.getMillis))
+    val geometrySql = s"ST_SetSRID(ST_GeomFromText('${link.shape}'), 3067)"
+
+    sqlu"""
+    INSERT INTO qgis_roadlinkex (
+      vvh_id, linkid, datasource, adminclass, municipalitycode, roadclass,
+      roadnamefin, roadnameswe, roadnamesme, roadnamesmn, roadnamesms,
+      roadnumber, roadpartnumber, surfacetype, lifecyclestatus, directiontype,
+      surfacerelation, horizontallength, starttime, created_user, versionstarttime,
+      shape, track_code, cust_owner
+    ) VALUES (
+      ${link.vvhid}, ${link.linkid}, ${link.datasource}, ${link.adminclass}, ${link.municipalitycode}, ${link.roadclass},
+      ${link.roadnamefin}, ${link.roadnameswe}, ${link.roadnamesme}, ${link.roadnamesmn}, ${link.roadnamesms},
+      ${link.roadnumber}, ${link.roadpartnumber}, ${link.surfacetype.value}, ${link.lifecyclestatus.value}, ${link.directiontype},
+      ${link.surfacerelation.value}, ${link.horizontallength}, ${sqlStartTime}, ${link.created_user}, ${sqlVersionStartTime},
+      #${geometrySql}, ${link.trackcode}, ${link.cust_owner.value}
+    )
+  """.execute
+  }
+
+  def getComplementaryRoadLinkIdsByMunicipality(municipalities: Seq[Int]): Seq[String] = {
+    LogUtils.time(logger, "TEST LOG Getting roadlinks") {
+      val municipalityFilter = municipalities.mkString(",")
+      sql"""
+      select linkid
+      from qgis_roadlinkex
+      where municipalitycode in (#$municipalityFilter)
+    """.as[String].list
+    }
+  }
+
+  def deleteComplementaryRoadLinksByLinkIds(linkIdsToDelete: Set[String]) = {
+    LogUtils.time(logger, "TEST LOG Delete Complementary Road Link Rows") {
+      val linkIdFilter = withLinkIdFilter(linkIdsToDelete)
+      sqlu"""
+      DELETE FROM qgis_roadlinkex
+      WHERE #$linkIdFilter
+      """.execute
+    }
+  }
+
 }
