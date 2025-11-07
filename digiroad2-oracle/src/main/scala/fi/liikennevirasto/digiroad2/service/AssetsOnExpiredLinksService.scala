@@ -1,16 +1,16 @@
 package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, PointAssetOperations}
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, AxleWeightLimit, BogieWeightLimit, CyclingAndWalking, DamagedByThaw, DirectionalTrafficSigns, HeightLimit, LengthLimit, MassTransitLane, MassTransitStopAsset, NumberOfLanes, Obstacles, ParkingProhibition, PedestrianCrossings, RailwayCrossings, RoadWorksAsset, TotalWeightLimit, TrafficLights, TrafficSigns, TrafficVolume, TrailerTruckWeightLimit, WidthLimit, WinterSpeedLimit}
-import fi.liikennevirasto.digiroad2.dao.{AssetOnExpiredRoadLink, AssetsOnExpiredLinksDAO, MassTransitStopDao, MunicipalityDao, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.{AssetOnExpiredRoadLink, AssetsOnExpiredLinksDAO, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.{DirectionalTrafficSignService, ObstacleService, PedestrianCrossingService, RailwayCrossingService, TrafficLightService, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset._
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.service.linearasset.{CyclingAndWalkingService, DamagedByThawService, DynamicLinearAssetService, LinearAssetOperations, LinearAssetService, LinearAxleWeightLimitService, LinearBogieWeightLimitService, LinearHeightLimitService, LinearLengthLimitService, LinearTotalWeightLimitService, LinearTrailerTruckWeightLimitService, LinearWidthLimitService, MassTransitLaneService, NumberOfLanesService, ParkingProhibitionService, RoadWorkService}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
-import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils, Parallel}
 import org.slf4j.LoggerFactory
 import org.json4s._
 import org.json4s.jackson.Serialization
@@ -68,6 +68,12 @@ class AssetsOnExpiredLinksService {
       case NumberOfLanes.typeId => new NumberOfLanesService(roadLinkService, eventbus)
       case WinterSpeedLimit.typeId => new LinearAssetService(roadLinkService, eventbus)
       case TrafficVolume.typeId => new LinearAssetService(roadLinkService, eventbus)
+      case MaintenanceRoadAsset.typeId => new MaintenanceService(roadLinkService, eventbus)
+      case PavedRoad.typeId =>  new PavedRoadService(roadLinkService, eventbus)
+      case Prohibition.typeId =>  new ProhibitionService(roadLinkService, eventbus)
+      case HazmatTransportProhibition.typeId => new HazmatTransportProhibitionService(roadLinkService, eventbus)
+      case RoadWidth.typeId => new RoadWidthService(roadLinkService, eventbus)
+      case SpeedLimitAsset.typeId =>   new SpeedLimitService(eventbus, roadLinkService)
       case _ => dynamicLinearAssetService
     }
   }
@@ -85,40 +91,43 @@ class AssetsOnExpiredLinksService {
     }
   }
 
-  private def getPersistedLinearAssetAsJson(asset: AssetOnExpiredLink):String = {
-    val dynamicLinearAssetService = getDynamicLinearAssetService(asset.assetTypeId)
-    val allAssetsOnLinkId = dynamicLinearAssetService.fetchExistingAssetsByLinksIdsString(asset.assetTypeId, Set(asset.linkId), Set(), newTransaction = false)
-    val persistedAsset = allAssetsOnLinkId.filter(_.id == asset.id)
-    val json = write(persistedAsset)
-    json
-  }
-
-  private def getPersistedPointAssetAsJson(asset: AssetOnExpiredLink):String = {
-    val dynamicPointAssetService = getDynamicPointAssetService(asset.assetTypeId)
-    val allAssetsOnLinkId = dynamicPointAssetService.getPersistedAssetsByLinkIdWithoutTransaction(asset.linkId)
-    val persistedAsset = allAssetsOnLinkId.filter(_.id == asset.id)
-    val json = write(persistedAsset)
-    json
+  private def getAssetsAndMapProperties(assetType:  AssetTypeInfo, workList: Seq[AssetOnExpiredLink], assetLinks: Seq[String]): Seq[AssetOnExpiredLinkWithAssetProperties] = {
+    assetType.geometryType match {
+      case "point" =>
+        val dynamicPointAssetService = getDynamicPointAssetService(assetType.typeId)
+        val allAssetsOnLinkId =   withDynTransaction { dynamicPointAssetService.getPersistedAssetsByLinkIdsWithoutTransaction(assetLinks.toSet) }
+        workList.map(a => {
+          val properties = allAssetsOnLinkId.filter(_.id == a.id)
+          val json = write(properties)
+          AssetOnExpiredLinkWithAssetProperties(a, json)
+        })
+      case "linear" =>
+        val dynamicPointAssetService = getDynamicLinearAssetService(assetType.typeId)
+        val allAssetsOnLinkId = dynamicPointAssetService.fetchExistingAssetsByLinksIdsString(assetType.typeId,assetLinks.toSet,Set(),newTransaction = true)
+        workList.map(a => {
+          val properties = allAssetsOnLinkId.filter(_.id == a.id)
+          val json = write(properties)
+          AssetOnExpiredLinkWithAssetProperties(a, json)
+        })
+      case _ =>
+        logger.warn(s"Unsupported asset type: ${assetType.typeId}")
+        Seq.empty[AssetOnExpiredLinkWithAssetProperties]
+    }
   }
 
   def getAllWorkListAssets(newTransaction: Boolean = true): Seq[AssetOnExpiredLinkWithAssetProperties] = {
     if (newTransaction) withDynTransaction {
       val workListAssets = dao.fetchWorkListAssets()
-      val enrichedAssets = workListAssets.map { asset =>
-        val assetType = AssetTypeInfo.apply(asset.assetTypeId)
-        val additionalJson =
-          if (assetType.geometryType == "point")
-            getPersistedPointAssetAsJson(asset)
-          else if (assetType.geometryType == "linear")
-            getPersistedLinearAssetAsJson(asset)
-          else {
-            logger.warn(s"Unknown asset type ${asset.assetTypeId} for ${asset.id}")
-            write(Map.empty[String, String])
+      val groupedByAssetType = workListAssets.groupBy(a=>a.assetTypeId)
+      val parallel = new Parallel()
+      parallel.operation(groupedByAssetType.par, groupedByAssetType.size) { parChunk => {
+        parChunk.flatMap { assetsByType =>
+          LogUtils.time(logger, s"Getting assets and mapping properties") {
+            getAssetsAndMapProperties(AssetTypeInfo.apply(assetsByType._1), assetsByType._2, assetsByType._2.map(a => a.linkId))
           }
-        AssetOnExpiredLinkWithAssetProperties(asset, additionalJson)
+        }
       }
-
-      enrichedAssets
+      }.toList
     } else {
       dao.fetchWorkListAssets().map(asset => AssetOnExpiredLinkWithAssetProperties(asset, write(Map.empty[String, String])))
     }
