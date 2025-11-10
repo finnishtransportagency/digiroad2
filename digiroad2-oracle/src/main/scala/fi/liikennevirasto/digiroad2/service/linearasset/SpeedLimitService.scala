@@ -238,7 +238,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
   
   override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-    val existingAssets = if (newTransaction) { //ok
+    val existingAssets = if (newTransaction) {
       withDynTransaction {
         enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq))
       }.filterNot(_.expired)
