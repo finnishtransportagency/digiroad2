@@ -10,7 +10,7 @@ import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils, Parallel}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils}
 import org.slf4j.LoggerFactory
 import org.json4s._
 import org.json4s.jackson.Serialization
@@ -95,7 +95,7 @@ class AssetsOnExpiredLinksService {
     assetType.geometryType match {
       case "point" =>
         val dynamicPointAssetService = getDynamicPointAssetService(assetType.typeId)
-        val allAssetsOnLinkId =   withDynTransaction { dynamicPointAssetService.getPersistedAssetsByLinkIdsWithoutTransaction(assetLinks.toSet) }
+        val allAssetsOnLinkId = dynamicPointAssetService.getPersistedAssetsByLinkIdsWithoutTransaction(assetLinks.toSet)
         workList.map(a => {
           val properties = allAssetsOnLinkId.filter(_.id == a.id)
           val json = write(properties)
@@ -103,7 +103,7 @@ class AssetsOnExpiredLinksService {
         })
       case "linear" =>
         val dynamicPointAssetService = getDynamicLinearAssetService(assetType.typeId)
-        val allAssetsOnLinkId = dynamicPointAssetService.fetchExistingAssetsByLinksIdsString(assetType.typeId,assetLinks.toSet,Set(),newTransaction = true)
+        val allAssetsOnLinkId = dynamicPointAssetService.fetchExistingAssetsByLinksIdsString(assetType.typeId,assetLinks.toSet,Set(), newTransaction = false)
         workList.map(a => {
           val properties = allAssetsOnLinkId.filter(_.id == a.id)
           val json = write(properties)
@@ -119,14 +119,10 @@ class AssetsOnExpiredLinksService {
     if (newTransaction) withDynTransaction {
       val workListAssets = dao.fetchWorkListAssets()
       val groupedByAssetType = workListAssets.groupBy(a=>a.assetTypeId)
-      val parallel = new Parallel()
-      parallel.operation(groupedByAssetType.par, groupedByAssetType.size) { parChunk => {
-        parChunk.flatMap { assetsByType =>
-          LogUtils.time(logger, s"Getting assets and mapping properties") {
-            getAssetsAndMapProperties(AssetTypeInfo.apply(assetsByType._1), assetsByType._2, assetsByType._2.map(a => a.linkId))
-          }
+      groupedByAssetType.flatMap { assetsByType =>
+        LogUtils.time(logger, s"Getting assets and mapping properties") {
+          getAssetsAndMapProperties(AssetTypeInfo.apply(assetsByType._1), assetsByType._2, assetsByType._2.map(a => a.linkId))
         }
-      }
       }.toList
     } else {
       dao.fetchWorkListAssets().map(asset => AssetOnExpiredLinkWithAssetProperties(asset, write(Map.empty[String, String])))
