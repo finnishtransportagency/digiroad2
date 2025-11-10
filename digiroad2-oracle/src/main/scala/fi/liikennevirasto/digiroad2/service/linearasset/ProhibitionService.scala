@@ -47,7 +47,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] ={
     if (newTransaction)
-      withDynTransaction {
+      withDynTransaction { //OK
         dao.fetchProhibitionsByLinkIds(typeId, (linksIds++removedLinkIds).toSeq)
       }
     else

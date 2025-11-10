@@ -31,7 +31,6 @@ class DynamicLinearAssetDao {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired
     val assets = LogUtils.time(logger, s"Fetch dynamic linear assets with MassQuery on ${linkIds.size} links, assetType: $assetTypeId") {
-      MassQuery.withStringIds(linkIds.toSet) { idTableName =>
         sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
@@ -48,7 +47,7 @@ class DynamicLinearAssetDao {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.asset_type_id = a.asset_type_id
-          join #$idTableName i on i.id = pos.link_id
+           #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
@@ -57,7 +56,6 @@ class DynamicLinearAssetDao {
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           #$filter""".as[DynamicAssetRow](getDynamicAssetRow).list
-      }
     }
     LogUtils.time(logger, s"Forming ${assets.size} asset rows to PersitedLinearAssets") {
       assets.groupBy(_.id).map { case (id, assetRows) =>

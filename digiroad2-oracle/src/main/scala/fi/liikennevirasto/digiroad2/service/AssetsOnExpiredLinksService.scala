@@ -102,8 +102,8 @@ class AssetsOnExpiredLinksService {
           AssetOnExpiredLinkWithAssetProperties(a, json)
         })
       case "linear" =>
-        val dynamicPointAssetService = getDynamicLinearAssetService(assetType.typeId)
-        val allAssetsOnLinkId = dynamicPointAssetService.fetchExistingAssetsByLinksIdsString(assetType.typeId,assetLinks.toSet,Set(), newTransaction = false)
+        val dynamicLinearAssetService = getDynamicLinearAssetService(assetType.typeId)
+        val allAssetsOnLinkId = dynamicLinearAssetService.fetchExistingAssetsByLinksIdsString(assetType.typeId,assetLinks.toSet,Set(), newTransaction = false)
         workList.map(a => {
           val properties = allAssetsOnLinkId.filter(_.id == a.id)
           val json = write(properties)

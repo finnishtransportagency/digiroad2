@@ -33,7 +33,7 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
   }
 
   override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-    val existingAssets = if (newTransaction) {
+    val existingAssets = if (newTransaction) { // OK
       withDynTransaction {
         dao.fetchLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq, LinearAssetTypes.numericValuePropertyId)
       }.filterNot(_.expired)
