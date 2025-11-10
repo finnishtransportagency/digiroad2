@@ -10,7 +10,7 @@ import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils, Parallel}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils}
 import org.slf4j.LoggerFactory
 import org.json4s._
 import org.json4s.jackson.Serialization
