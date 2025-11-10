@@ -8,6 +8,22 @@ import java.sql.PreparedStatement
 
 object MassQuery {
   val logger = LoggerFactory.getLogger(getClass)
+
+  def withNumberIdsValuesJoin(column: String, ids: Set[Long]) = {
+    if (ids.nonEmpty) {
+      val values = ids.map(id => s"($id)").mkString(",")
+      s"JOIN ( VALUES $values ) links(link) ON ($column = link) "
+    }
+    else ""
+  }
+
+  def withStringIdsValuesJoin(column: String, ids: Set[String]) = {
+    if (ids.nonEmpty) {
+      val values = ids.map(id => s"('${id}')").mkString(",")
+      s"JOIN ( VALUES $values ) links(link) ON ($column = link) "
+    }
+     else ""
+  }
   
   /**
     * Remember to add check for size of list, golden rule more than 1000 in array some improvement can be found
