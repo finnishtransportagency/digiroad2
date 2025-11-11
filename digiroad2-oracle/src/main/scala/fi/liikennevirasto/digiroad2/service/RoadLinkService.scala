@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, FunctionalClassDao, IncompleteLinkDao, LinkAttributesDao, LinkTypeDao, TrafficDirectionDao}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkAttribute, RoadLinkDAO, RoadLinkOverrideDAO, RoadLinkValue}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike, RoadLinkProperties, TinyRoadLink}
-import fi.liikennevirasto.digiroad2.postgis.MassQuery.logger
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.linearasset.AssetUpdateActor

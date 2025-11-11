@@ -7,7 +7,7 @@ import slick.jdbc.StaticQuery.interpolation
 import java.sql.PreparedStatement
 
 object MassQuery {
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
  
  /**
