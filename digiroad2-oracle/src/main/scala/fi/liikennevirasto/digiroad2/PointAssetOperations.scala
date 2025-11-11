@@ -331,10 +331,8 @@ trait  PointAssetOperations{
   }
 
   def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[String]): Seq[PersistedAsset] = {
-    MassQuery.withStringIds(linkIds) { idTableName =>
-      val filter = s"join $idTableName i on i.id = pos.link_id where a.asset_type_id = $typeId"
+      val filter = s"#${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)} where a.asset_type_id = $typeId"
       fetchPointAssets(withFilter(filter))
-    }
   }
 
   def getDefaultMultiChoiceValue: Int = defaultMultiChoiceValue
