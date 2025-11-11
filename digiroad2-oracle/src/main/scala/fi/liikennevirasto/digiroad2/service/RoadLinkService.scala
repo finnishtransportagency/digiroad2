@@ -372,9 +372,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getPrivateRoadsInfoByLinkIds(linkIds: Set[String]): List[(String, Option[(String, String)])] = {
     withDynTransaction {
-      //MassQuery.withStringIds(linkIds) { idTableName =>
         fetchOverridedRoadLinkAttributes(linkIds)
-      //}
     }
   }
 
@@ -733,43 +731,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
     ).toMap
   }
-  
-  private def fetchOverridesV1(idTableName: String): Map[String, (Option[RoadLinkPropertyRow],
-    Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow])] = {
-    sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
-          f.link_id, f.functional_class, f.modified_date, f.modified_by,
-          l.link_id, l.link_type, l.modified_date, l.modified_by,
-          a.link_id, a.administrative_class, a.created_date, a.created_by
-            from #$idTableName i
-            left join traffic_direction t on i.id = t.link_id
-            left join functional_class f on i.id = f.link_id
-            left join link_type l on i.id = l.link_id
-            left join administrative_class a on i.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
-      """.as[(String, Option[String], Option[Int], Option[DateTime], Option[String],
-      Option[String], Option[Int], Option[DateTime], Option[String],
-      Option[String], Option[Int], Option[DateTime], Option[String],
-      Option[String], Option[Int], Option[DateTime], Option[String])].list.map(row =>
-    {
-      val td = (row._2, row._3, row._4, row._5) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, Some(modBy)))
-        case _ => None
-      }
-      val fc = (row._6, row._7, row._8, row._9) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, Some(modBy)))
-        case _ => None
-      }
-      val lt = (row._10, row._11, row._12, row._13) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, Some(modBy)))
-        case _ => None
-      }
-      val ac = (row._14, row._15, row._16, row._17) match{
-        case (Some(linkId), Some(value), Some(createdDate), createdByOption) => Option((linkId, value, createdDate, createdByOption))
-        case _ => None
-      }
-      row._1 ->(td, fc, lt, ac)
-    }
-    ).toMap
-  }
 
   protected def setLinkAttributes(propertyName: String, linkProperty: LinkProperties, username: Option[String],
                                   roadLinkFetched: RoadLinkFetched, latestModifiedAt: Option[String],
@@ -811,24 +772,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       sql"""select rla.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
           from  #${MassQuery.withStringIdsValues(links, "links")}
           join road_link_attributes rla on links.id = rla.link_id and rla.valid_to IS NULL"""
-        .as[RoadLinkAttributeInfo].list
-
-    fetchResult.map(row => {
-      val rla = (row.name, row.value) match {
-        case (Some(name), Some(value)) => Option((name, value))
-        case _ => None
-      }
-
-      row.linkId.get -> rla
-    }
-    ) ++ getPrivateRoadLastModification(fetchResult)
-  }
-  
-  private def fetchOverridedRoadLinkAttributesV1(idTableName: String): List[(String, Option[(String, String)])] = {
-    val fetchResult =
-      sql"""select rla.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
-          from #$idTableName i
-          join road_link_attributes rla on i.id = rla.link_id and rla.valid_to IS NULL"""
         .as[RoadLinkAttributeInfo].list
 
     fetchResult.map(row => {
@@ -1002,24 +945,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     def splitRoadLinkAttributesMap(parameterMap: List[(String, Option[(String, String)])]) = {
       parameterMap.filter(_._2.nonEmpty).groupBy(_._1).map { case (k, v) => (k, v.map(_._2.get)) }
     }
-
-    //MassQuery.withStringIds(linkIds) { idTableName =>
+    
     LogUtils.time(logger, s"TEST LOG fetchRoadLinkPropertyRows ${linkIds.size}"){
       val (td, fc, lt, ac) = splitMap(fetchOverrides(linkIds))
       val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(linkIds))
       RoadLinkPropertyRows(td, fc, lt, ac, overridedRoadLinkAttributes)
     }
-    //}
-    LogUtils.time(logger, s"TEST LOG fetchRoadLinkPropertyRows with MassQuery.withStringIds ${linkIds.size}"){
-    
-    MassQuery.withStringIds(linkIds) { idTableName =>
-   
-      val (td, fc, lt, ac) = splitMap(fetchOverridesV1(idTableName))
-      val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributesV1(idTableName))
-      RoadLinkPropertyRows(td, fc, lt, ac, overridedRoadLinkAttributes)
-    }
-    }
-    
   }
 
   type RoadLinkId = String
