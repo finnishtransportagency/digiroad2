@@ -52,7 +52,7 @@ object MassQuery {
    if (joinColumn == "") 
     s" ( VALUES $values ) $tableName(id) "
    else 
-    s"join ( VALUES $values ) $tableName(id)  ON ($joinColumn = link)"
+    s"join ( VALUES $values ) $tableName(id)  ON ($joinColumn = id)"
   }
   else ""
  }
@@ -82,8 +82,7 @@ object MassQuery {
    * val sql = s"SELECT i.* FROM your_table i ${joinFrag}"*
    * Parameters:
    *
-   * @param ids        Set[Long]  the set of string ids to include in the VALUES list (each id
-   *                   will be wrapped in single quotes).
+   * @param ids        Set[Long]  the set of long  to include in the VALUES list.
    * @param tableName  String  alias/name used for the generated VALUES table (default "links").
    * @param joinColumn String  if empty (default) just emit the VALUES table fragment;
    *                   if non-empty emit a "join ( VALUES ... ) <tableName>(id) ON (<joinColumn> = link)"
@@ -98,7 +97,7 @@ object MassQuery {
    if (joinColumn == "")
     s" ( VALUES $values ) $tableName(id) "
    else
-    s"join ( VALUES $values ) $tableName(id)  ON ($joinColumn = link)"
+    s"join ( VALUES $values ) $tableName(id)  ON ($joinColumn = id)"
   }
   else ""
  }
