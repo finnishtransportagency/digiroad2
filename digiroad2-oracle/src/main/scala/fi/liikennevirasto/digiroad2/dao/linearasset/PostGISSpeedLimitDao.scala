@@ -383,8 +383,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
   }
 
   private def fetchByLinkIds(linkIds: Seq[String], queryFilter: String) : Seq[PersistedLinearAsset] = {
-    val speedLimitRows = 
-      //MassQuery.withStringIds(linkIds.toSet) { idTableName =>
+    val speedLimitRows =
       sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,
         a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.created_by, a.created_date,
@@ -398,7 +397,6 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
            left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
 		   where a.asset_type_id = 20 and floating = '0' #$queryFilter""".as[SpeedLimitRow].list
-    //}
     groupSpeedLimitsResult(speedLimitRows)
   }
 
