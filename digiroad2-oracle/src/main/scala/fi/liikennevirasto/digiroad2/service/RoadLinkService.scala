@@ -698,19 +698,16 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow])] = {
     if (links.isEmpty) return Map.empty[String, (Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow])]
     val valuesPart =MassQuery.withStringIdsValues(links, "links")
-    //#${MassQuery.withStringIdsValues(links, "links")}
     val sql = sql"""select links.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
           f.link_id, f.functional_class, f.modified_date, f.modified_by,
           l.link_id, l.link_type, l.modified_date, l.modified_by,
           a.link_id, a.administrative_class, a.created_date, a.created_by
-            from
-            #${valuesPart}
+            from #${valuesPart}
             left join traffic_direction t on links.id = t.link_id
             left join functional_class f on links.id = f.link_id
             left join link_type l on links.id = l.link_id
             left join administrative_class a on links.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
       """
-    
     sql.as[(String, Option[String], Option[Int], Option[DateTime], Option[String],
       Option[String], Option[Int], Option[DateTime], Option[String],
       Option[String], Option[Int], Option[DateTime], Option[String],
@@ -772,9 +769,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   private def fetchOverridedRoadLinkAttributes(links: Set[String]): List[(String, Option[(String, String)])] = {
-    println("fetchOverridedRoadLinkAttributes")
     if (links.isEmpty) return List.empty[(String, Option[(String, String)])]
-    
     val fetchResult =
       sql"""select rla.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
           from  #${MassQuery.withStringIdsValues(links, "links")}
