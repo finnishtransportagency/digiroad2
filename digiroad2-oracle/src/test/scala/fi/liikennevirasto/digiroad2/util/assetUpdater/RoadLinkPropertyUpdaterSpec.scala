@@ -562,9 +562,9 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers {
   }
 
   test("Given a new road link; when roadclass is 12132 then the functional class for State should be 4 and for Municipality and Private 6") {
-    val stateLinkId = "eea524dd-e371-47e3-9d58-44272ccf9db0:1" //State
-    val municiaplityLinkId = "cd4f0b7f-e916-4b6a-99ac-3c56516b691c:1" //Municipality
-    val privateLinkId = "b3539f88-88ac-4a92-8582-ef012cb0dbf3:1" //Private
+    val stateLinkId = "eea524dd-e371-47e3-9d58-44272ccf9db0:1"
+    val municiaplityLinkId = "cd4f0b7f-e916-4b6a-99ac-3c56516b691c:1"
+    val privateLinkId = "b3539f88-88ac-4a92-8582-ef012cb0dbf3:1"
     val relevantChanges = Seq(
       RoadLinkChange(Add, None,
         List(RoadLinkInfo(stateLinkId, 20.311, List(Point(238192.995, 6716501.977, 31.415), Point(238197.49, 6716521.779, 31.56)),
