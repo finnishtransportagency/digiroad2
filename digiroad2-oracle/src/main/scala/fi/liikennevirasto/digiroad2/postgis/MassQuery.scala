@@ -52,7 +52,7 @@ object MassQuery {
    if (joinColumn == "") 
     s" ( VALUES $values ) $tableName(id) "
    else 
-    s"join ( VALUES $values ) $tableName(id)  ON ($joinColumn = id)"
+    s"join ( VALUES $values ) $tableName(id)  ON ($joinColumn =  ${tableName}.id)"
   }
   else ""
  }
@@ -97,7 +97,7 @@ object MassQuery {
    if (joinColumn == "")
     s" ( VALUES $values ) $tableName(id) "
    else
-    s"join ( VALUES $values ) $tableName(id)  ON ($joinColumn = id)"
+    s"join ( VALUES $values ) $tableName(id)  ON ($joinColumn = ${tableName}.id)"
   }
   else ""
  }
