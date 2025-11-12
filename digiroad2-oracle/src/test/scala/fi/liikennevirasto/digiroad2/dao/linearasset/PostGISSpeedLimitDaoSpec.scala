@@ -52,12 +52,6 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
     throw new IllegalArgumentException
   }
 
-  private def simulateQuery[T](f: => T): T = {
-    val result = f
-    sqlu"""delete from temp_string_id""".execute
-    result
-  }
-
   test("filter out disallowed link types") {
     runWithRollback {
       val roadLinks = Seq(
@@ -103,13 +97,9 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
 
       val dao = daoWithRoadLinks(List(roadLinkFetched))
-      val id = simulateQuery {
-        dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
-      }
+      val id = dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       id shouldBe defined
-      val id2 = simulateQuery {
-        dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
-      }
+      val id2 = dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       id2 shouldBe None
     }
   }
@@ -127,17 +117,11 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLinkFetched))
       when(mockRoadLinkService.enrichFetchedRoadLinks(Seq(roadLinkFetched))).thenReturn(Seq(roadLink))
       val dao = daoWithRoadLinks(List(roadLinkFetched))
-      val id = simulateQuery {
-        dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.TowardsDigitizing, SpeedLimitValue(40), 0, (_, _) => ())
-      }
+      val id = dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.TowardsDigitizing, SpeedLimitValue(40), 0, (_, _) => ())
       id shouldBe defined
-      val id2 = simulateQuery {
-        dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.AgainstDigitizing, SpeedLimitValue(40), 0, (_, _) => ())
-      }
+      val id2 = dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.AgainstDigitizing, SpeedLimitValue(40), 0, (_, _) => ())
       id2 shouldBe defined
-      val id3 = simulateQuery {
-        dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
-      }
+      val id3 = dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       id3 shouldBe None
     }
   }
