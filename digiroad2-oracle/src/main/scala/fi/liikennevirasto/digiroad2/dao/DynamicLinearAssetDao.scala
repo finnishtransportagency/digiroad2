@@ -27,6 +27,7 @@ class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
     val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired

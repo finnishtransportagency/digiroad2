@@ -208,6 +208,7 @@ class PostGISLinearAssetDao() {
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
   def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
       sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
@@ -307,6 +308,7 @@ class PostGISLinearAssetDao() {
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
   def fetchAssetsWithTextualValuesByLinkIds(assetTypeId: Int, linkIds: Seq[String], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
       val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -358,7 +360,7 @@ class PostGISLinearAssetDao() {
     */
   def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, linkIds: Seq[String], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = '0'"
-
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
     val assets =
       sql"""
         select a.id, pos.link_id, pos.side_code,
