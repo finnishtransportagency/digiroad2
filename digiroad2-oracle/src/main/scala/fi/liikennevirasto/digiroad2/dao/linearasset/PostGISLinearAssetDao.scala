@@ -225,6 +225,7 @@ class PostGISLinearAssetDao() {
           and a.floating = '0'
           #$filterExpired"""
         .as[PersistedLinearAsset](getLinearAsset).list
+    }
   }
 
   def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[String], includeFloating: Boolean = false
