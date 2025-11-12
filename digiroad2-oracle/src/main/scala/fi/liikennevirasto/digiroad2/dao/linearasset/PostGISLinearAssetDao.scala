@@ -209,7 +209,7 @@ class PostGISLinearAssetDao() {
     */
   def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
-    LogUtils.time(logger, s"TEST LOG fetch linear Assets by linkIds ${linkIds.size}, asset type: ${assetTypeId}") {
+    LogUtils.time(logger, s"Fetch linear assets on ${linkIds.size} links, assetType: $assetTypeId") {
       sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
