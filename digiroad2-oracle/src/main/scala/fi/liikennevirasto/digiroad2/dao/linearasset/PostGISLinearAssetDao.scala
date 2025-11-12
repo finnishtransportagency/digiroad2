@@ -315,7 +315,7 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.public_id = $valuePropertyId
-           #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
+          #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
           and (a.valid_to > current_timestamp or a.valid_to is null)
@@ -323,7 +323,7 @@ class PostGISLinearAssetDao() {
         .as[(Long, String, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
         PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map{info => InformationSource(info)})
-    }
+      }
   }
 
   def groupProhibitionsResult(assets: List[ProhibitionsRow], assetTypeId: Int): Seq[PersistedLinearAsset] = {
@@ -358,7 +358,7 @@ class PostGISLinearAssetDao() {
   def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, linkIds: Seq[String], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = '0'"
 
-    val assets = 
+    val assets =
       sql"""
         select a.id, pos.link_id, pos.side_code,
                pv.id, pv.type,
@@ -373,7 +373,7 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join prohibition_value pv on pv.asset_id = a.id
-           #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
+          #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
           join property p on a.asset_type_id = p.asset_type_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
@@ -382,7 +382,6 @@ class PostGISLinearAssetDao() {
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to > current_timestamp or a.valid_to is null)
           #$floatingFilter""".as[ProhibitionsRow].list
-    
 
     groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
