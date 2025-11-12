@@ -383,6 +383,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
   }
 
   private def fetchByLinkIds(linkIds: Seq[String], queryFilter: String) : Seq[PersistedLinearAsset] = {
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
     val speedLimitRows =
       LogUtils.time(logger, s"TEST LOG Fetch linear assets on ${linkIds.size} links, assetType: ${SpeedLimitAsset.typeId}") {
         sql"""
