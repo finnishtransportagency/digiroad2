@@ -945,7 +945,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       parameterMap.filter(_._2.nonEmpty).groupBy(_._1).map { case (k, v) => (k, v.map(_._2.get)) }
     }
     
-    LogUtils.time(logger, s"TEST LOG fetchRoadLinkPropertyRows ${linkIds.size}"){
+    LogUtils.time(logger, s"TEST LOG fetch override roadLink property rows ${linkIds.size}"){
       val (td, fc, lt, ac) = splitMap(fetchOverrides(linkIds))
       val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(linkIds))
       RoadLinkPropertyRows(td, fc, lt, ac, overridedRoadLinkAttributes)

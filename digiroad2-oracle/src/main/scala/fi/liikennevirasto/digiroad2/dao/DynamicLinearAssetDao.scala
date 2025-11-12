@@ -30,7 +30,7 @@ class DynamicLinearAssetDao {
     val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired
-    val assets = LogUtils.time(logger, s"Fetch linear assets on ${linkIds.size} links, assetType: $assetTypeId") {
+    val assets = LogUtils.time(logger, s"TEST LOG Fetch linear assets on ${linkIds.size} links, assetType: $assetTypeId") {
         sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
