@@ -8,7 +8,21 @@ import java.sql.PreparedStatement
 
 object MassQuery {
   private val logger = LoggerFactory.getLogger(getClass)
+ def withNumberIdsValuesJoin(column: String, ids: Set[Long]) = {
+  if (ids.nonEmpty) {
+   val values = ids.map(id => s"($id)").mkString(",")
+   s"JOIN ( VALUES $values ) links(link) ON ($column = link) "
+  }
+  else ""
+ }
 
+ def withStringIdsValuesJoin(column: String, ids: Set[String]) = {
+  if (ids.nonEmpty) {
+   val values = ids.map(id => s"('${id}')").mkString(",")
+   s"JOIN ( VALUES $values ) links(link) ON ($column = link) "
+  }
+  else ""
+ }
  
  /**
    * Builds a SQL fragment that represents a VALUES table of string IDs, optionally

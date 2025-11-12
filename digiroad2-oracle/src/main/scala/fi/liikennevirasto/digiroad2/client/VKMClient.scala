@@ -419,16 +419,25 @@ class VKMClient {
       (addresses(1), RoadSide.Unknown)
     }
   }
+
   private def calculatePointAfterAndBeforeRoadAddressPosition(coord: Point, heading: Option[Int], sideCode: SideCode): (Point, Point) = {
-    val degrees = sideCode match {
-      case SideCode.AgainstDigitizing => 90 - heading.get + 180
-      case _ => 90 - heading.get
+    heading match {
+      case Some(h) =>
+        val degrees = sideCode match {
+          case SideCode.AgainstDigitizing => 90 - h + 180
+          case _ => 90 - h
+        }
+
+        val rad = degrees * Math.PI / 180.0
+        val stepVector = Vector3d(3 * Math.cos(rad), 3 * Math.sin(rad), 0.0)
+        val behind = coord - stepVector
+        val front = coord + stepVector
+        (behind, front)
+
+      case None =>
+        logger.error(s"Missing heading for coordinate $coord. Cannot calculate road address position.")
+        throw new IllegalArgumentException(s"Heading is required to calculate point positions for coordinate $coord")
     }
-    val rad = degrees * Math.PI / 180.0
-    val stepVector = Vector3d(3 * Math.cos(rad), 3 * Math.sin(rad), 0.0)
-    val behind = coord - stepVector
-    val front = coord + stepVector
-    (behind, front)
   }
 
   private def mapStartAndEndLinkId(data: Feature): (String, String) = {
