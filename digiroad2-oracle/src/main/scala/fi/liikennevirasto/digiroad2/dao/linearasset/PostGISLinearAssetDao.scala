@@ -209,7 +209,6 @@ class PostGISLinearAssetDao() {
     */
   def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
-    LogUtils.time(logger, s"TEST LOG Fetch linear assets on ${linkIds.size} links, assetType: $assetTypeId") {
       sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -219,13 +218,12 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.public_id = $valuePropertyId
-          #${MassQuery.withStringIdsValues(linkIds.toSet, joinColumn = "pos.link_id")}
+          #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
           and a.floating = '0'
           #$filterExpired"""
         .as[PersistedLinearAsset](getLinearAsset).list
-    }
   }
 
   def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[String], includeFloating: Boolean = false

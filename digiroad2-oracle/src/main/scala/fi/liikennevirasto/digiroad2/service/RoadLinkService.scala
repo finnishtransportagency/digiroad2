@@ -371,7 +371,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getPrivateRoadsInfoByLinkIds(linkIds: Set[String]): List[(String, Option[(String, String)])] = {
     withDynTransaction {
-        fetchOverridedRoadLinkAttributes(linkIds)
+      MassQuery.withStringIds(linkIds) { idTableName =>
+        fetchOverridedRoadLinkAttributes(idTableName)
+      }
     }
   }
 
@@ -694,18 +696,17 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
 
-  private def fetchOverrides(links: Set[String]): Map[String, (Option[RoadLinkPropertyRow],
+  private def fetchOverrides(idTableName: String): Map[String, (Option[RoadLinkPropertyRow],
     Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow], Option[RoadLinkPropertyRow])] = {
-    sql"""select links.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
-          f.link_id, f.functional_class, f.modified_date, f.modified_by,
-          l.link_id, l.link_type, l.modified_date, l.modified_by,
-          a.link_id, a.administrative_class, a.created_date, a.created_by
-            from
-            #${MassQuery.withStringIdsValues(links, "links")}
-            left join traffic_direction t on links.id = t.link_id
-            left join functional_class f on links.id = f.link_id
-            left join link_type l on links.id = l.link_id
-            left join administrative_class a on links.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
+    sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
+        f.link_id, f.functional_class, f.modified_date, f.modified_by,
+        l.link_id, l.link_type, l.modified_date, l.modified_by,
+        a.link_id, a.administrative_class, a.created_date, a.created_by
+          from #$idTableName i
+          left join traffic_direction t on i.id = t.link_id
+          left join functional_class f on i.id = f.link_id
+          left join link_type l on i.id = l.link_id
+          left join administrative_class a on i.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
       """.as[(String, Option[String], Option[Int], Option[DateTime], Option[String],
       Option[String], Option[Int], Option[DateTime], Option[String],
       Option[String], Option[Int], Option[DateTime], Option[String],
@@ -766,11 +767,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  private def fetchOverridedRoadLinkAttributes(links: Set[String]): List[(String, Option[(String, String)])] = {
+  private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(String, Option[(String, String)])] = {
     val fetchResult =
       sql"""select rla.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
-          from  #${MassQuery.withStringIdsValues(links, "links")}
-          join road_link_attributes rla on links.id = rla.link_id and rla.valid_to IS NULL"""
+          from #$idTableName i
+          join road_link_attributes rla on i.id = rla.link_id and rla.valid_to IS NULL"""
         .as[RoadLinkAttributeInfo].list
 
     fetchResult.map(row => {
@@ -950,11 +951,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     def splitRoadLinkAttributesMap(parameterMap: List[(String, Option[(String, String)])]) = {
       parameterMap.filter(_._2.nonEmpty).groupBy(_._1).map { case (k, v) => (k, v.map(_._2.get)) }
     }
-    
-    LogUtils.time(logger, s"TEST LOG fetch override roadLink property rows ${linkIds.size}"){
-      val (td, fc, lt, ac) = splitMap(fetchOverrides(linkIds))
-      val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(linkIds))
-      RoadLinkPropertyRows(td, fc, lt, ac, overridedRoadLinkAttributes)
+
+    MassQuery.withStringIds(linkIds) {
+      idTableName =>
+        val (td, fc, lt, ac) = splitMap(fetchOverrides(idTableName))
+        val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(idTableName))
+        RoadLinkPropertyRows(td, fc, lt, ac, overridedRoadLinkAttributes)
     }
   }
 
