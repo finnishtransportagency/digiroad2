@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.FeatureClass
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewSpeedLimitMassOperation}
-import fi.liikennevirasto.digiroad2.util.{KgvUtil, LinearAssetUtils}
+import fi.liikennevirasto.digiroad2.util.{KgvUtil, LinearAssetUtils, LogUtils}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
@@ -384,19 +384,21 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
 
   private def fetchByLinkIds(linkIds: Seq[String], queryFilter: String) : Seq[PersistedLinearAsset] = {
     val speedLimitRows =
-      sql"""
+      LogUtils.time(logger, s"TEST LOG fetch linear Assets by linkIds ${linkIds.size}, asset type: ${SpeedLimitAsset.typeId}") {
+        sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,
         a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.created_by, a.created_date,
         pos.adjusted_timestamp, pos.modified_date, pos.link_source, p.public_id, a.external_ids
            from asset a
            join asset_link al on a.id = al.asset_id
            join lrm_position pos on al.position_id = pos.id
-           #${MassQuery.withStringIdsValues(linkIds.toSet, joinColumn="pos.link_id")}
+           #${MassQuery.withStringIdsValues(linkIds.toSet, joinColumn = "pos.link_id")}
            join property p on a.asset_type_id = p.asset_type_id
            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
            left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
 		   where a.asset_type_id = 20 and floating = '0' #$queryFilter""".as[SpeedLimitRow].list
+      }
     groupSpeedLimitsResult(speedLimitRows)
   }
 
