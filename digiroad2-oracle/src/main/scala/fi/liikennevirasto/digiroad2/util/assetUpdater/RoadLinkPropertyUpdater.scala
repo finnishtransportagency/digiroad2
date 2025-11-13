@@ -77,13 +77,20 @@ class RoadLinkPropertyUpdater {
     featureClass match {
       case FeatureClass.TractorRoad => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(PrimitiveRoad.value), "mtkClass",None))
       case FeatureClass.HardShoulder => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(FunctionalClass9.value), "mtkClass",None))
-      case FeatureClass.DrivePath | FeatureClass.CarRoad_IIIb => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(AnotherPrivateRoad.value), "mtkClass",None))
+      case FeatureClass.DrivePath => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(AnotherPrivateRoad.value), "mtkClass",None))
       case FeatureClass.CycleOrPedestrianPath => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(WalkingAndCyclingPath.value), "mtkClass",None))
       case FeatureClass.SpecialTransportWithoutGate => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(UnknownFunctionalClass.value), "mtkClass",None))
       case FeatureClass.SpecialTransportWithGate => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(UnknownFunctionalClass.value), "mtkClass",None))
       case FeatureClass.CarRoad_IIIa => newLink.adminClass match {
         case State => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(FunctionalClass4.value), "mtkClass",None))
         case Municipality | Private => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(FunctionalClass5.value), "mtkClass",None))
+        case _ =>
+          logger.info(s"TEST LOG No functional class generated from feature class ${featureClass}")
+          None
+      }
+      case FeatureClass.CarRoad_IIIb => newLink.adminClass match {
+        case State => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(FunctionalClass4.value), "mtkClass",None))
+        case Municipality | Private => Some(FunctionalClassChange(newLink.linkId, roadLinkChangeToChangeType(changeType), None, Some(AnotherPrivateRoad.value), "mtkClass",None))
         case _ =>
           logger.info(s"TEST LOG No functional class generated from feature class ${featureClass}")
           None

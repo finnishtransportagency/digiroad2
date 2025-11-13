@@ -560,4 +560,37 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers {
       createdProperties.size should be(0)
     }
   }
+
+  test("Given a new road link; when roadclass is 12132 then the functional class for State should be 4 and for Municipality and Private 6") {
+    val stateLinkId = "eea524dd-e371-47e3-9d58-44272ccf9db0:1"
+    val municiaplityLinkId = "cd4f0b7f-e916-4b6a-99ac-3c56516b691c:1"
+    val privateLinkId = "b3539f88-88ac-4a92-8582-ef012cb0dbf3:1"
+    val relevantChanges = Seq(
+      RoadLinkChange(Add, None,
+        List(RoadLinkInfo(stateLinkId, 20.311, List(Point(238192.995, 6716501.977, 31.415), Point(238197.49, 6716521.779, 31.56)),
+          12132, State, Some(680), BothDirections)),
+        List(ReplaceInfo(None, Option(stateLinkId), None, None, Option(0.0), Option(20.311), false))),
+      RoadLinkChange(Add, None,
+        List(RoadLinkInfo(municiaplityLinkId, 82.995, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
+          12132, Municipality, Some(698), UnknownDirection)),
+        List(ReplaceInfo(None, Option(municiaplityLinkId), None, None, Option(0.0), Option(82.995), false))),
+      RoadLinkChange(Add, None,
+        List(RoadLinkInfo(privateLinkId, 341.261, List(Point(410580.098, 7524656.363, 186.118), Point(410803.855, 7525268.116, 186.353)),
+          12132, Private, Some(698), UnknownDirection)),
+        List(ReplaceInfo(None, Option(privateLinkId), None, None, Option(0.0), Option(341.261), false)))
+    )
+    runWithRollback {
+      val functionalClassChanges = roadLinkPropertyUpdater.runProcess(relevantChanges)
+        .changes
+        .collect { case f: FunctionalClassChange => f }
+
+      val stateFunctionalClass = functionalClassChanges.find(_.linkId == stateLinkId).get
+      val municipalityFunctionalClass = functionalClassChanges.find(_.linkId == municiaplityLinkId).get
+      val privateFunctionalClass = functionalClassChanges.find(_.linkId == privateLinkId).get
+
+      stateFunctionalClass.newValue should be (Some(4))
+      municipalityFunctionalClass.newValue should be (Some(6))
+      privateFunctionalClass.newValue should be (Some(6))
+    }
+  }
 }
