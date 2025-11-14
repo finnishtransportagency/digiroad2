@@ -96,28 +96,50 @@ class AssetsOnExpiredLinksService {
     }
   }
 
-  private def enrichAssetsWithPersistedPointAssetProperties(assets: Seq[AssetOnExpiredLink]): Seq[AssetOnExpiredLinkWithAssetProperties] = {
-    if (assets.isEmpty) return Seq.empty
-    LogUtils.time(logger, s"Enriching assets and mapping properties for asset type: ${assets.head.assetTypeId}") {
-      val dynamicPointAssetService = getDynamicPointAssetService(assets.head.assetTypeId)
+    private def enrichAssetsWithPersistedPointAssetProperties(assets: Seq[AssetOnExpiredLink]): Seq[AssetOnExpiredLinkWithAssetProperties] = {
+      if (assets.isEmpty) return Seq.empty
+      LogUtils.time(logger, s"Enriching assets and mapping properties for asset type: ${assets.head.assetTypeId}") {
+        val dynamicPointAssetService = getDynamicPointAssetService(assets.head.assetTypeId)
 
-      val linkIds = assets.map(_.linkId).toSet
-      val assetIds = assets.map(_.id).toSet
+        val linkIds = assets.map(_.linkId).toSet
+        val assetIds = assets.map(_.id).toSet
 
-      val persistedById: Map[Long, PersistedPointAsset] = dynamicPointAssetService
-        .getPersistedAssetsByLinkIdsWithoutTransaction(linkIds)
-        .filter(a => assetIds.contains(a.id))
-        .map(a => a.id -> a)
-        .toMap
+        val persistedAssets = linkIds.flatMap(linkId => dynamicPointAssetService.getPersistedAssetsByLinkIdWithoutTransaction(linkId))
+        val persistedAssetsFilteredById = persistedAssets.filter(asset => assetIds.contains(asset.id)).map(a => a.id -> a).toMap
 
-      // Pair matching assets and serialize persisted properties
-      assets.flatMap { asset =>
-        persistedById.get(asset.id).map { persisted =>
-          AssetOnExpiredLinkWithAssetProperties(asset, write(persisted))
+        // Pair matching assets and serialize persisted properties
+        assets.flatMap { asset =>
+          persistedAssetsFilteredById.get(asset.id).map { persisted =>
+            AssetOnExpiredLinkWithAssetProperties(asset, write(persisted))
+          }
         }
       }
     }
-  }
+
+// TODO use this when MassQuery is no longer slower option.
+
+//  private def enrichAssetsWithPersistedPointAssetProperties(assets: Seq[AssetOnExpiredLink]): Seq[AssetOnExpiredLinkWithAssetProperties] = {
+//    if (assets.isEmpty) return Seq.empty
+//    LogUtils.time(logger, s"Enriching assets and mapping properties for asset type: ${assets.head.assetTypeId}") {
+//      val dynamicPointAssetService = getDynamicPointAssetService(assets.head.assetTypeId)
+//
+//      val linkIds = assets.map(_.linkId).toSet
+//      val assetIds = assets.map(_.id).toSet
+//
+//      val persistedById: Map[Long, PersistedPointAsset] = dynamicPointAssetService
+//        .getPersistedAssetsByLinkIdsWithoutTransaction(linkIds)
+//        .filter(a => assetIds.contains(a.id))
+//        .map(a => a.id -> a)
+//        .toMap
+//
+//      // Pair matching assets and serialize persisted properties
+//      assets.flatMap { asset =>
+//        persistedById.get(asset.id).map { persisted =>
+//          AssetOnExpiredLinkWithAssetProperties(asset, write(persisted))
+//        }
+//      }
+//    }
+//  }
 
   def getAllWorkListAssets(newTransaction: Boolean = true): Seq[AssetOnExpiredLinkWithAssetProperties] = {
     if (newTransaction) withDynTransaction {
