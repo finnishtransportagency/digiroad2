@@ -61,7 +61,7 @@ class AssetsOnExpiredLinksDAO {
       }
 
       val sideCode = r.nextInt()
-      val bearing = r.nextInt()
+      val bearing = r.nextIntOption().getOrElse(0)
 
       val assetGeomObj = r.nextObjectOption()
 
@@ -117,7 +117,7 @@ class AssetsOnExpiredLinksDAO {
   def fetchWorkListAssets(): Seq[AssetOnExpiredLink] = {
     sql"""SELECT ael.asset_id, ael.asset_type_id, ael.link_id, ael.side_code, ael.start_measure, ael.end_measure, ael.road_link_expired_date, ael.asset_geometry, a.national_id
           FROM assets_on_expired_road_links ael
-          JOIN asset a ON a.id = ael.asset_id
+          LEFT JOIN asset a ON a.id = ael.asset_id
        """.as[AssetOnExpiredLink].list
   }
 
@@ -150,31 +150,30 @@ class AssetsOnExpiredLinksDAO {
     MassQuery.withIds(ids) { idTableName =>
       sql"""
        SELECT
-        a.id,
-        lp.link_id,
-        lp.start_measure,
-        lp.end_measure,
-        a.geometry,
+        aoerl.asset_id,
+        aoerl.link_id,
+        aoerl.start_measure,
+        aoerl.end_measure,
+        aoerl.asset_geometry,
         kr.shape AS line_geometry,
-        lp.side_code,
+        aoerl.side_code,
         a.bearing,
         CASE
-          WHEN lp.start_measure IS NOT NULL
-            AND lp.end_measure IS NOT NULL
+          WHEN aoerl.start_measure IS NOT NULL
+            AND aoerl.end_measure IS NOT NULL
           THEN ST_LineMerge(
             ST_LocateBetween(
               kr.shape,
-              lp.start_measure,
-              lp.end_measure
+              aoerl.start_measure,
+              aoerl.end_measure
             )
           )
           ELSE NULL
         END AS asset_geometry
-      FROM asset a
-      JOIN asset_link al ON al.asset_id = a.id
-      JOIN lrm_position lp ON al.position_id = lp.id
-      JOIN kgv_roadlink kr ON lp.link_id = kr.linkid
-      JOIN #$idTableName i ON i.id = a.id
+      FROM assets_on_expired_road_links aoerl
+      LEFT JOIN asset a ON a.id = aoerl.asset_id
+      LEFT JOIN kgv_roadlink kr ON kr.linkid = aoerl.link_id
+      JOIN #$idTableName i ON i.id = aoerl.asset_id
     """.as[AssetOnExpiredRoadLink].list
     }
   }

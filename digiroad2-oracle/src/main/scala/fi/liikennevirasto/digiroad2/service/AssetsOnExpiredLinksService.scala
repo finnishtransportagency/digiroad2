@@ -1,15 +1,17 @@
 package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, PersistedPointAsset, Point, PointAssetOperations}
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, AxleWeightLimit, BogieWeightLimit, CyclingAndWalking, DamagedByThaw, DirectionalTrafficSigns, HeightLimit, LengthLimit, MassTransitLane, MassTransitStopAsset, NumberOfLanes, Obstacles, ParkingProhibition, PedestrianCrossings, RailwayCrossings, RoadWorksAsset, TotalWeightLimit, TrafficLights, TrafficSigns, TrafficVolume, TrailerTruckWeightLimit, WidthLimit, WinterSpeedLimit}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetOnExpiredRoadLink, AssetsOnExpiredLinksDAO, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.{DirectionalTrafficSignService, ObstacleService, PedestrianCrossingService, RailwayCrossingService, TrafficLightService, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset._
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.lane.PersistedLane
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
-import fi.liikennevirasto.digiroad2.service.linearasset.{CyclingAndWalkingService, DamagedByThawService, DynamicLinearAssetService, LinearAssetOperations, LinearAssetService, LinearAxleWeightLimitService, LinearBogieWeightLimitService, LinearHeightLimitService, LinearLengthLimitService, LinearTotalWeightLimitService, LinearTrailerTruckWeightLimitService, LinearWidthLimitService, MassTransitLaneService, NumberOfLanesService, ParkingProhibitionService, RoadWorkService}
+import fi.liikennevirasto.digiroad2.service.lane.LaneService
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils}
 import org.slf4j.LoggerFactory
@@ -57,6 +59,12 @@ class AssetsOnExpiredLinksService {
       case NumberOfLanes.typeId => new NumberOfLanesService(roadLinkService, eventbus)
       case WinterSpeedLimit.typeId => new LinearAssetService(roadLinkService, eventbus)
       case TrafficVolume.typeId => new LinearAssetService(roadLinkService, eventbus)
+      case MaintenanceRoadAsset.typeId => new MaintenanceService(roadLinkService, eventbus)
+      case PavedRoad.typeId =>  new PavedRoadService(roadLinkService, eventbus)
+      case Prohibition.typeId =>  new ProhibitionService(roadLinkService, eventbus)
+      case HazmatTransportProhibition.typeId => new HazmatTransportProhibitionService(roadLinkService, eventbus)
+      case RoadWidth.typeId => new RoadWidthService(roadLinkService, eventbus)
+      case SpeedLimitAsset.typeId =>   new SpeedLimitService(eventbus, roadLinkService)
       case _ => dynamicLinearAssetService
     }
   }
@@ -73,11 +81,37 @@ class AssetsOnExpiredLinksService {
     }
   }
 
+  /**
+   *  Pair matching assets and serialize persisted properties
+   */
+  private def matchAssetsAndSerializeProps[T <: AnyRef](assets: Seq[AssetOnExpiredLink], persistedProps: Map[Long, T]): Seq[AssetOnExpiredLinkWithAssetProperties] = {
+    assets.flatMap { asset =>
+      persistedProps.get(asset.id).map { persisted =>
+        AssetOnExpiredLinkWithAssetProperties(asset, write(persisted))
+      }
+    }
+  }
+
+  private def enrichLanesWithPersistedLaneProperties(assets: Seq[AssetOnExpiredLink]): Seq[AssetOnExpiredLinkWithAssetProperties] = {
+    if (assets.isEmpty) return Seq.empty
+    LogUtils.time(logger, s"Enriching assets and mapping properties for asset type: ${assets.head.assetTypeId}") {
+      val linkIds = assets.map(_.linkId)
+      val assetIds = assets.map(_.id).toSet
+
+      val laneService = new LaneService(roadLinkService, eventbus, roadAddressService)
+
+      val persistedById: Map[Long, PersistedLane] = laneService.fetchExistingLanesByLinkIds(linkIds, Seq(), newTransaction = false)
+        .filter(pl => assetIds.contains(pl.id))
+        .map(pl => pl.id -> pl)
+        .toMap
+
+      matchAssetsAndSerializeProps(assets, persistedById)
+    }
+  }
+
   private def enrichAssetsWithPersistedLinearAssetProperties(assets: Seq[AssetOnExpiredLink]):Seq[AssetOnExpiredLinkWithAssetProperties] = {
     if (assets.isEmpty) return Seq.empty
     LogUtils.time(logger, s"Enriching assets and mapping properties for asset type: ${assets.head.assetTypeId}") {
-      val dynamicLinearAssetService = getDynamicLinearAssetService(assets.head.assetTypeId)
-
       val linkIds = assets.map(_.linkId).toSet
       val assetIds = assets.map(_.id).toSet
 
@@ -87,12 +121,7 @@ class AssetsOnExpiredLinksService {
         .map(a => a.id -> a)
         .toMap
 
-      // Pair matching assets and serialize persisted properties
-      assets.flatMap { asset =>
-        persistedById.get(asset.id).map { persisted =>
-          AssetOnExpiredLinkWithAssetProperties(asset, write(persisted))
-        }
-      }
+      matchAssetsAndSerializeProps(assets, persistedById)
     }
   }
 
@@ -107,12 +136,7 @@ class AssetsOnExpiredLinksService {
         val persistedAssets = linkIds.flatMap(linkId => dynamicPointAssetService.getPersistedAssetsByLinkIdWithoutTransaction(linkId))
         val persistedAssetsFilteredById = persistedAssets.filter(asset => assetIds.contains(asset.id)).map(a => a.id -> a).toMap
 
-        // Pair matching assets and serialize persisted properties
-        assets.flatMap { asset =>
-          persistedAssetsFilteredById.get(asset.id).map { persisted =>
-            AssetOnExpiredLinkWithAssetProperties(asset, write(persisted))
-          }
-        }
+        matchAssetsAndSerializeProps(assets, persistedAssetsFilteredById)
       }
     }
 
@@ -149,6 +173,8 @@ class AssetsOnExpiredLinksService {
         val assetType = AssetTypeInfo.apply(assetTypeId)
         if (assetType.geometryType == "point")
           enrichAssetsWithPersistedPointAssetProperties(assets)
+        else if (assetType.geometryType == "linear" && assetType.typeId == Lanes.typeId)
+          enrichLanesWithPersistedLaneProperties(assets)
         else if (assetType.geometryType == "linear")
           enrichAssetsWithPersistedLinearAssetProperties(assets)
         else {
