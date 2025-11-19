@@ -34,8 +34,6 @@ class AssetsOnExpiredLinksService {
   }
   private val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
   private val roadAddressService: RoadAddressService = new RoadAddressService
-  private val dynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService,eventbus)
-  private val laneService = new LaneService(roadLinkService, eventbus, roadAddressService)
   private class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
     override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
@@ -43,43 +41,51 @@ class AssetsOnExpiredLinksService {
     override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
   }
-  private def getDynamicLinearAssetService(typeId: Int): LinearAssetOperations = {
-    typeId match {
-      case HeightLimit.typeId => new LinearHeightLimitService(roadLinkService, eventbus)
-      case LengthLimit.typeId => new LinearLengthLimitService(roadLinkService, eventbus)
-      case WidthLimit.typeId => new LinearWidthLimitService(roadLinkService, eventbus)
-      case TotalWeightLimit.typeId => new LinearTotalWeightLimitService(roadLinkService, eventbus)
-      case TrailerTruckWeightLimit.typeId => new LinearTrailerTruckWeightLimitService(roadLinkService, eventbus)
-      case AxleWeightLimit.typeId => new LinearAxleWeightLimitService(roadLinkService, eventbus)
-      case BogieWeightLimit.typeId => new LinearBogieWeightLimitService(roadLinkService, eventbus)
-      case MassTransitLane.typeId => new MassTransitLaneService(roadLinkService, eventbus)
-      case DamagedByThaw.typeId => new DamagedByThawService(roadLinkService, eventbus)
-      case RoadWorksAsset.typeId => new RoadWorkService(roadLinkService, eventbus)
-      case ParkingProhibition.typeId => new ParkingProhibitionService(roadLinkService, eventbus)
-      case CyclingAndWalking.typeId => new CyclingAndWalkingService(roadLinkService, eventbus)
-      case NumberOfLanes.typeId => new NumberOfLanesService(roadLinkService, eventbus)
-      case WinterSpeedLimit.typeId => new LinearAssetService(roadLinkService, eventbus)
-      case TrafficVolume.typeId => new LinearAssetService(roadLinkService, eventbus)
-      case MaintenanceRoadAsset.typeId => new MaintenanceService(roadLinkService, eventbus)
-      case PavedRoad.typeId =>  new PavedRoadService(roadLinkService, eventbus)
-      case Prohibition.typeId =>  new ProhibitionService(roadLinkService, eventbus)
-      case HazmatTransportProhibition.typeId => new HazmatTransportProhibitionService(roadLinkService, eventbus)
-      case RoadWidth.typeId => new RoadWidthService(roadLinkService, eventbus)
-      case SpeedLimitAsset.typeId =>   new SpeedLimitService(eventbus, roadLinkService)
-      case _ => dynamicLinearAssetService
-    }
-  }
+
+  private lazy val laneService = new LaneService(roadLinkService, eventbus, roadAddressService)
+
+  private lazy val defaultDynamicLinearService: LinearAssetOperations =
+    new DynamicLinearAssetService(roadLinkService, eventbus)
+
+  private lazy val dynamicPointAssetServices: Map [Int, PointAssetOperations] = Map(
+   PedestrianCrossings.typeId     -> new PedestrianCrossingService(roadLinkService, eventbus),
+   Obstacles.typeId               -> new ObstacleService(roadLinkService),
+   RailwayCrossings.typeId        -> new RailwayCrossingService(roadLinkService),
+   DirectionalTrafficSigns.typeId -> new DirectionalTrafficSignService(roadLinkService),
+   TrafficSigns.typeId            -> new TrafficSignService(roadLinkService, eventbus),
+   TrafficLights.typeId           -> new TrafficLightService(roadLinkService),
+   MassTransitStopAsset.typeId    -> new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService, roadAddressService)
+  )
+
+  private lazy val dynamicLinearAssetServices: Map[Int, LinearAssetOperations] = Map(
+    HeightLimit.typeId                 -> new LinearHeightLimitService(roadLinkService, eventbus),
+    LengthLimit.typeId                 -> new LinearLengthLimitService(roadLinkService, eventbus),
+    WidthLimit.typeId                  -> new LinearWidthLimitService(roadLinkService, eventbus),
+    TotalWeightLimit.typeId            -> new LinearTotalWeightLimitService(roadLinkService, eventbus),
+    TrailerTruckWeightLimit.typeId     -> new LinearTrailerTruckWeightLimitService(roadLinkService, eventbus),
+    AxleWeightLimit.typeId             -> new LinearAxleWeightLimitService(roadLinkService, eventbus),
+    BogieWeightLimit.typeId            -> new LinearBogieWeightLimitService(roadLinkService, eventbus),
+    MassTransitLane.typeId             -> new MassTransitLaneService(roadLinkService, eventbus),
+    DamagedByThaw.typeId               -> new DamagedByThawService(roadLinkService, eventbus),
+    RoadWorksAsset.typeId              -> new RoadWorkService(roadLinkService, eventbus),
+    ParkingProhibition.typeId          -> new ParkingProhibitionService(roadLinkService, eventbus),
+    CyclingAndWalking.typeId           -> new CyclingAndWalkingService(roadLinkService, eventbus),
+    NumberOfLanes.typeId               -> new NumberOfLanesService(roadLinkService, eventbus),
+    WinterSpeedLimit.typeId            -> new LinearAssetService(roadLinkService, eventbus),
+    TrafficVolume.typeId               -> new LinearAssetService(roadLinkService, eventbus),
+    MaintenanceRoadAsset.typeId        -> new MaintenanceService(roadLinkService, eventbus),
+    PavedRoad.typeId                   -> new PavedRoadService(roadLinkService, eventbus),
+    Prohibition.typeId                 -> new ProhibitionService(roadLinkService, eventbus),
+    HazmatTransportProhibition.typeId  -> new HazmatTransportProhibitionService(roadLinkService, eventbus),
+    RoadWidth.typeId                   -> new RoadWidthService(roadLinkService, eventbus),
+    SpeedLimitAsset.typeId             -> new SpeedLimitService(eventbus, roadLinkService)
+  )
+
+  private def getDynamicLinearAssetService(typeId: Int): LinearAssetOperations =
+    dynamicLinearAssetServices.getOrElse(typeId, defaultDynamicLinearService)
+
   private def getDynamicPointAssetService(typeId: Int): PointAssetOperations = {
-    typeId match {
-      case PedestrianCrossings.typeId => new PedestrianCrossingService(roadLinkService, eventbus)
-      case Obstacles.typeId => new ObstacleService(roadLinkService)
-      case RailwayCrossings.typeId => new RailwayCrossingService(roadLinkService)
-      case DirectionalTrafficSigns.typeId => new DirectionalTrafficSignService(roadLinkService)
-      case TrafficSigns.typeId => new TrafficSignService(roadLinkService, eventbus)
-      case TrafficLights.typeId => new TrafficLightService(roadLinkService)
-      case MassTransitStopAsset.typeId => new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService, roadAddressService)
-      case _ => throw new IllegalArgumentException("Invalid asset id")
-    }
+    dynamicPointAssetServices.getOrElse(typeId, throw new IllegalArgumentException(s"Invalid asset type id $typeId"))
   }
 
   /**
@@ -113,6 +119,7 @@ class AssetsOnExpiredLinksService {
     LogUtils.time(logger, s"Enriching assets and mapping properties for asset type: ${assets.head.assetTypeId}") {
       val linkIds = assets.map(_.linkId).toSet
       val assetIds = assets.map(_.id).toSet
+      val dynamicLinearAssetService = getDynamicLinearAssetService(assets.head.assetTypeId)
 
       val persistedById: Map[Long, PersistedLinearAsset] = dynamicLinearAssetService
         .fetchExistingAssetsByLinksIdsString(assets.head.assetTypeId, linkIds, Set(), newTransaction = false)
@@ -138,31 +145,6 @@ class AssetsOnExpiredLinksService {
         matchAssetsAndSerializeProps(assets, persistedAssetsFilteredById)
       }
     }
-
-// TODO use this when MassQuery is no longer slower option.
-
-//  private def enrichAssetsWithPersistedPointAssetProperties(assets: Seq[AssetOnExpiredLink]): Seq[AssetOnExpiredLinkWithAssetProperties] = {
-//    if (assets.isEmpty) return Seq.empty
-//    LogUtils.time(logger, s"Enriching assets and mapping properties for asset type: ${assets.head.assetTypeId}") {
-//      val dynamicPointAssetService = getDynamicPointAssetService(assets.head.assetTypeId)
-//
-//      val linkIds = assets.map(_.linkId).toSet
-//      val assetIds = assets.map(_.id).toSet
-//
-//      val persistedById: Map[Long, PersistedPointAsset] = dynamicPointAssetService
-//        .getPersistedAssetsByLinkIdsWithoutTransaction(linkIds)
-//        .filter(a => assetIds.contains(a.id))
-//        .map(a => a.id -> a)
-//        .toMap
-//
-//      // Pair matching assets and serialize persisted properties
-//      assets.flatMap { asset =>
-//        persistedById.get(asset.id).map { persisted =>
-//          AssetOnExpiredLinkWithAssetProperties(asset, write(persisted))
-//        }
-//      }
-//    }
-//  }
 
   def getAllWorkListAssets(newTransaction: Boolean = true): Seq[AssetOnExpiredLinkWithAssetProperties] = {
     if (newTransaction) withDynTransaction {
