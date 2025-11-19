@@ -35,6 +35,7 @@ class AssetsOnExpiredLinksService {
   private val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus)
   private val roadAddressService: RoadAddressService = new RoadAddressService
   private val dynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService,eventbus)
+  private val laneService = new LaneService(roadLinkService, eventbus, roadAddressService)
   private class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
     override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
@@ -95,10 +96,8 @@ class AssetsOnExpiredLinksService {
   private def enrichLanesWithPersistedLaneProperties(assets: Seq[AssetOnExpiredLink]): Seq[AssetOnExpiredLinkWithAssetProperties] = {
     if (assets.isEmpty) return Seq.empty
     LogUtils.time(logger, s"Enriching assets and mapping properties for asset type: ${assets.head.assetTypeId}") {
-      val linkIds = assets.map(_.linkId)
+      val linkIds = assets.map(_.linkId).distinct
       val assetIds = assets.map(_.id).toSet
-
-      val laneService = new LaneService(roadLinkService, eventbus, roadAddressService)
 
       val persistedById: Map[Long, PersistedLane] = laneService.fetchExistingLanesByLinkIds(linkIds, Seq(), newTransaction = false)
         .filter(pl => assetIds.contains(pl.id))
