@@ -1625,17 +1625,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false => halt(Forbidden("User not authorized for assetsOnExpiredLinksWorkList"))
     }
 
-    Map("items" -> workListItems.groupBy(_.assetTypeId)
-      .mapValues(_.map { item =>
-        Map("id" -> item.id,
-          "assetType" -> item.assetTypeId,
-          "linkId" -> item.linkId,
-          "sideCode" -> item.sideCode,
-          "startMeasure" -> item.startMeasure,
-          "endMeasure" -> item.endMeasure,
-          "geometry" -> item.geometry,
-          "roadLinkExpiredDate" -> item.roadLinkExpiredDate)
-      })
+    Map(
+      "items" -> workListItems.groupBy(_.asset.assetTypeId)
+        .mapValues(_.map { item =>
+          val parsedProperties =
+            if (item.properties.nonEmpty) parse(item.properties)
+            else JObject() // empty JSON object
+
+          Map(
+            "id" -> item.asset.id,
+            "assetType" -> item.asset.assetTypeId,
+            "linkId" -> item.asset.linkId,
+            "sideCode" -> item.asset.sideCode,
+            "startMeasure" -> item.asset.startMeasure,
+            "endMeasure" -> item.asset.endMeasure,
+            "geometry" -> item.asset.geometry,
+            "roadLinkExpiredDate" -> item.asset.roadLinkExpiredDate,
+            "nationalId" -> item.asset.nationalId,
+            "properties" -> parsedProperties
+          )
+        })
     )
   }
 
@@ -1648,7 +1657,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     assetIdsToDeleteFromList match {
       case Some(assetIds) =>
-        assetsOnExpiredLinksService.deleteFromWorkList(assetIds, newTransaction = true)
+        assetsOnExpiredLinksService.expireAssetsByIdAndDeleteFromWorkList(assetIds, user.username, newTransaction = true)
       case None => halt(BadRequest("No ids to delete provided"))
     }
   }
@@ -1890,6 +1899,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/assetOnExpiredRoadLink") {
+    params.get("assetId").map { assetId =>
+      val assetOnExpiredRoadLink = assetsOnExpiredLinksService.getAssetsOnExpiredRoadLinksById(Set(assetId.toLong))
+      assetOnExpiredRoadLink
+    } getOrElse {
+      BadRequest("Could not fetch asset on expired road link due to a missing assetId parameter.")
+    }
+  }
 
   get("/manoeuvres") {
     params.get("bbox").map { bbox =>
