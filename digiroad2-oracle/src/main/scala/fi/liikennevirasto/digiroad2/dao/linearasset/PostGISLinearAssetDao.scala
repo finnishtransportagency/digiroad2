@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, ValueAdjustment}
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, NewLinearAssetMassOperation}
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import net.postgis.jdbc.PGgeometry
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
@@ -207,7 +208,9 @@ class PostGISLinearAssetDao() {
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
   def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
+    LogUtils.time(logger, s"TEST LOG Fetch linear assets on ${linkIds.size} links, assetType: $assetTypeId") {
       sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -217,12 +220,13 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.public_id = $valuePropertyId
-          #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
+          #${MassQuery.withStringIdsValues(linkIds.toSet, joinColumn = "pos.link_id")}
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
           and a.floating = '0'
           #$filterExpired"""
         .as[PersistedLinearAsset](getLinearAsset).list
+    }
   }
 
   def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[String], includeFloating: Boolean = false
@@ -306,7 +310,10 @@ class PostGISLinearAssetDao() {
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
   def fetchAssetsWithTextualValuesByLinkIds(assetTypeId: Int, linkIds: Seq[String], valuePropertyId: String): Seq[PersistedLinearAsset] = {
-      val assets = sql"""
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
+      val assets =
+        LogUtils.time(logger, s"TEST LOG Fetch linear assets on ${linkIds.size} links, assetType: ${assetTypeId}") {
+          sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
@@ -315,12 +322,13 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.public_id = $valuePropertyId
-          #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
+          #${MassQuery.withStringIdsValues(linkIds.toSet, joinColumn = "pos.link_id")}
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
           and (a.valid_to > current_timestamp or a.valid_to is null)
           and a.floating = '0'"""
-        .as[(Long, String, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
+            .as[(Long, String, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
+        }
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
         PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map{info => InformationSource(info)})
       }
@@ -357,8 +365,9 @@ class PostGISLinearAssetDao() {
     */
   def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, linkIds: Seq[String], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = '0'"
-
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
     val assets =
+      LogUtils.time(logger, s"TEST LOG Fetch linear assets on ${linkIds.size} links, assetType: ${prohibitionAssetTypeId}") {
       sql"""
         select a.id, pos.link_id, pos.side_code,
                pv.id, pv.type,
@@ -373,7 +382,7 @@ class PostGISLinearAssetDao() {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join prohibition_value pv on pv.asset_id = a.id
-          #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
+          #${MassQuery.withStringIdsValues(linkIds.toSet,joinColumn="pos.link_id")}
           join property p on a.asset_type_id = p.asset_type_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id

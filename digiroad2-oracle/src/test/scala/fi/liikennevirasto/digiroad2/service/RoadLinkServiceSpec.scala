@@ -59,12 +59,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def simulateQuery[T](f: => T): T = {
-    val result = f
-    sqlu"""delete from temp_string_id""".execute
-    result
-  }
-
   test("Override road link traffic direction with adjusted value") {
     PostGISDatabase.withDynTransaction {
       when(mockRoadLinkDao.fetchByLinkIds(Set(linkId)))
@@ -151,12 +145,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkDao.fetchByLinkId(linkId))
         .thenReturn(Some(RoadLinkFetched(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
-      val roadLink = simulateQuery {
+      val roadLink =  {
         val linkProperty = LinkProperties(linkId, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality)
         service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       }
       roadLink.map(_.trafficDirection) should be(Some(TrafficDirection.BothDirections))
-      val roadLink2 = simulateQuery {
+      val roadLink2 =  {
         val linkProperty = LinkProperties(linkId, 5, PedestrianZone, TrafficDirection.TowardsDigitizing, Municipality)
         service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       }
@@ -203,11 +197,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""insert into incomplete_link (id, link_id, municipality_code, administrative_class) values (43241231233, $linkId, 91, 1)""".execute
 
-      simulateQuery {
+       {
         val linkProperty = LinkProperties(linkId, UnknownFunctionalClass.value, Freeway, TrafficDirection.BothDirections, Municipality)
         service.updateLinkProperties(linkProperty, Option("test"), { (_, _) => })
       }
-      simulateQuery {
+       {
         val linkProperty = LinkProperties(linkId, 4, UnknownLinkType, TrafficDirection.BothDirections, Municipality)
         service.updateLinkProperties(linkProperty, Option("test"), { (_, _) => })
       }

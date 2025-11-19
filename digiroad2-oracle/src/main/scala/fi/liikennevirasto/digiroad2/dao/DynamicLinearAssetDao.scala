@@ -27,10 +27,11 @@ class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    if (linkIds.isEmpty) return  Seq.empty[PersistedLinearAsset]
     val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired
-    val assets = LogUtils.time(logger, s"Fetch dynamic linear assets with MassQuery on ${linkIds.size} links, assetType: $assetTypeId") {
+    val assets = LogUtils.time(logger, s"TEST LOG Fetch linear assets on ${linkIds.size} links, assetType: $assetTypeId") {
         sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
@@ -47,7 +48,7 @@ class DynamicLinearAssetDao {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.asset_type_id = a.asset_type_id
-          #${MassQuery.withStringIdsValuesJoin("pos.link_id", linkIds.toSet)}
+          #${MassQuery.withStringIdsValues(linkIds.toSet, joinColumn = "pos.link_id")}
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
