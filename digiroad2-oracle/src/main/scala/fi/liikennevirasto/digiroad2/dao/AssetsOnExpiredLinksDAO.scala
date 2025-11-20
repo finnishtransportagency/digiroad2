@@ -154,7 +154,7 @@ class AssetsOnExpiredLinksDAO {
         aoerl.link_id,
         aoerl.start_measure,
         aoerl.end_measure,
-        aoerl.asset_geometry,
+        a.geometry,
         kr.shape AS line_geometry,
         aoerl.side_code,
         a.bearing,

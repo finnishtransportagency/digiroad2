@@ -9,7 +9,7 @@
         // PointAsset has a point + linkGeometry where the point lies
         // LinearAsset has only the linkGeometry
         _.each(assets, function(asset) {
-            var hasPoint = asset.point && asset.point.length > 0;
+            var hasPoint = asset.point && asset.point.length === 1;
             var hasAssetGeometry = asset.assetGeometry && asset.assetGeometry.length > 0;
             var hasLinkGeometry = asset.linkGeometry && asset.linkGeometry.length > 0;
 
@@ -27,19 +27,8 @@
                 features.push(optionalLineFeature);
             }
 
-            // Linear asset
-            if (hasAssetGeometry) {
-                var coords = asset.assetGeometry.map(function(p) {
-                    return [p.x, p.y];
-                });
-                var lineFeature = new ol.Feature({
-                    geometry: new ol.geom.LineString(coords),
-                    assetId: asset.id,
-                    linkId: asset.linkId
-                });
-                features.push(lineFeature);
-
-            } else if (hasPoint) { // Point Asset
+            // Point Asset
+            if (hasPoint) {
                 var pointCoords = [asset.point[0].x, asset.point[0].y];
                 var pointFeature = new ol.Feature({
                     geometry: new ol.geom.Point(pointCoords),
@@ -49,6 +38,16 @@
                     bearing: asset.bearing
                 });
                 features.push(pointFeature);
+            } else if (hasAssetGeometry) { // Linear Asset
+                var coords = asset.assetGeometry.map(function(p) {
+                    return [p.x, p.y];
+                });
+                var lineFeature = new ol.Feature({
+                    geometry: new ol.geom.LineString(coords),
+                    assetId: asset.id,
+                    linkId: asset.linkId
+                });
+                features.push(lineFeature);
             } else {
                 console.warn('Asset missing linkGeometry or point:', asset);
             }
