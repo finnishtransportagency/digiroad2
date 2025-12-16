@@ -9,7 +9,7 @@ ENV javaParameter="${initialRam} ${maxRamPercentage} ${containerCPU} ${otherPara
 ENV batchMode="false"
 RUN apk --no-cache add curl
 RUN apk update && \
-    apk del xz openssl zsh git wget
+    apk del xz openssl zsh git wget py3-django google-cloud-cpp google-authenticator jupyter-nbclassic libreoffice nextcloud31 nextcloud29 nginx nmap
 RUN mkdir /src
 RUN mkdir /src/main
 RUN mkdir /src/main/webapp
