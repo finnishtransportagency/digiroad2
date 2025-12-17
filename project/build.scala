@@ -55,7 +55,7 @@ object Digiroad2Build extends Build {
           "it.geosolutions.jgridshift" % "jgridshift" % "1.3",
           "org.locationtech.jts" % "jts-core" % "1.19.0",
           "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
-          "ch.qos.logback" % "logback-classic" % "1.3.15"
+          "ch.qos.logback" % "logback-classic" % "1.3.16"
         )
       )
     )
@@ -95,7 +95,7 @@ object Digiroad2Build extends Build {
         "com.sun.mail" % "javax.mail" % "1.6.1",
         "org.postgresql" % "postgresql" % "42.3.9",
         "net.postgis" % "postgis-jdbc" % "2023.1.0" exclude("org.postgresql","postgresql"),
-        "ch.qos.logback" % "logback-classic" % "1.3.15" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.16" % "runtime",
         "net.spy" % "spymemcached" % "2.12.3",
         "software.amazon.awssdk" % "s3" % AwsSdkVersion,
         "software.amazon.awssdk" % "sso" % AwsSdkVersion
@@ -168,7 +168,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.3.15" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.16" % "runtime",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatra" %% "scalatra-swagger"  % "2.6.5"
       ),
@@ -206,7 +206,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-swagger"  % "2.6.5",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
-        "ch.qos.logback" % "logback-classic" % "1.3.15" % "runtime",
+        "ch.qos.logback" % "logback-classic" % "1.3.16" % "runtime",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.eclipse.jetty" % "jetty-webapp" % jettyVersion % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % jettyVersion % "container;compile",
