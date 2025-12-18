@@ -7,9 +7,9 @@ ENV otherParameter="-Djava.security.egd=file:/dev/./urandom -Duser.timezone=Euro
 ENV containerCPU=""
 ENV javaParameter="${initialRam} ${maxRamPercentage} ${containerCPU} ${otherParameter}"
 ENV batchMode="false"
-RUN apk update && \
-    apk del xz openssl
 RUN apk --no-cache add curl
+RUN apk update && \
+    apk del xz openssl zsh git wget py3-django google-cloud-cpp google-authenticator jupyter-nbclassic libreoffice nextcloud31 nextcloud29 nginx nmap
 RUN mkdir /src
 RUN mkdir /src/main
 RUN mkdir /src/main/webapp
