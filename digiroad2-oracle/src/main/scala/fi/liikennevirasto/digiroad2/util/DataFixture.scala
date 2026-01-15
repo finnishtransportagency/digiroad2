@@ -2024,8 +2024,6 @@ object DataFixture {
         exit()  //For a currently unknown reason refreshCache batch doesn't exit automatically upon completion
       case Some("lane_end_date_expirer") =>
         LaneEndDateExpirer.expireLanesByEndDates()
-      case Some("resolving_frozen_links") =>
-        ResolvingFrozenRoadLinks.process()
       case Some("topology_validation") =>
         ValidateAssets.validateAll()
       case Some("find_assets_on_expired_road_links") =>
@@ -2053,7 +2051,7 @@ object DataFixture {
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | update_last_modified_assets_info | import_cycling_walking_info |" +
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite |" +
         " populate_new_link_with_main_lanes | redundant_traffic_direction_removal |" + "update_unknown_speed_limits |" +
-        " refresh_road_link_cache | lane_end_date_expirer | resolving_frozen_links | handle_expired_road_links | topology_validation | find_assets_on_expired_road_links | repeat_damaged_by_thaw_activity_periods")
+        " refresh_road_link_cache | lane_end_date_expirer | handle_expired_road_links | topology_validation | find_assets_on_expired_road_links | repeat_damaged_by_thaw_activity_periods")
     }
   }
 }
