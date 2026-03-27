@@ -409,8 +409,8 @@
 
         var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
-        var stateRoadEditingRestricted = 'Kohteiden muokkaus on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.';
-        var municipalityRoadEditingRestricted = 'Kunnan kohteiden muokkaus on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.';
+        var stateRoadEditingRestricted = 'Joukkoliikenteen pysäkkien ylläpito Digiroadissa on päättynyt. Pysäkkien ylläpito on siirtynyt Digiroadista Fintrafficin Pysäkki- ja esteettömyystietokantaan (PETI-järjestelmään)';
+        var municipalityRoadEditingRestricted = 'Joukkoliikenteen pysäkkien ylläpito Digiroadissa on päättynyt. Pysäkkien ylläpito on siirtynyt Digiroadista Fintrafficin Pysäkki- ja esteettömyystietokantaan (PETI-järjestelmään)';
         var message = '';
 
         var stateAdminClassLink = selectedMassTransitStopModel.isAdminClassState();

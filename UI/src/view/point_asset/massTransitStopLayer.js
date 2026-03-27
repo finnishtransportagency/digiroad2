@@ -533,13 +533,13 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
 
       if (administrativeClass === 'State' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
-        me.displayAssetCreationRestricted('Kohteiden lisääminen on estetty, koska kohteita ylläpidetään Tievelho-tietojärjestelmässä.');
+        me.displayAssetCreationRestricted('Joukkoliikenteen pysäkkien ylläpito Digiroadissa on päättynyt. Pysäkkien ylläpito on siirtynyt Digiroadista Fintrafficin Pysäkki ja esteettömyystietokantaan (PETI-järjestelmään).');
         selectedMassTransitStopModel.cancel();
         return;
       }
 
       if (administrativeClass === 'Municipality' && editingRestrictions.pointAssetHasRestriction(municipalityCode, administrativeClass, typeId)) {
-        me.displayAssetCreationRestricted('Kunnan kohteiden lisääminen on estetty, koska kohteita ylläpidetään kunnan omassa tietojärjestelmässä.');
+        me.displayAssetCreationRestricted('Joukkoliikenteen pysäkkien ylläpito Digiroadissa on päättynyt. Pysäkkien ylläpito on siirtynyt Digiroadista Fintrafficin Pysäkki ja esteettömyystietokantaan (PETI-järjestelmään).');
         selectedMassTransitStopModel.cancel();
         return;
       }
